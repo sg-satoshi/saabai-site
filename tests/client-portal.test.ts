@@ -173,7 +173,8 @@ test("request emails escape client-supplied content and stay polite", async () =
   assert.ok(!n.html.includes("<script>") && n.html.includes("&lt;script&gt;"));
   assert.ok(!n.html.includes("<img src=x"));
   const s = buildStatusEmail(r);
-  assert.ok(s.html.includes("Good news") && s.html.includes("Thanks so much") && s.html.includes("All done &lt;3"));
+  assert.ok(s.html.includes("Good news") && s.html.includes("Thanks so much"));
+  assert.ok(!s.html.includes("All done") && !(s.text || "").includes("All done"), "admin notes are not emailed");
   assert.ok(!s.html.includes("<b>Smith"));
   assert.ok(!/\u2014/.test(s.html + n.html), "no em dashes");
 });

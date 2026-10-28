@@ -438,6 +438,36 @@ export async function updateRequest(
   return { request: next, statusChanged };
 }
 
+/** Rewrite the status line so the panel can show whether the client was emailed. */
+export async function annotateStatusEmail(
+  id: string,
+  fromStatus: string,
+  toStatus: string,
+  emailed: boolean,
+  authorName: string,
+): Promise<ClientRequest | null> {
+  const existing = await getRequest(id);
+  if (!existing) return null;
+  const from = STATUS_LABELS[fromStatus] || fromStatus;
+  const to = STATUS_LABELS[toStatus] || toStatus;
+  const body = `Status: ${from} → ${to} · ${emailed ? "Client emailed" : "Client not emailed"}`;
+  let idx = -1;
+  for (let i = existing.timeline.length - 1; i >= 0; i--) {
+    if (existing.timeline[i].kind === "status") {
+      idx = i;
+      break;
+    }
+  }
+  if (idx >= 0) {
+    existing.timeline[idx] = { ...existing.timeline[idx], body, authorName, authorKind: "admin" };
+  } else {
+    existing.timeline.push(
+      entry({ kind: "status", authorKind: "admin", authorName, body }),
+    );
+  }
+  return saveRequest(existing);
+}
+
 export async function addTimelineEntry(
   id: string,
   partial: Omit<TimelineEntry, "id" | "createdAt">,

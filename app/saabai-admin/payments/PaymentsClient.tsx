@@ -39,7 +39,7 @@ const C = {
 const CARD_STYLE: Record<string, Record<string, string | Record<string, string>>> = {
   base: {
     fontSize: "14px",
-    fontFamily: "Inter, system-ui, sans-serif",
+    fontFamily: "var(--font-admin-sans), system-ui, sans-serif",
     color: C.text,
     "::placeholder": { color: C.muted },
   },

@@ -1,7 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  notifyClientDefault,
+  statusEmailFirstLine,
+  statusEmailSubject,
+  statusLabel,
+} from "../../../lib/request-notify";
+import "./requests.css";
 
 type Status =
   | "new"
@@ -12,6 +19,7 @@ type Status =
   | "blocked"
   | "done"
   | "received";
+type Editable = Exclude<Status, "received">;
 type Priority = "low" | "normal" | "high" | "critical";
 type Assignee = "chief_ai" | "designer" | "shane" | "team";
 
@@ -47,24 +55,23 @@ interface ClientRequest {
   timeline: TimelineEntry[];
   createdAt: string;
   updatedAt: string;
+  statusChangedAt?: string;
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  new: "New",
-  received: "New",
-  awaiting_client: "Awaiting client",
-  triaged: "Triaged",
-  in_progress: "In progress",
-  qa: "QA / Review",
-  blocked: "Blocked",
-  done: "Done",
-};
+const EDITABLE: Editable[] = ["new", "awaiting_client", "triaged", "in_progress", "qa", "blocked", "done"];
 
 const PRI_LABEL: Record<Priority, string> = {
   low: "Low",
   normal: "Normal",
   high: "High",
   critical: "Critical",
+};
+
+const TYPE_LABEL: Record<string, string> = {
+  text_change: "Text change",
+  new_feature: "Feature",
+  bug: "Bug",
+  other: "Other",
 };
 
 const ASSIGNEE_LABEL: Record<Assignee, string> = {
@@ -86,13 +93,22 @@ function fmt(iso: string) {
 function age(iso: string) {
   const ms = Date.now() - new Date(iso).getTime();
   const m = Math.floor(ms / 60000);
-  if (m < 60) return `${m}m`;
+  if (m < 60) return `${Math.max(m, 0)}m`;
   const h = Math.floor(m / 60);
   if (h < 48) return `${h}h`;
   return `${Math.floor(h / 24)}d`;
 }
 
+function savedStatus(r: ClientRequest): Editable {
+  return r.status === "received" ? "new" : r.status;
+}
+
+function narrow() {
+  return typeof window !== "undefined" && window.matchMedia("(max-width: 600px)").matches;
+}
+
 export default function RequestsAdminClient() {
+  const router = useRouter();
   const sp = useSearchParams();
   const deepId = sp.get("id") || "";
   const wantTakeOver = sp.get("takeOver") === "1";
@@ -105,8 +121,8 @@ export default function RequestsAdminClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState("");
-  const [selectedId, setSelectedId] = useState(deepId);
   const [detail, setDetail] = useState<ClientRequest | null>(null);
+  const selectedId = deepId;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -134,6 +150,18 @@ export default function RequestsAdminClient() {
   }, [load]);
 
   useEffect(() => {
+    const app = document.querySelector(".app");
+    if (!app) return;
+    const on = () => app.classList.toggle("req-open", Boolean(selectedId) && narrow());
+    on();
+    window.addEventListener("resize", on);
+    return () => {
+      window.removeEventListener("resize", on);
+      app.classList.remove("req-open");
+    };
+  }, [selectedId]);
+
+  useEffect(() => {
     if (!selectedId) {
       setDetail(null);
       return;
@@ -141,43 +169,14 @@ export default function RequestsAdminClient() {
     let cancelled = false;
     (async () => {
       const res = await fetch(`/api/admin/requests/${encodeURIComponent(selectedId)}`);
-      const data = await res.json();
-      if (!cancelled && res.ok) setDetail(data.request);
+      const data = await res.json().catch(() => ({}));
+      if (cancelled) return;
+      setDetail(res.ok && data.request ? data.request : null);
     })();
     return () => {
       cancelled = true;
     };
   }, [selectedId]);
-
-  // Email "Take over" deep link: switch to Discuss and assign to Shane (easy to change later).
-  useEffect(() => {
-    if (!wantTakeOver || !detail || detail.discussWithShane) return;
-    let cancelled = false;
-    (async () => {
-      const res = await fetch(`/api/admin/requests/${encodeURIComponent(detail.id)}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          discussWithShane: true,
-          autoHandle: false,
-          assignee: "shane",
-          internalNote: "Take over: switched to Discuss with Shane.",
-        }),
-      });
-      const data = await res.json();
-      if (!cancelled && res.ok) {
-        setDetail(data.request);
-        setToast("Taken over · Discuss with Shane");
-        // Drop takeOver from URL without reload
-        const url = new URL(window.location.href);
-        url.searchParams.delete("takeOver");
-        window.history.replaceState({}, "", url.pathname + url.search);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [wantTakeOver, detail?.id, detail?.discussWithShane]);
 
   const tabs = useMemo(
     () => [
@@ -187,6 +186,8 @@ export default function RequestsAdminClient() {
       { key: "awaiting_client", label: "Awaiting client", n: counts.awaiting_client || 0 },
       { key: "triaged", label: "Triaged", n: counts.triaged || 0 },
       { key: "in_progress", label: "In progress", n: counts.in_progress || 0 },
+      { key: "qa", label: "QA", n: counts.qa || 0 },
+      { key: "blocked", label: "Blocked", n: counts.blocked || 0 },
       { key: "done", label: "Done", n: counts.done || 0 },
     ],
     [counts],
@@ -197,250 +198,218 @@ export default function RequestsAdminClient() {
     return requests;
   }, [requests, status]);
 
+  function openRequest(id: string) {
+    const qs = new URLSearchParams(sp.toString());
+    qs.set("id", id);
+    if (id !== deepId) qs.delete("takeOver");
+    const next = `/saabai-admin/requests?${qs.toString()}`;
+    // Mobile pushes so the phone back button returns to the list. Desktop replaces.
+    if (narrow()) router.push(next);
+    else router.replace(next);
+  }
+
+  function closePanel() {
+    const qs = new URLSearchParams(sp.toString());
+    qs.delete("id");
+    qs.delete("takeOver");
+    const next = qs.toString();
+    const url = next ? `/saabai-admin/requests?${next}` : "/saabai-admin/requests";
+    // Replace so Close panel stays closed. The phone back button still works
+    // because opening the ticket was a push.
+    router.replace(url);
+  }
+
+  function clearTakeOverFlag() {
+    const qs = new URLSearchParams(sp.toString());
+    if (!qs.has("takeOver")) return;
+    qs.delete("takeOver");
+    const next = qs.toString();
+    router.replace(next ? `/saabai-admin/requests?${next}` : "/saabai-admin/requests");
+  }
+
+  const pinned = requests.find((r) => r.priority === "critical" && r.status !== "done");
+  const shown = detail && detail.id === selectedId ? detail : null;
+
   return (
-    <div style={{ maxWidth: 1200 }}>
-      <h1 className="mc-h1">Client Requests</h1>
-      <p className="mc-sub" style={{ marginBottom: 20 }}>
-        Inbox for change and support tickets. Clarifier messages and Critical alerts show here.
-      </p>
+    <div className={`req-layout${selectedId ? " has-detail" : ""}`}>
+      <div className="req-list">
+        <h1 className="mc-h1">Client Requests</h1>
+        <p className="mc-sub" style={{ marginBottom: 20 }}>
+          Change and support tickets from clients.
+        </p>
 
-      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
-        {tabs.map((t) => (
-          <button
-            key={t.key || "all"}
-            onClick={() => setStatus(t.key === "critical" ? "critical" : t.key)}
-            style={{
-              padding: "7px 14px",
-              borderRadius: 999,
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: "pointer",
-              border: `1px solid ${status === t.key ? (t.special ? "#f3c4c0" : "#b9e4ea") : "rgba(0,0,0,0.1)"}`,
-              background: status === t.key ? (t.special ? "#fff8f7" : "#edf8f9") : "#fff",
-              color: status === t.key ? (t.special ? "#c2261d" : "#0e7482") : "#5f6580",
-            }}
-          >
-            {t.label} <span style={{ opacity: 0.7 }}>{t.n}</span>
-          </button>
-        ))}
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search…"
-          style={{ marginLeft: "auto", padding: "7px 10px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.12)", fontSize: 12, width: 180 }}
-        />
-        <select
-          value={clientId}
-          onChange={(e) => setClientId(e.target.value)}
-          style={{ padding: "7px 10px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.12)", fontSize: 12, background: "#fff" }}
-        >
-          <option value="">All clients</option>
-          {clients.map((c) => (
-            <option key={c.clientId} value={c.clientId}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {(() => {
-        const crit = requests.find((r) => r.priority === "critical" && r.status !== "done");
-        if (!crit) return null;
-        return (
-          <div
-            style={{
-              display: "flex",
-              gap: 14,
-              alignItems: "center",
-              flexWrap: "wrap",
-              border: "1px solid #f3c4c0",
-              borderLeft: "4px solid #c2261d",
-              background: "linear-gradient(90deg,#fdecea,#fff 70%)",
-              borderRadius: 12,
-              padding: "14px 18px",
-              marginBottom: 16,
-            }}
-          >
-            <div style={{ flex: 1, minWidth: 220 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: "#c2261d", textTransform: "uppercase" }}>
-                Critical · pinned
-              </div>
-              <div style={{ fontWeight: 600, marginTop: 2 }}>
-                {crit.siteName ? `${crit.siteName}: ` : ""}
-                {crit.title}
-              </div>
-              <div style={{ fontSize: 12, color: "#5f6580", marginTop: 4 }}>
-                {crit.discussWithShane ? "Discuss with Shane" : "Chief AI · Auto-handling"} · Open {age(crit.createdAt)}
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              {!crit.discussWithShane && (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const res = await fetch(`/api/admin/requests/${encodeURIComponent(crit.id)}`, {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        discussWithShane: true,
-                        autoHandle: false,
-                        assignee: "shane",
-                        internalNote: "Take over: switched to Discuss with Shane.",
-                      }),
-                    });
-                    const data = await res.json();
-                    if (res.ok) {
-                      setToast("Taken over");
-                      setSelectedId(crit.id);
-                      setDetail(data.request);
-                      load();
-                    }
-                  }}
-                  style={{
-                    padding: "8px 14px",
-                    borderRadius: 8,
-                    border: "1px solid rgba(0,0,0,0.14)",
-                    background: "#fff",
-                    fontWeight: 600,
-                    fontSize: 13,
-                    cursor: "pointer",
-                  }}
-                >
-                  Take over
-                </button>
-              )}
+        <div className="req-filters">
+          <div className="chip-row" role="tablist" aria-label="Filter requests">
+            {tabs.map((t) => (
               <button
+                key={t.key || "all"}
                 type="button"
-                onClick={() => setSelectedId(crit.id)}
-                style={{
-                  padding: "8px 14px",
-                  borderRadius: 8,
-                  border: "1px solid #b9e4ea",
-                  background: "#0e7482",
-                  color: "#fff",
-                  fontWeight: 600,
-                  fontSize: 13,
-                  cursor: "pointer",
-                }}
+                role="tab"
+                aria-selected={status === t.key}
+                className={`req-chip${status === t.key ? " on" : ""}${t.special ? " bad" : ""}`}
+                onClick={() => setStatus(t.key)}
               >
-                Open request
+                {t.label} <span>{t.n}</span>
               </button>
-            </div>
+            ))}
           </div>
-        );
-      })()}
-      {toast && <p style={{ margin: "0 0 12px", fontSize: 13, color: "#16a34a", fontWeight: 600 }}>{toast}</p>}
-      {error && <p style={{ margin: "0 0 12px", fontSize: 13, color: "#c2261d" }}>{error}</p>}
-
-      <div style={{ display: "grid", gridTemplateColumns: detail ? "1fr 420px" : "1fr", gap: 16, alignItems: "start" }}>
-        <div>
-          {loading ? (
-            <p style={{ color: "#5f6580", fontSize: 13 }}>Loading…</p>
-          ) : visible.length === 0 ? (
-            <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 14, padding: 28, textAlign: "center" }}>
-              <p style={{ margin: 0, fontSize: 13, color: "#5f6580" }}>No requests here yet.</p>
-            </div>
-          ) : (
-            <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 14, overflow: "hidden" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                <thead>
-                  <tr style={{ textAlign: "left", color: "#5f6580", fontSize: 11, letterSpacing: 0.06, textTransform: "uppercase" }}>
-                    <th style={{ padding: "10px 14px" }}>Request</th>
-                    <th style={{ padding: "10px 14px" }}>Site</th>
-                    <th style={{ padding: "10px 14px" }}>Priority</th>
-                    <th style={{ padding: "10px 14px" }}>Status</th>
-                    <th style={{ padding: "10px 14px" }}>Mode</th>
-                    <th style={{ padding: "10px 14px", textAlign: "right" }}>Age</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {visible.map((r) => (
-                    <tr
-                      key={r.id}
-                      onClick={() => setSelectedId(r.id)}
-                      style={{
-                        cursor: "pointer",
-                        background: selectedId === r.id ? "#edf8f9" : r.priority === "critical" ? "#fff8f7" : undefined,
-                        borderTop: "1px solid rgba(0,0,0,0.06)",
-                        boxShadow: r.priority === "critical" ? "inset 3px 0 0 #c2261d" : undefined,
-                      }}
-                    >
-                      <td style={{ padding: "12px 14px" }}>
-                        <div style={{ fontWeight: 500 }}>{r.title}</div>
-                        <div style={{ fontSize: 11, color: "#5f6580", marginTop: 2 }}>
-                          {r.clientName || r.clientEmail} · {r.type}
-                        </div>
-                      </td>
-                      <td style={{ padding: "12px 14px" }}>{r.siteName || "—"}</td>
-                      <td style={{ padding: "12px 14px" }}>
-                        <span
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 600,
-                            padding: "2px 8px",
-                            borderRadius: 6,
-                            background: r.priority === "critical" ? "#c2261d" : r.priority === "high" ? "#fff7e6" : "#fff",
-                            color: r.priority === "critical" ? "#fff" : r.priority === "high" ? "#b45309" : "#5f6580",
-                            border: "1px solid rgba(0,0,0,0.08)",
-                          }}
-                        >
-                          {PRI_LABEL[r.priority]}
-                        </span>
-                      </td>
-                      <td style={{ padding: "12px 14px" }}>{STATUS_LABEL[r.status]}</td>
-                      <td style={{ padding: "12px 14px", fontSize: 12, color: "#5f6580" }}>
-                        {r.discussWithShane ? "Discuss" : "Auto"}
-                      </td>
-                      <td style={{ padding: "12px 14px", textAlign: "right", fontVariantNumeric: "tabular-nums", color: r.priority === "critical" ? "#c2261d" : "#5f6580" }}>
-                        {age(r.createdAt)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <input className="req-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search requests" aria-label="Search requests" />
+          <select className="req-client" value={clientId} onChange={(e) => setClientId(e.target.value)} aria-label="Filter by client">
+            <option value="">All clients</option>
+            {clients.map((c) => (
+              <option key={c.clientId} value={c.clientId}>{c.name}</option>
+            ))}
+          </select>
         </div>
 
-        {detail && (
-          <DetailPane
-            r={detail}
-            onClose={() => setSelectedId("")}
-            onSaved={(msg, next) => {
-              setToast(msg);
-              if (next) setDetail(next);
-              load();
-              setTimeout(() => setToast(""), 3500);
-            }}
-          />
+        {pinned && (
+          <div className="req-pin">
+            <div style={{ flex: 1, minWidth: 220 }}>
+              <div className="k">Critical · pinned</div>
+              <div style={{ fontWeight: 650, marginTop: 2 }}>{pinned.title}</div>
+              <div style={{ fontSize: 12, color: "var(--n-500)", marginTop: 4 }}>
+                {pinned.siteName || pinned.clientName}
+                {" · "}
+                {pinned.discussWithShane ? "Discuss with Shane" : "Chief AI handling"}
+                {" · Open "}
+                {age(pinned.createdAt)}
+              </div>
+            </div>
+            <button type="button" className="btn acc" onClick={() => openRequest(pinned.id)}>Open</button>
+          </div>
+        )}
+        {toast && <p className="req-toast" role="status">{toast}</p>}
+        {error && <p className="req-err">{error}</p>}
+
+        {loading ? (
+          <p style={{ color: "var(--n-500)", fontSize: 13 }}>Loading...</p>
+        ) : visible.length === 0 ? (
+          <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 14, padding: 28, textAlign: "center" }}>
+            <p style={{ margin: 0, fontSize: 13, color: "var(--n-500)" }}>No requests here yet.</p>
+          </div>
+        ) : (
+          <>
+            <table className="req-table">
+              <thead>
+                <tr>
+                  <th>Request</th>
+                  <th>Status</th>
+                  <th>Priority</th>
+                  <th className="r">Age</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((r) => (
+                  <tr
+                    key={r.id}
+                    className={`${selectedId === r.id ? "sel" : ""} ${r.priority === "critical" ? "crit" : ""}`}
+                    onClick={() => openRequest(r.id)}
+                  >
+                    <td>
+                      <div style={{ fontWeight: 600 }}>{r.title}</div>
+                      <div className="req-sub">{r.siteName || r.clientName} · {TYPE_LABEL[r.type] || r.type}</div>
+                    </td>
+                    <td><StatusPill status={r.status} /></td>
+                    <td><PriorityPill priority={r.priority} /></td>
+                    <td className={`req-age${r.priority === "critical" ? " hot" : ""}`}>{age(r.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="req-cards">
+              {visible.map((r) => (
+                <button key={r.id} type="button" className={`req-card${r.priority === "critical" ? " crit" : ""}`} onClick={() => openRequest(r.id)}>
+                  <div className="top">
+                    <h3>{r.title}</h3>
+                    <span className={`req-age${r.priority === "critical" ? " hot" : ""}`}>{age(r.createdAt)}</span>
+                  </div>
+                  <div className="req-sub">{r.siteName || r.clientName}</div>
+                  <div className="req-badges">
+                    <PriorityPill priority={r.priority} />
+                    <StatusPill status={r.status} />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
         )}
       </div>
+
+      {selectedId && !shown && (
+        <section className="req-panel" aria-label="Request detail">
+          <header className="req-head">
+            <button type="button" className="req-back" onClick={closePanel}>‹ Requests</button>
+            <button type="button" className="req-x" onClick={closePanel} aria-label="Close panel">
+              Close panel
+            </button>
+          </header>
+          <p className="req-empty" style={{ padding: 20 }}>Loading...</p>
+        </section>
+      )}
+      {shown && (
+        <DetailPane
+          r={shown}
+          promptTakeOver={wantTakeOver && shown.id === deepId}
+          onClose={closePanel}
+          onTakeOverDone={clearTakeOverFlag}
+          onSaved={(msg, next) => {
+            setToast(msg);
+            if (next) setDetail(next);
+            load();
+            window.setTimeout(() => setToast(""), 3500);
+          }}
+        />
+      )}
     </div>
   );
 }
 
+function StatusPill({ status }: { status: string }) {
+  return (
+    <span className={`pill st ${status}`}>
+      <i />
+      {statusLabel(status)}
+    </span>
+  );
+}
+
+function PriorityPill({ priority }: { priority: Priority }) {
+  const cls = priority === "critical" ? "crit" : priority === "high" ? "high" : "norm";
+  return <span className={`pill ${cls}`}>{PRI_LABEL[priority]}</span>;
+}
+
 function DetailPane({
   r,
+  promptTakeOver,
   onClose,
+  onTakeOverDone,
   onSaved,
 }: {
   r: ClientRequest;
+  promptTakeOver: boolean;
   onClose: () => void;
+  onTakeOverDone: () => void;
   onSaved: (msg: string, next?: ClientRequest) => void;
 }) {
-  const [status, setStatus] = useState<Exclude<Status, "received">>(r.status === "received" ? "new" : r.status);
+  const saved = savedStatus(r);
+  const [pending, setPending] = useState<Editable | null>(null);
+  const [notify, setNotify] = useState(true);
   const [assignee, setAssignee] = useState(r.assignee || "");
   const [autoHandle, setAutoHandle] = useState(r.autoHandle && r.priority !== "critical");
+  const [tab, setTab] = useState<"conversation" | "internal" | "details">("conversation");
   const [reply, setReply] = useState("");
   const [note, setNote] = useState("");
   const [clarifierOn, setClarifierOn] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState("");
   const [err, setErr] = useState("");
+  const [more, setMore] = useState(false);
 
   useEffect(() => {
-    setStatus(r.status === "received" ? "new" : (r.status as Exclude<Status, "received">));
+    setPending(null);
     setAssignee(r.assignee || "");
     setAutoHandle(r.autoHandle && r.priority !== "critical");
+    setMore(false);
+    setErr("");
   }, [r]);
 
   useEffect(() => {
@@ -451,8 +420,8 @@ function DetailPane({
     })();
   }, [r.clientId]);
 
-  async function patch(body: Record<string, unknown>) {
-    setBusy(true);
+  async function patch(body: Record<string, unknown>, kind: string) {
+    setBusy(kind);
     setErr("");
     try {
       const res = await fetch(`/api/admin/requests/${encodeURIComponent(r.id)}`, {
@@ -462,17 +431,31 @@ function DetailPane({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not save");
-      onSaved(
-        data.statusChanged ? (data.emailed ? "Saved, client emailed" : "Saved") : "Saved",
-        data.request,
-      );
+      const msg = data.statusChanged
+        ? data.emailed ? "Saved. Client emailed." : "Saved. No email sent."
+        : "Saved";
+      onSaved(msg, data.request);
       setReply("");
       setNote("");
+      setPending(null);
+      return true;
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
+      return false;
     } finally {
-      setBusy(false);
+      setBusy("");
     }
+  }
+
+  function beginChange(next: Editable) {
+    if (next === saved) {
+      setPending(null);
+      return;
+    }
+    setPending(next);
+    setNotify(notifyClientDefault(next));
+    setErr("");
+    setMore(false);
   }
 
   async function toggleClarifier(enabled: boolean) {
@@ -485,253 +468,390 @@ function DetailPane({
     onSaved(enabled ? "Clarifier on for this client" : "Clarifier off for this client");
   }
 
+  async function takeOver() {
+    const ok = await patch(
+      {
+        discussWithShane: true,
+        autoHandle: false,
+        assignee: "shane",
+        internalNote: "Take over: switched to Discuss with Shane.",
+      },
+      "handle",
+    );
+    if (ok) onTakeOverDone();
+  }
+
+  async function handBack() {
+    await patch(
+      {
+        discussWithShane: false,
+        autoHandle: true,
+        assignee: "chief_ai",
+        internalNote: "Handed back to Chief.",
+      },
+      "handle",
+    );
+  }
+
+  const showHandle = r.priority === "critical" || r.discussWithShane || promptTakeOver;
+  const done = saved === "done";
+  const statusEntry = [...(r.timeline || [])].reverse().find((t) => t.kind === "status");
+  const emailed = !statusEntry
+    ? null
+    : statusEntry.body.includes("Client not emailed")
+      ? false
+      : statusEntry.body.includes("Client emailed")
+        ? true
+        : null;
+  const notes = (r.timeline || []).filter((t) => t.internal);
+  const convo = (r.timeline || []).filter((t) => !t.internal && t.kind !== "agreed_change");
+
   return (
-    <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 14, padding: 18, position: "sticky", top: 16, maxHeight: "calc(100vh - 40px)", overflow: "auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
-        <div style={{ fontSize: 11, color: "#5f6580" }}>{r.id.slice(0, 8)}</div>
-        <button type="button" onClick={onClose} style={{ border: "none", background: "none", cursor: "pointer", color: "#5f6580" }}>
-          Close
-        </button>
-      </div>
-      {r.priority === "critical" && (
-        <div style={{ border: "1px solid #f3c4c0", borderLeft: "4px solid #c2261d", background: "#fff8f7", borderRadius: 10, padding: 12, marginBottom: 12, fontSize: 12 }}>
-          <strong style={{ color: "#c2261d" }}>Critical</strong>
-          {r.discussWithShane
-            ? " · Discuss with Shane (taken over / escalated)"
-            : " · Chief AI auto-handling · Escalation: not needed yet"}
+    <section className="req-panel" aria-label="Request detail">
+      <header className="req-head">
+        <button type="button" className="req-back" onClick={onClose}>‹ Requests</button>
+        <div className="req-idrow">
+          <div className="req-id">{r.id.slice(0, 8)}{r.siteName ? ` · ${r.siteName}` : ""}</div>
+          <button type="button" className="req-x" onClick={onClose} aria-label="Close panel">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+            Close panel
+          </button>
         </div>
-      )}
-      <h2 style={{ margin: "0 0 4px", fontSize: 17, fontWeight: 700 }}>{r.title}</h2>
-      <p style={{ margin: "0 0 12px", fontSize: 12, color: "#5f6580" }}>
-        {r.clientName} · {r.clientEmail}
-        {r.siteName ? ` · ${r.siteName}` : ""} · {fmt(r.createdAt)}
-      </p>
-      <p style={{ margin: "0 0 14px", fontSize: 13, lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{r.description}</p>
-
-      {r.agreedChange && (
-        <div style={{ background: "#edf8f9", border: "1px solid #b9e4ea", borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 13 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.1, textTransform: "uppercase", color: "#0e7482", marginBottom: 4 }}>
-            Agreed change
+        <h2 className="req-title">{r.title}</h2>
+        <p className="req-meta">
+          {r.clientName || "Client"}
+          {r.clientEmail ? ` · ${r.clientEmail}` : ""}
+          {r.siteName ? ` · ${r.siteName}` : ""}
+        </p>
+        <div className="req-badges">
+          <PriorityPill priority={r.priority} />
+          <StatusPill status={saved} />
+          {r.discussWithShane ? (
+            <span className="pill handle">Discuss with Shane</span>
+          ) : r.priority === "critical" ? (
+            <span className="pill handle">Chief AI handling</span>
+          ) : null}
+        </div>
+        {done && !pending && (
+          <div className="req-done">
+            <span>
+              Done. Closed {fmt(r.statusChangedAt || statusEntry?.createdAt || r.updatedAt)}
+              {statusEntry?.authorName ? ` by ${statusEntry.authorName}` : ""}.
+              {emailed === true ? " Client emailed." : emailed === false ? " Client not emailed." : ""}
+            </span>
+            <button type="button" className="btn sm" onClick={() => beginChange("in_progress")}>Reopen</button>
           </div>
-          {r.agreedChange}
-        </div>
-      )}
-
-      <div style={{ display: "grid", gap: 10, marginBottom: 14 }}>
-        <label style={{ fontSize: 11, fontWeight: 700, color: "#5f6580" }}>
-          Status
+        )}
+        {r.priority === "critical" && (
+          <p className="req-handle">
+            <strong>Critical.</strong>{" "}
+            {r.discussWithShane
+              ? "Discuss with Shane. Chief is paused until this is handed back."
+              : "Chief AI is handling this. It comes to you for cost decisions or blockers."}
+          </p>
+        )}
+        {promptTakeOver && !r.discussWithShane && (
+          <p className="req-take">This link does not take the ticket over on its own. Click Take over to do it.</p>
+        )}
+        <div className="req-actions">
           <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value as Exclude<Status, "received">)}
-            style={{ display: "block", width: "100%", marginTop: 4, padding: 8, borderRadius: 8, border: "1px solid rgba(0,0,0,0.14)" }}
+            aria-label="Status"
+            className={pending ? "changed" : ""}
+            value={pending || saved}
+            onChange={(e) => beginChange(e.target.value as Editable)}
           >
-            {["new", "awaiting_client", "triaged", "in_progress", "qa", "blocked", "done"].map((s) => (
-              <option key={s} value={s}>
-                {STATUS_LABEL[s]}
-              </option>
+            {EDITABLE.map((s) => (
+              <option key={s} value={s}>{statusLabel(s)}</option>
             ))}
           </select>
-        </label>
-        <label style={{ fontSize: 11, fontWeight: 700, color: "#5f6580" }}>
-          Assignee
-          <select
-            value={assignee}
-            onChange={(e) => setAssignee(e.target.value)}
-            style={{ display: "block", width: "100%", marginTop: 4, padding: 8, borderRadius: 8, border: "1px solid rgba(0,0,0,0.14)" }}
-          >
-            <option value="">Unassigned</option>
-            {(Object.keys(ASSIGNEE_LABEL) as Assignee[]).map((a) => (
-              <option key={a} value={a}>
-                {ASSIGNEE_LABEL[a]}
-              </option>
-            ))}
-          </select>
-        </label>
-        {r.priority === "critical" ? (
-          <div style={{ background: "#edf8f9", border: "1px solid #b9e4ea", borderRadius: 10, padding: 12 }}>
-            {!r.discussWithShane ? (
-              <>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#13152a" }}>Chief is handling.</div>
-                <div style={{ fontSize: 12, color: "#5f6580", marginTop: 2 }}>
-                  Will escalate to Shane if needed (cost decision or blocker).
-                </div>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() =>
-                    patch({
-                      discussWithShane: true,
-                      autoHandle: false,
-                      assignee: "shane",
-                      internalNote: "Escalated to Shane by admin.",
-                    })
-                  }
-                  style={{
-                    width: "100%",
-                    marginTop: 10,
-                    padding: "10px 14px",
-                    borderRadius: 8,
-                    border: "1px solid rgba(0,0,0,0.14)",
-                    background: "#fff",
-                    fontWeight: 600,
-                    fontSize: 13,
-                    cursor: "pointer",
-                  }}
-                >
-                  Escalate to Shane
+          {showHandle && (
+            <button
+              type="button"
+              className="btn"
+              disabled={!!busy}
+              onClick={r.discussWithShane ? handBack : takeOver}
+            >
+              {r.discussWithShane ? "Hand back to Chief" : "Take over"}
+            </button>
+          )}
+          {done ? (
+            <button type="button" className="btn" onClick={() => beginChange("in_progress")}>Reopen</button>
+          ) : (
+            <button type="button" className="btn acc" onClick={() => { if (!pending) beginChange("done"); }}>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-6.5" /></svg>
+              Mark done
+            </button>
+          )}
+          <div className="req-more">
+            <button type="button" className="btn" aria-label="More actions" aria-expanded={more} onClick={() => setMore((v) => !v)}>...</button>
+            {more && (
+              <div className="req-menu" role="menu">
+                <button type="button" onClick={async () => {
+                  const url = `${window.location.origin}/saabai-admin/requests?id=${encodeURIComponent(r.id)}`;
+                  await navigator.clipboard.writeText(url);
+                  setMore(false);
+                  onSaved("Link copied");
+                }}>Copy link</button>
+                <button type="button" onClick={() => { window.open("/client-portal", "_blank", "noopener,noreferrer"); setMore(false); }}>
+                  Open client portal view
                 </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() =>
-                    patch({
-                      discussWithShane: true,
-                      autoHandle: false,
-                      assignee: "shane",
-                      internalNote: "Take over: switched to Discuss with Shane.",
-                    })
-                  }
-                  style={{
-                    width: "100%",
-                    marginTop: 8,
-                    padding: "10px 14px",
-                    borderRadius: 8,
-                    border: "1px solid #b9e4ea",
-                    background: "#0e7482",
-                    color: "#fff",
-                    fontWeight: 600,
-                    fontSize: 13,
-                    cursor: "pointer",
-                  }}
-                >
-                  Take over
-                </button>
-              </>
-            ) : (
-              <>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>Discuss with Shane</div>
-                <div style={{ fontSize: 12, color: "#5f6580", marginTop: 2 }}>
-                  Chief paused. Nothing ships until Shane approves.
-                </div>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() =>
-                    patch({
-                      discussWithShane: false,
-                      autoHandle: true,
-                      assignee: "chief_ai",
-                      internalNote: "Returned to Auto-handle by Chief.",
-                    })
-                  }
-                  style={{
-                    width: "100%",
-                    marginTop: 10,
-                    padding: "10px 14px",
-                    borderRadius: 8,
-                    border: "1px solid #b9e4ea",
-                    background: "#fff",
-                    fontWeight: 600,
-                    fontSize: 13,
-                    cursor: "pointer",
-                  }}
-                >
-                  Return to Chief
-                </button>
-              </>
+                {done && <button type="button" onClick={() => beginChange("in_progress")}>Reopen</button>}
+              </div>
             )}
           </div>
-        ) : (
-          <label style={{ fontSize: 12, color: "#5f6580", display: "flex", gap: 8, alignItems: "center" }}>
-            <input
-              type="checkbox"
-              checked={autoHandle}
-              onChange={(e) => setAutoHandle(e.target.checked)}
-            />
-            Auto-handle (off = Discuss with Shane)
-          </label>
+        </div>
+        {pending && (
+          <ConfirmStrip
+            from={saved}
+            to={pending}
+            notify={notify}
+            setNotify={setNotify}
+            request={r}
+            busy={busy === "status"}
+            err={err}
+            onCancel={() => { setPending(null); setErr(""); }}
+            onSave={() => patch({ status: pending, notifyClient: notify }, "status")}
+          />
         )}
-        <label style={{ fontSize: 12, color: "#5f6580", display: "flex", gap: 8, alignItems: "center" }}>
-          <input type="checkbox" checked={clarifierOn} onChange={(e) => toggleClarifier(e.target.checked)} />
-          AI clarifier for this client
-        </label>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() =>
-            patch({
-              status,
-              assignee: assignee || null,
-              autoHandle,
-              discussWithShane: !autoHandle,
-            })
-          }
-          style={{
-            padding: "8px 14px",
-            borderRadius: 8,
-            border: "1px solid #b9e4ea",
-            background: "#edf8f9",
-            color: "#0e7482",
-            fontWeight: 700,
-            fontSize: 13,
-            cursor: "pointer",
+      </header>
+
+      <div className="tabs req-tabs" role="tablist">
+        <button type="button" className={tab === "conversation" ? "on" : ""} onClick={() => setTab("conversation")}>
+          Conversation <span className="num">{convo.length + 1}</span>
+        </button>
+        <button type="button" className={tab === "internal" ? "on" : ""} onClick={() => setTab("internal")}>
+          Internal notes <span className="num">{notes.length}</span>
+          {notes.length > 0 && <i className="dot" aria-hidden="true" />}
+        </button>
+        <button type="button" className={tab === "details" ? "on" : ""} onClick={() => setTab("details")}>Details</button>
+      </div>
+
+      <div className="req-body">
+        {tab === "conversation" && (
+          <>
+            {r.agreedChange && (
+              <div className="req-agreed">
+                <div className="k">Agreed change</div>
+                {r.agreedChange}
+              </div>
+            )}
+            <article className="req-bubble client">
+              <div className="who"><b>{r.clientName || "Client"}</b> · Client · {fmt(r.createdAt)}</div>
+              <div style={{ whiteSpace: "pre-wrap" }}>{r.description}</div>
+              <Shots urls={r.screenshots} />
+            </article>
+            {convo.map((t) => <Entry key={t.id} t={t} />)}
+          </>
+        )}
+        {tab === "internal" && (
+          notes.length === 0
+            ? <p className="req-empty">No internal notes yet.</p>
+            : notes.map((t) => (
+              <article key={t.id} className="req-note">
+                <div className="who"><b>{t.authorName}</b> · Internal · {fmt(t.createdAt)}</div>
+                <div style={{ whiteSpace: "pre-wrap" }}>{t.body}</div>
+              </article>
+            ))
+        )}
+        {tab === "details" && (
+          <>
+            <label className="req-field">
+              Assignee
+              <select
+                value={assignee}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setAssignee(value);
+                  patch({ assignee: value || null }, "handle");
+                }}
+              >
+                <option value="">Unassigned</option>
+                {(Object.keys(ASSIGNEE_LABEL) as Assignee[]).map((a) => (
+                  <option key={a} value={a}>{ASSIGNEE_LABEL[a]}</option>
+                ))}
+              </select>
+            </label>
+            {r.priority !== "critical" && (
+              <label className="req-check">
+                <input
+                  type="checkbox"
+                  checked={autoHandle}
+                  onChange={(e) => {
+                    const on = e.target.checked;
+                    setAutoHandle(on);
+                    patch({ autoHandle: on, discussWithShane: !on }, "handle");
+                  }}
+                />
+                <span>
+                  Chief AI handles this (off: Discuss with Shane)
+                </span>
+              </label>
+            )}
+            <label className="req-check">
+              <input type="checkbox" checked={clarifierOn} onChange={(e) => toggleClarifier(e.target.checked)} />
+              <span>
+                AI clarifier for this client
+                <small>Applies to all of this client&apos;s requests.</small>
+              </span>
+            </label>
+            {r.agreedChange && (
+              <div className="req-agreed">
+                <div className="k">Agreed change</div>
+                {r.agreedChange}
+              </div>
+            )}
+            <Shots urls={r.screenshots} />
+            <p className="req-empty">Opened {fmt(r.createdAt)}. Clarifier rounds {r.clarifierRounds || 0}.</p>
+          </>
+        )}
+      </div>
+
+      {tab !== "details" && (
+        <form
+          className={`req-compose${tab === "internal" ? " internal" : ""}`}
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (tab === "internal") {
+              if (note.trim()) patch({ internalNote: note }, "note");
+            } else if (reply.trim()) {
+              patch({ reply }, "reply");
+            }
           }}
         >
-          Save status / assignee
-        </button>
-      </div>
-
-      <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: 12, marginBottom: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.08, textTransform: "uppercase", color: "#5f6580", marginBottom: 8 }}>
-          Timeline ({r.timeline?.length || 0}) · clarifier rounds {r.clarifierRounds || 0}
-        </div>
-        <div style={{ maxHeight: 220, overflow: "auto", marginBottom: 10 }}>
-          {(r.timeline || []).map((t) => (
-            <div key={t.id} style={{ marginBottom: 10, fontSize: 12, lineHeight: 1.45 }}>
-              <div style={{ color: "#5f6580" }}>
-                <strong style={{ color: t.internal ? "#b45309" : "#13152a" }}>
-                  {t.authorName}
-                  {t.internal ? " (internal)" : ""}
-                </strong>{" "}
-                · {fmt(t.createdAt)}
-              </div>
-              <div style={{ whiteSpace: "pre-wrap" }}>{t.body}</div>
-            </div>
-          ))}
-        </div>
-        <textarea
-          value={reply}
-          onChange={(e) => setReply(e.target.value)}
-          rows={2}
-          placeholder="Reply to client…"
-          style={{ width: "100%", boxSizing: "border-box", padding: 8, borderRadius: 8, border: "1px solid rgba(0,0,0,0.14)", fontSize: 13, fontFamily: "inherit", marginBottom: 6 }}
-        />
-        <button type="button" disabled={busy || !reply.trim()} onClick={() => patch({ reply })} style={{ marginBottom: 10, padding: "7px 12px", borderRadius: 8, border: "1px solid #b9e4ea", background: "#0e7482", color: "#fff", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>
-          Send reply
-        </button>
-        <textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          rows={2}
-          placeholder="Internal note…"
-          style={{ width: "100%", boxSizing: "border-box", padding: 8, borderRadius: 8, border: "1px solid rgba(0,0,0,0.14)", fontSize: 13, fontFamily: "inherit", marginBottom: 6 }}
-        />
-        <button type="button" disabled={busy || !note.trim()} onClick={() => patch({ internalNote: note })} style={{ padding: "7px 12px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.12)", background: "#fff", color: "#5f6580", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>
-          Add internal note
-        </button>
-      </div>
-
-      {r.screenshots?.length > 0 && (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {r.screenshots.map((u, i) => (
-            <a key={u} href={u} target="_blank" rel="noopener noreferrer">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={u} alt={`Shot ${i + 1}`} style={{ width: 72, height: 54, objectFit: "cover", borderRadius: 6, border: "1px solid rgba(0,0,0,0.08)" }} />
-            </a>
-          ))}
-        </div>
+          <div className="lab">
+            <span>{tab === "internal" ? "Internal note" : "Reply to client"}</span>
+            {tab === "internal"
+              ? <span className="vis internal">Internal only</span>
+              : <span className="vis client">Visible to client</span>}
+          </div>
+          {tab === "internal" ? (
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Add a note for the team. The client never sees this."
+              aria-label="Internal note"
+            />
+          ) : (
+            <textarea
+              value={reply}
+              onChange={(e) => setReply(e.target.value)}
+              placeholder={r.clientEmail ? `Write a reply. It is emailed to ${r.clientEmail} and shows in their portal.` : "Write a reply. It shows in their portal."}
+              aria-label="Reply to client"
+            />
+          )}
+          <div className="send">
+            {tab === "internal" ? (
+              <button type="submit" className="btn req-note-btn" disabled={!!busy || !note.trim()}>Add internal note</button>
+            ) : (
+              <button type="submit" className={`btn pri${busy === "reply" ? " loading" : ""}`} disabled={!!busy || !reply.trim()}>Send reply</button>
+            )}
+          </div>
+          {err && !pending && <p className="inline-err" style={{ color: "var(--bad)", fontSize: 12, marginTop: 8 }}>{err}</p>}
+        </form>
       )}
-      {err && <p style={{ margin: "8px 0 0", fontSize: 12, color: "#c2261d" }}>{err}</p>}
+
+      <div className="req-mbar">
+        <select
+          aria-label="Status"
+          className={pending ? "changed" : ""}
+          value={pending || saved}
+          onChange={(e) => beginChange(e.target.value as Editable)}
+        >
+          {EDITABLE.map((s) => (
+            <option key={s} value={s}>{statusLabel(s)}</option>
+          ))}
+        </select>
+        {showHandle && !done && (
+          <button type="button" className="btn" disabled={!!busy} onClick={r.discussWithShane ? handBack : takeOver}>
+            {r.discussWithShane ? "Hand back" : "Take over"}
+          </button>
+        )}
+        {done ? (
+          <button type="button" className="btn" onClick={() => beginChange("in_progress")}>Reopen</button>
+        ) : (
+          <button type="button" className="btn acc" onClick={() => { if (!pending) beginChange("done"); }}>Mark done</button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ConfirmStrip({
+  from,
+  to,
+  notify,
+  setNotify,
+  request,
+  busy,
+  err,
+  onCancel,
+  onSave,
+}: {
+  from: string;
+  to: string;
+  notify: boolean;
+  setNotify: (v: boolean) => void;
+  request: ClientRequest;
+  busy: boolean;
+  err: string;
+  onCancel: () => void;
+  onSave: () => void;
+}) {
+  const line = statusEmailFirstLine(to, request.title, request.clientName);
+  return (
+    <div className="req-confirm" role="region" aria-label="Confirm status change">
+      <h3>Change status: {statusLabel(from)} → {statusLabel(to)}</h3>
+      <div className="req-switchrow">
+        <button type="button" className={`req-switch${notify ? " on" : ""}`} role="switch" aria-checked={notify} onClick={() => setNotify(!notify)}>
+          <i />
+        </button>
+        <span>Email the client about this change</span>
+        <span className="req-onoff">{notify ? "ON" : "OFF"}</span>
+      </div>
+      <div className="req-preview">
+        <div className="to">To {request.clientEmail || "no email on file"} · {statusEmailSubject(request.title)}</div>
+        {line}
+      </div>
+      <p className="req-help">Turn off to save without an email. It is still logged.</p>
+      {err && <p className="inline-err">{err}</p>}
+      <div className="row">
+        <button type="button" className="btn gh" onClick={onCancel} disabled={busy}>Cancel</button>
+        <button type="button" className={`btn acc${busy ? " loading" : ""}`} onClick={onSave} disabled={busy}>
+          {notify ? "Save and email client" : "Save without email"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Entry({ t }: { t: TimelineEntry }) {
+  if (t.kind === "status" || t.kind === "system") {
+    return <p className="req-system">{t.body} · {fmt(t.createdAt)}</p>;
+  }
+  const staff = t.authorKind === "admin" || t.authorKind === "assistant";
+  return (
+    <article className={`req-bubble ${staff ? "staff" : "client"}`}>
+      <div className="who">
+        <b>{t.authorName || (staff ? "Saabai" : "Client")}</b>
+        {staff ? " · Sent to client" : " · Client"}
+        {" · "}
+        {fmt(t.createdAt)}
+      </div>
+      <div style={{ whiteSpace: "pre-wrap" }}>{t.body}</div>
+    </article>
+  );
+}
+
+function Shots({ urls }: { urls?: string[] }) {
+  if (!urls?.length) return null;
+  return (
+    <div className="req-shots">
+      {urls.map((u, i) => (
+        <a key={u} href={u} target="_blank" rel="noopener noreferrer">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={u} alt={`Screenshot ${i + 1}`} />
+        </a>
+      ))}
     </div>
   );
 }
