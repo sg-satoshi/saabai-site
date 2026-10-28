@@ -68,7 +68,7 @@ const schema = schemaGraph([
     "@type": "WebPage",
     url: `${SITE_URL}${PATH}`,
     name: "Custom AI Chatbot Developer in Queensland | Saabai",
-    dateModified: "2026-10-25",
+    dateModified: "2026-10-29",
   },
 ]);
 
@@ -82,7 +82,7 @@ export default function QueenslandChatbotPage() {
         <div className="glow" />
         <div className="wrap" style={{ position: "relative" }}>
           <h1 style={{ margin: "18px auto 0", maxWidth: 920 }}>
-            Custom AI chatbots built in Queensland
+            Custom AI chatbots that turn Queensland website visitors into leads
           </h1>
           <p style={{ maxWidth: 720, margin: "18px auto 0", fontSize: 18 }}>
             Saabai builds custom AI chatbots for business websites across Queensland. We are based in Merrimac on the Gold Coast and work with clients in Brisbane, the Sunshine Coast and beyond.
@@ -95,6 +95,20 @@ export default function QueenslandChatbotPage() {
           </div>
         </div>
       </div>
+
+      <section style={{ paddingTop: 24 }} aria-labelledby="real-work">
+        <div className="wrap">
+          <div className="card">
+            <span className="eyebrow">Real work</span>
+            <h2 id="real-work" style={{ fontSize: 26, lineHeight: 1.25, marginTop: 12 }}>Rex, the AI sales agent we built for PlasticOnline</h2>
+            <div style={{ display: "grid", gap: 12, marginTop: 12, fontSize: 17 }}>
+              <p>Rex is the AI agent Saabai built for <a href="https://plasticonline.com.au" target="_blank" rel="noopener noreferrer" style={copyLink}>PlasticOnline.com.au</a>, a national plastics supplier.</p>
+              <p>Rex answered product questions, priced cut-to-size jobs from the supplier&apos;s own product data and captured leads for the sales team. It was a custom build, quoted to the job.</p>
+              <p>No result figures are published. <a href="/case-studies/rex-plastics-online" style={copyLink}>Read the PlasticOnline case study</a>.</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section style={{ paddingTop: 24 }}>
         <div className="wrap grid2">

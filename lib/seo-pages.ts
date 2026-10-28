@@ -117,9 +117,9 @@ export const publicPageMeta = {
   }),
   rexCase: pageMeta({
     path: "/case-studies/rex-plastics-online",
-    title: "Rex Plastics Case Study | AI Sales Agent | Saabai",
+    title: "PlasticOnline.com.au Case Study | Rex AI Sales Agent | Saabai",
     description:
-      "A custom AI sales agent Saabai built on the Gold Coast for Rex Plastics. It answered product questions and priced cut-to-size jobs from that supplier's catalogue.",
+      "Rex, a custom AI sales agent Saabai built on the Gold Coast for PlasticOnline.com.au. It answered product questions and priced cut-to-size jobs from that supplier's catalogue.",
   }),
   process: pageMeta({
     path: "/process",
