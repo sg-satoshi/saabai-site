@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./admin.css";
+import "./ui/admin-ui.css";
 
 const geist = localFont({ src: "../fonts/geist-latin-wght-normal.woff2", weight: "100 900", variable: "--font-admin-sans", display: "swap" });
 

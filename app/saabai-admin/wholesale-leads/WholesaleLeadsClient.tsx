@@ -184,7 +184,7 @@ export default function WholesaleLeadsClient() {
   const toastBdr = toast?.ok ? C.greenBdr : C.redBdr;
 
   return (
-    <div style={{ maxWidth: 960 }}>
+    <div>
       <div className="mc-head">
         <div>
           <p className="mc-eyebrow">

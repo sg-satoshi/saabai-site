@@ -6,7 +6,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import AdminShell from "../../AdminSidebar";
 import {
   legacyAnswers,
@@ -19,14 +18,19 @@ import type {
   FirmType,
   FactFindValue,
 } from "../../../../lib/audit-types";
+import { ClipboardList, Wallet, Building2 } from "lucide-react";
 import { CreditUsePanel } from "./CreditUsePanel";
+import { PageHeader } from "../../ui/PageHeader";
+import { SectionCard } from "../../ui/SectionCard";
+import { FieldLabel } from "../../ui/FieldLabel";
+import { AdminTabs } from "../../ui/AdminTabs";
 
 const C = {
   card: "#ffffff",
   border: "rgba(0,0,0,0.08)",
   text: "#111827",
-  muted: "#9ca3af",
-  dim: "#6b7280",
+  muted: "#64748b",
+  dim: "#475569",
   gold: "#b45309",
   goldBg: "rgba(180,83,9,0.07)",
   green: "#16a34a",
@@ -236,64 +240,71 @@ export default function EngagementClient({ id }: { id: string }) {
 
   const card: React.CSSProperties = {
     background: C.card,
-    border: `1px solid ${C.border}`,
+    border: "1px solid #e2e8f0",
     borderRadius: 12,
-    padding: 20,
+    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+    padding: "20px 24px",
   };
   const btn: React.CSSProperties = {
     background: C.navy,
     color: "#fff",
     border: "none",
     borderRadius: 8,
-    padding: "9px 16px",
-    fontSize: 13,
+    height: 36,
+    padding: "0 16px",
+    fontSize: 14,
     fontWeight: 600,
     cursor: "pointer",
   };
   const btnGhost: React.CSSProperties = {
-    background: "transparent",
-    color: C.text,
-    border: `1px solid ${C.border}`,
+    background: "#fff",
+    color: "#1e293b",
+    border: "1px solid #cbd5e1",
     borderRadius: 8,
-    padding: "9px 16px",
-    fontSize: 13,
+    height: 36,
+    padding: "0 12px",
+    fontSize: 14,
     fontWeight: 500,
     cursor: "pointer",
   };
   const inputStyle: React.CSSProperties = {
     width: "100%",
-    padding: "8px 11px",
+    minHeight: 40,
+    padding: "8px 12px",
+    lineHeight: "22px",
     borderRadius: 8,
-    border: `1px solid ${C.border}`,
-    fontSize: 13.5,
-    color: C.text,
+    border: "1px solid #cbd5e1",
+    fontSize: 14,
+    color: "#0f172a",
     outline: "none",
     background: "#fff",
   };
 
   return (
     <AdminShell activePath="/saabai-admin/audits">
-      <div style={{ maxWidth: 1000 }}>
-        {/* Header */}
-        <Link href="/saabai-admin/audits" style={{ fontSize: 13, color: C.muted, textDecoration: "none" }}>
-          ← Blueprints
-        </Link>
-        <div className="mc-head" style={{ margin: "10px 0 6px" }}>
-          <h1 className="mc-h1">{eng.firmName}</h1>
-          <select
-            value={eng.status}
-            onChange={(e) => patch({ status: e.target.value }, "status")}
-            style={{ ...inputStyle, width: "auto", fontWeight: 600 }}
-          >
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-            ))}
-          </select>
-        </div>
-        <p style={{ fontSize: 13.5, color: C.dim, margin: "0 0 18px" }}>
-          {eng.tier.charAt(0).toUpperCase() + eng.tier.slice(1)} tier · {eng.firmType} ·{" "}
-          {eng.contactName} ({eng.contactEmail})
-        </p>
+      <div className="au-scope au-fab-safe">
+        <PageHeader
+          back={{ href: "/saabai-admin/audits", label: "Blueprints" }}
+          title={eng.firmName}
+          meta={
+            <>
+              {eng.tier.charAt(0).toUpperCase() + eng.tier.slice(1)} tier · {eng.firmType} ·{" "}
+              {eng.contactName} ({eng.contactEmail})
+            </>
+          }
+          actions={
+            <select
+              aria-label="Engagement status"
+              value={eng.status}
+              onChange={(e) => patch({ status: e.target.value }, "status")}
+              style={{ ...inputStyle, width: "auto", fontWeight: 600 }}
+            >
+              {STATUSES.map((s) => (
+                <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+              ))}
+            </select>
+          }
+        />
 
         {flash && (
           <div style={{ background: C.greenBg, color: C.green, borderRadius: 8, padding: "9px 14px", fontSize: 13, marginBottom: 16, fontWeight: 500 }}>
@@ -301,82 +312,71 @@ export default function EngagementClient({ id }: { id: string }) {
           </div>
         )}
 
-        {/* Tabs */}
-        <div style={{ display: "flex", gap: 6, marginBottom: 20, borderBottom: `1px solid ${C.border}` }}>
-          {(
-            [
-              ["overview", "Overview"],
-              ["factfind", `Fact-Find (${answeredCount})`],
-              ["assessment", "Assessment"],
-              ["reports", `Reports (${eng.reports?.length ?? 0})`],
-              ["notes", `Notes (${eng.notes?.length ?? 0})`],
-            ] as [Tab, string][]
-          ).map(([t, label]) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              style={{
-                background: "none",
-                border: "none",
-                borderBottom: tab === t ? `2px solid ${C.navy}` : "2px solid transparent",
-                padding: "10px 14px",
-                fontSize: 13.5,
-                fontWeight: tab === t ? 700 : 500,
-                color: tab === t ? C.text : C.dim,
-                cursor: "pointer",
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <AdminTabs
+          label="Engagement sections"
+          value={tab}
+          onChange={setTab}
+          tabs={[
+            { id: "overview", label: "Overview" },
+            { id: "factfind", label: "Fact-Find", count: answeredCount },
+            { id: "assessment", label: "Assessment" },
+            { id: "reports", label: "Reports", count: eng.reports?.length ?? 0 },
+            { id: "notes", label: "Notes", count: eng.notes?.length ?? 0 },
+          ]}
+        />
 
         {/* ── Overview ── */}
         {tab === "overview" && (
-          <div style={{ display: "grid", gap: 16 }}>
-            <div style={card}>
-              <h3 style={{ margin: "0 0 12px", fontSize: 14.5, color: C.text }}>Fact-Find Questionnaire</h3>
-              <p style={{ fontSize: 13, color: C.dim, margin: "0 0 12px" }}>
-                {eng.factFindCompletedAt
-                  ? `Completed ${new Date(eng.factFindCompletedAt).toLocaleString("en-AU")} - ${answeredCount} answers.`
-                  : eng.factFindSentAt
-                    ? `Sent ${new Date(eng.factFindSentAt).toLocaleString("en-AU")} - awaiting completion (${answeredCount} answers so far).`
-                    : "Not yet sent to the client."}
-              </p>
+          <div className="au-detail">
+            <SectionCard
+              className="au-main"
+              icon={ClipboardList}
+              title="Fact-Find Questionnaire"
+              badge={!eng.factFindCompletedAt && !eng.factFindSentAt ? <span className="au-pill">Not yet sent</span> : null}
+            >
+              {(eng.factFindCompletedAt || eng.factFindSentAt) && (
+                <p className="au-body" style={{ marginBottom: 12 }}>
+                  {eng.factFindCompletedAt
+                    ? `Completed ${new Date(eng.factFindCompletedAt).toLocaleString("en-AU")} - ${answeredCount} answers.`
+                    : `Sent ${new Date(eng.factFindSentAt!).toLocaleString("en-AU")} - awaiting completion (${answeredCount} answers so far).`}
+                </p>
+              )}
               {eng.factFindCompletedAt && (
-                <p style={{ fontSize: 13, color: C.dim, margin: "0 0 12px" }}>
+                <p className="au-body" style={{ marginBottom: 12 }}>
                   Anonymous quote consent:{" "}
                   <strong style={{ color: eng.quoteConsent ? C.gold : C.text }}>
                     {eng.quoteConsent ? "Yes, their words may be used without name or business" : "No, do not reuse their words"}
                   </strong>
                 </p>
               )}
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <button onClick={sendQuestionnaire} disabled={busy === "send"} style={btn}>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                <button type="button" className="btn pri au-1" onClick={sendQuestionnaire} disabled={busy === "send"}>
                   {busy === "send" ? "Sending…" : eng.factFindSentAt ? "Re-send questionnaire email" : "Email questionnaire to client"}
                 </button>
                 <button
+                  type="button"
+                  className="btn au-2"
                   onClick={() => {
                     navigator.clipboard.writeText(factFindLink);
                     showFlash("Link copied.");
                   }}
-                  style={btnGhost}
                 >
                   Copy client link
                 </button>
                 <button
+                  type="button"
+                  className="au-link"
                   onClick={() => {
                     navigator.clipboard.writeText(onboardingLink);
                     showFlash("Search onboarding link copied. It is not emailed.");
                   }}
-                  style={btnGhost}
                 >
                   Copy search onboarding link
                 </button>
               </div>
-            </div>
+            </SectionCard>
 
-            <div style={card}>
+            <SectionCard className="au-side" icon={Wallet} title="Blueprint credit">
               <CreditUsePanel
                 eng={eng}
                 onSaved={(next) => {
@@ -386,18 +386,16 @@ export default function EngagementClient({ id }: { id: string }) {
                 inputStyle={inputStyle}
                 btn={btn}
               />
-            </div>
+            </SectionCard>
 
-            <div style={card}>
-              <h3 style={{ margin: "0 0 12px", fontSize: 14.5, color: C.text }}>Firm Profile</h3>
+            <SectionCard className="au-main" icon={Building2} title="Firm Profile">
               <ProfileEditor eng={eng} onSave={(p) => patch(p, "profile")} inputStyle={inputStyle} btn={btn} busy={busy === "profile"} />
-            </div>
+            </SectionCard>
 
-            <div style={card}>
-              <h3 style={{ margin: "0 0 14px", fontSize: 14.5, color: C.text }}>Client Timeline</h3>
+            <SectionCard className="au-main" title="Client Timeline">
               {(eng.timeline ?? []).length === 0 ? (
                 <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>
-                  No events yet - touchpoints are logged automatically (questionnaire sent, fact-find progress, sessions, assessment, report delivery).
+                  No events yet. Touchpoints are logged automatically: questionnaire sent, fact-find progress, sessions, assessment and report delivery.
                 </p>
               ) : (
                 <div style={{ position: "relative", paddingLeft: 22 }}>
@@ -446,13 +444,13 @@ export default function EngagementClient({ id }: { id: string }) {
                   })}
                 </div>
               )}
-            </div>
+            </SectionCard>
           </div>
         )}
 
         {/* ── Fact-Find / Interview ── */}
         {tab === "factfind" && (
-          <div style={{ display: "grid", gap: 16 }}>
+          <div className="au-stack">
             <div style={{ ...card, background: C.goldBg, border: `1px solid rgba(180,83,9,0.2)` }}>
               <p style={{ margin: 0, fontSize: 13, color: C.gold, fontWeight: 500 }}>
                 Interview mode: gold prompts below each question are your discovery-session script - they never appear to clients.
@@ -461,8 +459,8 @@ export default function EngagementClient({ id }: { id: string }) {
             </div>
             {legacyAnswers(eng.responses).length > 0 && (
               <div style={card}>
-                <h3 style={{ margin: "0 0 4px", fontSize: 15, color: C.text }}>Earlier answers</h3>
-                <p style={{ margin: "0 0 16px", fontSize: 12.5, color: C.muted }}>Answers to questions no longer on the form. Still used by the assessment.</p>
+                <h3 style={{ margin: "0 0 4px", fontSize: 18, lineHeight: "28px", fontWeight: 600, letterSpacing: "-0.025em", color: "#0b092e" }}>Earlier answers</h3>
+                <p style={{ margin: "0 0 16px", fontSize: 14, color: C.muted }}>Answers to questions no longer on the form. Still used by the assessment.</p>
                 {legacyAnswers(eng.responses).map((l) => (
                   <div key={l.id} style={{ marginBottom: 12 }}>
                     <div style={{ fontSize: 13.5, fontWeight: 600, color: C.text, marginBottom: 3 }}>{l.label}</div>
@@ -476,8 +474,8 @@ export default function EngagementClient({ id }: { id: string }) {
               if (qs.length === 0) return null;
               return (
                 <div key={s.id} style={card}>
-                  <h3 style={{ margin: "0 0 4px", fontSize: 15, color: C.text }}>{s.title}</h3>
-                  <p style={{ margin: "0 0 16px", fontSize: 12.5, color: C.muted }}>{s.description}</p>
+                  <h3 style={{ margin: "0 0 4px", fontSize: 18, lineHeight: "28px", fontWeight: 600, letterSpacing: "-0.025em", color: "#0b092e" }}>{s.title}</h3>
+                  <p style={{ margin: "0 0 16px", fontSize: 14, color: C.muted }}>{s.description}</p>
                   <div style={{ display: "grid", gap: 18 }}>
                     {qs.map((q) => {
                       const saved = eng.responses?.[q.id];
@@ -537,12 +535,12 @@ export default function EngagementClient({ id }: { id: string }) {
 
         {/* ── Assessment ── */}
         {tab === "assessment" && (
-          <div style={{ display: "grid", gap: 16 }}>
+          <div className="au-stack">
             <div style={card}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 14.5, color: C.text }}>AI Assessment</h3>
-                  <p style={{ margin: "4px 0 0", fontSize: 12.5, color: C.muted }}>
+                  <h3 style={{ margin: 0, fontSize: 18, lineHeight: "28px", fontWeight: 600, letterSpacing: "-0.025em", color: "#0b092e" }}>AI Assessment</h3>
+                  <p style={{ margin: "4px 0 0", fontSize: 14, color: C.muted }}>
                     Crosses the fact-find against the capability matrix to draft ranked opportunities. Always review before client delivery.
                   </p>
                 </div>
@@ -589,7 +587,7 @@ export default function EngagementClient({ id }: { id: string }) {
                 {eng.assessment.opportunities.map((o) => (
                   <div key={o.id} style={card}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                      <h4 style={{ margin: 0, fontSize: 14.5, color: C.text }}>
+                      <h4 style={{ margin: 0, fontSize: 18, lineHeight: "28px", fontWeight: 600, letterSpacing: "-0.025em", color: "#0b092e" }}>
                         #{o.rank} - {o.title}
                         {o.fixesMainFrustration && (
                           <span style={{ marginLeft: 8, fontSize: 11.5, fontWeight: 500, color: C.gold }}>Fixes their #1 frustration</span>
@@ -623,12 +621,12 @@ export default function EngagementClient({ id }: { id: string }) {
 
         {/* ── Reports ── */}
         {tab === "reports" && (
-          <div style={{ display: "grid", gap: 16 }}>
+          <div className="au-stack">
             <div style={card}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 14.5, color: C.text }}>Audit Report</h3>
-                  <p style={{ margin: "4px 0 0", fontSize: 12.5, color: C.muted }}>
+                  <h3 style={{ margin: 0, fontSize: 18, lineHeight: "28px", fontWeight: 600, letterSpacing: "-0.025em", color: "#0b092e" }}>Audit Report</h3>
+                  <p style={{ margin: "4px 0 0", fontSize: 14, color: C.muted }}>
                     Generates a branded .docx draft from the profile + assessment. Polish in Word, then deliver.
                   </p>
                 </div>
@@ -682,7 +680,7 @@ export default function EngagementClient({ id }: { id: string }) {
 
         {/* ── Notes ── */}
         {tab === "notes" && (
-          <div style={{ display: "grid", gap: 16 }}>
+          <div className="au-stack">
             <div style={card}>
               <textarea
                 rows={3}
@@ -735,10 +733,9 @@ function ProfileEditor({
 
   const field = (label: string, key: keyof typeof p) => (
     <div>
-      <label style={{ fontSize: 11.5, color: "#9ca3af", display: "block", marginBottom: 4, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4 }}>
-        {label}
-      </label>
+      <FieldLabel htmlFor={`pf-${key}`}>{label}</FieldLabel>
       <input
+        id={`pf-${key}`}
         style={inputStyle}
         value={p[key]}
         onChange={(e) => setP({ ...p, [key]: e.target.value })}
@@ -747,7 +744,7 @@ function ProfileEditor({
   );
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+    <div className="au-form">
       {field("Firm name", "firmName")}
       {field("Firm size", "firmSize")}
       {field("Website", "website")}

@@ -84,7 +84,7 @@ export default function RoadmapClient() {
   const edit = (i: RoadmapView) => setDraft({ id: i.id, title: i.title, description: i.description, status: i.status, area: i.area, target: i.target ?? "", priority: i.priority ?? "", prNumber: i.prNumber ? String(i.prNumber) : "", issueNumber: i.issueNumber ? String(i.issueNumber) : "" });
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 1000, fontFamily: "var(--font-admin-sans), system-ui, sans-serif" }}>
+    <div style={{ fontFamily: "var(--font-admin-sans), system-ui, sans-serif" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
         <div>
           <h1 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800 }}>Roadmap</h1>
