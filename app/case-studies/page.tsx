@@ -74,8 +74,9 @@ export default function CaseStudies() {
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">
           <a href="/case-studies/rex-plastics-online">Rex Plastics</a>
         </h2>
-        <p className="mb-6">
+        <p className="mb-6 flex flex-wrap gap-x-8 gap-y-2">
           <a href="/case-studies/rex-plastics-online" className="text-saabai-teal font-semibold underline underline-offset-2">Read the Rex Plastics case study</a>
+          <a href="https://www.plasticonline.com.au" target="_blank" rel="noopener noreferrer" className="text-saabai-teal font-semibold underline underline-offset-2">plasticonline.com.au</a>
         </p>
         <p className="text-saabai-text-muted text-base mb-16 max-w-2xl leading-relaxed">
           Rex Plastics, a national plastics supplier, trade and retail

@@ -84,6 +84,12 @@ const useCases = [
   },
 ];
 
+const CASE_LINKS: Record<string, { label: string; href: string }> = {
+  "Trade & E-commerce": { label: "Read the Rex Plastics case study", href: "/case-studies/rex-plastics-online" },
+  "Real Estate Agencies": { label: "Read the FAQ", href: "/faq" },
+  "Clinics, Studios & Salons": { label: "Read the FAQ", href: "/faq" },
+};
+
 const inlineCta = {
   headline: "See this in your business?",
   body: "Take the free 3 minute AI score, or book a free 30 minute call. We'll help you find the highest-value opportunities in your business.",
@@ -173,6 +179,13 @@ export default function UseCases() {
                     {outcome}
                   </p>
                 </div>
+                {CASE_LINKS[category] ? (
+                  <p className="mt-6">
+                    <a href={CASE_LINKS[category].href} className="text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright">
+                      {CASE_LINKS[category].label} →
+                    </a>
+                  </p>
+                ) : null}
               </div>
 
               {/* Right, examples card */}

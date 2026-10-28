@@ -15,6 +15,7 @@ const articleSchema = {
   description: publicPageMeta.rexCase.description,
   url: `${SITE_URL}/case-studies/rex-plastics-online`,
   mainEntityOfPage: `${SITE_URL}/case-studies/rex-plastics-online`,
+  about: { "@type": "Organization", name: "Rex Plastics", url: "https://www.plasticonline.com.au" },
   author: { "@type": "Organization", name: "Saabai", url: SITE_URL },
   publisher: { "@id": ORG_ID },
 };
@@ -23,7 +24,10 @@ export default function RexPlasticsCaseStudy() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
       <JsonLd data={articleSchema} />
-      <JsonLd data={breadcrumbSchema([{ name: "Rex Plastics case study", path: "/case-studies/rex-plastics-online" }])} />
+      <JsonLd data={breadcrumbSchema([
+        { name: "Case studies", path: "/case-studies" },
+        { name: "Rex Plastics case study", path: "/case-studies/rex-plastics-online" },
+      ])} />
       <Nav />
 
       <section className="relative pt-52 pb-20 px-6 max-w-5xl mx-auto overflow-hidden">

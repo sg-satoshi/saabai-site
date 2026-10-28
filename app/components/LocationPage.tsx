@@ -179,6 +179,14 @@ export default function LocationPage({ config }: Props) {
               Take the free AI Readiness Score &rarr;
             </a>
           </p>
+          <p className="text-sm mt-2 flex flex-wrap gap-x-6 gap-y-1">
+            <a href="/case-studies/rex-plastics-online" className="inline-flex items-center min-h-[44px] text-saabai-teal font-medium hover:text-saabai-teal-bright">
+              Rex Plastics case study
+            </a>
+            <a href="https://www.plasticonline.com.au" target="_blank" rel="noopener noreferrer" className="inline-flex items-center min-h-[44px] text-saabai-teal font-medium hover:text-saabai-teal-bright">
+              plasticonline.com.au
+            </a>
+          </p>
         </div>
       </section>
 

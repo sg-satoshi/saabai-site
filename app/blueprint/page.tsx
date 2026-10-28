@@ -98,6 +98,10 @@ export default function BlueprintPage() {
             </div>
           </div>
           <p className="dim" style={{ fontSize: 13, marginTop: 14, textAlign: "center" }}>Prices in AUD. GST not applicable.</p>
+          <p style={{ fontSize: 15, marginTop: 18, textAlign: "center", display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap" }}>
+            <a href="/case-studies" style={{ color: "var(--teal)" }}>See the case studies →</a>
+            <a href="/process" style={{ color: "var(--teal)" }}>How we work →</a>
+          </p>
         </div>
       </section>
 

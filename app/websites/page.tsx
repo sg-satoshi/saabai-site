@@ -9,6 +9,7 @@ import { breadcrumbNode, faqNode } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
 import { formatAud, SPLIT_TESTING, WEBSITE_TIERS, websiteBuildPrice, websiteCareFaqAnswer, websiteMonthlyCare } from "@/lib/website-tiers";
 import { CARE_PLAN_FAQS } from "@/lib/care-faqs";
+import LinkedText from "../components/LinkedText";
 
 export const metadata: Metadata = publicPageMeta.websites;
 
@@ -300,6 +301,12 @@ export default function WebsitesPage() {
           >
             Book a call to hear a sample of your AI →
           </a>
+          <a
+            href="/case-studies"
+            className="block mt-4 text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide"
+          >
+            See the case studies →
+          </a>
         </div>
       </section>
 
@@ -321,7 +328,7 @@ export default function WebsitesPage() {
                 </span>
               </summary>
               <p className="text-sm text-saabai-text-muted leading-relaxed mt-4">
-                {item.a}
+                <LinkedText text={item.a} links={[{ phrase: "free AI score", href: "/score" }]} />
               </p>
             </details>
           ))}
