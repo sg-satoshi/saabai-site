@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   notifyClientDefault,
@@ -8,6 +8,21 @@ import {
   statusEmailSubject,
   statusLabel,
 } from "../../../lib/request-notify";
+import {
+  PANEL_DEFAULT,
+  SPLIT_STEP,
+  SPLIT_STORAGE_KEY,
+  TOP_MIN,
+  clampPanelWidth,
+  clampSplit,
+  loadPanelWidth,
+  moveSplit,
+  persistPanelWidth,
+  persistSplit,
+  readStoredNumber,
+  splitEnd,
+  splitHome,
+} from "./split";
 import "./requests.css";
 
 type Status =
@@ -122,7 +137,35 @@ export default function RequestsAdminClient() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState("");
   const [detail, setDetail] = useState<ClientRequest | null>(null);
+  const [panelWidth, setPanelWidth] = useState(PANEL_DEFAULT);
+  const [isNarrow, setIsNarrow] = useState(false);
   const selectedId = deepId;
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 600px)");
+    const apply = () => {
+      setIsNarrow(mq.matches);
+      setPanelWidth(loadPanelWidth(localStorage, window.innerWidth));
+    };
+    apply();
+    window.addEventListener("resize", apply);
+    mq.addEventListener("change", apply);
+    return () => {
+      window.removeEventListener("resize", apply);
+      mq.removeEventListener("change", apply);
+    };
+  }, []);
+
+  function changePanelWidth(next: number) {
+    const width = clampPanelWidth(next, window.innerWidth);
+    setPanelWidth(width);
+    persistPanelWidth(localStorage, width);
+  }
+
+  function resetPanelWidth() {
+    persistPanelWidth(localStorage, null);
+    setPanelWidth(clampPanelWidth(PANEL_DEFAULT, window.innerWidth));
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -240,7 +283,10 @@ export default function RequestsAdminClient() {
   const shown = detail && detail.id === selectedId ? detail : null;
 
   return (
-    <div className={`req-layout${selectedId ? " has-detail" : ""}`}>
+    <div
+      className={`req-layout${selectedId ? " has-detail" : ""}`}
+      style={!isNarrow && selectedId ? ({ "--req-panel-w": `${panelWidth}px` } as React.CSSProperties) : undefined}
+    >
       <div className="req-list">
         <h1 className="mc-h1">Client Requests</h1>
         <p className="mc-sub" style={{ marginBottom: 20 }}>
@@ -368,6 +414,9 @@ export default function RequestsAdminClient() {
           promptTakeOver={wantTakeOver && shown.id === deepId}
           onClose={closePanel}
           onTakeOverDone={clearTakeOverFlag}
+          panelWidth={panelWidth}
+          onPanelWidth={changePanelWidth}
+          onPanelWidthReset={resetPanelWidth}
           onSaved={(msg, next) => {
             setToast(msg);
             if (next) setDetail(next);
@@ -400,12 +449,18 @@ function DetailPane({
   onClose,
   onTakeOverDone,
   onSaved,
+  panelWidth,
+  onPanelWidth,
+  onPanelWidthReset,
 }: {
   r: ClientRequest;
   promptTakeOver: boolean;
   onClose: () => void;
   onTakeOverDone: () => void;
   onSaved: (msg: string, next?: ClientRequest) => void;
+  panelWidth: number;
+  onPanelWidth: (width: number) => void;
+  onPanelWidthReset: () => void;
 }) {
   const saved = savedStatus(r);
   const [pending, setPending] = useState<Editable | null>(null);
@@ -419,6 +474,123 @@ function DetailPane({
   const [busy, setBusy] = useState("");
   const [err, setErr] = useState("");
   const [more, setMore] = useState(false);
+  const panelRef = useRef<HTMLElement>(null);
+  const topRef = useRef<number | null>(null);
+  const [topPx, setTopPx] = useState<number | null>(null);
+  const [panelHeight, setPanelHeight] = useState(0);
+  const [autoTop, setAutoTop] = useState(TOP_MIN);
+  const [capped, setCapped] = useState(false);
+  const [splitDrag, setSplitDrag] = useState(false);
+  const [widthDrag, setWidthDrag] = useState(false);
+
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    const measure = () => {
+      setPanelHeight(panel.clientHeight);
+      const top = panel.querySelector(".req-top");
+      if (!top) return;
+      setAutoTop(top.clientHeight);
+      setCapped(top.scrollHeight > top.clientHeight + 1);
+    };
+    measure();
+    const watcher = new ResizeObserver(measure);
+    watcher.observe(panel);
+    const top = panel.querySelector(".req-top");
+    if (top) watcher.observe(top);
+    return () => watcher.disconnect();
+  }, [topPx, pending]);
+
+  useEffect(() => {
+    if (!panelHeight || narrow()) return;
+    const basis = topRef.current ?? readStoredNumber(localStorage.getItem(SPLIT_STORAGE_KEY));
+    if (basis == null) return;
+    const next = clampSplit(basis, panelHeight);
+    if (next === topRef.current) return;
+    topRef.current = next;
+    setTopPx(next);
+    persistSplit(localStorage, next);
+  }, [panelHeight]);
+
+  function commitTop(next: number | null) {
+    topRef.current = next;
+    setTopPx(next);
+    persistSplit(localStorage, next);
+  }
+
+  function onSplitPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
+    if (e.button !== 0 || narrow()) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    e.preventDefault();
+    const handle = e.currentTarget;
+    const startY = e.clientY;
+    const startTop = topRef.current ?? panel.querySelector(".req-top")?.clientHeight ?? TOP_MIN;
+    setSplitDrag(true);
+    handle.setPointerCapture(e.pointerId);
+    const move = (ev: PointerEvent) => {
+      commitTop(clampSplit(startTop + (ev.clientY - startY), panel.clientHeight));
+    };
+    const end = () => {
+      setSplitDrag(false);
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", end);
+      handle.removeEventListener("pointercancel", end);
+    };
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", end);
+    handle.addEventListener("pointercancel", end);
+  }
+
+  function onSplitKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
+    const panel = panelRef.current;
+    if (!panel || narrow()) return;
+    const height = panel.clientHeight;
+    const current = topRef.current ?? panel.querySelector(".req-top")?.clientHeight ?? TOP_MIN;
+    let next: number | null = null;
+    if (e.key === "ArrowDown") next = moveSplit(current, height, SPLIT_STEP);
+    else if (e.key === "ArrowUp") next = moveSplit(current, height, -SPLIT_STEP);
+    else if (e.key === "Home") next = splitHome(height);
+    else if (e.key === "End") next = splitEnd(height);
+    else return;
+    e.preventDefault();
+    commitTop(next);
+  }
+
+  function onWidthPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
+    if (e.button !== 0 || narrow()) return;
+    e.preventDefault();
+    const handle = e.currentTarget;
+    const startX = e.clientX;
+    const startW = panelWidth;
+    setWidthDrag(true);
+    handle.setPointerCapture(e.pointerId);
+    const move = (ev: PointerEvent) => {
+      onPanelWidth(startW + (startX - ev.clientX));
+    };
+    const end = () => {
+      setWidthDrag(false);
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", end);
+      handle.removeEventListener("pointercancel", end);
+    };
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", end);
+    handle.addEventListener("pointercancel", end);
+  }
+
+  function onWidthKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
+    if (narrow()) return;
+    const viewport = window.innerWidth;
+    let next: number | null = null;
+    if (e.key === "ArrowLeft") next = panelWidth + SPLIT_STEP;
+    else if (e.key === "ArrowRight") next = panelWidth - SPLIT_STEP;
+    else if (e.key === "Home") next = PANEL_DEFAULT;
+    else if (e.key === "End") next = clampPanelWidth(viewport, viewport);
+    else return;
+    e.preventDefault();
+    onPanelWidth(next);
+  }
 
   useEffect(() => {
     setPending(null);
@@ -522,8 +694,25 @@ function DetailPane({
   const notes = (r.timeline || []).filter((t) => t.internal);
   const convo = (r.timeline || []).filter((t) => !t.internal && t.kind !== "agreed_change");
 
+  const splitNow = topPx ?? autoTop;
+  const splitMax = panelHeight ? splitEnd(panelHeight) : splitNow;
+
   return (
-    <section className="req-panel" aria-label="Request detail">
+    <section ref={panelRef} className={`req-panel${splitDrag || widthDrag ? " is-dragging" : ""}`} aria-label="Request detail">
+      <button
+        type="button"
+        className={`req-width${widthDrag ? " is-drag" : ""}`}
+        aria-label="Resize panel width"
+        onPointerDown={onWidthPointerDown}
+        onKeyDown={onWidthKeyDown}
+        onDoubleClick={onPanelWidthReset}
+      >
+        <i />
+      </button>
+      <div
+        className={`req-top${topPx != null && !narrow() ? " is-set" : ""}${capped ? " is-capped" : ""}`}
+        style={topPx != null && !narrow() ? { height: topPx } : undefined}
+      >
       <header className="req-head">
         <button type="button" className="req-back" onClick={onClose}>‹ Requests</button>
         <div className="req-idrow">
@@ -630,6 +819,23 @@ function DetailPane({
           />
         )}
       </header>
+      </div>
+      <button
+        type="button"
+        className={`req-split${splitDrag ? " is-drag" : ""}`}
+        role="separator"
+        aria-orientation="horizontal"
+        aria-label="Resize request sections"
+        aria-valuemin={TOP_MIN}
+        aria-valuemax={splitMax}
+        aria-valuenow={splitNow}
+        onPointerDown={onSplitPointerDown}
+        onKeyDown={onSplitKeyDown}
+        onDoubleClick={() => commitTop(null)}
+      >
+        <i />
+      </button>
+      <div className="req-bottom">
 
       <div className="tabs req-tabs" role="tablist" aria-label="Request sections">
         <button type="button" role="tab" aria-selected={tab === "conversation"} className={tab === "conversation" ? "on" : ""} onClick={() => setTab("conversation")}>
@@ -765,6 +971,8 @@ function DetailPane({
           {err && !pending && <p className="inline-err" style={{ color: "var(--bad)", fontSize: 12, marginTop: 8 }}>{err}</p>}
         </form>
       )}
+
+      </div>
 
       <div className="req-mbar">
         <select
