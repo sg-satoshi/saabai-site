@@ -328,6 +328,14 @@ ${oaicBlock()}
 ${licensingHtml()}`;
 }
 
+/** Same icon set as the LMM home page. Versioned so browsers drop any cached Saabai icon. */
+export const LMM_ICON_LINKS = [
+  '<link rel="icon" href="/clients/lmm-site/assets/favicon.ico?v=20261028" sizes="48x48">',
+  '<link rel="icon" type="image/svg+xml" href="/clients/lmm-site/assets/favicon.svg?v=20261028">',
+  '<link rel="apple-touch-icon" sizes="180x180" href="/clients/lmm-site/assets/apple-touch-icon.png?v=20261028">',
+  '<link rel="manifest" href="/clients/lmm-site/assets/site.webmanifest?v=20261028">',
+].join("\n  ");
+
 function documentHtml(opts: { title: string; description: string; path: string; body: string }): string {
   const canonical = `${LMM_SITE.url}${opts.path}`;
   return `<!doctype html>
@@ -338,7 +346,7 @@ function documentHtml(opts: { title: string; description: string; path: string; 
   <title>${esc(opts.title)} | ${esc(LMM_SITE.name)}</title>
   <meta name="description" content="${esc(opts.description)}">
   <link rel="canonical" href="${esc(canonical)}">
-  <link rel="icon" href="/clients/lmm-site/assets/lmm-icon-full-colour-light.svg" type="image/svg+xml">
+  ${LMM_ICON_LINKS}
   <meta name="theme-color" content="#101F34">
   <style>
     :root { color-scheme: light; }
