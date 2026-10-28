@@ -231,6 +231,7 @@ export default function EngagementClient({ id }: { id: string }) {
   }
 
   const factFindLink = `${typeof window !== "undefined" ? window.location.origin : ""}/audit/factfind/${eng.factFindToken}`;
+  const onboardingLink = `${typeof window !== "undefined" ? window.location.origin : ""}/audit/onboarding/${eng.factFindToken}`;
   const answeredCount = Object.keys(eng.responses ?? {}).length;
 
   const card: React.CSSProperties = {
@@ -362,6 +363,15 @@ export default function EngagementClient({ id }: { id: string }) {
                   style={btnGhost}
                 >
                   Copy client link
+                </button>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(onboardingLink);
+                    showFlash("Search onboarding link copied. It is not emailed.");
+                  }}
+                  style={btnGhost}
+                >
+                  Copy search onboarding link
                 </button>
               </div>
             </div>

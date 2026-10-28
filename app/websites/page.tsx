@@ -3,10 +3,11 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import InShort from "../components/InShort";
 import JsonLd from "../components/JsonLd";
+import SplitTestingSection from "./SplitTestingSection";
 import { schemaGraph, websitesServiceNode } from "@/lib/seo-entity";
 import { breadcrumbNode, faqNode } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
-import { formatAud, WEBSITE_TIERS, websiteBuildPrice, websiteCareFaqAnswer, websiteMonthlyCare } from "@/lib/website-tiers";
+import { formatAud, SPLIT_TESTING, WEBSITE_TIERS, websiteBuildPrice, websiteCareFaqAnswer, websiteMonthlyCare } from "@/lib/website-tiers";
 import { CARE_PLAN_FAQS } from "@/lib/care-faqs";
 
 export const metadata: Metadata = publicPageMeta.websites;
@@ -26,6 +27,10 @@ const faqs = [
   {
     q: "What is the custom avatar on the Signature tier?",
     a: "We train the AI to look and sound like a persona you choose, so it matches your brand voice rather than sounding like a generic bot. It becomes a recognisable part of your business.",
+  },
+  {
+    q: `What is the ${SPLIT_TESTING.name}?`,
+    a: `It shows different versions of a headline, button or image to real visitors and tracks which one brings in more enquiries, including which version works best for each ad source. When there is a clear winner, it becomes the live version. It is an add-on for ${SPLIT_TESTING.tiers.join(" and ")} sites.`,
   },
   {
     q: "What does the monthly care cover?",
@@ -167,6 +172,8 @@ export default function WebsitesPage() {
         </div>
       </section>
 
+      <SplitTestingSection />
+
       {/* Pricing tiers */}
       <section className="py-24 px-6 max-w-5xl mx-auto border-t border-saabai-border">
         <div className="text-center mb-14">
@@ -252,19 +259,19 @@ export default function WebsitesPage() {
                 Book a Consult
               </a>
               <a
-                href={CALENDLY}
-                target="_blank"
-                rel="noopener noreferrer"
+                href="mailto:hello@saabai.ai"
                 className="text-center text-xs text-saabai-text-dim hover:text-saabai-teal transition-colors tracking-wide"
               >
-                Ask a question →
+                Email a question →
               </a>
             </div>
           ))}
         </div>
         <p className="text-center text-xs text-saabai-text-dim mt-8">
-          Build fees are quoted from these figures and scoped to your project.
-          Monthly care keeps your site and AI running.
+          Build fees start from these figures. The price only goes above the
+          &apos;from&apos; figure for custom integrations or other additional work,
+          and we quote that in writing before any work starts. Monthly care keeps
+          your site and AI running.
         </p>
       </section>
 
@@ -291,7 +298,7 @@ export default function WebsitesPage() {
             rel="noopener noreferrer"
             className="inline-block text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide"
           >
-            See what your AI could sound like →
+            Book a call to hear a sample of your AI →
           </a>
         </div>
       </section>

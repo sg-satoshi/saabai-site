@@ -128,7 +128,7 @@ export default function CheckoutClient({ initialTier, cancelled }: { initialTier
             <div className="card" id="blueprint-pay" style={{ marginTop: 20 }}>
               <h3 style={{ margin: 0 }}>Pay {t.priceLabel}</h3>
               <p className="dim" style={{ marginTop: 10, fontSize: 14 }}>
-                Enter your full name and email below to pay. Phone, business name and website are optional. Anything else we can collect after payment.
+                Just your name and email to pay. Phone, business name and website are optional. We&apos;ll use your email for your invoice and fact-find.
               </p>
 
               {enabled === null || loadingPay ? (
@@ -199,12 +199,12 @@ export default function CheckoutClient({ initialTier, cancelled }: { initialTier
               <span>{aud(t.price, true)}</span>
             </div>
             <div className="note">
-              <b style={{ color: "var(--teal)" }}>30 day build credit.</b> Book any Saabai build within 30 days of delivery and the full {t.priceLabel} comes off your build.
+              <b style={{ color: "var(--teal)" }}>30 day build credit.</b> Book any Saabai build within 30 days of delivery and the full {t.priceLabel} comes off your build invoice.
             </div>
             <ul className="trust" style={{ marginTop: 16 }}>
               <li>Australian business</li>
               <li>Secure Stripe payments</li>
-              <li>Cancel anytime before paying</li>
+              <li>Full refund if work hasn&apos;t begun</li>
             </ul>
           </aside>
         </div>

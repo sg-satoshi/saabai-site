@@ -154,7 +154,9 @@ export type AuditEventType =
   | "assessment_generated"
   | "report_generated"
   | "report_delivered"
-  | "credit_applied";
+  | "credit_applied"
+  | "onboarding_saved"
+  | "faq_drafts_ready";
 
 /**
  * A Blueprint credit draw-down. Only a signed quote or a deposit counts.
@@ -272,6 +274,8 @@ export interface AuditEngagement {
   searchBrief?: {
     promise?: string;
     services?: string[];
+    /** Client-picked kind from search onboarding. Never inferred from a crawl. */
+    businessKind?: "local-trade" | "professional" | "property" | "general";
     industry?: string;
     statedGoogleRating?: number;
     statedGoogleReviews?: number;
@@ -281,6 +285,13 @@ export interface AuditEngagement {
       averageJobAud?: number;
     };
   };
+  /**
+   * Search onboarding progress. Answers are what the client typed or confirmed.
+   * Crawl suggestions live on `prefill` until the client saves them.
+   */
+  searchOnboarding?: import("./blueprint/onboarding").SearchOnboardingRecord;
+  /** Buyer-question FAQ drafts. `published` stays false. Nothing here is on the site. */
+  faqDrafts?: import("./blueprint/onboarding").FaqDraftRecord;
 }
 
 export function newId(prefix: string): string {

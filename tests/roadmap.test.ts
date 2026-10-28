@@ -6,7 +6,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import type { AddressInfo } from "node:net";
 import { createMockUpstash } from "../scripts/dev/mock-upstash.mjs";
-import { applyLinkPatches, buildView, classifySearchItems, closesFromBody, filterView, prStatus, validateInput, SEED_ITEMS, STATUSES, type GithubState, type RoadmapItem } from "../lib/roadmap-core";
+import { applyLinkPatches, buildView, classifySearchItems, closesFromBody, filterView, prStatus, refreshStoredSeeds, validateInput, RM_AREAS, SEED_ITEMS, SEED_STAMP, STATUSES, WORKSTREAM_LABEL, type GithubState, type RoadmapItem } from "../lib/roadmap-core";
 import { createItem, deleteItem, fetchGithubState, loadItems, moveItem, resetGithubCache, updateItem } from "../lib/roadmap";
 import { decide, levelFor, sanitizeGrant, type AccessGrant } from "../lib/access";
 
@@ -50,6 +50,12 @@ test("seed covers the agreed items and statuses are valid", () => {
   const page = SEED_ITEMS.find((i) => i.id === "admin-roadmap")!;
   assert.equal(page.prNumber, 149); assert.equal(page.status, "in_progress");
   assert.equal(SEED_ITEMS.find((i) => i.id === "chat-followups")!.prNumber, undefined);
+  for (const area of ["Saabai site", "SEO toolkit", "Instagram", "LocalCommand", "Lex", "Blueprint", "client sites", "admin"]) {
+    assert.ok((RM_AREAS as readonly string[]).includes(area), area);
+    assert.ok(SEED_ITEMS.some((i) => i.area === area), area);
+  }
+  const blob = SEED_ITEMS.map((i) => `${i.title} ${i.description}`).join("\n");
+  assert.equal(/Tributum|Rex Plastics|home-based|LeadGen|\u2014/.test(blob), false);
 });
 
 test("prStatus and buildView: deployed vs shipped, promotion, unmatched PRs added, unknown deploy", () => {
@@ -64,7 +70,7 @@ test("prStatus and buildView: deployed vs shipped, promotion, unmatched PRs adde
   assert.equal(v.find((i) => i.id === "coupon-start-date")!.status, "deployed"); // promoted
   assert.equal(v.find((i) => i.id === "coupon-reporting")!.status, "planned"); // untouched
   const auto = v.find((i) => i.id === "gh-200")!;
-  assert.equal(auto.status, "shipped"); assert.equal(auto.source, "github"); assert.equal(auto.area, "Chatbots");
+  assert.equal(auto.status, "shipped"); assert.equal(auto.source, "github"); assert.equal(auto.area, "client sites");
   assert.equal(v.filter((i) => i.prNumber === 146).length, 1); // no duplicate
   assert.equal(buildView(items, null).find((i) => i.id === "coupon-start-date")!.status, "in_progress"); // fail soft
 });
@@ -106,7 +112,7 @@ test("buildView: linked merged PR stays Done outside a short window, closed issu
   assert.equal(v.filter((i) => i.issueNumber === 278 && i.source === "github").length, 0);
   const seo = v.find((i) => i.id === "gh-issue-280")!;
   assert.equal(seo.status, "in_review"); // open PR closes it
-  assert.equal(seo.area, "SEO");
+  assert.equal(seo.area, "SEO toolkit");
   assert.equal(seo.prNumber, 282);
   assert.equal(v.find((i) => i.id === "gh-pr-282"), undefined); // attached, not duplicated
   assert.equal(v.find((i) => i.id === "gh-issue-233")!.status, "in_review");
@@ -119,11 +125,13 @@ test("classifySearchItems drops closed issues and unmerged closed PRs", () => {
     { number: 278, title: "Closed with stale label", state: "closed", html_url: "i278", labels: [{ name: "status:in-progress" }, { name: "agent:chief" }] },
     { number: 10, title: "Closed unmerged", state: "closed", html_url: "p10", pull_request: { merged_at: null } },
     { number: 208, title: "Shared platform", state: "closed", html_url: "p208", pull_request: { merged_at: "2026-10-20T05:27:55Z" } },
-    { number: 285, title: "Roadmap", state: "open", html_url: "i285", labels: [{ name: "status:blocked" }], updated_at: "2026-10-26T00:00:00Z" },
+    { number: 285, title: "Roadmap", state: "open", html_url: "i285", labels: [{ name: "status:blocked" }, { name: WORKSTREAM_LABEL }], updated_at: "2026-10-26T00:00:00Z" },
     { number: 284, title: "Blueprint checks", state: "open", html_url: "p284", pull_request: {}, body: "Closes #281", labels: [], updated_at: "2026-10-26T00:00:00Z" },
   ]);
   assert.deepEqual(split.prs.map((p) => p.number), [208]);
   assert.deepEqual(split.openIssues.map((i) => i.number), [285]);
+  assert.equal(split.openIssues[0].workstream, true);
+  assert.equal(buildView([], ghState({ prs: [], openIssues: split.openIssues })).find((i) => i.id === "gh-issue-285")!.workstream, true);
   assert.deepEqual(split.openPrs.map((p) => p.number), [284]);
   assert.deepEqual(split.openPrs[0].closes, [281]);
   assert.deepEqual(closesFromBody("Closes #280\nAlso fixes #12 and resolved: #9. Not a close of ticket 4."), [280, 12, 9]);
@@ -153,9 +161,24 @@ test("filterView: search, status and area", () => {
   assert.ok(filterView(v, { q: "lead capture" }).some((i) => i.id === "chat-lead-capture"));
   assert.ok(filterView(v, { q: "#147" }).some((i) => i.id === "coupon-once-per-customer"));
   assert.ok(filterView(v, { status: "idea" }).every((i) => i.status === "idea"));
-  assert.ok(filterView(v, { area: "Coupons" }).every((i) => i.area === "Coupons"));
+  assert.ok(filterView(v, { area: "admin" }).every((i) => i.area === "admin"));
   assert.equal(filterView(v, { q: "zzzznothing" }).length, 0);
   assert.equal(filterView(v, { status: "all", area: "all" }).length, v.length);
+});
+
+test("refreshStoredSeeds updates an untouched seed and leaves an edited row", () => {
+  const follow = SEED_ITEMS.find((i) => i.id === "chat-followups")!;
+  const stale: RoadmapItem = { ...follow, description: "Old follow-up list that named a withheld client.", area: "Chatbots", updatedAt: SEED_STAMP, updatedBy: "seed" };
+  const edited: RoadmapItem = { ...stale, id: "custom-note", title: "Keep this", description: "Hand edited note", updatedBy: "shane", updatedAt: "2026-10-20T00:00:00.000Z" };
+  const { items, changed } = refreshStoredSeeds([stale, edited]);
+  assert.equal(changed, true);
+  assert.equal(items[0].description, follow.description);
+  assert.equal(items[0].area, "client sites");
+  assert.equal(items[0].updatedAt, follow.updatedAt);
+  assert.equal(items[1].title, "Keep this");
+  assert.equal(items[1].description, "Hand edited note");
+  const again = refreshStoredSeeds(items);
+  assert.equal(again.changed, false);
 });
 
 test("store: seeds once, create/update/move/delete", async () => {

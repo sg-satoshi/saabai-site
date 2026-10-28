@@ -16,7 +16,9 @@ export const STATUS_LABEL: Record<RoadmapStatus, string> = {
 };
 export const PRIORITIES = ["high", "medium", "low"] as const;
 export type RoadmapPriority = (typeof PRIORITIES)[number];
-export const RM_AREAS = ["Admin", "Access", "Chatbots", "Coupons", "Payments", "Billing", "Site factory", "Marketing", "SEO", "Voice", "Lex", "Blueprint", "Analytics", "Clients", "Other"] as const;
+export const RM_AREAS = ["Saabai site", "SEO toolkit", "Instagram", "LocalCommand", "Lex", "Blueprint", "client sites", "admin", "Other"] as const;
+/** Open issues with this label are tracking workstreams, not one-off tasks. */
+export const WORKSTREAM_LABEL = "type:workstream";
 export const MAX_ITEMS = 300;
 /** Shown when GitHub cannot be read. Never treat that as an empty roadmap. */
 export const GITHUB_UNAVAILABLE = "unavailable";
@@ -42,6 +44,8 @@ export interface RoadmapView extends RoadmapItem {
   prUrl?: string;
   issueUrl?: string;
   mergedAt?: string;
+  /** Open issue carrying the type:workstream label. */
+  workstream?: boolean;
 }
 
 export interface MergedPr { number: number; title: string; mergedAt: string; url: string }
@@ -53,6 +57,8 @@ export interface OpenWork {
   updatedAt: string;
   /** Issue numbers named with a closing keyword in the pull request body. */
   closes?: number[];
+  /** True when the issue is labelled type:workstream. */
+  workstream?: boolean;
 }
 /** A manual link fetched by number, including closed issues that must not appear as open work. */
 export interface LinkedWork {
@@ -128,17 +134,12 @@ export function areaForTitle(title: string): string {
   const t = title.toLowerCase();
   if (/blueprint/.test(t)) return "Blueprint";
   if (/\blex\b|austlii|citation/.test(t)) return "Lex";
-  if (/\bvoice\b|receptionist/.test(t)) return "Voice";
-  if (/analytics|\bga4\b|\bpixel\b|visitors/.test(t)) return "Analytics";
-  if (/\bseo\b|search audit|ai search/.test(t)) return "SEO";
-  if (/coupon|offer/.test(t)) return "Coupons";
-  if (/chat|widget|bot/.test(t)) return "Chatbots";
-  if (/role|access|2fa|login|security/.test(t)) return "Access";
-  if (/stripe|payment|invoice|checkout/.test(t)) return "Payments";
-  if (/billing|\bplans?\b/.test(t)) return "Billing";
-  if (/announce|marketing|blog/.test(t)) return "Marketing";
-  if (/admin/.test(t)) return "Admin";
-  if (/site|factory/.test(t)) return "Site factory";
+  if (/instagram|\big\b/.test(t)) return "Instagram";
+  if (/localcommand|local command/.test(t)) return "LocalCommand";
+  if (/\bseo\b|search audit|ai search/.test(t)) return "SEO toolkit";
+  if (/coupon|payment|billing|invoice|stripe|admin|roadmap|access|2fa/.test(t)) return "admin";
+  if (/chat|widget|bot|client site|site factory|wholesale/.test(t)) return "client sites";
+  if (/website|about page|marketing|homepage/.test(t)) return "Saabai site";
   return "Other";
 }
 
@@ -206,7 +207,7 @@ export function classifySearchItems(items: GhSearchItem[]): { prs: MergedPr[]; o
     if (isPr) {
       openPrs.push({ number: item.number, title, url, labels, updatedAt, closes: closesFromBody(item.body) });
     } else {
-      openIssues.push({ number: item.number, title, url, labels, updatedAt });
+      openIssues.push({ number: item.number, title, url, labels, updatedAt, workstream: labels.includes(WORKSTREAM_LABEL) });
     }
   }
   return { prs, openIssues, openPrs };
@@ -289,7 +290,8 @@ export function buildView(items: RoadmapItem[], gh: GithubState | null): Roadmap
     const prUrl = pr.merged?.url || pr.open?.url || pr.linked?.url || closing[0]?.url;
     const issueUrl = issueOpen?.url || issueLinked?.url;
     const mergedAt = mergedAtOf(pr) || issueLinked?.mergedAt || undefined;
-    return { ...it, prNumber, status, source: "manual", prUrl, issueUrl, mergedAt: mergedAt || undefined };
+    const workstream = !!(issueOpen?.workstream || (issueLinked?.state === "open" && issueLinked.labels.includes(WORKSTREAM_LABEL)));
+    return { ...it, prNumber, status, source: "manual", prUrl, issueUrl, mergedAt: mergedAt || undefined, ...(workstream ? { workstream: true } : {}) };
   });
 
   for (const issue of gh.openIssues ?? []) {
@@ -303,6 +305,7 @@ export function buildView(items: RoadmapItem[], gh: GithubState | null): Roadmap
       area: areaForTitle(issue.title), issueNumber: issue.number, prNumber: closing[0]?.number,
       createdAt: issue.updatedAt, updatedAt: issue.updatedAt, updatedBy: "GitHub",
       source: "github", issueUrl: issue.url, prUrl: closing[0]?.url,
+      ...(issue.workstream ? { workstream: true } : {}),
     });
   }
 
@@ -369,26 +372,55 @@ export function applyLinkPatches(items: RoadmapItem[], patches: ReadonlyArray<{ 
   return { items: next, changes };
 }
 
+/** Original seed stamp. Untouched Redis rows still carry this and can be refreshed in place. */
+export const SEED_STAMP = "2026-10-19T00:00:00.000Z";
+export const SEED_REFRESH_STAMP = "2026-10-28T00:00:00.000Z";
+
+/**
+ * Rewrite seed rows that nobody has edited. Same ids, same Redis key.
+ * A deleted seed stays deleted. A row Shane edited stays as he saved it.
+ */
+export function refreshStoredSeeds(items: RoadmapItem[]): { items: RoadmapItem[]; changed: boolean } {
+  let changed = false;
+  const next = items.map((it) => {
+    const seed = SEED_ITEMS.find((s) => s.id === it.id);
+    if (!seed) return it;
+    const untouched = it.updatedBy === "seed" && (it.updatedAt === SEED_STAMP || it.updatedAt === SEED_REFRESH_STAMP);
+    if (!untouched) return it;
+    const same = it.title === seed.title && it.description === seed.description && it.status === seed.status && it.area === seed.area && it.priority === seed.priority && it.prNumber === seed.prNumber && it.issueNumber === seed.issueNumber;
+    if (same) return it;
+    changed = true;
+    return { ...seed };
+  });
+  return { items: next, changed };
+}
+
 // ── Seed ─────────────────────────────────────────────────────────────
 const S = (id: string, title: string, description: string, status: RoadmapStatus, area: string, extra: Partial<RoadmapItem> = {}): RoadmapItem =>
-  ({ id, title, description, status, area, createdAt: "2026-10-19T00:00:00.000Z", updatedAt: "2026-10-19T00:00:00.000Z", updatedBy: "seed", ...extra });
+  ({ id, title, description, status, area, createdAt: SEED_REFRESH_STAMP, updatedAt: SEED_REFRESH_STAMP, updatedBy: "seed", ...extra });
 
 export const SEED_ITEMS: RoadmapItem[] = [
-  S("chat-integrations-addon", "Chatbot integrations add-on (stage 4)", "Email alerts included. Telegram, WhatsApp and SMS with a one-off setup fee and no monthly fee. SMS on prepaid credit packs with a 75% low-credit email and a buy-more link. Prices need Shane's approval.", "planned", "Chatbots", { priority: "high" }),
-  S("stripe-payments-module", "Stripe payments module for client sites", "Let client sites take payments through Stripe. To be discussed before any build.", "planned", "Payments"),
-  S("client-logins", "Client logins (own bot only)", "Clients sign in and see only their own chatbot.", "planned", "Clients"),
-  S("knowledge-builder", "Client knowledge base builder", "Includes an unanswered-questions queue so clients can fill the gaps.", "planned", "Chatbots"),
-  S("chat-lead-capture", "Lead capture for chatbots", "Capture contact details from chats and route them to the client.", "planned", "Chatbots"),
-  S("chat-followups", "Remaining chatbot follow-ups", "CHAT_WIDGET_V2, real plans per site, origin enforce, LMM, Tributum and BO migration.", "planned", "Chatbots"),
-  S("coupon-reporting", "Coupons: per-coupon reporting", "Redemptions and revenue per code.", "planned", "Coupons"),
-  S("coupon-subscription-duration", "Coupons: subscription duration", "Choose how long a discount lasts on subscriptions.", "planned", "Coupons"),
-  S("coupon-auto-apply", "Coupons: campaign auto-apply", "Apply a campaign code automatically from a link.", "planned", "Coupons"),
-  S("payments-coupon-picker", "Payments coupon picker", "Dropdown of usable coupons on Payments and Sell. Scheduled codes show greyed out with their start date. Show-inactive toggle noted for later.", "planned", "Payments", { prNumber: 154 }),
-  S("coupon-multi-product", "Coupons: multi-product Works on", "Pick several products for one coupon.", "in_progress", "Coupons", { prNumber: 144 }),
-  S("coupon-copy-link", "Coupons: copy-link button", "One-click checkout link for each coupon.", "in_progress", "Coupons", { prNumber: 145 }),
-  S("coupon-start-date", "Coupons: start date", "Schedule a coupon to begin at Brisbane midnight.", "in_progress", "Coupons", { prNumber: 146 }),
-  S("coupon-once-per-customer", "Coupons: one use per customer", "Hashed-email check, no addresses stored.", "in_progress", "Coupons", { prNumber: 147 }),
-  S("admin-roadmap", "Admin roadmap page", "This page: planned, in progress, shipped and deployed, searchable.", "in_progress", "Admin", { prNumber: 149 }),
-  S("role-based-access", "Role-based admin access", "Viewer and custom roles with per-area read or write, mandatory 2FA, audit log.", "deployed", "Access", { prNumber: 148 }),
-  S("idea-bulk-codes-partners", "Single-use bulk codes and partner attribution", "Unique one-time codes for campaigns, plus tracking results per partner or referrer. Possible future referral program.", "idea", "Coupons"),
+  S("chat-integrations-addon", "Chatbot integrations add-on (stage 4)", "Email alerts included. Telegram, WhatsApp and SMS with a one-off setup fee and no monthly fee. SMS on prepaid credit packs with a 75% low-credit email and a buy-more link. Prices need Shane's approval.", "planned", "client sites", { priority: "high" }),
+  S("stripe-payments-module", "Stripe payments module for client sites", "Let client sites take payments through Stripe. Needs a decision before any build.", "planned", "client sites"),
+  S("client-logins", "Client logins (own bot only)", "Clients sign in and see only their own chatbot.", "planned", "client sites"),
+  S("knowledge-builder", "Client knowledge base builder", "Includes an unanswered-questions queue so clients can fill the gaps.", "planned", "client sites"),
+  S("chat-lead-capture", "Lead capture for chatbots", "Capture contact details from chats and route them to the client.", "planned", "client sites"),
+  S("chat-followups", "Remaining chatbot follow-ups", "Widget v2, real plans per site, origin checks, and moving the remaining client chats onto the shared platform.", "planned", "client sites"),
+  S("coupon-reporting", "Coupons: per-coupon reporting", "Redemptions and revenue per code.", "planned", "admin"),
+  S("coupon-subscription-duration", "Coupons: subscription duration", "Choose how long a discount lasts on subscriptions.", "planned", "admin"),
+  S("coupon-auto-apply", "Coupons: campaign auto-apply", "Apply a campaign code automatically from a link.", "planned", "admin"),
+  S("payments-coupon-picker", "Payments coupon picker", "Dropdown of usable coupons on Payments and Sell. Scheduled codes show greyed out with their start date. Show-inactive toggle noted for later.", "planned", "admin", { prNumber: 154 }),
+  S("coupon-multi-product", "Coupons: multi-product Works on", "Pick several products for one coupon.", "in_progress", "admin", { prNumber: 144 }),
+  S("coupon-copy-link", "Coupons: copy-link button", "One-click checkout link for each coupon.", "in_progress", "admin", { prNumber: 145 }),
+  S("coupon-start-date", "Coupons: start date", "Schedule a coupon to begin at Brisbane midnight.", "in_progress", "admin", { prNumber: 146 }),
+  S("coupon-once-per-customer", "Coupons: one use per customer", "Hashed-email check, no addresses stored.", "in_progress", "admin", { prNumber: 147 }),
+  S("admin-roadmap", "Admin roadmap page", "This page lists open issues, open pull requests, workstreams, and every merged pull request.", "in_progress", "admin", { prNumber: 149 }),
+  S("role-based-access", "Role-based admin access", "Viewer and custom roles with per-area read or write, mandatory 2FA, audit log.", "deployed", "admin", { prNumber: 148 }),
+  S("idea-bulk-codes-partners", "Single-use bulk codes and partner attribution", "Unique one-time codes for campaigns, plus tracking results per partner or referrer. Possible future referral program.", "idea", "admin"),
+  S("saabai-site-pages", "Saabai marketing site", "Public pages, pricing, and the about page. Reply time is within 1 business day. Blueprint stays $497.", "planned", "Saabai site"),
+  S("seo-toolkit", "SEO toolkit", "Search checks, titles, and the pages that help Google and AI search find a site.", "planned", "SEO toolkit"),
+  S("instagram-landing", "Instagram", "The bio landing page and later Instagram posting work.", "planned", "Instagram"),
+  S("localcommand", "LocalCommand", "Tracking area for LocalCommand. Issues labelled type:workstream show under Workstreams.", "planned", "LocalCommand"),
+  S("lex-track", "Lex", "Legal research product. Firm is $299 a month. Billing is confirmed before a firm starts.", "planned", "Lex"),
+  S("blueprint-track", "Blueprint", "Paid AI audit. Starter is $497, never free. The free piece is the AI Readiness Score.", "planned", "Blueprint"),
 ];

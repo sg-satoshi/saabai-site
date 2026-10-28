@@ -4,7 +4,7 @@
  */
 import { randomUUID } from "crypto";
 import { getRedis } from "./redis";
-import { GITHUB_UNAVAILABLE, ROADMAP_KEY, MAX_ITEMS, SEED_ITEMS, classifySearchItems, type GhSearchItem, type GithubState, type ItemInput, type LinkedWork, type MergedPr, type OpenWork, type RoadmapItem } from "./roadmap-core";
+import { GITHUB_UNAVAILABLE, ROADMAP_KEY, MAX_ITEMS, SEED_ITEMS, classifySearchItems, refreshStoredSeeds, type GhSearchItem, type GithubState, type ItemInput, type LinkedWork, type MergedPr, type OpenWork, type RoadmapItem } from "./roadmap-core";
 
 export * from "./roadmap-core";
 
@@ -21,7 +21,11 @@ export async function loadItems(): Promise<RoadmapItem[] | null> {
   const redis = getRedis();
   if (!redis) return null;
   const cur = parse(await redis.get(ROADMAP_KEY));
-  if (cur) return cur;
+  if (cur) {
+    const refreshed = refreshStoredSeeds(cur);
+    if (refreshed.changed) await redis.set(ROADMAP_KEY, JSON.stringify(refreshed.items));
+    return refreshed.items;
+  }
   await redis.set(ROADMAP_KEY, JSON.stringify(SEED_ITEMS), { nx: true });
   return parse(await redis.get(ROADMAP_KEY)) ?? SEED_ITEMS;
 }
@@ -80,10 +84,9 @@ export async function deleteItem(id: string): Promise<RoadmapItem | null> {
 
 // ── GitHub (fail soft) ───────────────────────────────────────────────
 const REPO = process.env.ROADMAP_GITHUB_REPO || "sg-satoshi/saabai-site";
-/** Merged PRs since this date stay on the page. Older linked numbers are fetched one by one. */
-const MERGED_SINCE = "2026-10-01";
+/** GitHub search returns at most 1000 hits. Page until a short page, not a 40-item cap. */
 const SEARCH_PAGE_SIZE = 100;
-const MAX_SEARCH_PAGES = 5;
+const MAX_SEARCH_PAGES = 10;
 const TTL = 5 * 60_000;
 
 export interface GithubLinks { prs?: number[]; issues?: number[] }
@@ -215,7 +218,7 @@ export async function fetchGithubState(force = false, links?: GithubLinks): Prom
     let bulk = !force && bulkCache && Date.now() - bulkCache.at < TTL ? bulkCache : null;
     if (!bulk) {
       const [mergedItems, openItems, deployedAt] = await Promise.all([
-        searchAll(`repo:${REPO} is:pr is:merged merged:>=${MERGED_SINCE}`),
+        searchAll(`repo:${REPO} is:pr is:merged`),
         searchAll(`repo:${REPO} is:open`),
         loadDeployedAt().catch(() => null),
       ]);

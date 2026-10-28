@@ -193,6 +193,10 @@ export default function FactFindClient({ token }: { token: string }) {
           <p className="mb-3" style={{ color: "#9aa0c3" }} data-testid="factfind-thanks">
             {FACTFIND_THANKS_BODY}
           </p>
+          <p className="mb-3" style={{ color: "#9aa0c3" }}>
+            <a href={`/audit/onboarding/${token}`} style={{ color: GOLD }}>Confirm what we found on your website</a>.
+            That page saves as you go, and it does not send another email.
+          </p>
           <p style={{ color: "#9aa0c3" }}>
             Questions in the meantime? Email{" "}
             <a href="mailto:hello@saabai.ai" style={{ color: GOLD }}>hello@saabai.ai</a>.
@@ -221,6 +225,10 @@ export default function FactFindClient({ token }: { token: string }) {
           >
             <p className="text-sm leading-relaxed" style={{ color: "#e2e4f0" }}>
               {FACTFIND_INTRO}
+            </p>
+            <p className="text-sm leading-relaxed mt-3" style={{ color: "#c4c8e0" }}>
+              We can read your website first and only ask what we cannot find.{" "}
+              <a href={`/audit/onboarding/${token}`} style={{ color: GOLD }}>Start search onboarding</a>.
             </p>
           </div>
         )}

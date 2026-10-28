@@ -4,6 +4,7 @@
  */
 export const FOCUSED_FORM_PREFIXES = [
   "/audit/factfind",
+  "/audit/onboarding",
   // Instagram bio landing: one form, no Mia, ticker, popup or announcement bar.
   "/ig",
 ];
