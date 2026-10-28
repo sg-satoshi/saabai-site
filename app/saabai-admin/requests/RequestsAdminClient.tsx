@@ -10,16 +10,26 @@ import {
 } from "../../../lib/request-notify";
 import {
   PANEL_DEFAULT,
+  REPLY_DEFAULT,
+  REPLY_MIN,
+  REPLY_STORAGE_KEY,
   SPLIT_STEP,
   SPLIT_STORAGE_KEY,
   TOP_MIN,
   clampPanelWidth,
+  clampReply,
   clampSplit,
+  defaultReply,
+  defaultTop,
   loadPanelWidth,
+  moveReply,
   moveSplit,
   persistPanelWidth,
+  persistReply,
   persistSplit,
   readStoredNumber,
+  replyEnd,
+  replyHome,
   splitEnd,
   splitHome,
 } from "./split";
@@ -475,12 +485,17 @@ function DetailPane({
   const [err, setErr] = useState("");
   const [more, setMore] = useState(false);
   const panelRef = useRef<HTMLElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<number | null>(null);
+  const replyRef = useRef<number | null>(null);
   const [topPx, setTopPx] = useState<number | null>(null);
+  const [replyPx, setReplyPx] = useState<number | null>(null);
   const [panelHeight, setPanelHeight] = useState(0);
+  const [bottomHeight, setBottomHeight] = useState(0);
   const [autoTop, setAutoTop] = useState(TOP_MIN);
   const [capped, setCapped] = useState(false);
   const [splitDrag, setSplitDrag] = useState(false);
+  const [replyDrag, setReplyDrag] = useState(false);
   const [widthDrag, setWidthDrag] = useState(false);
 
   useEffect(() => {
@@ -503,19 +518,62 @@ function DetailPane({
 
   useEffect(() => {
     if (!panelHeight || narrow()) return;
-    const basis = topRef.current ?? readStoredNumber(localStorage.getItem(SPLIT_STORAGE_KEY));
-    if (basis == null) return;
+    const stored = readStoredNumber(localStorage.getItem(SPLIT_STORAGE_KEY));
+    const basis = topRef.current ?? stored ?? defaultTop(panelHeight);
     const next = clampSplit(basis, panelHeight);
     if (next === topRef.current) return;
     topRef.current = next;
     setTopPx(next);
-    persistSplit(localStorage, next);
+    if (stored != null) persistSplit(localStorage, next);
   }, [panelHeight]);
+
+  useEffect(() => {
+    const bottom = bottomRef.current;
+    if (!bottom) return;
+    const measure = () => setBottomHeight(bottom.clientHeight);
+    measure();
+    const watcher = new ResizeObserver(measure);
+    watcher.observe(bottom);
+    return () => watcher.disconnect();
+  }, [topPx, tab]);
+
+  useEffect(() => {
+    if (!bottomHeight || narrow() || tab === "details") return;
+    const stored = readStoredNumber(localStorage.getItem(REPLY_STORAGE_KEY));
+    const basis = replyRef.current ?? stored ?? REPLY_DEFAULT;
+    const next = clampReply(basis, bottomHeight);
+    if (next === replyRef.current) return;
+    replyRef.current = next;
+    setReplyPx(next);
+    if (stored != null) persistReply(localStorage, next);
+  }, [bottomHeight, tab]);
 
   function commitTop(next: number | null) {
     topRef.current = next;
     setTopPx(next);
     persistSplit(localStorage, next);
+  }
+
+  function resetTop() {
+    const height = panelRef.current?.clientHeight ?? panelHeight;
+    const next = height ? defaultTop(height) : null;
+    topRef.current = next;
+    setTopPx(next);
+    persistSplit(localStorage, null);
+  }
+
+  function commitReply(next: number | null) {
+    replyRef.current = next;
+    setReplyPx(next);
+    persistReply(localStorage, next);
+  }
+
+  function resetReply() {
+    const height = bottomRef.current?.clientHeight ?? bottomHeight;
+    const next = height ? defaultReply(height) : REPLY_DEFAULT;
+    replyRef.current = next;
+    setReplyPx(next);
+    persistReply(localStorage, null);
   }
 
   function onSplitPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
@@ -555,6 +613,45 @@ function DetailPane({
     else return;
     e.preventDefault();
     commitTop(next);
+  }
+
+  function onReplyPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
+    if (e.button !== 0 || narrow()) return;
+    const bottom = bottomRef.current;
+    if (!bottom) return;
+    e.preventDefault();
+    const handle = e.currentTarget;
+    const startY = e.clientY;
+    const startReply = replyRef.current ?? bottom.querySelector(".req-compose")?.clientHeight ?? REPLY_DEFAULT;
+    setReplyDrag(true);
+    handle.setPointerCapture(e.pointerId);
+    const move = (ev: PointerEvent) => {
+      commitReply(clampReply(startReply + (startY - ev.clientY), bottom.clientHeight));
+    };
+    const end = () => {
+      setReplyDrag(false);
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", end);
+      handle.removeEventListener("pointercancel", end);
+    };
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", end);
+    handle.addEventListener("pointercancel", end);
+  }
+
+  function onReplyKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
+    const bottom = bottomRef.current;
+    if (!bottom || narrow()) return;
+    const height = bottom.clientHeight;
+    const current = replyRef.current ?? REPLY_DEFAULT;
+    let next: number | null = null;
+    if (e.key === "ArrowUp") next = moveReply(current, height, SPLIT_STEP);
+    else if (e.key === "ArrowDown") next = moveReply(current, height, -SPLIT_STEP);
+    else if (e.key === "Home") next = replyHome(height);
+    else if (e.key === "End") next = replyEnd(height);
+    else return;
+    e.preventDefault();
+    commitReply(next);
   }
 
   function onWidthPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
@@ -698,7 +795,7 @@ function DetailPane({
   const splitMax = panelHeight ? splitEnd(panelHeight) : splitNow;
 
   return (
-    <section ref={panelRef} className={`req-panel${splitDrag || widthDrag ? " is-dragging" : ""}`} aria-label="Request detail">
+    <section ref={panelRef} className={`req-panel${splitDrag || replyDrag || widthDrag ? " is-dragging" : ""}`} aria-label="Request detail">
       <button
         type="button"
         className={`req-width${widthDrag ? " is-drag" : ""}`}
@@ -831,11 +928,11 @@ function DetailPane({
         aria-valuenow={splitNow}
         onPointerDown={onSplitPointerDown}
         onKeyDown={onSplitKeyDown}
-        onDoubleClick={() => commitTop(null)}
+        onDoubleClick={resetTop}
       >
         <i />
       </button>
-      <div className="req-bottom">
+      <div className="req-bottom" ref={bottomRef}>
 
       <div className="tabs req-tabs" role="tablist" aria-label="Request sections">
         <button type="button" role="tab" aria-selected={tab === "conversation"} className={tab === "conversation" ? "on" : ""} onClick={() => setTab("conversation")}>
@@ -929,8 +1026,27 @@ function DetailPane({
       </div>
 
       {tab !== "details" && (
+        <button
+          type="button"
+          className={`req-split req-reply${replyDrag ? " is-drag" : ""}`}
+          role="separator"
+          aria-orientation="horizontal"
+          aria-label="Resize reply box"
+          aria-valuemin={REPLY_MIN}
+          aria-valuemax={bottomHeight ? replyEnd(bottomHeight) : REPLY_DEFAULT}
+          aria-valuenow={replyPx ?? REPLY_DEFAULT}
+          onPointerDown={onReplyPointerDown}
+          onKeyDown={onReplyKeyDown}
+          onDoubleClick={resetReply}
+        >
+          <i />
+        </button>
+      )}
+
+      {tab !== "details" && (
         <form
-          className={`req-compose${tab === "internal" ? " internal" : ""}`}
+          className={`req-compose${tab === "internal" ? " internal" : ""}${replyPx != null ? " is-set" : ""}`}
+          style={replyPx != null && !narrow() ? { height: replyPx } : undefined}
           onSubmit={(e) => {
             e.preventDefault();
             if (tab === "internal") {

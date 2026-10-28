@@ -58,15 +58,14 @@
 .req-panel{background:#fff;border-left:1px solid var(--n-200);display:flex;flex-direction:column;position:sticky;top:0;height:calc(100vh - 60px);min-width:0;min-height:0}
 .req-panel.is-dragging{user-select:none}
 .req-width{display:none}
-.req-top{flex:0 1 auto;min-height:0;max-height:calc(100% - 232px);overflow:visible}
-.req-top.is-capped{overflow-y:auto}
-.req-top.is-set{flex:none;max-height:none;min-height:120px;overflow-y:auto}
+.req-top{flex:none;min-height:120px;max-height:calc(100% - 338px);overflow-y:auto}
+.req-top.is-set{max-height:none;min-height:0}
 .req-split{flex:none;height:12px;border:0;border-top:1px solid var(--n-200);border-bottom:1px solid var(--n-200);background:#fff;cursor:row-resize;display:flex;align-items:center;justify-content:center;padding:0;touch-action:none}
 .req-split i{width:36px;height:4px;border-radius:999px;background:var(--n-300);display:block}
 .req-split:hover,.req-split:focus-visible,.req-split.is-drag{background:var(--teal-50)}
 .req-split:hover i,.req-split:focus-visible i,.req-split.is-drag i{background:var(--teal-600)}
 .req-split:focus-visible{outline:2px solid var(--teal-600);outline-offset:-2px}
-.req-bottom{flex:1 1 auto;min-height:220px;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.req-bottom{flex:1 1 0%;min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden}
 .req-head{padding:14px 20px 12px;background:#fff}
 .req-idrow{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
 .req-id{font-size:12px;color:var(--n-500)}
@@ -103,7 +102,7 @@
 
 .req-tabs{flex:none;padding:0 20px;margin:0;border-bottom:1px solid var(--n-200)}
 .req-tabs .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--warn);margin-left:6px;vertical-align:middle}
-.req-body{flex:1;min-height:0;overflow:auto;padding:16px 20px;background:var(--n-25);display:flex;flex-direction:column;gap:12px}
+.req-body{flex:1 1 0%;min-height:0;overflow:auto;padding:16px 20px;background:var(--n-25);display:flex;flex-direction:column;gap:12px}
 .req-bubble{max-width:92%;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.5}
 .req-bubble.client{align-self:flex-start;background:#fff;border:1px solid var(--n-200)}
 .req-bubble.staff{align-self:flex-end;background:var(--teal-50);border:1px solid #b9e4ea}
@@ -123,13 +122,13 @@
 .req-check{display:flex;gap:8px;align-items:flex-start;font-size:13px;font-weight:500;color:var(--n-700)}
 .req-check small{display:block;font-weight:400;color:var(--n-500)}
 
-.req-compose{flex:none;padding:12px 20px 16px;border-top:1px solid var(--n-200);background:#fff}
+.req-compose{flex:none;min-height:110px;box-sizing:border-box;padding:12px 20px 16px;background:#fff;display:flex;flex-direction:column;overflow:hidden}
 .req-compose.internal{background:#fffaf0;border-top:2px solid var(--warn)}
 .req-compose .lab{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:13px;font-weight:650}
 .vis{font-size:11px;font-weight:650;border-radius:999px;padding:3px 8px}
 .vis.client{background:var(--teal-50);border:1px solid #b9e4ea;color:var(--teal-700)}
 .vis.internal{background:var(--warn-bg);border:1px solid var(--warn-bd);color:var(--warn)}
-.req-compose textarea{width:100%;box-sizing:border-box;min-height:72px;max-height:200px;padding:8px 10px;border-radius:8px;border:1px solid var(--n-200);font:inherit;font-size:13px;resize:vertical;background:#fff}
+.req-compose textarea{width:100%;box-sizing:border-box;flex:1 1 auto;min-height:0;padding:8px 10px;border-radius:8px;border:1px solid var(--n-200);font:inherit;font-size:13px;resize:none;background:#fff}
 .req-compose.internal textarea{border-color:var(--warn-bd);background:#fff}
 .req-compose .send{margin-top:8px;display:flex;justify-content:flex-end}
 .req-note-btn{background:var(--warn-bg);border:1px solid var(--warn-bd);color:var(--warn)}
@@ -144,10 +143,12 @@
   .req-panel{position:fixed;left:0;right:0;top:56px;bottom:0;height:auto;z-index:40;border-left:0}
   .req-back{display:inline-flex;align-items:center;gap:4px;border:0;background:none;color:var(--n-700);font:inherit;font-weight:600;font-size:14px;padding:0;margin-bottom:8px;cursor:pointer}
   .req-actions,.req-x,.req-split,.req-width{display:none}
-  .req-top,.req-top.is-set{max-height:none;height:auto;min-height:0;overflow:visible;flex:none}
-  .req-bottom{min-height:0;flex:1}
+  .req-top,.req-top.is-set{max-height:none;height:auto !important;min-height:0;overflow:visible;flex:none}
+  .req-bottom{min-height:0;flex:1 1 0%}
+  .req-compose,.req-compose.is-set{height:auto !important;min-height:0;overflow:visible}
+  .req-compose textarea{min-height:72px;max-height:160px;resize:vertical;flex:none}
   .req-panel{padding-bottom:76px}
-  .req-body{padding-bottom:16px}
+  .req-body{flex:1 1 0%;min-height:0;padding-bottom:16px}
   .req-mbar{display:flex;gap:8px;position:fixed;left:0;right:0;bottom:0;z-index:45;background:#fff;border-top:1px solid var(--n-200);padding:10px 12px 22px}
   .req-mbar .btn, .req-mbar select{height:44px;min-height:44px}
   .req-confirm{position:fixed;left:0;right:0;bottom:0;z-index:50;margin:0;border-radius:16px 16px 0 0;padding:16px 16px 22px;box-shadow:var(--sh-3)}
