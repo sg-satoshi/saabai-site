@@ -5,8 +5,7 @@
  * It does not email them and it does not publish the FAQ.
  */
 
-import { useEffect, useState, type CSSProperties } from "react";
-import AdminShell from "../AdminSidebar";
+import { useEffect, useState } from "react";
 
 type Draft = {
   id: string;
@@ -33,6 +32,7 @@ export default function FaqQueueClient() {
   const [items, setItems] = useState<Item[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -46,6 +46,9 @@ export default function FaqQueueClient() {
       })
       .catch(() => {
         if (!cancelled) setError("The queue could not be loaded.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
   }, []);
@@ -67,55 +70,72 @@ export default function FaqQueueClient() {
   }
 
   return (
-    <AdminShell>
-      <div style={{ maxWidth: 880, margin: "0 auto", padding: "24px 16px 64px" }}>
-        <h1 style={{ fontSize: 28, margin: "0 0 8px" }}>Blueprint FAQ drafts</h1>
-        <p style={{ color: "#4b5563", marginTop: 0 }}>Review first, then send to the client for approval. Nothing on this page publishes to a website, and the client is not emailed.</p>
-        {error && <p style={{ color: "#b91c1c" }}>{error}</p>}
-        {items.length === 0 && <p style={{ color: "#6b7280" }}>No drafts waiting.</p>}
-        <div style={{ display: "grid", gap: 16 }}>
-          {items.map((item) => (
-            <section key={item.id} style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 16 }}>
-              <h2 style={{ fontSize: 18, margin: "0 0 4px" }}>{item.firmName}</h2>
-              <p style={{ color: "#6b7280", margin: "0 0 12px", fontSize: 14 }}>{item.contactName} · {item.questionBank} · not published</p>
-              <div style={{ display: "grid", gap: 12 }}>
-                {item.drafts.map((draft) => (
-                  <article key={draft.id} style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: 12 }}>
-                    <p style={{ margin: "0 0 6px", fontWeight: 600 }}>{draft.question}</p>
-                    <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{draft.answer || "No answer yet. Waiting on the client."}</p>
-                    <p style={{ margin: "8px 0 0", color: "#6b7280", fontSize: 13 }}>Source: {draft.source}. {draft.sourceDetail}</p>
-                    <p style={{ margin: "4px 0 8px", fontSize: 13 }}>Status: {label(draft.status)}</p>
+    <>
+      <div className="mc-head">
+        <div>
+          <h1 className="mc-h1">Blueprint FAQs</h1>
+          <p className="mc-sub">Review first, then send to the client for approval. Nothing on this page publishes to a website, and the client is not emailed.</p>
+        </div>
+      </div>
+
+      {error && <p role="alert" style={{ color: "var(--bad)", fontSize: 13, margin: "0 0 12px" }}>{error}</p>}
+      {loading && <p className="muted">Loading...</p>}
+
+      {!loading && items.length === 0 && !error && (
+        <div className="card">
+          <div className="bd" style={{ textAlign: "center" }}>
+            <p className="muted" style={{ margin: 0 }}>No drafts waiting.</p>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: "grid", gap: 16 }}>
+        {items.map((item) => (
+          <section key={item.id} className="card" aria-labelledby={`faq-firm-${item.id}`}>
+            <div className="hd" style={{ flexWrap: "wrap", gap: 8 }}>
+              <div style={{ minWidth: 0 }}>
+                <h2 id={`faq-firm-${item.id}`} style={{ margin: 0 }}>{item.firmName}</h2>
+                <p className="muted" style={{ margin: "4px 0 0", fontSize: 13 }}>{item.contactName} · {item.questionBank}</p>
+              </div>
+              <span className="badge b-n">Not published</span>
+            </div>
+            <div className="bd" style={{ display: "grid", gap: 12 }}>
+              {item.drafts.map((draft) => {
+                const badge = statusBadge(draft.status);
+                return (
+                  <article key={draft.id} aria-busy={busy === draft.id} style={{ border: "1px solid var(--n-200)", borderRadius: 12, padding: 14, background: "var(--n-25)" }}>
+                    <p style={{ margin: "0 0 8px", fontWeight: 650 }}>{draft.question}</p>
+                    <p style={{ margin: 0, whiteSpace: "pre-wrap", lineHeight: 1.5 }}>{draft.answer || "No answer yet. Waiting on the client."}</p>
+                    <p className="muted" style={{ margin: "8px 0 0", fontSize: 13 }}>Source: {draft.source}. {draft.sourceDetail}</p>
+                    <p style={{ margin: "8px 0" }}><span className={`badge ${badge.cls}`}>{badge.text}</span></p>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                       {draft.status === "admin_review" && draft.answer && (
-                        <button type="button" disabled={busy === draft.id} onClick={() => act(item.id, draft.id, "to_client")} style={btn}>Send to client for approval</button>
+                        <button type="button" className={`btn pri${busy === draft.id ? " loading" : ""}`} disabled={busy === draft.id} onClick={() => act(item.id, draft.id, "to_client")}>Send to client for approval</button>
                       )}
                       {(draft.status === "client_review" || draft.status === "approved") && (
-                        <button type="button" disabled={busy === draft.id} onClick={() => act(item.id, draft.id, "hold")} style={btnGhost}>Hold for another review</button>
+                        <button type="button" className="btn" disabled={busy === draft.id} onClick={() => act(item.id, draft.id, "hold")}>Hold for another review</button>
                       )}
                     </div>
                   </article>
-                ))}
-              </div>
+                );
+              })}
               {item.faqPage != null && (
-                <details style={{ marginTop: 12 }}>
-                  <summary style={{ cursor: "pointer" }}>FAQPage JSON, not published</summary>
-                  <pre style={{ overflow: "auto", fontSize: 12, background: "#f8fafc", padding: 12, borderRadius: 8 }}>{JSON.stringify(item.faqPage, null, 2)}</pre>
+                <details>
+                  <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: 13 }}>FAQPage JSON, not published</summary>
+                  <pre className="num" style={{ overflow: "auto", fontSize: 12, background: "var(--n-25)", border: "1px solid var(--n-200)", padding: 12, borderRadius: 8, margin: "8px 0 0" }}>{JSON.stringify(item.faqPage, null, 2)}</pre>
                 </details>
               )}
-            </section>
-          ))}
-        </div>
+            </div>
+          </section>
+        ))}
       </div>
-    </AdminShell>
+    </>
   );
 }
 
-function label(status: string): string {
-  if (status === "admin_review") return "Waiting for Saabai";
-  if (status === "client_review") return "Waiting for the client";
-  if (status === "approved") return "Approved, not published";
-  return "Needs a client answer";
+function statusBadge(status: string): { cls: string; text: string } {
+  if (status === "admin_review") return { cls: "b-warn", text: "Waiting for Saabai" };
+  if (status === "client_review") return { cls: "b-info", text: "Waiting for the client" };
+  if (status === "approved") return { cls: "b-ok", text: "Approved, not published" };
+  return { cls: "b-n", text: "Needs a client answer" };
 }
-
-const btn: CSSProperties = { minHeight: 44, padding: "8px 14px", borderRadius: 8, border: "none", background: "#0e0c2e", color: "#fff", cursor: "pointer" };
-const btnGhost: CSSProperties = { minHeight: 44, padding: "8px 14px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.15)", background: "#fff", cursor: "pointer" };
