@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import type { AddressInfo } from "node:net";
 import { createMockUpstash } from "../scripts/dev/mock-upstash.mjs";
+import { toClientView } from "../lib/client-requests";
 import {
   notifyClientDefault,
   shouldEmailStatus,
@@ -243,6 +244,116 @@ test("toClientView hides the email flag and any email address", async () => {
   assert.equal(view.timeline[0].authorName, "Saabai");
   assert.equal(view.timeline[1].authorName, "Shane Goldberg");
   assert.equal(view.timeline.some((t) => /designer@saabai\.ai|hard coded/.test(`${t.authorName} ${t.body}`)), false);
+});
+
+function clientView(timeline: {
+  id: string;
+  kind: "comment" | "status" | "internal_note" | "system" | "agreed_change";
+  authorKind: "client" | "admin" | "assistant" | "system";
+  authorName: string;
+  body: string;
+  internal?: boolean;
+  createdAt: string;
+}[]) {
+  return toClientView({
+    id: "req-1",
+    clientId: "client-n",
+    clientName: "Sam",
+    clientEmail: "sam@example.com",
+    title: "Phone number wrong on homepage",
+    description: "Please change the number.",
+    type: "other",
+    priority: "normal",
+    screenshots: [],
+    status: "in_progress",
+    autoHandle: true,
+    discussWithShane: false,
+    clarifierRounds: 0,
+    createdAt: "2026-10-26T00:00:00.000Z",
+    updatedAt: "2026-10-28T00:00:00.000Z",
+    timeline,
+  });
+}
+
+test("a client message containing emailed is unchanged and stays theirs", async () => {
+  const body = "I haven't been emailed any updates yet.";
+  const view = clientView([
+    {
+      id: "c",
+      kind: "comment",
+      authorKind: "client",
+      authorName: "Sam",
+      body,
+      createdAt: "2026-10-28T00:00:00.000Z",
+    },
+  ]);
+  assert.equal(view.timeline.length, 1);
+  assert.equal(view.timeline[0].body, body);
+  assert.equal(view.timeline[0].authorName, "Sam");
+});
+
+test("a client message that contains an email address is unchanged", async () => {
+  const body = "Please change the contact email on my site to info@samsplumbing.com.au";
+  const view = clientView([
+    {
+      id: "c",
+      kind: "comment",
+      authorKind: "client",
+      authorName: "Sam",
+      body,
+      createdAt: "2026-10-28T00:00:00.000Z",
+    },
+  ]);
+  assert.equal(view.timeline[0].body, body);
+  assert.equal(view.timeline[0].authorName, "Sam");
+});
+
+test("a status entry is shown as Status set to X by Saabai", async () => {
+  const view = clientView([
+    {
+      id: "s",
+      kind: "status",
+      authorKind: "admin",
+      authorName: "Admin",
+      body: "Status set to In progress.",
+      createdAt: "2026-10-28T00:00:00.000Z",
+    },
+  ]);
+  assert.equal(view.timeline[0].body, "Status set to In progress.");
+  assert.equal(view.timeline[0].authorName, "Saabai");
+});
+
+test("a legacy status line is rewritten and the email flag is dropped", async () => {
+  const view = clientView([
+    {
+      id: "s",
+      kind: "comment",
+      authorKind: "admin",
+      authorName: "Shane Goldberg <shane@saabai.ai>",
+      body: "Status: New → QA / Review · Client not emailed",
+      createdAt: "2026-10-28T00:00:00.000Z",
+    },
+  ]);
+  assert.equal(view.timeline[0].body, "Status set to QA / Review.");
+  assert.equal(view.timeline[0].authorName, "Saabai");
+  assert.doesNotMatch(view.timeline[0].body, /emailed/i);
+});
+
+test("an author stored as Name <email> is shown as the name only", async () => {
+  const body = "Thanks, we are looking at it.";
+  const view = clientView([
+    {
+      id: "c",
+      kind: "comment",
+      authorKind: "admin",
+      authorName: "Shane Goldberg <shane@saabai.ai>",
+      body,
+      createdAt: "2026-10-28T00:00:00.000Z",
+    },
+  ]);
+  assert.equal(view.timeline[0].authorName, "Shane Goldberg");
+  assert.equal(view.timeline[0].body, body);
+  assert.doesNotMatch(view.timeline[0].authorName, /@/);
 });
 
 test("a second status save cannot tag the other status note", async () => {

@@ -241,56 +241,43 @@ function parse(raw: unknown): ClientRequest | null {
   };
 }
 
-const EMAIL_IN_TEXT = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
 const EMAIL_FLAG = /client not emailed|client emailed|\bnot emailed\b|\bemailed\b/i;
+/** Stored before the client-visible status line. Exact, so a normal message that says "emailed" is left alone. */
+const LEGACY_STATUS_LINE = /^Status: .+ · Client (not )?emailed$/;
+const BARE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Drop an address, including the "Name <email>" audit form. */
-function nameWithoutEmail(name: string, fallback: string): string {
-  const cleaned = name
-    .replace(/\s*<[^>]*>/g, "")
-    .replace(EMAIL_IN_TEXT, "")
-    .replace(/\s+/g, " ")
-    .trim();
-  return cleaned || fallback;
+/** "Name <email>" becomes "Name". A bare address is not used as an author. */
+function authorForClient(t: TimelineEntry): string {
+  const fallback = t.authorKind === "client" ? "Client" : t.authorKind === "system" ? "System" : "Saabai";
+  const name = t.authorName.replace(/\s*<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+  if (!name || BARE_EMAIL.test(name)) return fallback;
+  return name;
 }
 
-function textWithoutEmail(text: string): string {
-  return text
-    .replace(/\s*<[^>\n]*@[^>\n]*>/g, "")
-    .replace(EMAIL_IN_TEXT, "")
-    .replace(/[ \t]{2,}/g, " ")
-    .trim();
-}
-
-/** Client-visible status copy. The emailed / not-emailed flag never survives this. */
-function neutralStatusBody(body: string): string {
-  const setTo = body.match(/Status set to\s+(.+?)\./i);
-  if (setTo && !EMAIL_FLAG.test(setTo[1])) return `Status set to ${setTo[1].trim()}.`;
-  const arrow = body.match(/→\s*([^·]+)/);
-  if (arrow) {
-    const label = arrow[1].trim().replace(/\.$/, "");
-    if (label) return `Status set to ${label}.`;
-  }
-  const stripped = textWithoutEmail(body).replace(EMAIL_FLAG, "").replace(/\s*·\s*/g, " ").replace(/\s+/g, " ").trim();
-  return stripped && !EMAIL_FLAG.test(stripped) ? stripped : "Status updated.";
+/** Client-visible status copy. Only used for status entries and the legacy status line. */
+function statusBodyForClient(body: string): string {
+  const setTo = body.match(/^Status set to\s+(.+)\.$/);
+  if (setTo) return `Status set to ${setTo[1].trim()}.`;
+  const legacy = body.match(/^Status: .+ →\s*(.+?)\s*· Client (?:not )?emailed$/);
+  if (legacy && legacy[1].trim()) return `Status set to ${legacy[1].trim()}.`;
+  return "Status updated.";
 }
 
 function forClient(t: TimelineEntry): TimelineEntry {
-  if (t.kind === "status" || EMAIL_FLAG.test(t.body)) {
+  if (t.kind === "status" || LEGACY_STATUS_LINE.test(t.body)) {
     return {
       ...t,
       internal: false,
       refId: undefined,
       authorName: "Saabai",
-      body: neutralStatusBody(t.body),
+      body: statusBodyForClient(t.body),
     };
   }
-  const fallback = t.authorKind === "client" ? "Client" : "Saabai";
   return {
     ...t,
     refId: undefined,
-    authorName: nameWithoutEmail(t.authorName, fallback),
-    body: textWithoutEmail(t.body),
+    authorName: authorForClient(t),
+    body: t.body,
   };
 }
 
