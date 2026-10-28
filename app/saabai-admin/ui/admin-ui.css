@@ -39,7 +39,7 @@
 .btn.pri.au-1{height:36px;border-radius:8px;font-size:14px;font-weight:600}
 
 /* Stats and callouts (Blueprint credit) */
-.au-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.au-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:end}
 .au-stat-l{font-size:12px;line-height:16px;font-weight:500;color:#64748b}
 .au-stat-v{margin-top:2px;font-size:20px;line-height:28px;font-weight:600;font-variant-numeric:tabular-nums;color:#0b092e}
 .au-status{border-radius:8px;background:#f8fafc;padding:8px 12px;font-size:14px;line-height:20px;color:#475569;margin:0}
