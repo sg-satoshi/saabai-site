@@ -6,9 +6,9 @@ const BASE_URL = "https://www.saabai.ai";
 type Freq = MetadataRoute.Sitemap[number]["changeFrequency"];
 
 const PAGES: Array<{ path: string; priority: number; changeFrequency: Freq; updated: string }> = [
-  { path: "", updated: "2026-10-28", priority: 1, changeFrequency: "weekly" },
+  { path: "", updated: "2026-10-14", priority: 1, changeFrequency: "weekly" },
   { path: "/blueprint", updated: "2026-10-28", priority: 0.95, changeFrequency: "monthly" },
-  { path: "/websites", updated: "2026-10-28", priority: 0.95, changeFrequency: "monthly" },
+  { path: "/websites", updated: "2026-10-14", priority: 0.95, changeFrequency: "monthly" },
   { path: "/score", updated: "2026-10-14", priority: 0.9, changeFrequency: "monthly" },
   { path: "/services", updated: "2026-10-13", priority: 0.9, changeFrequency: "monthly" },
   { path: "/use-cases", updated: "2026-10-28", priority: 0.9, changeFrequency: "monthly" },
@@ -27,7 +27,7 @@ const PAGES: Array<{ path: string; priority: number; changeFrequency: Freq; upda
   { path: "/ai-chatbot-developer-queensland", updated: "2026-10-25", priority: 0.8, changeFrequency: "monthly" },
   { path: "/ai-receptionist-gold-coast", updated: "2026-10-25", priority: 0.8, changeFrequency: "monthly" },
   { path: "/about", updated: "2026-10-14", priority: 0.7, changeFrequency: "monthly" },
-  { path: "/contact", updated: "2026-10-28", priority: 0.5, changeFrequency: "yearly" },
+  { path: "/contact", updated: "2026-10-17", priority: 0.5, changeFrequency: "yearly" },
   { path: "/terms", updated: "2026-10-17", priority: 0.3, changeFrequency: "yearly" },
   { path: "/privacy", updated: "2026-10-14", priority: 0.3, changeFrequency: "yearly" },
 ];

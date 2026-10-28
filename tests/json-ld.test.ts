@@ -220,7 +220,7 @@ test("about page publishes AboutPage, Person and Organization JSON-LD", () => {
   assert.equal(person?.name, "Shane Goldberg");
   assert.equal(person?.["@id"], `${SITE_URL}/#shane-goldberg`);
   assert.equal(person?.jobTitle, "Founder");
-  assert.equal(person?.image, `${SITE_URL}/shane-goldberg.png`);
+  assert.equal(person?.image, `${SITE_URL}/shane-goldberg.jpg`);
   assert.deepEqual(person?.sameAs, [...SAME_AS]);
 
   const org = graph.find((node) => {
@@ -289,4 +289,37 @@ test("footer, contact, terms, privacy and about share one NAP and publish no pho
   const layout = readFileSync("app/layout.tsx", "utf8");
   assert.match(layout, /Merrimac on the Gold Coast/);
   assert.match(layout, /siteName: "Saabai"/);
+});
+
+test("homepage canonical and og:url are the same origin, with no trailing slash", () => {
+  const canonical = (publicPageMeta.home.alternates as { canonical?: string } | undefined)?.canonical;
+  const ogUrl = (publicPageMeta.home.openGraph as { url?: string } | undefined)?.url;
+  assert.equal(canonical, `${SITE_URL}`);
+  assert.equal(ogUrl, canonical);
+  assert.equal(canonical, "https://www.saabai.ai");
+  assert.doesNotMatch(readFileSync("app/page.tsx", "utf8"), /rel="canonical"/);
+});
+
+test("checkout openGraph url is the checkout page", () => {
+  const page = readFileSync("app/blueprint/checkout/page.tsx", "utf8");
+  assert.match(page, /const CHECKOUT_URL = "https:\/\/www\.saabai\.ai\/blueprint\/checkout"/);
+  assert.match(page, /url: CHECKOUT_URL/);
+});
+
+test("founder schema image is a compressed photo and the original png stays", async () => {
+  const jpg = readFileSync("public/shane-goldberg.jpg");
+  const png = readFileSync("public/shane-goldberg.png");
+  assert.ok(jpg.length < 200 * 1024, `jpg is ${jpg.length} bytes`);
+  assert.ok(png.length > jpg.length);
+  assert.equal(jpg[0], 0xff);
+  assert.equal(jpg[1], 0xd8);
+  const sharp = (await import("sharp")).default;
+  const meta = await sharp(jpg).metadata();
+  assert.ok((meta.width ?? 0) >= 400 && (meta.height ?? 0) >= 400, `${meta.width}x${meta.height}`);
+  const people: string[] = [];
+  walk(organizationSchema, (node) => {
+    if (node["@type"] === "Person" && typeof node.image === "string") people.push(node.image);
+  });
+  assert.deepEqual(people, [`${SITE_URL}/shane-goldberg.jpg`]);
+  assert.match(readFileSync("app/about/page.tsx", "utf8"), /src="\/shane-goldberg\.png"/);
 });

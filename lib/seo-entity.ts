@@ -46,7 +46,7 @@ export const founderSchema = {
   jobTitle: "Founder",
   worksFor: { "@id": ORG_ID },
   url: `${SITE_URL}/about`,
-  image: `${SITE_URL}/shane-goldberg.png`,
+  image: `${SITE_URL}/shane-goldberg.jpg`,
   sameAs: [...SAME_AS],
 };
 
@@ -339,7 +339,7 @@ export const aboutPageSchema = schemaGraph([
   },
   {
     ...founderSchema,
-    image: `${SITE_URL}/shane-goldberg.png`,
+    image: `${SITE_URL}/shane-goldberg.jpg`,
     description:
       "Shane Goldberg is the founder of Saabai, a sole trader business based in Merrimac on the Gold Coast, Queensland.",
   },

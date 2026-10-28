@@ -28,8 +28,6 @@ const FAQS = [
 export default function Home() {
   return (
     <div className="sb">
-      {/* Next.js metadata drops the trailing slash on this URL. */}
-      <link rel="canonical" href="https://www.saabai.ai/" />
       <JsonLd data={miaServiceSchema} />
       <JsonLd data={faqSchema(FAQS)} />
       <Nav activePage="/" />
