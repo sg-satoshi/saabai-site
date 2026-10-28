@@ -242,3 +242,61 @@ test("no em dashes in portal copy", async () => {
   walk("app/portal"); walk("lib/portal-blueprint"); walk("app/api/portal/blueprint");
   for (const f of files) assert.ok(!readFileSync(f, "utf8").includes("\u2014"), `em dash in ${f}`);
 });
+
+test("portal link base: production stays on www.saabai.ai, previews use their own allow-listed host", async () => {
+  const { portalBaseUrl, isAllowedPortalHost, linkUrl } = await import("../lib/portal-blueprint/links");
+  const saved = { ...process.env };
+  const req = (host: string, xf?: string) => new Request("https://x.test/api/portal/blueprint/login", { headers: { host, ...(xf ? { "x-forwarded-host": xf } : {}) } });
+  const preview = "saabai-site-git-feat-client-port-2dd764-shanegoldbergs-projects.vercel.app";
+  try {
+    delete process.env.NEXT_PUBLIC_BASE_URL;
+    for (const h of ["saabai.ai", "www.saabai.ai", preview, "saabai-site-b4bkx70y5-shanegoldbergs-projects.vercel.app"]) assert.equal(isAllowedPortalHost(h), true, h);
+    for (const h of ["evil.com", "saabai.ai.evil.com", "other-app.vercel.app", "saabai-site-x-otherteam.vercel.app", "localhost:3000", "", null]) assert.equal(isAllowedPortalHost(h as string), false, String(h));
+
+    process.env.VERCEL_ENV = "production";
+    assert.equal(portalBaseUrl(req(preview)), "https://www.saabai.ai");
+    assert.equal(portalBaseUrl(req("evil.com")), "https://www.saabai.ai");
+
+    process.env.VERCEL_ENV = "preview";
+    process.env.VERCEL_URL = "saabai-site-b4bkx70y5-shanegoldbergs-projects.vercel.app";
+    delete process.env.VERCEL_BRANCH_URL;
+    assert.equal(portalBaseUrl(req(preview)), `https://${preview}`);
+    assert.equal(portalBaseUrl(req("evil.com", preview)), `https://${preview}`);
+    assert.equal(portalBaseUrl(req("evil.com")), "https://saabai-site-b4bkx70y5-shanegoldbergs-projects.vercel.app");
+    assert.equal(portalBaseUrl(), "https://saabai-site-b4bkx70y5-shanegoldbergs-projects.vercel.app");
+    process.env.VERCEL_URL = "evil.vercel.app";
+    assert.equal(portalBaseUrl(req("evil.com")), "https://www.saabai.ai");
+
+    delete process.env.VERCEL_ENV;
+    delete process.env.VERCEL_URL;
+    assert.equal(portalBaseUrl(req("localhost:3000")), "https://www.saabai.ai");
+    assert.equal(linkUrl("tok", `https://${preview}/`), `https://${preview}/portal/auth?token=tok`);
+    assert.equal(linkUrl("tok"), "https://www.saabai.ai/portal/auth?token=tok");
+  } finally {
+    for (const k of ["VERCEL_ENV", "VERCEL_URL", "VERCEL_BRANCH_URL", "NEXT_PUBLIC_BASE_URL"]) {
+      if (saved[k] === undefined) delete process.env[k]; else process.env[k] = saved[k];
+    }
+  }
+});
+
+test("portal routes hide the promo bar and sales chrome", async () => {
+  const { hidesAnnouncement, isFocusedFormPath } = await import("../lib/focused-paths");
+  for (const p of ["/portal", "/portal/login", "/portal/auth?token=x", "/portal/aud_1/factfind", "/portal/aud_1/review"]) {
+    assert.equal(hidesAnnouncement(p), true, p);
+  }
+  assert.equal(isFocusedFormPath("/portal/aud_1"), true);
+  for (const p of ["/portals", "/client-portal", "/client-portal/auth", "/"]) assert.equal(hidesAnnouncement(p), false, p);
+});
+
+test("sign-in email has a plain-text version with the link, and Resend gets it", async () => {
+  const { portalLinkEmail } = await import("../lib/portal-blueprint/emails");
+  const link = "https://www.saabai.ai/portal/auth?token=abc";
+  const m = portalLinkEmail({ name: "Alex Smith", link });
+  assert.ok(m.text.length > 40);
+  assert.ok(m.text.includes(link));
+  assert.ok(m.text.startsWith("Pick up where you left off"));
+  assert.ok(!/<[a-z]/i.test(m.text), "text part has no HTML");
+  const fs = await import("node:fs");
+  const src = fs.readFileSync(new URL("../lib/email/branded-layout.ts", import.meta.url), "utf8");
+  assert.match(src, /text:\s*opts\.email\.text/);
+});

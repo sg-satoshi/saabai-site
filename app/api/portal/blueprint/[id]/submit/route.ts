@@ -9,7 +9,7 @@ import { guardEngagement } from "../../../../../../lib/portal-blueprint/api";
 import { submitForBuild } from "../../../../../../lib/portal-blueprint/store";
 import { adminReadyEmail, submitConfirmationEmail } from "../../../../../../lib/portal-blueprint/emails";
 import { EMAIL_BRAND, sendBrandedEmail } from "../../../../../../lib/email/branded-layout";
-import { baseUrl } from "../../../../../../lib/portal-blueprint/links";
+import { portalBaseUrl } from "../../../../../../lib/portal-blueprint/links";
 import { answersOf, computeProgress, TIER_NAMES } from "../../../../../../lib/portal-blueprint/progress";
 
 export const runtime = "nodejs";
@@ -32,6 +32,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (r.status === "busy") return Response.json({ error: "Busy, please retry" }, { status: 503 });
 
   const e = r.engagement;
+  const base = portalBaseUrl(req);
   if (!r.already) {
     after(async () => {
       try {
@@ -40,13 +41,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         await Promise.allSettled([
           sendBrandedEmail({
             to: e.contactEmail,
-            email: submitConfirmationEmail({ name: e.contactName, tierName, portalUrl: `${baseUrl()}/portal/${e.id}/submitted`, answered: prog.answered, total: prog.totalQuestions }),
+            email: submitConfirmationEmail({ name: e.contactName, tierName, portalUrl: `${base}/portal/${e.id}/submitted`, answered: prog.answered, total: prog.totalQuestions }),
             from: process.env.BLUEPRINT_FROM_EMAIL || EMAIL_BRAND.fromShane,
             replyTo: EMAIL_BRAND.supportEmail,
           }),
           sendBrandedEmail({
             to: EMAIL_BRAND.supportEmail,
-            email: adminReadyEmail({ firmName: e.firmName, tier: tierName, contactName: e.contactName, contactEmail: e.contactEmail, adminUrl: `${baseUrl()}/saabai-admin/audits/${e.id}`, answered: prog.answered, total: prog.totalQuestions, blanks: prog.blanks.length }),
+            email: adminReadyEmail({ firmName: e.firmName, tier: tierName, contactName: e.contactName, contactEmail: e.contactEmail, adminUrl: `${base}/saabai-admin/audits/${e.id}`, answered: prog.answered, total: prog.totalQuestions, blanks: prog.blanks.length }),
             from: EMAIL_BRAND.from,
           }),
         ]);
