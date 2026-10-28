@@ -1,6 +1,7 @@
 import { getRedis } from "./redis";
 import type { ProductId } from "./user-products";
 import type { AccessGrant } from "./access";
+import type { OnboardingState } from "./portal-onboarding";
 
 export interface DirectoryUser {
   id: string;
@@ -19,6 +20,8 @@ export interface DirectoryUser {
   approvedAt: string;
   createdAt: string;
   profile?: UserProfile;
+  /** Guided portal onboarding. Same record as the account. Absent until the client starts. */
+  onboarding?: OnboardingState;
 }
 
 export interface UserProfile {

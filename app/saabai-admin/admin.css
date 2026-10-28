@@ -230,3 +230,9 @@ a.btn{text-decoration:none}
 .onoff-pop button.danger{background:#c42f21;border-color:#c42f21;color:#fff}
 .onoff-pop button:focus-visible{outline:2px solid #fff;box-shadow:0 0 0 4px #62c5d1}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Onboarding progress. Geist comes from the admin layout. Scrollbars stay hidden. */
+.onb-admin{font-family:var(--font-admin-sans),Geist,system-ui,sans-serif}
+.onb-scroll{scrollbar-width:none}
+.onb-scroll::-webkit-scrollbar{display:none}
+.onb-admin .onb-error{color:var(--bad);margin:0}

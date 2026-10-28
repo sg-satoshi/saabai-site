@@ -1,4 +1,5 @@
 import { getRedis } from "./redis";
+import type { OnboardingState } from "./portal-onboarding";
 
 export interface PortalUser {
   id: string;
@@ -7,6 +8,8 @@ export interface PortalUser {
   password: string;
   dashboardUrl: string;
   approvedAt: string;
+  /** Present only when this legacy row is the client's only account record. */
+  onboarding?: OnboardingState;
 }
 
 export interface PendingRequest {
@@ -64,4 +67,14 @@ export async function deletePendingRequest(email: string): Promise<void> {
   const redis = getRedis();
   if (!redis) return;
   await redis.hdel(PENDING_KEY, email.toLowerCase());
+}
+
+export async function listPortalUsers(): Promise<PortalUser[]> {
+  const redis = getRedis();
+  if (!redis) return [];
+  const raw = await redis.hgetall<Record<string, string>>(USERS_KEY);
+  if (!raw) return [];
+  return Object.values(raw)
+    .map((v) => parse<PortalUser>(v))
+    .filter((u): u is PortalUser => u !== null && typeof u.email === "string" && u.email.includes("@"));
 }

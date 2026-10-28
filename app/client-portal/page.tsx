@@ -10,6 +10,7 @@ import { UpgradesPanel } from "./upgrades/UpgradesPanel";
 import { portalPageFromSearchParam } from "../../lib/portal-pages";
 import { BLUEPRINT_PAGE_HREF, type BlueprintCreditModel } from "../../lib/blueprint-credit";
 import { CreditPlanRail } from "./credit/CreditPlanRail";
+import { OnboardingCard } from "./onboarding/OnboardingCard";
 
 type AuthView = "checking" | "login" | "sent" | "request" | "request-sent" | "code" | "error" | "app";
 type PageId =
@@ -532,6 +533,7 @@ function ClientPortalInner() {
     >
       {page === "overview" && (
         <>
+          <OnboardingCard />
           <div className="ph">
             <div>
               <h1>Welcome back, {firstName}</h1>
