@@ -2,9 +2,10 @@
  * Emails for client requests (Resend). Failures are logged, never thrown, so
  * a mail problem can't block saving a request.
  */
-import { PRIORITY_LABELS, STATUS_LABELS, type ClientRequest } from "./client-requests";
+import { PRIORITY_LABELS, type ClientRequest } from "./client-requests";
 import { EMAIL_BRAND, escapeHtml, renderBrandedEmail, sendBrandedEmail } from "./email/branded-layout";
 import { adminRequestEmail } from "./notify-routing";
+import { statusEmailSubject, statusLabel, statusLeadPlain } from "./request-notify";
 
 const SITE = "https://www.saabai.ai";
 
@@ -43,40 +44,34 @@ export function buildNewRequestEmail(r: ClientRequest) {
   });
 }
 
+/** HTML lead. Same words as statusLeadPlain, with the title escaped. adminNote is never included. */
+export function statusLeadHtml(status: string, title: string): string {
+  const plain = statusLeadPlain(status, title);
+  const quoted = `"${title}"`;
+  const strong = `<strong>"${escapeHtml(title)}"</strong>`;
+  const withTitle = plain.includes(quoted) ? plain.replace(quoted, strong) : escapeHtml(plain);
+  return withTitle.charAt(0).toUpperCase() + withTitle.slice(1);
+}
+
 export function buildStatusEmail(r: ClientRequest) {
   const first = escapeHtml((r.clientName || "").split(" ")[0] || "there");
-  const status = STATUS_LABELS[r.status] || r.status || "updated";
-  const lead =
-    r.status === "done"
-      ? `Good news, your request <strong>“${escapeHtml(r.title)}”</strong> is done.`
-      : r.status === "in_progress"
-        ? `Quick update: work has started on <strong>“${escapeHtml(r.title)}”</strong>.`
-        : r.status === "awaiting_client"
-          ? `We need a quick detail from you on <strong>“${escapeHtml(r.title)}”</strong>.`
-          : `Your request <strong>“${escapeHtml(r.title)}”</strong> is now marked as ${escapeHtml((status || r.status).toLowerCase())}.`;
-  const note = r.adminNote
-    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px;background:#f4f5f9;border-radius:12px;border:1px solid #dfe2ea;"><tr><td style="padding:16px 18px;">
-        <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#0e7482;">Note</p>
-        <p style="margin:0;color:#13152a;">${nl2br(r.adminNote)}</p>
-      </td></tr></table>`
-    : "";
+  const status = statusLabel(r.status);
+  const lead = statusLeadHtml(r.status, r.title);
   return renderBrandedEmail({
-    subject: `Update on your request: ${r.title}`,
+    subject: statusEmailSubject(r.title),
     preheader: `Status: ${status}`,
     eyebrow: "Request update",
     title: `Request ${status.toLowerCase()}`,
     bodyHtml: `
       <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:#13152a;">Hi ${first},</p>
       <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:#13152a;">${lead}</p>
-      ${note}
       <p style="margin:18px 0 0;font-size:15px;line-height:1.65;color:#13152a;">If you have any questions, just reply to this email. Thanks so much!</p>
       <p style="margin:12px 0 0;font-size:15px;line-height:1.65;color:#13152a;">Kind regards,<br>Shane</p>`,
     cta: { href: `${SITE}/client-portal`, label: "View your requests" },
     textBody: [
       `Hi ${(r.clientName || "").split(" ")[0] || "there"},`,
       "",
-      `Status: ${status}. Title: ${r.title}`,
-      r.adminNote || "",
+      statusLeadPlain(r.status, r.title),
       "",
       "View: https://www.saabai.ai/client-portal",
     ],

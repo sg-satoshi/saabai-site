@@ -37,3 +37,11 @@ export async function actorLabel(fallback = "Admin"): Promise<string> {
   if (!a) return fallback;
   return a.email ? `${a.name || a.id} <${a.email}>`.slice(0, 160) : a.id.slice(0, 160);
 }
+
+/** Name a client may see. Never includes an email address. */
+export async function actorDisplayName(fallback = "Saabai"): Promise<string> {
+  const a = await currentActor();
+  if (!a) return fallback;
+  const name = (a.name || "").replace(/\s*<[^>]*>/g, "").replace(/[^\s<>]+@[^\s<>]+/g, "").trim();
+  return (name || fallback).slice(0, 80);
+}

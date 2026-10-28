@@ -23,7 +23,7 @@ export default function PreviewFrame() {
   }, []);
   const top = state.ann?.layout === "top";
   return (
-    <div style={{ minHeight: "100vh", background: "#f4f5f9", fontFamily: "Inter,system-ui,sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#f4f5f9", fontFamily: "var(--font-geist-sans), system-ui, sans-serif" }}>
       <div style={{ height: 56, background: "#0b092e", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", color: "#fff", fontWeight: 600 }}>
         <span>saabai.ai</span><span style={{ fontSize: 13, color: "#c9cde8" }}>Preview only</span>
       </div>

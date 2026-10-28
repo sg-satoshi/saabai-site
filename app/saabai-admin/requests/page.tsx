@@ -5,7 +5,7 @@ import RequestsAdminClient from "./RequestsAdminClient";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-export const metadata = { title: "Client Requests — Saabai" };
+export const metadata = { title: "Client Requests | Saabai" };
 
 export default async function AdminRequestsPage() {
   await requireAdmin("/saabai-admin/requests");

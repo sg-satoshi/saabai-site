@@ -24,7 +24,7 @@ type PlanOption = { key: string; label: string; cap: number };
 const css = `
 .bd{max-width:1100px}
 .bd h1{margin:8px 0 4px}
-.bd h2{margin:0 0 8px;font:600 15px Inter,system-ui,sans-serif}
+.bd h2{margin:0 0 8px;font:600 15px var(--font-admin-sans),system-ui,sans-serif}
 .bd-back{font-size:13px;color:var(--n-700)}
 .bd-links{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
 .bd-slug{color:var(--n-500);font-size:13px}
@@ -35,7 +35,7 @@ const css = `
 .bd-grid dd{margin:0;color:var(--n-900)}
 .bd-facts{white-space:pre-wrap;max-height:180px;overflow:auto;margin:0}
 .bd-plan{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px}
-.bd-plan select{font:400 13px Inter,system-ui,sans-serif;border:1px solid var(--n-200);border-radius:6px;background:#fff;padding:4px 6px}
+.bd-plan select{font:400 13px var(--font-admin-sans),system-ui,sans-serif;border:1px solid var(--n-200);border-radius:6px;background:#fff;padding:4px 6px}
 .bd-alert{background:#fff;border:1px solid #f6c4bf;color:#b42318;border-radius:10px;padding:12px 16px;margin:8px 0;font-size:13px}
 .bd-flag{font-weight:600}.bd-flag.near{color:#8a5a00}.bd-flag.over{color:#b42318}
 #plan,#editor{scroll-margin-top:80px}

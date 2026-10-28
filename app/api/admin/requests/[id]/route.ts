@@ -2,15 +2,17 @@
  * GET/PATCH /api/admin/requests/:id
  * PATCH: status, assignee, autoHandle/discussWithShane, internal note, reply to client
  */
-import { actorLabel } from "../../../../../lib/auth-acl";
+import { actorDisplayName, actorLabel } from "../../../../../lib/auth-acl";
 import { requireAdminSession } from "../../../../../lib/admin-guard";
 import {
   addTimelineEntry,
+  annotateStatusEmail,
   getRequest,
   updateRequest,
   type RequestAssignee,
 } from "../../../../../lib/client-requests";
 import { sendStatusUpdate } from "../../../../../lib/client-request-emails";
+import { shouldEmailStatus } from "../../../../../lib/request-notify";
 import { addChangeLogEntry } from "../../../../../lib/change-log";
 import { EMAIL_BRAND, escapeHtml, renderBrandedEmail, sendBrandedEmail } from "../../../../../lib/email/branded-layout";
 
@@ -43,7 +45,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       const next = await addTimelineEntry(id, {
         kind: "comment",
         authorKind: "admin",
-        authorName: typeof body.authorName === "string" ? body.authorName : "Shane",
+        authorName: await actorDisplayName(),
         body: body.reply.trim(),
       });
       if (!next) return Response.json({ error: "Not found" }, { status: 404 });
@@ -73,6 +75,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     let request = await getRequest(id);
     if (!request) return Response.json({ error: "Not found" }, { status: 404 });
+    const previousStatus = request.status;
     let statusChanged = false;
 
     if (hasFieldUpdate) {
@@ -89,6 +92,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       statusChanged = result.statusChanged;
     }
 
+    const statusEntryId = statusChanged
+      ? [...request.timeline].reverse().find((t) => t.kind === "status" && !t.internal)?.id
+      : undefined;
+
     if (typeof body.internalNote === "string" && body.internalNote.trim()) {
       const next = await addTimelineEntry(id, {
         kind: "internal_note",
@@ -102,16 +109,27 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
 
     let emailed = false;
-    if (statusChanged && body.notifyClient !== false) {
-      emailed = await sendStatusUpdate(request);
+    if (statusChanged) {
+      const actor = await actorLabel();
+      // Status saves do not include handling fields. adminNote is never part of the client email.
+      if (shouldEmailStatus(request.status, body.notifyClient)) {
+        try {
+          emailed = await sendStatusUpdate({ ...request, adminNote: undefined });
+        } catch (err) {
+          console.error("[admin/requests] status email", err);
+          emailed = false;
+        }
+      }
       await addChangeLogEntry({
         siteId: request.siteId || request.clientId,
         siteName: request.siteName || request.clientName || request.clientId,
-        summary: `Request “${request.title}” → ${request.status}`,
+        summary: `Request "${request.title}" → ${request.status}`,
         source: "request",
         requestId: request.id,
-        authorName: await actorLabel(),
+        authorName: actor,
       });
+      const noted = await annotateStatusEmail(id, previousStatus, request.status, emailed, actor, statusEntryId);
+      if (noted) request = noted;
     }
     return Response.json({ request, statusChanged, emailed });
   } catch (err) {

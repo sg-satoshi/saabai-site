@@ -15,10 +15,10 @@ export type EditorRow = {
 
 const css = `
 .ce{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:20px;margin-top:14px;padding-top:14px;border-top:1px solid #e6e6ef}
-.ce h3{margin:0 0 8px;font:600 13px Inter,system-ui,sans-serif;color:var(--n-900)}
+.ce h3{margin:0 0 8px;font:600 13px var(--font-admin-sans),system-ui,sans-serif;color:var(--n-900)}
 .ce fieldset{border:0;padding:0;margin:0 0 16px}
 .ce label{display:block;font-size:12px;color:var(--n-600);margin:0 0 10px}
-.ce input[type=text],.ce textarea,.ce select{display:block;width:100%;margin-top:4px;padding:6px 8px;border:1px solid var(--n-200);border-radius:8px;font:400 13px Inter,system-ui,sans-serif;background:#fff;color:var(--n-900);box-sizing:border-box}
+.ce input[type=text],.ce textarea,.ce select{display:block;width:100%;margin-top:4px;padding:6px 8px;border:1px solid var(--n-200);border-radius:8px;font:400 13px var(--font-admin-sans),system-ui,sans-serif;background:#fff;color:var(--n-900);box-sizing:border-box}
 .ce textarea{min-height:110px;resize:vertical}
 .ce .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .ce .col{display:flex;align-items:center;gap:8px;margin-top:4px}
@@ -37,15 +37,15 @@ const css = `
 .ce .bulk-top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
 .ce .include{display:flex;align-items:center;gap:6px;margin:0 0 0 auto;font-size:12px;color:var(--n-700)}
 .ce .include input{margin:0}
-.ce .pill{font:600 11px Inter,system-ui,sans-serif;border-radius:999px;padding:2px 8px}
+.ce .pill{font:600 11px var(--font-admin-sans),system-ui,sans-serif;border-radius:999px;padding:2px 8px}
 .ce .pill.ok{background:#e7f6ee;color:#137a52}
 .ce .pill.bad{background:#fdecea;color:#b42318}
 .ce .pill.skip{background:#f4f4f8;color:#5c5c70}
-.ce .count{font:600 12.5px Inter,system-ui,sans-serif;color:var(--n-800);margin:8px 0 4px}
+.ce .count{font:600 12.5px var(--font-admin-sans),system-ui,sans-serif;color:var(--n-800);margin:8px 0 4px}
 .ce .pv{position:sticky;top:12px;align-self:start}
 .ce .pvbox{border:1px solid #e6e6ef;border-radius:12px;overflow:hidden;background:#fff}
 .ce .pvtools{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px}
-.ce .seg{height:28px;padding:0 10px;border:1px solid var(--n-200);border-radius:999px;background:#fff;font:600 12px Inter,system-ui,sans-serif;color:var(--n-700);cursor:pointer}
+.ce .seg{height:28px;padding:0 10px;border:1px solid var(--n-200);border-radius:999px;background:#fff;font:600 12px var(--font-admin-sans),system-ui,sans-serif;color:var(--n-700);cursor:pointer}
 .ce .seg[aria-pressed=true]{background:var(--navy-900);border-color:var(--navy-900);color:#fff}
 .ce iframe{display:block;border:0;height:600px;margin:0 auto;background:transparent;max-width:100%}
 .ce code{display:block;padding:8px;background:#0b092e;color:#d6f3f6;border-radius:8px;font:12px/1.5 var(--mono,monospace);white-space:pre-wrap;word-break:break-all}

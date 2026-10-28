@@ -36,7 +36,7 @@
   .foot2{position:static;margin-top:28px;left:auto;right:auto}
 }
 
-.auth-screen{font-family:var(--font-admin-sans),Inter,system-ui,sans-serif;font-feature-settings:"cv11","ss01"}
+.auth-screen{--font-admin-sans:Inter,system-ui,sans-serif;font-family:Inter,system-ui,sans-serif;font-feature-settings:"cv11","ss01"}
 .auth-screen .num{font-family:var(--font-admin-mono),var(--mono);font-variant-numeric:tabular-nums}
 .auth-screen .chkline{display:flex;align-items:flex-start;gap:10px;margin-top:16px;color:#c9cde8;font-size:13px;line-height:1.45}
 .auth-screen .chkline input{margin-top:3px;accent-color:var(--gold-500)}

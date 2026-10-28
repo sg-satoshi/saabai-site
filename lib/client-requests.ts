@@ -82,6 +82,8 @@ export interface TimelineEntry {
   body: string;
   /** Internal notes never returned to clients. */
   internal?: boolean;
+  /** Admin-only link to the client-visible status entry this note describes. */
+  refId?: string;
   createdAt: string;
 }
 
@@ -239,6 +241,46 @@ function parse(raw: unknown): ClientRequest | null {
   };
 }
 
+const EMAIL_FLAG = /client not emailed|client emailed|\bnot emailed\b|\bemailed\b/i;
+/** Stored before the client-visible status line. Exact, so a normal message that says "emailed" is left alone. */
+const LEGACY_STATUS_LINE = /^Status: .+ · Client (not )?emailed$/;
+const BARE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** "Name <email>" becomes "Name". A bare address is not used as an author. */
+function authorForClient(t: TimelineEntry): string {
+  const fallback = t.authorKind === "client" ? "Client" : t.authorKind === "system" ? "System" : "Saabai";
+  const name = t.authorName.replace(/\s*<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+  if (!name || BARE_EMAIL.test(name)) return fallback;
+  return name;
+}
+
+/** Client-visible status copy. Only used for status entries and the legacy status line. */
+function statusBodyForClient(body: string): string {
+  const setTo = body.match(/^Status set to\s+(.+)\.$/);
+  if (setTo) return `Status set to ${setTo[1].trim()}.`;
+  const legacy = body.match(/^Status: .+ →\s*(.+?)\s*· Client (?:not )?emailed$/);
+  if (legacy && legacy[1].trim()) return `Status set to ${legacy[1].trim()}.`;
+  return "Status updated.";
+}
+
+function forClient(t: TimelineEntry): TimelineEntry {
+  if (t.kind === "status" || LEGACY_STATUS_LINE.test(t.body)) {
+    return {
+      ...t,
+      internal: false,
+      refId: undefined,
+      authorName: "Saabai",
+      body: statusBodyForClient(t.body),
+    };
+  }
+  return {
+    ...t,
+    refId: undefined,
+    authorName: authorForClient(t),
+    body: t.body,
+  };
+}
+
 /** Strip internal fields for client-facing responses. */
 export function toClientView(r: ClientRequest): Omit<ClientRequest, "timeline" | "adminNote" | "agreedChange"> & {
   timeline: TimelineEntry[];
@@ -248,7 +290,7 @@ export function toClientView(r: ClientRequest): Omit<ClientRequest, "timeline" |
   void _omit;
   return {
     ...rest,
-    timeline: r.timeline.filter((t) => !t.internal),
+    timeline: r.timeline.filter((t) => !t.internal).map(forClient),
   };
 }
 
@@ -380,7 +422,7 @@ export async function updateRequest(
         entry({
           kind: "status",
           authorKind: "admin",
-          authorName: "Admin",
+          authorName: "Saabai",
           body: `Status set to ${STATUS_LABELS[next.status] || next.status}.`,
         }),
       );
@@ -436,6 +478,48 @@ export async function updateRequest(
   const redis = requireRedis();
   await redis.hset(REQUESTS_KEY, { [id]: JSON.stringify(next) });
   return { request: next, statusChanged };
+}
+
+/**
+ * Record whether the client was emailed, on an internal note tied to one status entry.
+ * A missing entry is left alone, so a second save cannot tag the other note.
+ * The client-visible line stays "Status set to X." by Saabai.
+ */
+export async function annotateStatusEmail(
+  id: string,
+  fromStatus: string,
+  toStatus: string,
+  emailed: boolean,
+  authorName: string,
+  statusEntryId?: string,
+): Promise<ClientRequest | null> {
+  const existing = await getRequest(id);
+  if (!existing) return null;
+  if (!statusEntryId) return existing;
+  const target = existing.timeline.find((t) => t.id === statusEntryId && t.kind === "status" && !t.internal);
+  if (!target) return existing;
+  if (existing.timeline.some((t) => t.internal && t.refId === statusEntryId)) return existing;
+
+  const to = STATUS_LABELS[toStatus] || toStatus;
+  if (EMAIL_FLAG.test(target.body) || target.authorName.includes("@")) {
+    target.body = `Status set to ${to}.`;
+    target.authorName = "Saabai";
+    target.authorKind = "admin";
+    target.internal = false;
+  }
+
+  const from = STATUS_LABELS[fromStatus] || fromStatus;
+  existing.timeline.push(
+    entry({
+      kind: "status",
+      authorKind: "admin",
+      authorName,
+      internal: true,
+      refId: statusEntryId,
+      body: `Status: ${from} → ${to} · ${emailed ? "Client emailed" : "Client not emailed"}`,
+    }),
+  );
+  return saveRequest(existing);
 }
 
 export async function addTimelineEntry(

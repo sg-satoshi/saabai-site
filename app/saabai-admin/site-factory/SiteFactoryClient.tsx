@@ -1754,7 +1754,7 @@ export default function SiteFactoryClient() {
     const isMulti = multiPageProgress.length > 0;
     const doneCount = multiPageProgress.filter(p => p.status === "done").length;
     return (
-      <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: C.bg, color: C.text, fontFamily: "Inter, system-ui, sans-serif" }}>
+      <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: C.bg, color: C.text, fontFamily: "var(--font-admin-sans), system-ui, sans-serif" }}>
         <div style={{ padding: "14px 20px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
           <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.gold, animation: "pulse 1.4s ease-in-out infinite" }} />
           <span style={{ fontWeight: 600, fontSize: 14 }}>
@@ -1820,7 +1820,7 @@ export default function SiteFactoryClient() {
     const sidebarWidth = isMobile ? "100%" : `${sidebarPx}px`;
 
     return (
-      <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: C.bg, color: C.text, fontFamily: "Inter, system-ui, sans-serif", overflow: "hidden" }}>
+      <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: C.bg, color: C.text, fontFamily: "var(--font-admin-sans), system-ui, sans-serif", overflow: "hidden" }}>
 
         {/* Hidden file inputs */}
         <input
@@ -2964,7 +2964,7 @@ export default function SiteFactoryClient() {
     : "36px minmax(160px,2fr) minmax(140px,2fr) 124px 168px 72px 80px 100px";
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "Inter, system-ui, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "var(--font-admin-sans), system-ui, sans-serif" }}>
 
       {/* ── Header ── */}
       <div style={{ borderBottom: `1px solid ${C.border}`, paddingBottom: 0 }}>
