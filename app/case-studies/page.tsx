@@ -38,12 +38,12 @@ export default function CaseStudies() {
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
-          One published example: a custom AI sales agent on the Rex Plastics website.
+          One published example: a custom AI sales agent that ran on the Rex Plastics website.
         </p>
         <InShort>
-          Saabai, a Gold Coast AI business founded by Shane Goldberg, has a custom AI
-          sales agent live for Rex Plastics. It answers
-          product questions and prices cut-to-size jobs from that supplier&apos;s catalogue.
+          Saabai, a Gold Coast AI business founded by Shane Goldberg, had a custom AI
+          sales agent for Rex Plastics. It answered
+          product questions and priced cut-to-size jobs from that supplier&apos;s catalogue.
           A Blueprint is optional, from{" "}
           <a href="/blueprint">the Starter Blueprint at $497</a>. Website care plans are sold on their own.
         </InShort>
@@ -92,12 +92,12 @@ export default function CaseStudies() {
             </h3>
             <div className="flex flex-col gap-3 text-saabai-text-muted text-sm leading-relaxed">
               <p>
-                Rex is a custom AI sales agent on the supplier&apos;s website. It answers
-                product questions at any hour, prices cut-to-size jobs from that
-                supplier&apos;s own product data, and captures leads.
+                Rex was a custom AI sales agent on the supplier&apos;s website. It answered
+                product questions at any hour, priced cut-to-size jobs from that
+                supplier&apos;s own product data, and captured leads.
               </p>
               <p>
-                Leads are emailed to the sales team. This quoting setup was scoped
+                Leads were emailed to the sales team. This quoting setup was scoped
                 for this client. It is not included in the website care plans.
               </p>
             </div>
@@ -111,7 +111,7 @@ export default function CaseStudies() {
             </h3>
             <div className="flex flex-col gap-3 text-saabai-text-muted text-sm leading-relaxed">
               <p>
-                This page describes what the agent does. Custom agents are quoted to the job.
+                This page describes what the agent did. Custom agents are quoted to the job.
               </p>
             </div>
           </div>
