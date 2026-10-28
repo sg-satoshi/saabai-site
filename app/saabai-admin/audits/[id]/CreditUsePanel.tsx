@@ -9,7 +9,6 @@ import {
   creditModelForEngagement,
   resolveDeliveredAt,
   TIER_CREDIT_CENTS,
-  tierCreditName,
 } from "../../../../lib/blueprint-credit";
 import { formatAud } from "../../../../lib/money";
 
@@ -78,7 +77,7 @@ export function CreditUsePanel({
     <div style={{ display: "grid", gap: 12 }}>
       <div className="au-stats">
         <div>
-          <div className="au-stat-l">{tierCreditName(eng.tier)} credit</div>
+          <div className="au-stat-l">Credit</div>
           <div className="au-stat-v">{formatAud(full / 100)}</div>
         </div>
         <div>

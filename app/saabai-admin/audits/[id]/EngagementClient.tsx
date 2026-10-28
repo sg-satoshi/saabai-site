@@ -350,7 +350,7 @@ export default function EngagementClient({ id }: { id: string }) {
                   </strong>
                 </p>
               )}
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
                 <button type="button" className="btn pri au-1" onClick={sendQuestionnaire} disabled={busy === "send"}>
                   {busy === "send" ? "Sending…" : eng.factFindSentAt ? "Re-send questionnaire email" : "Email questionnaire to client"}
                 </button>
@@ -366,7 +366,7 @@ export default function EngagementClient({ id }: { id: string }) {
                 </button>
                 <button
                   type="button"
-                  className="btn au-2"
+                  className="au-link"
                   onClick={() => {
                     navigator.clipboard.writeText(onboardingLink);
                     showFlash("Search onboarding link copied. It is not emailed.");
@@ -396,7 +396,7 @@ export default function EngagementClient({ id }: { id: string }) {
             <SectionCard className="au-main" title="Client Timeline">
               {(eng.timeline ?? []).length === 0 ? (
                 <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>
-                  No events yet - touchpoints are logged automatically (questionnaire sent, fact-find progress, sessions, assessment, report delivery).
+                  No events yet. Touchpoints are logged automatically: questionnaire sent, fact-find progress, sessions, assessment and report delivery.
                 </p>
               ) : (
                 <div style={{ position: "relative", paddingLeft: 22 }}>
