@@ -101,6 +101,8 @@ const PUBLIC_API = [
   "/api/analyze-document",
   // AI Audit fact-find — token-gated public questionnaire (clients have no login)
   "/api/audit/factfind",
+  // Blueprint search onboarding. Same fact-find token, no login. The route stores nothing for demo tokens.
+  "/api/audit/onboarding",
   // Payments (Stripe verifies its own webhook signatures)
   "/api/checkout",
   "/api/blueprint/checkout", // Saabai Blueprint one-off Stripe Checkout (public buyers)

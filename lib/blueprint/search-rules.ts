@@ -249,6 +249,11 @@ export type ClientFigures = {
 export type SearchClientInput = {
   name?: string;
   firmType?: string;
+  /**
+   * Set only when the client picked a kind in onboarding. Absent means the
+   * kind is inferred from firm type and the words they already gave us.
+   */
+  businessKind?: "local-trade" | "professional" | "property" | "general";
   industry?: string;
   overview?: string;
   location?: string;
@@ -259,6 +264,39 @@ export type SearchClientInput = {
   statedGoogleReviews?: number;
   figures?: ClientFigures;
 };
+
+/** Every check id evaluateSearch can emit. Onboarding questions map onto this list. */
+export const SEARCH_CHECK_IDS = [
+  "robots_index",
+  "canonical",
+  "host",
+  "orphans",
+  "utility_indexable",
+  "thin_indexable",
+  "ai_search_crawlers",
+  "ai_training_crawlers",
+  "llms_present",
+  "llms_accurate",
+  "schema_business",
+  "schema_match",
+  "schema_faq",
+  "schema_breadcrumb",
+  "schema_article",
+  "answerable_pricing",
+  "comparison",
+  "promise",
+  "rating_fold",
+  "cta_fold",
+  "from_price",
+  "service_pages",
+  "gbp_link",
+  "question_gap",
+  "questions_shell",
+  "conversion_shell",
+  "leak_inputs",
+] as const;
+
+export type SearchCheckId = (typeof SEARCH_CHECK_IDS)[number];
 
 export type HostProbe = { url: string; status: number; location: string | null };
 export type HtmlPage = { url: string; status: number; html: string; headers?: Record<string, string> };
@@ -291,6 +329,8 @@ export type SearchCheck = {
   effortMins: number;
   confidence: Confidence;
   bucket: FindingBucket;
+  /** Set when this line used a fallback instead of a fact the client confirmed. */
+  assumption?: string;
 };
 
 export type QuestionResult = {
@@ -301,6 +341,8 @@ export type QuestionResult = {
   why: string;
   confidence: Confidence;
   effort?: string;
+  /** Set when the result was inferred from page wording, not confirmed by the client. */
+  assumption?: string;
 };
 
 export type SearchAudit = {
@@ -326,7 +368,15 @@ export type SearchAudit = {
   unreadNote?: string;
 };
 
-export function classifyBusiness(input: Pick<SearchClientInput, "firmType" | "industry" | "overview">): { kind: BusinessKind; bank: QuestionBankId } {
+export function classifyBusiness(input: Pick<SearchClientInput, "firmType" | "industry" | "overview" | "businessKind">): { kind: BusinessKind; bank: QuestionBankId } {
+  if (input.businessKind === "property") return { kind: "local-trade", bank: "property" };
+  if (input.businessKind === "professional") return { kind: "professional", bank: "professional" };
+  if (input.businessKind === "general") return { kind: "general", bank: "general" };
+  if (input.businessKind === "local-trade") {
+    const chosen = `${input.industry ?? ""} ${input.overview ?? ""}`.toLowerCase();
+    if (PROPERTY_TERMS.some((t) => chosen.includes(t))) return { kind: "local-trade", bank: "property" };
+    return { kind: "local-trade", bank: "local" };
+  }
   const firm = (input.firmType ?? "").toLowerCase().trim();
   if (firm === "real-estate" || firm === "real estate" || firm === "property") return { kind: "local-trade", bank: "property" };
   if (["law", "legal", "accounting", "financial-advisory", "financial", "professional"].includes(firm)) return { kind: "professional", bank: "professional" };
@@ -562,8 +612,12 @@ export function evaluateSearch(snapshot: CrawlSnapshot, client: SearchClientInpu
   checks.push(...schemaChecks(snapshot, shell));
   checks.push(...contentChecks(snapshot, shell));
   if (shell) {
-    checks.push(unknownCheck("questions_shell", "questions", "Buyer questions were not scored.", "The homepage is built by JavaScript and the HTML has almost no text, so we did not mark questions as missing.", home.url, "medium"));
-    checks.push(unknownCheck("conversion_shell", "conversion", "First-screen conversion checks were not scored from empty HTML.", FOLD_NOTE, home.url, "low"));
+    const questionsShell = unknownCheck("questions_shell", "questions", "Buyer questions were not scored.", "The homepage is built by JavaScript and the HTML has almost no text, so we did not mark questions as missing.", home.url, "medium");
+    questionsShell.assumption = "Buyer questions were not scored from empty HTML. Nothing was marked missing.";
+    checks.push(questionsShell);
+    const conversionShell = unknownCheck("conversion_shell", "conversion", "First-screen conversion checks were not scored from empty HTML.", FOLD_NOTE, home.url, "low");
+    conversionShell.assumption = "First-screen checks were not scored from empty HTML. Nothing was filled in.";
+    checks.push(conversionShell);
   } else {
     checks.push(promiseCheck(home, client));
     checks.push(ratingCheck(snapshot, client));
@@ -572,6 +626,7 @@ export function evaluateSearch(snapshot: CrawlSnapshot, client: SearchClientInpu
     checks.push(serviceCheck(snapshot, client));
   }
   checks.push(gbpCheck(snapshot, client, shell));
+  checks.push(leakInputsCheck(client, home.url));
 
   const questions = shell ? [] : scoreBuyerQuestions(snapshot.pages, QUESTION_BANKS[kindInfo.bank]);
   const questionScore = questions.length ? Math.round((questions.reduce((n, q) => n + (q.result === "clear" ? 1 : q.result === "partial" ? 0.5 : 0), 0) / questions.length) * 100) : null;
@@ -590,6 +645,7 @@ export function evaluateSearch(snapshot: CrawlSnapshot, client: SearchClientInpu
       effortMins: 60,
       confidence: "medium",
       bucket: "owner-decision",
+      assumption: questionGapAssumption(client),
     });
   }
 
@@ -640,6 +696,7 @@ export function scoreBuyerQuestions(pages: HtmlPage[], bank: BuyerQuestion[]): Q
             page: page.url,
             why: "A direct answer follows the question on this page.",
             confidence: inHeading ? "high" as const : "medium" as const,
+            assumption: "Marked clear from words on the page. You have not confirmed this answer.",
           };
         }
       }
@@ -654,6 +711,7 @@ export function scoreBuyerQuestions(pages: HtmlPage[], bank: BuyerQuestion[]): Q
         why: "The topic is on this page, but a buyer does not get a direct answer.",
         confidence: "medium",
         effort: "Write a short answer in your own words. About 10 minutes.",
+        assumption: "The topic is on the page. No answer was filled in.",
       };
     }
     return {
@@ -782,7 +840,9 @@ function orphanCheck(snapshot: CrawlSnapshot): SearchCheck {
   const shown = orphans.slice(0, 8).join(", ");
   const more = orphans.length > 8 ? ` and ${orphans.length - 8} more` : "";
   const cap = snapshot.capped ? " We did not open every page, so a link from a page we skipped would clear one of these." : "";
-  return failCheck("orphans", "indexing", 2, `${orphans.length} sitemap page${orphans.length === 1 ? "" : "s"} had no internal link: ${shown}${more}.${cap}`, WHY.orphans, orphans[0], "About 30 to 60 minutes. Add a link, or take the page out of the sitemap.", 45, snapshot.capped ? "medium" : "high", "quick-win");
+  const finding = failCheck("orphans", "indexing", 2, `${orphans.length} sitemap page${orphans.length === 1 ? "" : "s"} had no internal link: ${shown}${more}.${cap}`, WHY.orphans, orphans[0], "About 30 to 60 minutes. Add a link, or take the page out of the sitemap.", 45, snapshot.capped ? "medium" : "high", "quick-win");
+  if (snapshot.capped) finding.assumption = "The crawl stopped at the page cap, so a link on a page we did not open could clear one of these.";
+  return finding;
 }
 
 function thinAndUtility(snapshot: CrawlSnapshot, robotsBody: string | null): SearchCheck[] {
@@ -870,7 +930,9 @@ function llmsChecks(snapshot: CrawlSnapshot, client: SearchClientInput): SearchC
   const present = passCheck("llms_present", "ai-search", 2, "llms.txt is present.", page);
   const name = (client.name ?? "").trim();
   if (!name) {
-    return [present, unknownCheck("llms_accurate", "ai-search", "llms.txt is present. Accuracy was not scored because no business name was supplied.", "We do not invent a name to compare it with.", page, "medium")];
+    const accurate = unknownCheck("llms_accurate", "ai-search", "llms.txt is present. Accuracy was not scored because no business name was supplied.", "We do not invent a name to compare it with.", page, "medium");
+    accurate.assumption = "No business name was supplied, so accuracy was not scored.";
+    return [present, accurate];
   }
   if (!nameMatches(body, name)) {
     return [present, failCheck("llms_accurate", "ai-search", 2, `llms.txt does not mention ${name}.`, WHY.llms, page, "About 15 minutes to add the real name and what you do.", 15, "high", "quick-win")];
@@ -880,7 +942,9 @@ function llmsChecks(snapshot: CrawlSnapshot, client: SearchClientInput): SearchC
   if (missed.length) {
     return [present, partialCheck("llms_accurate", "ai-search", 2, `llms.txt names the business, but it does not mention: ${missed.join(", ")}.`, WHY.llms, page, "About 15 minutes.", 15, "medium", "quick-win")];
   }
-  return [present, passCheck("llms_accurate", "ai-search", 2, services.length ? "llms.txt names the business and the services you supplied." : "llms.txt names the business. No service list was supplied, so only the name was checked.", page)];
+  const accurate = passCheck("llms_accurate", "ai-search", 2, services.length ? "llms.txt names the business and the services you supplied." : "llms.txt names the business. No service list was supplied, so only the name was checked.", page);
+  if (!services.length) accurate.assumption = "No service list was supplied, so only the business name was checked.";
+  return [present, accurate];
 }
 
 const BUSINESS_TYPE_RE = /LocalBusiness|Organization|ProfessionalService|HomeAndConstructionBusiness|MedicalBusiness|FinancialService|LegalService|RealEstateAgent|AccountingService|Store|Dentist|Attorney|Plumber|Electrician|Contractor|HousePainter|RoofingContractor|Locksmith|HVACBusiness|GeneralContractor|MedicalClinic|Physician|Restaurant|AutoRepair|HomeAndConstructionBusiness/i;
@@ -1001,13 +1065,28 @@ function promiseCheck(home: HtmlPage, client: SearchClientInput): SearchCheck {
   }
   const title = (home.html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "").replace(/\s+/g, " ").trim();
   const h1 = visibleText((home.html.match(/<h1\b[^>]*>[\s\S]*?<\/h1>/i)?.[0] ?? ""));
-  if (!title && !h1) return failCheck("promise", "conversion", 2, "The homepage has no title and no main heading to carry the promise.", WHY.promise, home.url, "Your call on the words. About 15 minutes to add a heading.", 15, "medium", "owner-decision");
+  const assumption = "No promise was supplied, so the title and the heading were compared. That is not your offer in your words.";
+  if (!title && !h1) {
+    const check = failCheck("promise", "conversion", 2, "The homepage has no title and no main heading to carry the promise.", WHY.promise, home.url, "Your call on the words. About 15 minutes to add a heading.", 15, "medium", "owner-decision");
+    check.assumption = assumption;
+    return check;
+  }
   const tw = significant(title);
   const hw = new Set(significant(h1));
   const overlap = tw.length ? tw.filter((w) => hw.has(w)).length / tw.length : h1 ? 1 : 0;
-  if (title && h1 && overlap >= 0.5) return passCheck("promise", "conversion", 2, `No separate promise was supplied. The title and the main heading agree. Heading: "${clip(h1, 120)}".`, home.url);
-  if (title && h1) return partialCheck("promise", "conversion", 2, `No promise was supplied. The title and the main heading do not say the same thing. Title: "${clip(title, 120)}". Heading: "${clip(h1, 120)}".`, WHY.promise, home.url, "Your call on which line is the promise.", 20, "medium", "owner-decision");
-  return partialCheck("promise", "conversion", 2, `No promise was supplied. ${title ? "There is a title but no main heading." : "There is a main heading but no title."}`, WHY.promise, home.url, "About 15 minutes.", 15, "medium", "owner-decision");
+  if (title && h1 && overlap >= 0.5) {
+    const check = passCheck("promise", "conversion", 2, `No separate promise was supplied. The title and the main heading agree. Heading: "${clip(h1, 120)}".`, home.url);
+    check.assumption = assumption;
+    return check;
+  }
+  if (title && h1) {
+    const check = partialCheck("promise", "conversion", 2, `No promise was supplied. The title and the main heading do not say the same thing. Title: "${clip(title, 120)}". Heading: "${clip(h1, 120)}".`, WHY.promise, home.url, "Your call on which line is the promise.", 20, "medium", "owner-decision");
+    check.assumption = assumption;
+    return check;
+  }
+  const check = partialCheck("promise", "conversion", 2, `No promise was supplied. ${title ? "There is a title but no main heading." : "There is a main heading but no title."}`, WHY.promise, home.url, "About 15 minutes.", 15, "medium", "owner-decision");
+  check.assumption = assumption;
+  return check;
 }
 
 function ratingCheck(snapshot: CrawlSnapshot, client: SearchClientInput): SearchCheck {
@@ -1059,15 +1138,24 @@ function serviceCheck(snapshot: CrawlSnapshot, client: SearchClientInput): Searc
     if (!missing.length) return passCheck("service_pages", "conversion", 2, "Each service you listed has its own page.", home.url);
     return failCheck("service_pages", "conversion", 2, `These services do not have their own page: ${missing.join(", ")}.`, WHY.services, home.url, "Your call which services deserve a page. Each page is a writing job.", 120, "medium", "owner-decision");
   }
+  const assumption = "No service list was supplied. The menu was treated as the list, which may not be what you sell.";
   const nav = navServices(home);
-  if (nav.length < 2) return unknownCheck("service_pages", "conversion", "One page per service was not scored.", "No service list was supplied, and the menu does not show separate services. We have not invented a list.", home.url, "medium");
+  if (nav.length < 2) {
+    const check = unknownCheck("service_pages", "conversion", "One page per service was not scored.", "No service list was supplied, and the menu does not show separate services. We have not invented a list.", home.url, "medium");
+    check.assumption = assumption;
+    return check;
+  }
   const distinct = new Set(nav.map((n) => {
     try { return new URL(n.url).pathname.replace(/\/+$/, "") || "/"; } catch { return n.url; }
   }));
   if (distinct.size === 1 && [...distinct][0] === "/") {
-    return failCheck("service_pages", "conversion", 2, `The menu names ${nav.map((n) => n.text).join(", ")}, but they all point at the homepage.`, WHY.services, home.url, "Your call which of these get a page.", 120, "medium", "owner-decision");
+    const check = failCheck("service_pages", "conversion", 2, `The menu names ${nav.map((n) => n.text).join(", ")}, but they all point at the homepage.`, WHY.services, home.url, "Your call which of these get a page.", 120, "medium", "owner-decision");
+    check.assumption = assumption;
+    return check;
   }
-  return passCheck("service_pages", "conversion", 2, `The menu gives these their own pages: ${nav.map((n) => n.text).join(", ")}.`, home.url);
+  const check = passCheck("service_pages", "conversion", 2, `The menu gives these their own pages: ${nav.map((n) => n.text).join(", ")}.`, home.url);
+  check.assumption = assumption;
+  return check;
 }
 
 function gbpCheck(snapshot: CrawlSnapshot, client: SearchClientInput, shell: boolean): SearchCheck {
@@ -1078,6 +1166,27 @@ function gbpCheck(snapshot: CrawlSnapshot, client: SearchClientInput, shell: boo
   const note = stated !== undefined ? ` You told us the rating is ${stated}. We did not look it up.` : " We did not look up a rating.";
   if (linked) return passCheck("gbp_link", "gbp", 3, `The site links to a Google profile.${note}`, pageWith(snapshot, "google.") ?? snapshot.finalUrl);
   return failCheck("gbp_link", "gbp", 3, `No Google profile link on the pages we opened.${note}`, WHY.gbp, snapshot.finalUrl, "Your call to link the real profile. About 10 minutes once you have the address.", 15, "medium", "owner-decision");
+}
+
+function questionGapAssumption(client: SearchClientInput): string {
+  const firm = (client.firmType ?? "").toLowerCase().trim();
+  const knownFirm = ["law", "legal", "accounting", "financial-advisory", "financial", "professional", "real-estate", "real estate", "property"].includes(firm);
+  const typed = Boolean(client.businessKind || knownFirm || (client.industry ?? "").trim());
+  const base = "A question is marked clear only when the page uses a set phrase and a nearby signal. Different wording can be missed.";
+  if (typed) return base;
+  return `${base} Business type was not confirmed, so the question list is a best fit from the words on hand.`;
+}
+
+function leakInputsCheck(client: SearchClientInput, page: string): SearchCheck {
+  const figures = cleanFigures(client.figures);
+  const ready = figures?.missedEnquiriesPerMonth !== undefined && figures.closeRate !== undefined && figures.averageJobAud !== undefined;
+  if (ready) {
+    return passCheck("leak_inputs", "conversion", 0, "Missed enquiries, close rate, and average job value were supplied by the client.", page);
+  }
+  const check = unknownCheck("leak_inputs", "conversion", figures ? "The leak estimate is still missing one of the three client numbers." : "The leak estimate has no client numbers.", "A dollar figure is only your arithmetic. Missing numbers are not estimated.", page, "high");
+  check.points = 0;
+  check.assumption = "Missing enquiry, close rate, or job value figures were not estimated.";
+  return check;
 }
 
 function passCheck(id: string, area: SearchArea, points: number, what: string, page: string): SearchCheck {
