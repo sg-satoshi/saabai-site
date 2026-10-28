@@ -20,6 +20,8 @@ import {
 } from "docx";
 import { AuditEngagement } from "./audit-types";
 import { startAnswers } from "./audit-assessment";
+import { searchReportBlocks, searchSkippedBlocks, type ReportBlock } from "./blueprint/search-audit";
+import type { SearchAudit } from "./blueprint/search-rules";
 
 const NAVY = "0E0C2E";
 const GOLD = "C9A84C";
@@ -152,13 +154,23 @@ export function whatYouToldUs(eng: AuditEngagement): Paragraph[] {
   return out;
 }
 
+function pushBlocks(children: (Paragraph | Table)[], blocks: ReportBlock[]) {
+  for (const b of blocks) {
+    if (b.kind === "h1") children.push(h1(b.text));
+    else if (b.kind === "h2") children.push(h2(b.text));
+    else if (b.kind === "muted") children.push(body(b.text, { italic: true, color: GREY }));
+    else children.push(body(b.text));
+  }
+}
+
 function noBorders() {
   const none = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" } as const;
   return { top: none, bottom: none, left: none, right: none };
 }
 
 export async function buildAuditReportDocx(
-  eng: AuditEngagement
+  eng: AuditEngagement,
+  search?: SearchAudit | null
 ): Promise<Buffer> {
   const a = eng.assessment;
   const tierName = TIER_NAMES[eng.tier] ?? eng.tier;
@@ -240,6 +252,16 @@ export async function buildAuditReportDocx(
   if (a?.quickWins) {
     children.push(h2("Quick Wins (First 30 Days)"), body(a.quickWins));
   }
+
+  // ── Search and conversion (issue #281). Prices and ratings come only from the crawl or the client. ──
+  const searchBlocks = search
+    ? searchReportBlocks(search)
+    : searchSkippedBlocks(
+        eng.website
+          ? "Search checks were not run for this draft, so they are not shown. Nothing is guessed."
+          : "No website was recorded on this Blueprint, so search and conversion were not checked. Nothing is guessed."
+      );
+  pushBlocks(children, searchBlocks);
 
   // ── Opportunities ──────────────────────────────────────────────────────
   children.push(

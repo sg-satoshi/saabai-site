@@ -1,4 +1,7 @@
 .sb .qwrap{max-width:760px;margin:0 auto;padding:72px 40px 120px;position:relative}
+.sb .score-intro{margin:0 0 28px}
+.sb .score-intro h1{font-size:34px;line-height:1.15;letter-spacing:-.02em}
+.sb .score-intro p{margin-top:12px;font-size:17px}
 .sb .prog{display:flex;justify-content:space-between;gap:12px;font-size:14px;color:var(--dim);margin-bottom:12px}
 .sb .qbar{height:6px;border-radius:9px;background:var(--surface);overflow:hidden}.sb .qbar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--teal));transition:width .3s}
 .sb .cats{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}.sb .cats span{font-size:12px;padding:4px 10px;border-radius:99px;border:1px solid var(--border);color:var(--dim)}.sb .cats span.on{color:var(--teal);border-color:var(--teal)}.sb .cats span.done{color:var(--muted)}
@@ -17,7 +20,7 @@
 .sb .rec{display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center}
 .sb .linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;font:inherit;cursor:pointer;min-height:44px;padding:0 4px}
 .sb .emailrow{display:flex;gap:10px;margin-top:14px}.sb .emailrow input{flex:1}
-@media (max-width:760px){.sb .qwrap{padding:36px 20px 64px}.sb .qwrap h2{font-size:26px!important}.sb .opt{font-size:16px;padding:14px 16px}.sb .rtop{grid-template-columns:1fr;padding:40px 0 24px;gap:28px}.sb .rtop h1{font-size:34px!important}.sb .ring{width:240px;height:240px}.sb .ring>div{width:204px;height:204px}.sb .ring b{font-size:72px}.sb .rec{grid-template-columns:1fr}.sb .rec .btn{width:100%}.sb .emailrow{flex-direction:column}}
+@media (max-width:760px){.sb .qwrap{padding:36px 20px 64px}.sb .score-intro h1{font-size:28px}.sb .qwrap h2{font-size:26px!important}.sb .opt{font-size:16px;padding:14px 16px}.sb .rtop{grid-template-columns:1fr;padding:40px 0 24px;gap:28px}.sb .rtop h1{font-size:34px!important}.sb .ring{width:240px;height:240px}.sb .ring>div{width:204px;height:204px}.sb .ring b{font-size:72px}.sb .rec{grid-template-columns:1fr}.sb .rec .btn{width:100%}.sb .emailrow{flex-direction:column}}
 
 /* ---- /score results: PDF email box + brush arrow (Option C: navy, yellow edge, yellow button) ---- */
 .sb .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

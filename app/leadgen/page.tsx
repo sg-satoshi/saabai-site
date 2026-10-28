@@ -9,46 +9,43 @@ const DEMO_SLUG = "bne-emergency-plumbing";
 
 const FEATURES = [
   {
-    title: "Captures Every Lead",
-    desc: "Never miss a potential customer. Our AI engages every visitor, collecting name, phone, and service needed — even after hours.",
+    title: "Captures lead details",
+    desc: "The AI can talk with visitors and collect a name, phone, and the service they need, including after hours.",
     icon: "🎯",
   },
   {
-    title: "Instant Multi-Channel Alerts",
-    desc: "Get notified the second a lead comes in via email, SMS, or WhatsApp. Name, phone, service, address, and urgency — everything you need to respond fast.",
+    title: "Lead details for your team",
+    desc: "Your team gets an email with the lead details.",
     icon: "📲",
   },
   {
     title: "Zero Effort Setup",
-    desc: "One line of code on your website. We configure the AI with your services, pricing, and service area. Done in under an hour.",
+    desc: "We configure the AI with your services and service area. Ask us how long setup will take for your site.",
     icon: "🔌",
   },
   {
     title: "Works 24/7",
-    desc: "While you are on a job, asleep, or on the weekend — your AI lead agent is qualifying and capturing every visitor.",
+    desc: "While you are on a job, asleep, or on the weekend, the AI lead agent can qualify visitors and capture their details.",
     icon: "🕐",
   },
   {
     title: "Emergency Ready",
-    desc: "Emergency callouts flagged immediately. The AI knows to prioritise urgent leads so you can respond when it matters most.",
+    desc: "The captured details can mark a job as urgent, so your team can see it when they read the lead.",
     icon: "🚨",
   },
   {
     title: "Grows Your Business",
-    desc: "More leads captured means more jobs booked. Our clients see 2-3x more lead capture vs contact forms alone.",
+    desc: "The widget collects a name, phone and the job, which a bare contact form often does not.",
     icon: "📈",
   },
 ];
 
 const HOW_IT_WORKS = [
   { step: "01", title: "Embed the Widget", desc: "Add one line of code to your website. That is it." },
-  { step: "02", title: "AI Greets Visitors", desc: "Your AI assistant welcomes every visitor, asks what they need, and captures their details." },
-  { step: "03", title: "Lead Captured", desc: "Name, phone, service, address, urgency — collected in a natural conversation." },
-  { step: "04", title: "You Get Notified Instantly", desc: "Email, SMS, and WhatsApp alerts with every detail. Call the lead back and book the job." },
+  { step: "02", title: "AI Greets Visitors", desc: "Your AI assistant welcomes visitors, asks what they need, and can capture their details." },
+  { step: "03", title: "Lead Captured", desc: "Name, phone, service, address, and urgency, collected in a natural conversation." },
+  { step: "04", title: "Your team gets the details", desc: "Your team gets an email with the lead details." },
 ];
-
-const TIER_SMS = { starter: 10, pro: 50, enterprise: 500 } as const;
-const TIER_WA = { starter: 10, pro: 50, enterprise: 500 } as const;
 
 export default function LeadGenPage() {
   return (
@@ -74,13 +71,13 @@ export default function LeadGenPage() {
 
         <h1 className="relative text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.92] mb-8">
           Turn website visitors<br />
-          <span className="text-saabai-gold">into booked jobs</span>
+          <span className="text-saabai-gold">into captured leads</span>
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-dim max-w-2xl mx-auto mb-12 leading-relaxed">
-          Saabai LeadGen is a 24/7 AI lead conversion agent for service businesses.
-          It captures, qualifies, and alerts you via email, SMS, and WhatsApp
-          the instant a lead comes in. No forms. No missed calls. No lost revenue.
+          Saabai LeadGen is an AI lead capture widget for service businesses.
+          It can collect a name, phone and the job at any hour, including while you are on a job.
+          Your team gets an email with the lead details.
         </p>
 
         <div className="relative flex flex-wrap items-center justify-center gap-4">
@@ -104,7 +101,7 @@ export default function LeadGenPage() {
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
           <p className="text-saabai-text-dim text-lg max-w-xl mx-auto">
-            From website visitor to booked job in four steps. No apps to install. No training needed.
+            From website visitor to a captured lead in four steps. No apps to install. No training needed.
           </p>
         </div>
 
@@ -124,7 +121,7 @@ export default function LeadGenPage() {
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Live Demo</h2>
           <p className="text-saabai-text-dim text-lg max-w-xl mx-auto">
-            This is exactly what your customers will see. Jack answers 24/7, captures their details, and sends you the lead instantly.
+            This is an AI demo for an example plumbing business, not a real client. Jack can answer day and night and collect a name and phone.
           </p>
         </div>
 
@@ -158,9 +155,8 @@ export default function LeadGenPage() {
               <h3 className="text-lg font-semibold mb-4">What happens after Jack captures a lead</h3>
               <div className="space-y-4">
                 {[
-                  "Your team gets an instant email with the full conversation and lead details",
-                  "Emergency leads trigger an SMS notification to your phone directly",
-                  "A WhatsApp message is sent for high-priority leads with full contact info",
+                  "The plan includes an email with the conversation and lead details",
+                  "Urgent jobs can be marked in the captured details so your team can see them",
                   "The lead appears in your Saabai dashboard with all channels logged",
                 ].map((step, i) => (
                   <div key={i} className="flex items-start gap-3 text-sm text-saabai-text-dim">
@@ -183,7 +179,7 @@ export default function LeadGenPage() {
               <iframe
                 src={`/leadgen-widget?slug=${DEMO_SLUG}`}
                 style={{ width: "100%", height: "100%", border: "none" }}
-                title="Jack AI Agent — Live Demo"
+                title="Jack AI Agent, live demo"
               />
             </div>
             <p className="text-xs text-saabai-text-dim mt-4">Live · Powered by Saabai</p>
@@ -197,7 +193,7 @@ export default function LeadGenPage() {
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything You Need</h2>
           <p className="text-saabai-text-dim text-lg max-w-xl mx-auto">
-            Built for service businesses that want more bookings without more overhead.
+            Built for service businesses that want enquiries captured without more overhead.
           </p>
         </div>
 
@@ -220,7 +216,7 @@ export default function LeadGenPage() {
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple Pricing</h2>
           <p className="text-saabai-text-dim text-lg max-w-xl mx-auto">
-            One flat monthly fee. No surprises, no long contracts, no hidden costs.
+            One flat monthly fee. Published prices are Starter $197, Pro $397 and Enterprise $997.
           </p>
         </div>
 
@@ -236,8 +232,6 @@ export default function LeadGenPage() {
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> AI lead capture widget</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Email notifications (unlimited)</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> SMS alerts ({TIER_SMS.starter}/month)</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> WhatsApp alerts ({TIER_WA.starter}/month)</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Monthly lead report</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Setup and configuration</li>
             </ul>
@@ -261,10 +255,6 @@ export default function LeadGenPage() {
             </div>
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Everything in Starter</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> SMS alerts ({TIER_SMS.pro}/month)</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> WhatsApp alerts ({TIER_WA.pro}/month)</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Google Maps listing management</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Automated review responses</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Weekly performance reports</li>
             </ul>
             <form action="/api/leadgen/checkout" method="POST" target="_blank">
@@ -284,8 +274,6 @@ export default function LeadGenPage() {
             </div>
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Everything in Pro</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> SMS alerts ({TIER_SMS.enterprise}/month)</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> WhatsApp alerts ({TIER_WA.enterprise}/month)</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Multi-location support</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Dedicated account management</li>
             </ul>
@@ -305,18 +293,18 @@ export default function LeadGenPage() {
           background: "radial-gradient(ellipse 60% 40% at 50% 50%, var(--saabai-glow) 0%, transparent 70%)"
         }} />
         <h2 className="relative text-3xl md:text-5xl font-bold mb-6">
-          Ready to turn more visitors<br />
-          <span className="text-saabai-gold">into booked jobs?</span>
+          Ready to capture more<br />
+          <span className="text-saabai-gold">website enquiries?</span>
         </h2>
         <p className="relative text-saabai-text-dim text-lg mb-10 max-w-lg mx-auto">
-          Get started with a free 14-day trial. No credit card. No commitment. We set everything up for you.
+          Talk to us. We set everything up for you.
         </p>
         <div className="relative flex flex-wrap justify-center gap-4">
           <a
-            href="mailto:hello@saabai.ai?subject=LeadGen%20Trial"
+            href="mailto:hello@saabai.ai?subject=LeadGen"
             className="px-8 py-4 rounded-xl bg-saabai-gold text-black font-bold text-sm tracking-wide hover:brightness-125 transition-all shadow-lg shadow-saabai-gold/25"
           >
-            Start Free Trial
+            Get started
           </a>
           <a
             href="mailto:hello@saabai.ai?subject=LeadGen%20Question"

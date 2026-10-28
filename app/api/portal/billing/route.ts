@@ -7,7 +7,7 @@ import { after } from "next/server";
 import { rejectIfImpersonatingReadOnly } from "../../../../lib/impersonation";
 import { rejectIfLoginAs } from "../../../../lib/login-as";
 import { resolvePortalBilling } from "../../../../lib/billing/portal-auth";
-import { getCatalog, visibleAddons, visiblePlans } from "../../../../lib/billing/catalog";
+import { getCatalog, isRetiredPortalAddon, visibleAddons, visiblePlans } from "../../../../lib/billing/catalog";
 import { planChangeKind, prorate, STATUS_LABELS } from "../../../../lib/billing/state";
 import { saveSiteBilling } from "../../../../lib/billing/store";
 import { enableFeature } from "../../../../lib/addons/flags";
@@ -52,6 +52,10 @@ export async function POST(req: Request) {
   try { body = await req.json(); } catch { return Response.json({ error: "Invalid request" }, { status: 400 }); }
   const catalog = await getCatalog();
   const rec = who.rec;
+
+  if ((body.action === "quote" || body.action === "add-addon") && isRetiredPortalAddon({ id: body.addonId })) {
+    return Response.json({ error: "That add-on isn't available" }, { status: 400 });
+  }
 
   if (body.action === "quote") {
     const addon = catalog.addons.find((a) => a.id === body.addonId && a.visible);

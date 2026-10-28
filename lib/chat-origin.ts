@@ -3,16 +3,16 @@ import { Redis } from "@upstash/redis";
 /**
  * Origin allow-list and per-site limits for the public Site Factory chat.
  *
- * Modes (env CHAT_ORIGIN_MODE): "log" (default, records would-be blocks, blocks
- * nothing), "enforce" (rejects), "off". Everything else in the security fix is
- * always on; only the origin check has a rollout switch so a missed client
- * domain cannot take a live chatbot down.
+ * Modes (env CHAT_ORIGIN_MODE): "enforce" (default, rejects a foreign host),
+ * "log" (still rejects, and records the miss), "off" (the only bypass).
+ * A foreign origin does not receive config or a reply unless the mode is off.
  */
 
 export type OriginMode = "off" | "log" | "enforce";
 export const originMode = (): OriginMode => {
-  const v = (process.env.CHAT_ORIGIN_MODE || "log").toLowerCase();
-  return v === "enforce" || v === "off" ? v : "log";
+  const v = (process.env.CHAT_ORIGIN_MODE || "enforce").toLowerCase();
+  if (v === "off" || v === "log") return v;
+  return "enforce";
 };
 
 const MASTER_HOSTS = ["saabai.ai", "www.saabai.ai"];

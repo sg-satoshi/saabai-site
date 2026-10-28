@@ -214,6 +214,9 @@
 .lx-src.other{padding:10px 12px}
 .lx-src.other .t{margin-top:4px;font-size:12.5px}
 .lx-pempty{padding:28px 16px;text-align:center;color:var(--muted);font-size:13px;line-height:1.55}
+.lx-snapshot{margin:16px 4px 8px;padding-top:12px;border-top:1px solid var(--line)}
+.lx-snapshot p{font-size:12px;line-height:1.5;color:var(--muted);margin:0 0 8px}
+.lx-snapshot b{color:var(--ink);font-weight:600}
 .lx-sheet-handle{display:none}
 
 

@@ -17,6 +17,7 @@ export default function LocationPage({ config }: Props) {
     slug,
     stateCode,
     heroHeadline,
+    heroPrice,
     heroSubheading,
     industries,
     marketContext,
@@ -24,11 +25,14 @@ export default function LocationPage({ config }: Props) {
     challenges,
     howWeHelpIntro,
     services,
-    caseStudy,
     industryLinks,
     faqs,
     ctaHeadline,
     ctaSubtext,
+    spotlight,
+    breadcrumbName,
+    serviceName,
+    dateModified,
     seo,
   } = config;
 
@@ -36,9 +40,18 @@ export default function LocationPage({ config }: Props) {
 
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
-      <JsonLd data={locationServiceSchema(city, seo.canonical, seo.description)} />
+      <JsonLd data={locationServiceSchema(city, seo.canonical, seo.description, serviceName)} />
       <JsonLd data={faqSchema(faqs)} />
-      <JsonLd data={breadcrumbSchema([{ name: `Websites and AI ${city}`, path: `/${slug}` }])} />
+      <JsonLd data={breadcrumbSchema([{ name: breadcrumbName ?? `Websites and AI ${city}`, path: `/${slug}` }])} />
+      {dateModified ? (
+        <JsonLd data={{
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          url: seo.canonical,
+          name: seo.title,
+          dateModified,
+        }} />
+      ) : null}
 
       <Nav />
 
@@ -80,6 +93,9 @@ export default function LocationPage({ config }: Props) {
         <h1 className="relative text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight mb-8 text-balance">
           {heroHeadline}
         </h1>
+        {heroPrice ? (
+          <p className="relative text-lg font-semibold text-saabai-teal mb-8">{heroPrice}</p>
+        ) : null}
 
         {/* Subheading */}
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-3xl mx-auto mb-12 leading-relaxed">
@@ -166,6 +182,30 @@ export default function LocationPage({ config }: Props) {
         </div>
       </section>
 
+      {spotlight ? (
+        <section className="py-16 md:py-24 px-5 sm:px-6 border-t border-saabai-border">
+          <div className="max-w-5xl mx-auto">
+            <p className="text-xs font-semibold tracking-widest uppercase text-saabai-teal mb-4">
+              {spotlight.eyebrow}
+            </p>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-6">
+              {spotlight.title}
+            </h2>
+            <div className="text-saabai-text-muted text-lg leading-relaxed space-y-4 max-w-3xl">
+              {spotlight.paragraphs.map((para) => (
+                <p key={para}>{para}</p>
+              ))}
+            </div>
+            <a
+              href={spotlight.linkHref}
+              className="inline-flex items-center min-h-[44px] mt-6 text-saabai-teal font-medium hover:text-saabai-teal-bright"
+            >
+              {spotlight.linkLabel} &rarr;
+            </a>
+          </div>
+        </section>
+      ) : null}
+
       {/* ── Local Market Context ────────────────────────────────────────── */}
       <section className="py-16 md:py-24 px-5 sm:px-6 border-t border-saabai-border">
         <div className="max-w-5xl mx-auto">
@@ -250,7 +290,7 @@ export default function LocationPage({ config }: Props) {
         </div>
       </section>
 
-      {/* ── Case Study ──────────────────────────────────────────────────── */}
+      {/* ── Case studies ────────────────────────────────────────────────── */}
       <section
         className="py-16 md:py-24 px-5 sm:px-6 border-t border-saabai-border"
         style={{ background: "var(--saabai-surface)" }}
@@ -259,40 +299,14 @@ export default function LocationPage({ config }: Props) {
           <p className="text-xs font-semibold tracking-widest uppercase text-saabai-teal mb-4">
             Real Experience
           </p>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-10">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-6">
             Work We Have Done
           </h2>
-          <div
-            className="rounded-2xl border border-saabai-border p-8 md:p-10"
-            style={{ background: "var(--saabai-surface-raised)" }}
-          >
-            <h3 className="text-2xl font-bold">{caseStudy.client}</h3>
-            <p className="text-saabai-teal text-sm font-semibold mt-1 mb-6">
-              {caseStudy.industry}
-            </p>
-            <div>
-              <p className="text-xs font-semibold tracking-widest uppercase text-saabai-text-dim mb-2">
-                Context
-              </p>
-              <p className="text-saabai-text-muted leading-relaxed">
-                {caseStudy.context}
-              </p>
-            </div>
-            <div className="my-7 border-t border-saabai-border" />
-            <div>
-              <p className="text-xs font-semibold tracking-widest uppercase text-saabai-text-dim mb-2">
-                Outcome
-              </p>
-              <p className="text-saabai-text-muted leading-relaxed">
-                {caseStudy.outcome}
-              </p>
-            </div>
-          </div>
           <a
             href="/case-studies"
-            className="inline-flex items-center min-h-[44px] mt-6 text-saabai-teal font-medium hover:text-saabai-teal-bright transition-colors"
+            className="inline-flex items-center min-h-[44px] text-saabai-teal font-medium hover:text-saabai-teal-bright transition-colors"
           >
-            See more case studies &rarr;
+            See case studies &rarr;
           </a>
         </div>
       </section>

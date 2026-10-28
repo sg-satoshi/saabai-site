@@ -8,6 +8,7 @@ import { schemaGraph, websitesServiceNode } from "@/lib/seo-entity";
 import { breadcrumbNode, faqNode } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
 import { formatAud, SPLIT_TESTING, WEBSITE_TIERS, websiteBuildPrice, websiteCareFaqAnswer, websiteMonthlyCare } from "@/lib/website-tiers";
+import { CARE_PLAN_FAQS } from "@/lib/care-faqs";
 
 export const metadata: Metadata = publicPageMeta.websites;
 
@@ -21,7 +22,7 @@ const faqs = [
   },
   {
     q: "What does the chatbot actually do?",
-    a: "It answers the questions your visitors keep asking, captures their details and sends every enquiry straight to you. On the Growth tier it also qualifies leads and books calls into your calendar.",
+    a: "It answers the questions your visitors keep asking and keeps a log of each chat. Enquiry alerts are coming soon. On the Growth tier the published offer also includes a lead qualifying chatbot with booking.",
   },
   {
     q: "What is the custom avatar on the Signature tier?",
@@ -43,6 +44,7 @@ const faqs = [
     q: "How do we get started?",
     a: "Book a free consult. We look at your current site, your enquiries and the persona you want, then recommend the right tier and a fixed scope.",
   },
+  ...CARE_PLAN_FAQS,
 ];
 
 const websitesSchema = schemaGraph([
@@ -73,10 +75,13 @@ export default function WebsitesPage() {
           A website that works like an{" "}
           <span className="text-gradient">employee</span>
         </h1>
+        <p className="text-base font-semibold text-saabai-teal mb-6">
+          From {formatAud(tiers[0].monthly)} a month. Builds from {formatAud(tiers[0].buildFrom)}.
+        </p>
         <p className="text-lg text-saabai-text-muted max-w-2xl mx-auto leading-relaxed mb-10">
           We build, host and look after websites for Australian small
           businesses, each one with a trained AI team member built in. It
-          answers enquiries, qualifies leads and works around the clock, so your
+          answers visitors and works around the clock, so your
           site does more than sit there looking pretty.
         </p>
 
@@ -111,7 +116,7 @@ export default function WebsitesPage() {
           </h2>
           <p className="text-saabai-text-muted leading-relaxed">
             A normal website waits. Someone lands, reads, and usually leaves.
-            Ours greets every visitor, answers their questions in your words and
+            The chatbot greets visitors, answers their questions in your words and
             captures the lead before it goes cold. That is the difference between
             a page and a team member.
           </p>
@@ -119,12 +124,12 @@ export default function WebsitesPage() {
         <div className="grid md:grid-cols-3 gap-px bg-saabai-border rounded-xl overflow-hidden">
           {[
             {
-              t: "Answers instantly",
-              d: "Every visitor gets a fast, on-brand answer, day or night, without you touching your phone.",
+              t: "Answers quickly",
+              d: "Visitors can get a fast, on-brand answer, day or night, without you picking up the phone.",
             },
             {
-              t: "Never misses a lead",
-              d: "Enquiries are captured and sent to you the moment they happen, so slow follow-up stops costing you work.",
+              t: "Keeps a log",
+              d: "The chatbot answers questions and keeps a log of each chat. Enquiry alerts are coming soon.",
             },
             {
               t: "Sounds like you",

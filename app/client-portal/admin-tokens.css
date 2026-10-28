@@ -7,7 +7,7 @@
 --sh-1:0 1px 2px rgba(19,21,42,.06),0 1px 1px rgba(19,21,42,.04);--sh-2:0 4px 16px rgba(19,21,42,.08);--sh-3:0 24px 64px rgba(0,0,0,.45);
 --r-sm:6px;--r-md:8px;--r-lg:12px;--r-xl:16px;--mono:"Geist Mono",ui-monospace,monospace}
 *{box-sizing:border-box;margin:0;padding:0}
-.portal-root{font-family:Inter,system-ui,sans-serif;font-feature-settings:"cv11","ss01";-webkit-font-smoothing:antialiased;background:var(--n-50);color:var(--n-900);font-size:14px;line-height:1.5}
+.portal-root{font-family:Geist,system-ui,sans-serif;font-feature-settings:"cv11","ss01";-webkit-font-smoothing:antialiased;background:var(--n-50);color:var(--n-900);font-size:14px;line-height:1.5}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
 .side{background:var(--navy-900);color:#c9cde8;padding:18px 12px;display:flex;flex-direction:column;gap:2px;border-right:1px solid #1d1b4a}
@@ -76,7 +76,7 @@ td.r,th.r,.r{text-align:right}
 }
 @media (min-width:601px){.mo{display:none!important}}
 
-.portal-root{font-family:var(--font-portal-sans),Inter,system-ui,sans-serif;font-feature-settings:"cv11","ss01"}
+.portal-root{font-family:var(--font-portal-sans),Geist,system-ui,sans-serif;font-feature-settings:"cv11","ss01"}
 .portal-root .num,.portal-root .kpi .v,th.r,td.r{font-family:var(--font-portal-mono),var(--mono);font-variant-numeric:tabular-nums}
 .portal-root a.btn{text-decoration:none}
 .mc-drawer{position:fixed;inset:0;z-index:80;display:none}

@@ -4,6 +4,7 @@ import { addChangeLogEntry } from "../change-log";
 import {
   DEFAULT_SKIN, effectiveEnabled, isPlan, monthKey, capState, auditSummary, type CapState, type ChatbotConfig, type Plan,
 } from "./core";
+import { eventKey, type ChatEventName } from "./events";
 
 const cfgKey = (slug: string) => `saabai:chatbot:config:${slug}`;
 const flagKey = (slug: string) => `saabai:chatbot:flag:${slug}`;
@@ -99,6 +100,19 @@ export async function recordUsage(slug: string, plan: Plan, sessionId: string): 
   } catch (e) {
     console.error("chatbot usage record failed (ignored):", e);
     return empty;
+  }
+}
+
+/** Count one monitoring event. Does not send email or Telegram. */
+export async function recordChatEvent(slug: string, event: ChatEventName): Promise<void> {
+  try {
+    const r = getRedis();
+    if (!r) return;
+    const key = eventKey(slug, monthKey());
+    await r.hincrby(key, event, 1);
+    await r.expire(key, 400 * 86400);
+  } catch {
+    /* counting only */
   }
 }
 

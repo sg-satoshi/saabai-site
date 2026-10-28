@@ -52,7 +52,7 @@ export async function authenticateWithPassword(rawEmail: string, password: strin
   }
   return {
     clientId: dirUser.id,
-    dashboardUrl: dirUser.dashboardUrl || "/rex-dashboard",
+    dashboardUrl: dirUser.dashboardUrl || "/dashboard",
     source: "directory",
     upgraded,
   };

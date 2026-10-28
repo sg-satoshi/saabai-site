@@ -153,7 +153,23 @@ export type AuditEventType =
   | "status_changed"
   | "assessment_generated"
   | "report_generated"
-  | "report_delivered";
+  | "report_delivered"
+  | "credit_applied"
+  | "onboarding_saved"
+  | "faq_drafts_ready";
+
+/**
+ * A Blueprint credit draw-down. Only a signed quote or a deposit counts.
+ * A booked call is not a use. Stored on the engagement JSON in Redis.
+ */
+export interface BlueprintCreditApplication {
+  id: string;
+  /** Positive integer cents (AUD). */
+  cents: number;
+  kind: "signed_quote" | "deposit";
+  recordedAt: string;
+  reference?: string;
+}
 
 export interface AuditEvent {
   id: string;
@@ -230,6 +246,52 @@ export interface AuditEngagement {
   /** Promo code redeemed at checkout, and the discount it gave (cents) */
   couponCode?: string;
   discountCents?: number;
+
+  /**
+   * UTC timestamp when this Blueprint was marked delivered. The 30-day build
+   * credit starts here and ends 11:59:59 pm Australia/Brisbane on day 30.
+   *
+   * Redis migration: optional on existing `audit:engagements` hashes. Readers
+   * derive it when missing (earliest report deliveredAt, then a report_delivered
+   * timeline event, then updatedAt if status is already "delivered"). Nothing
+   * is rewritten until the next delivery or an admin save. No SQL migration.
+   */
+  deliveredAt?: string;
+  /**
+   * Cents of this Blueprint's fee already applied to implementation builds.
+   * Partial use is allowed. `creditApplications` is the ledger. The amount
+   * shown as used is the greater of this field and the ledger sum, so a
+   * legacy number is not dropped when the first line is added.
+   * A booked call must not change either field.
+   */
+  creditUsedCents?: number;
+  creditApplications?: BlueprintCreditApplication[];
+
+  /**
+   * Optional facts the client supplied for the search section. Never filled
+   * from a crawl. Leak dollars are calculated only from figures here.
+   */
+  searchBrief?: {
+    promise?: string;
+    services?: string[];
+    /** Client-picked kind from search onboarding. Never inferred from a crawl. */
+    businessKind?: "local-trade" | "professional" | "property" | "general";
+    industry?: string;
+    statedGoogleRating?: number;
+    statedGoogleReviews?: number;
+    figures?: {
+      missedEnquiriesPerMonth?: number;
+      closeRate?: number;
+      averageJobAud?: number;
+    };
+  };
+  /**
+   * Search onboarding progress. Answers are what the client typed or confirmed.
+   * Crawl suggestions live on `prefill` until the client saves them.
+   */
+  searchOnboarding?: import("./blueprint/onboarding").SearchOnboardingRecord;
+  /** Buyer-question FAQ drafts. `published` stays false. Nothing here is on the site. */
+  faqDrafts?: import("./blueprint/onboarding").FaqDraftRecord;
 }
 
 export function newId(prefix: string): string {

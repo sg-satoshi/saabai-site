@@ -3,9 +3,7 @@
 /**
  * Auto-update changelog from git commits
  * Runs on post-commit hook
- * Routes commits to the correct changelog:
- *   - Rex changes → app/rex-changelog/ChangelogClient.tsx
- *   - Saabai/Lex/site changes → app/saabai-changelog/SaabaiChangelogClient.tsx
+ * Routes Saabai, Lex and site commits to app/saabai-changelog/SaabaiChangelogClient.tsx.
  */
 
 const fs = require('fs');
@@ -26,21 +24,13 @@ try {
   const scopeMatch = message.match(/\(([^)]+)\)/);
   if (scopeMatch) {
     const scopeLower = scopeMatch[1].toLowerCase();
-    if (scopeLower === 'rex') scope = 'rex';
-    else if (['lex', 'saabai', 'admin'].includes(scopeLower)) scope = 'saabai';
+    if (['lex', 'saabai', 'admin'].includes(scopeLower)) scope = 'saabai';
   }
 
   // Fallback: determine scope from files changed
   if (!scope) {
-    const rexPaths = ['lib/rex-', 'app/api/pete-chat', 'app/api/rex-', 'app/components/PeterAvatarWidget', 'app/rex-', 'app/rex-widget'];
     const saabaiPaths = ['app/counsel-backup', 'app/saabai-', 'app/components/ChatWidget', 'app/api/saabai-', 'app/tributum', 'app/use-cases', 'app/process', 'app/services', 'app/leadgen', 'app/leadgen-widget', 'app/leadgen-dashboard'];
-
-    let hasRex = filesChanged.some(f => rexPaths.some(p => f.startsWith(p)));
-    let hasSaabai = filesChanged.some(f => saabaiPaths.some(p => f.startsWith(p)));
-
-    if (hasRex && !hasSaabai) scope = 'rex';
-    else if (hasSaabai && !hasRex) scope = 'saabai';
-    else if (hasRex && hasSaabai) scope = 'both';
+    if (filesChanged.some(f => saabaiPaths.some(p => f.startsWith(p)))) scope = 'saabai';
   }
 
   // If still no scope, skip (don't update anything)
@@ -105,10 +95,7 @@ try {
   }
 
   const targets = [];
-  if (scope === 'rex' || scope === 'both') {
-    targets.push(path.join(__dirname, '../app/rex-changelog/ChangelogClient.tsx'));
-  }
-  if (scope === 'saabai' || scope === 'both') {
+  if (scope === 'saabai') {
     targets.push(path.join(__dirname, '../app/saabai-changelog/SaabaiChangelogClient.tsx'));
   }
 

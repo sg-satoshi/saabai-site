@@ -15,4 +15,4 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx tsx --test tests/client-site-surface.test.ts
+      - run: npx tsx --test tests/client-site-surface.test.ts tests/nico-privacy.test.ts

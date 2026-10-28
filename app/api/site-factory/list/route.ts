@@ -1,3 +1,5 @@
+import { BO_PERSONA, personaGreeting } from "../../../../lib/chatbot/personas";
+import { BO_SYSTEM_PROMPT } from "../../../../lib/chatbot/platform-bot-seed";
 import { listSites } from "../../../../lib/site-registry";
 import { readdirSync, existsSync } from "fs";
 import path from "path";
@@ -30,7 +32,7 @@ const PINNED_SITES = [
     url: "https://boconsulting.com.au",
     domains: ["boconsulting.com.au", "www.boconsulting.com.au"],
     business: { name: "BO Consulting", email: "info@boconsulting.com.au" },
-    chatbot: { enabled: true, name: "Christina", greeting: "G'day! I'm Christina, the BO Consulting assistant.", systemPrompt: "You are Christina, the BO Consulting assistant.", avatarUrl: "/sites/bo-consultancy/christina-avatar.jpg" },
+    chatbot: { enabled: true, name: "Christina", greeting: personaGreeting(BO_PERSONA), systemPrompt: BO_SYSTEM_PROMPT, avatarUrl: "/sites/bo-consultancy/christina-avatar.jpg" },
     createdAt: 1745000000000,
     updatedAt: 1745000000000,
   },

@@ -28,6 +28,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "26 Oct 2026",
+    entries: [
+      { time: "08:19", tag: "NEW", title: "Add Blueprint search onboarding" }
+    ],
+  },
+  {
     date: "6 Sep 2026",
     entries: [
       { time: "23:48", tag: "NEW", title: "Add hover (i) help tooltips to confusing payment fields (recurring start date, setup fee, interval, terms)" },
@@ -286,7 +292,7 @@ export default function SaabaiChangelogClient() {
 
   return (
     <div className="min-h-screen bg-[#0b092e] text-white font-sans">
-      {/* Top nav bar - matching Rex style */}
+      {/* Top nav bar */}
       <nav className="border-b border-white/10 bg-[#0b092e] sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <a href="/" className="flex items-center">

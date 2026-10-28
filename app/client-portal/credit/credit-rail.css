@@ -1,0 +1,55 @@
+/* Concept C credit plan rail. Scoped so the rest of the portal keeps its layout. */
+.ov-with-credit{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start}
+.ov-with-credit > :first-child{min-width:0}
+
+.credit-rail{font-family:var(--font-portal-sans),Geist,system-ui,sans-serif}
+.credit-rail svg{stroke-linecap:round;stroke-linejoin:round}
+.credit-rail .C-h{padding:18px 20px 16px;color:#fff;background:radial-gradient(300px 160px at 100% 0%,rgba(98,197,209,.25),transparent 70%),linear-gradient(140deg,#0b092e,#1c1a4d)}
+.credit-rail .C-h .eb{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--teal-300)}
+.credit-rail .C-h .pill2{letter-spacing:0;text-transform:none;font-size:12px;font-weight:550;background:rgba(98,197,209,.16);color:var(--teal-300);border-radius:99px;padding:3px 10px;white-space:nowrap}
+.credit-rail .C-h h3{font-size:20px;font-weight:700;letter-spacing:-.015em;line-height:1.2;margin:10px 0;color:inherit}
+.credit-rail .C-h .cdl{font-size:15px;color:#a9aed4;display:flex;align-items:baseline;gap:4px}
+.credit-rail .C-h .cdl b{font-family:var(--font-portal-mono),"Geist Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;font-size:30px;font-weight:500;color:#fff;margin-left:4px;letter-spacing:-.02em}
+.credit-rail .C-h .cdl b:first-child{margin-left:0}
+.credit-rail .C-h .cdl .lft{margin-left:6px;font-family:var(--font-portal-sans),Geist,system-ui,sans-serif;font-size:14px}
+.credit-rail .C-h .trk{height:5px;border-radius:9px;background:rgba(255,255,255,.1);margin:12px 0 8px;overflow:hidden}
+.credit-rail .C-h .trk i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,var(--teal-600),var(--teal-300))}
+.credit-rail .C-h .ends{font-size:12px;color:#a9aed4}
+.credit-rail .C-h.t-warm{background:radial-gradient(300px 160px at 100% 0%,rgba(245,194,122,.2),transparent 70%),linear-gradient(140deg,#0b092e,#1c1a4d)}
+.credit-rail .C-h.t-warm .pill2{background:rgba(245,194,122,.16);color:#f5c27a}
+.credit-rail .C-h.t-warm .trk i{background:linear-gradient(90deg,#e9a23b,#f5c27a)}
+.credit-rail .C-b{padding:16px 20px 18px}
+.credit-rail .body{font-size:13.5px;color:var(--n-600);margin:0 0 14px;line-height:1.45}
+.credit-rail .used{font-size:13px;color:var(--n-700);margin:-6px 0 14px}
+.credit-rail .plbl{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px}
+.credit-rail .plbl b{font-size:14px;font-weight:600}
+.credit-rail .plbl span{font-size:12px;color:var(--n-500);text-align:right}
+.credit-rail .rec{display:grid;grid-template-columns:24px 1fr;gap:4px 10px;padding:10px 0;border-bottom:1px solid var(--n-100)}
+.credit-rail .rec .n{width:24px;height:24px;border-radius:7px;background:var(--navy-900);color:#fff;display:grid;place-items:center;font-family:var(--font-portal-mono),"Geist Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;font-size:11.5px}
+.credit-rail .rec .rt{font-size:13.5px;font-weight:500;line-height:1.3}
+.credit-rail .rec .rt small{display:block;font-size:11.5px;color:var(--n-500);font-weight:400}
+.credit-rail .rec .svc{grid-column:2;justify-self:start;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--teal-700);background:var(--teal-50);border:1px solid #b9e4ea;border-radius:99px;padding:2px 10px 2px 8px}
+.credit-rail .rec .svc svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
+.credit-rail .also{font-size:12.5px;color:var(--n-500);margin:10px 0 14px;line-height:1.45}
+.credit-rail a.btn.full{width:100%;justify-content:center;height:42px;font-size:14px;text-decoration:none}
+.credit-rail a.btn.full + a.btn.full{margin-top:8px}
+.credit-rail a.btn:focus-visible{outline:2px solid var(--teal-600);outline-offset:2px}
+.credit-rail .fine{font-size:11.5px;line-height:1.5;color:var(--n-500);margin-top:12px}
+.credit-rail .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+@media (max-width:1279px){
+  .ov-with-credit{grid-template-columns:minmax(0,1fr)}
+  .ov-with-credit .credit-rail{order:-1;margin-bottom:16px}
+}
+@media (max-width:600px){
+  .credit-rail .C-h{padding:16px}
+  .credit-rail .C-b{padding:14px 16px 16px}
+}
+@media (prefers-reduced-motion:reduce){
+  .credit-rail .trk i{transition:none}
+}
+
+.credit-preview-bar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;padding:12px 20px;background:#fff;border-bottom:1px solid var(--n-200);font-size:13px;color:var(--n-600)}
+.credit-preview-bar nav{display:flex;flex-wrap:wrap;gap:6px}
+.credit-preview-bar a{text-decoration:none;color:var(--n-700);border:1px solid var(--n-200);border-radius:99px;padding:4px 10px;font-weight:500}
+.credit-preview-bar a[aria-current="page"]{background:var(--navy-900);color:#fff;border-color:var(--navy-900)}

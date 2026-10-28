@@ -11,7 +11,7 @@ import { showsSaabaiChrome } from "@/lib/client-site-surface";
 // Saabai pages where Mia, the mobile CTA and the news ticker stay off.
 // Client sites are not listed here: showsSaabaiChrome reads the site registry.
 const SUPPRESS_PATHS = [
-  "/onboarding/plon", "/mission-control", "/plon", "/rex-widget", "/lex-widget",
+  "/mission-control", "/lex-widget",
   // Lex platform — has its own full-page experience
   "/lex", "/client-portal", "/legal",
   // Focused Blueprint flows: no chat or sticky bars
@@ -19,13 +19,13 @@ const SUPPRESS_PATHS = [
   // Client feedback and unsubscribe: focused, no sales widgets
   "/testimonial", "/unsubscribe",
   // Admin pages have their own nav
-  "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/login", "/saabai-admin",
+  "/login", "/saabai-admin",
   // LeadGen — has its own dedicated widget
   "/leadgen", "/leadgen-widget",
 ];
 
 // Pages where the NewsTicker/Signal bar should be hidden
-const SUPPRESS_TICKER_PATHS = ["/for-law-firms", "/leadgen-widget"];
+const SUPPRESS_TICKER_PATHS = ["/leadgen-widget"];
 
 export default function ConditionalWidgets() {
   const pathname = usePathname();

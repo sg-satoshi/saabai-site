@@ -555,7 +555,6 @@ function buildExecutionStartLine(plan: OperatorPlan): string {
   const goal = plan.goal.toLowerCase();
 
   if (goal.includes("lex")) return "Got it — I’m working on Lex now.";
-  if (goal.includes("rex")) return "Got it — I’m working on Rex now.";
   if (goal.includes("atlas")) return "Got it — I’m updating Atlas now.";
   if (goal.includes("build")) return "Got it — I’m running the build now.";
 
@@ -825,13 +824,6 @@ function interpretConversationalInput(input: string): ConversationalInterpretati
     cleaned.toLowerCase().includes("spacing")
   ) {
     cleaned = "fix lex ui spacing issues";
-  }
-
-  if (
-    cleaned.toLowerCase().includes("rex") &&
-    cleaned.toLowerCase().includes("spacing")
-  ) {
-    cleaned = "fix rex dashboard spacing issues";
   }
 
   const reply =
