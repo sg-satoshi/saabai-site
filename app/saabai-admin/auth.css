@@ -4,7 +4,7 @@
 --gold-400:#d4b45a;--gold-500:#c9a227;--gold-700:#7d6212;--gold-50:#faf4e2;
 --n-0:#ffffff;--n-200:#dfe2ea;--n-400:#9aa0b4;--n-500:#5f6580;--n-900:#13152a;
 --mono:"Geist Mono",ui-monospace,monospace;--r-md:8px;--r-xl:16px;
---font-admin-sans:system-ui,sans-serif;--font-admin-mono:"Geist Mono",ui-monospace,monospace}
+--font-admin-sans:Inter,system-ui,sans-serif;--font-admin-mono:"Geist Mono",ui-monospace,monospace}
 .auth-screen{background:var(--navy-900);color:#eef0fb;min-height:100vh;display:grid;grid-template-columns:1fr 1fr}
 .art img{mix-blend-mode:normal}.art{position:relative;overflow:hidden;background-color:#0b092e;background:radial-gradient(900px 600px at 40% 75%,rgba(31,77,197,.30),transparent 60%),radial-gradient(700px 500px at 90% 90%,rgba(201,162,39,.12),transparent 60%),var(--navy-900);padding:48px 56px;display:flex;flex-direction:column;justify-content:space-between;border-right:1px solid #1d1b4a}
 .art img{height:40px;align-self:flex-start}
@@ -36,7 +36,7 @@
   .foot2{position:static;margin-top:28px;left:auto;right:auto}
 }
 
-.auth-screen{font-family:var(--font-admin-sans),system-ui,sans-serif;font-feature-settings:"cv11","ss01"}
+.auth-screen{--font-admin-sans:Inter,system-ui,sans-serif;font-family:Inter,system-ui,sans-serif;font-feature-settings:"cv11","ss01"}
 .auth-screen .num{font-family:var(--font-admin-mono),var(--mono);font-variant-numeric:tabular-nums}
 .auth-screen .chkline{display:flex;align-items:flex-start;gap:10px;margin-top:16px;color:#c9cde8;font-size:13px;line-height:1.45}
 .auth-screen .chkline input{margin-top:3px;accent-color:var(--gold-500)}

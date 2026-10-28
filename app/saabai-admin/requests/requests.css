@@ -17,6 +17,7 @@
 .req-table th{padding:10px 14px}
 .req-table td{padding:12px 14px;border-top:1px solid rgba(0,0,0,.06);vertical-align:middle;white-space:normal}
 .req-table tr{cursor:pointer}
+.req-table tr:focus-visible{outline:2px solid var(--teal-600);outline-offset:-2px}
 .req-table tr.sel td{background:#eef8fa}
 .req-table tr.crit td{background:#fff8f7}
 .req-table tr.crit td:first-child{box-shadow:inset 3px 0 0 var(--bad)}

@@ -219,6 +219,15 @@ export default function RequestsAdminClient() {
     router.replace(url);
   }
 
+  useEffect(() => {
+    if (!selectedId) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") closePanel();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedId, sp, router]);
+
   function clearTakeOverFlag() {
     const qs = new URLSearchParams(sp.toString());
     if (!qs.has("takeOver")) return;
@@ -302,8 +311,15 @@ export default function RequestsAdminClient() {
                 {visible.map((r) => (
                   <tr
                     key={r.id}
+                    tabIndex={0}
                     className={`${selectedId === r.id ? "sel" : ""} ${r.priority === "critical" ? "crit" : ""}`}
                     onClick={() => openRequest(r.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openRequest(r.id);
+                      }
+                    }}
                   >
                     <td>
                       <div style={{ fontWeight: 600 }}>{r.title}</div>
@@ -615,15 +631,15 @@ function DetailPane({
         )}
       </header>
 
-      <div className="tabs req-tabs" role="tablist">
-        <button type="button" className={tab === "conversation" ? "on" : ""} onClick={() => setTab("conversation")}>
+      <div className="tabs req-tabs" role="tablist" aria-label="Request sections">
+        <button type="button" role="tab" aria-selected={tab === "conversation"} className={tab === "conversation" ? "on" : ""} onClick={() => setTab("conversation")}>
           Conversation <span className="num">{convo.length + 1}</span>
         </button>
-        <button type="button" className={tab === "internal" ? "on" : ""} onClick={() => setTab("internal")}>
+        <button type="button" role="tab" aria-selected={tab === "internal"} className={tab === "internal" ? "on" : ""} onClick={() => setTab("internal")}>
           Internal notes <span className="num">{notes.length}</span>
           {notes.length > 0 && <i className="dot" aria-hidden="true" />}
         </button>
-        <button type="button" className={tab === "details" ? "on" : ""} onClick={() => setTab("details")}>Details</button>
+        <button type="button" role="tab" aria-selected={tab === "details"} className={tab === "details" ? "on" : ""} onClick={() => setTab("details")}>Details</button>
       </div>
 
       <div className="req-body">
@@ -802,7 +818,7 @@ function ConfirmStrip({
     <div className="req-confirm" role="region" aria-label="Confirm status change">
       <h3>Change status: {statusLabel(from)} → {statusLabel(to)}</h3>
       <div className="req-switchrow">
-        <button type="button" className={`req-switch${notify ? " on" : ""}`} role="switch" aria-checked={notify} onClick={() => setNotify(!notify)}>
+        <button type="button" className={`req-switch${notify ? " on" : ""}`} role="switch" aria-checked={notify} aria-label="Email the client about this change" onClick={() => setNotify(!notify)}>
           <i />
         </button>
         <span>Email the client about this change</span>

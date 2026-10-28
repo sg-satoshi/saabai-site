@@ -82,6 +82,8 @@ export interface TimelineEntry {
   body: string;
   /** Internal notes never returned to clients. */
   internal?: boolean;
+  /** Admin-only link to the client-visible status entry this note describes. */
+  refId?: string;
   createdAt: string;
 }
 
@@ -239,6 +241,59 @@ function parse(raw: unknown): ClientRequest | null {
   };
 }
 
+const EMAIL_IN_TEXT = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+const EMAIL_FLAG = /client not emailed|client emailed|\bnot emailed\b|\bemailed\b/i;
+
+/** Drop an address, including the "Name <email>" audit form. */
+function nameWithoutEmail(name: string, fallback: string): string {
+  const cleaned = name
+    .replace(/\s*<[^>]*>/g, "")
+    .replace(EMAIL_IN_TEXT, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned || fallback;
+}
+
+function textWithoutEmail(text: string): string {
+  return text
+    .replace(/\s*<[^>\n]*@[^>\n]*>/g, "")
+    .replace(EMAIL_IN_TEXT, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
+/** Client-visible status copy. The emailed / not-emailed flag never survives this. */
+function neutralStatusBody(body: string): string {
+  const setTo = body.match(/Status set to\s+(.+?)\./i);
+  if (setTo && !EMAIL_FLAG.test(setTo[1])) return `Status set to ${setTo[1].trim()}.`;
+  const arrow = body.match(/→\s*([^·]+)/);
+  if (arrow) {
+    const label = arrow[1].trim().replace(/\.$/, "");
+    if (label) return `Status set to ${label}.`;
+  }
+  const stripped = textWithoutEmail(body).replace(EMAIL_FLAG, "").replace(/\s*·\s*/g, " ").replace(/\s+/g, " ").trim();
+  return stripped && !EMAIL_FLAG.test(stripped) ? stripped : "Status updated.";
+}
+
+function forClient(t: TimelineEntry): TimelineEntry {
+  if (t.kind === "status" || EMAIL_FLAG.test(t.body)) {
+    return {
+      ...t,
+      internal: false,
+      refId: undefined,
+      authorName: "Saabai",
+      body: neutralStatusBody(t.body),
+    };
+  }
+  const fallback = t.authorKind === "client" ? "Client" : "Saabai";
+  return {
+    ...t,
+    refId: undefined,
+    authorName: nameWithoutEmail(t.authorName, fallback),
+    body: textWithoutEmail(t.body),
+  };
+}
+
 /** Strip internal fields for client-facing responses. */
 export function toClientView(r: ClientRequest): Omit<ClientRequest, "timeline" | "adminNote" | "agreedChange"> & {
   timeline: TimelineEntry[];
@@ -248,7 +303,7 @@ export function toClientView(r: ClientRequest): Omit<ClientRequest, "timeline" |
   void _omit;
   return {
     ...rest,
-    timeline: r.timeline.filter((t) => !t.internal),
+    timeline: r.timeline.filter((t) => !t.internal).map(forClient),
   };
 }
 
@@ -380,7 +435,7 @@ export async function updateRequest(
         entry({
           kind: "status",
           authorKind: "admin",
-          authorName: "Admin",
+          authorName: "Saabai",
           body: `Status set to ${STATUS_LABELS[next.status] || next.status}.`,
         }),
       );
@@ -438,33 +493,45 @@ export async function updateRequest(
   return { request: next, statusChanged };
 }
 
-/** Rewrite the status line so the panel can show whether the client was emailed. */
+/**
+ * Record whether the client was emailed, on an internal note tied to one status entry.
+ * A missing entry is left alone, so a second save cannot tag the other note.
+ * The client-visible line stays "Status set to X." by Saabai.
+ */
 export async function annotateStatusEmail(
   id: string,
   fromStatus: string,
   toStatus: string,
   emailed: boolean,
   authorName: string,
+  statusEntryId?: string,
 ): Promise<ClientRequest | null> {
   const existing = await getRequest(id);
   if (!existing) return null;
-  const from = STATUS_LABELS[fromStatus] || fromStatus;
+  if (!statusEntryId) return existing;
+  const target = existing.timeline.find((t) => t.id === statusEntryId && t.kind === "status" && !t.internal);
+  if (!target) return existing;
+  if (existing.timeline.some((t) => t.internal && t.refId === statusEntryId)) return existing;
+
   const to = STATUS_LABELS[toStatus] || toStatus;
-  const body = `Status: ${from} → ${to} · ${emailed ? "Client emailed" : "Client not emailed"}`;
-  let idx = -1;
-  for (let i = existing.timeline.length - 1; i >= 0; i--) {
-    if (existing.timeline[i].kind === "status") {
-      idx = i;
-      break;
-    }
+  if (EMAIL_FLAG.test(target.body) || target.authorName.includes("@")) {
+    target.body = `Status set to ${to}.`;
+    target.authorName = "Saabai";
+    target.authorKind = "admin";
+    target.internal = false;
   }
-  if (idx >= 0) {
-    existing.timeline[idx] = { ...existing.timeline[idx], body, authorName, authorKind: "admin" };
-  } else {
-    existing.timeline.push(
-      entry({ kind: "status", authorKind: "admin", authorName, body }),
-    );
-  }
+
+  const from = STATUS_LABELS[fromStatus] || fromStatus;
+  existing.timeline.push(
+    entry({
+      kind: "status",
+      authorKind: "admin",
+      authorName,
+      internal: true,
+      refId: statusEntryId,
+      body: `Status: ${from} → ${to} · ${emailed ? "Client emailed" : "Client not emailed"}`,
+    }),
+  );
   return saveRequest(existing);
 }
 

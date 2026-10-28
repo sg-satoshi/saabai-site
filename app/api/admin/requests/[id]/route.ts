@@ -2,7 +2,7 @@
  * GET/PATCH /api/admin/requests/:id
  * PATCH: status, assignee, autoHandle/discussWithShane, internal note, reply to client
  */
-import { actorLabel } from "../../../../../lib/auth-acl";
+import { actorDisplayName, actorLabel } from "../../../../../lib/auth-acl";
 import { requireAdminSession } from "../../../../../lib/admin-guard";
 import {
   addTimelineEntry,
@@ -45,7 +45,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       const next = await addTimelineEntry(id, {
         kind: "comment",
         authorKind: "admin",
-        authorName: await actorLabel(),
+        authorName: await actorDisplayName(),
         body: body.reply.trim(),
       });
       if (!next) return Response.json({ error: "Not found" }, { status: 404 });
@@ -92,6 +92,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       statusChanged = result.statusChanged;
     }
 
+    const statusEntryId = statusChanged
+      ? [...request.timeline].reverse().find((t) => t.kind === "status" && !t.internal)?.id
+      : undefined;
+
     if (typeof body.internalNote === "string" && body.internalNote.trim()) {
       const next = await addTimelineEntry(id, {
         kind: "internal_note",
@@ -124,7 +128,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         requestId: request.id,
         authorName: actor,
       });
-      const noted = await annotateStatusEmail(id, previousStatus, request.status, emailed, actor);
+      const noted = await annotateStatusEmail(id, previousStatus, request.status, emailed, actor, statusEntryId);
       if (noted) request = noted;
     }
     return Response.json({ request, statusChanged, emailed });

@@ -7,7 +7,7 @@
 import { after } from "next/server";
 import { getClientContext } from "../../../../lib/client-context";
 import { rejectIfImpersonatingReadOnlyCookies } from "../../../../lib/impersonation";
-import { blobFolderFor, createRequest, listRequests, validateNewRequest } from "../../../../lib/client-requests";
+import { blobFolderFor, createRequest, listRequests, toClientView, validateNewRequest } from "../../../../lib/client-requests";
 import { sendNewRequestNotification } from "../../../../lib/client-request-emails";
 import { sendCriticalAlerts } from "../../../../lib/request-alerts";
 import { maybeClarifyRequest } from "../../../../lib/request-clarifier";
@@ -20,7 +20,10 @@ export async function GET() {
   const ctx = await getClientContext();
   if (!ctx) return Response.json({ error: "Not authenticated" }, { status: 401 });
   try {
-    const requests = await listRequests({ clientId: ctx.clientId });
+    const requests = (await listRequests({ clientId: ctx.clientId })).map((r) => ({
+      ...toClientView(r),
+      adminNote: r.adminNote,
+    }));
     return Response.json({ requests, uploadFolder: blobFolderFor(ctx.clientId), siteName: ctx.site?.name ?? null });
   } catch (err) {
     console.error("[dashboard/requests] list", err);

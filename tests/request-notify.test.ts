@@ -106,12 +106,26 @@ test("a status save does not take over a critical ticket, and the log line recor
   assert.equal(saved.request.assignee, "chief_ai");
   assert.equal(saved.request.adminNote, undefined);
 
-  const noted = await annotateStatusEmail(critical.id, "new", "in_progress", false, "Alex Admin <alex@saabai.ai>");
+  const publicId = saved.request.timeline.filter((t) => t.kind === "status" && !t.internal).at(-1)?.id;
+  assert.ok(publicId);
+  const noted = await annotateStatusEmail(
+    critical.id,
+    "new",
+    "in_progress",
+    false,
+    "Alex Admin <alex@saabai.ai>",
+    publicId,
+  );
   assert.ok(noted);
-  const lines = noted!.timeline.filter((t) => t.kind === "status");
-  assert.equal(lines.length, 1);
-  assert.equal(lines[0].body, "Status: New → In progress · Client not emailed");
-  assert.equal(lines[0].authorName, "Alex Admin <alex@saabai.ai>");
+  const visible = noted!.timeline.filter((t) => t.kind === "status" && !t.internal);
+  assert.equal(visible.length, 1);
+  assert.equal(visible[0].body, "Status set to In progress.");
+  assert.equal(visible[0].authorName, "Saabai");
+  const hidden = noted!.timeline.filter((t) => t.kind === "status" && t.internal);
+  assert.equal(hidden.length, 1);
+  assert.equal(hidden[0].body, "Status: New → In progress · Client not emailed");
+  assert.equal(hidden[0].authorName, "Alex Admin <alex@saabai.ai>");
+  assert.equal(hidden[0].refId, publicId);
 
   const taken = await updateRequest(critical.id, {
     discussWithShane: true,
@@ -132,6 +146,7 @@ test("admin requests route and panel keep the notify, author, and close behaviou
   const layout = readFileSync("app/saabai-admin/layout.tsx", "utf8");
   const globals = readFileSync("app/globals.css", "utf8");
 
+  assert.match(route, /authorName: await actorDisplayName\(\)/);
   assert.match(route, /authorName: await actorLabel\(\)/);
   assert.doesNotMatch(route, /authorName:.*\|\| "Shane"|authorName: "Shane"/);
   const statusBlock = route.slice(route.indexOf("if (statusChanged)"));
@@ -144,7 +159,11 @@ test("admin requests route and panel keep the notify, author, and close behaviou
   assert.match(panel, /patch\(\{ status: pending, notifyClient: notify \}, "status"\)/);
   assert.match(panel, /Close panel/);
   assert.match(panel, /Hand back to Chief/);
-  assert.match(panel, /Email the client about this change/);
+  assert.match(panel, /aria-label="Email the client about this change"/);
+  assert.match(panel, /role="tab"/);
+  assert.match(panel, /aria-selected=/);
+  assert.match(panel, /e\.key === "Escape"/);
+  assert.match(panel, /tabIndex=\{0\}/);
   assert.match(panel, /label: "QA"/);
   assert.match(panel, /label: "Blocked"/);
   assert.match(panel, /if \(narrow\(\)\) router\.push\(next\)/);
@@ -161,4 +180,110 @@ test("admin requests route and panel keep the notify, author, and close behaviou
   assert.match(layout, /--font-admin-sans/);
   assert.doesNotMatch(layout, /Inter/);
   assert.match(globals, /font-family:\s*"Inter"/);
+  const auth = readFileSync("app/saabai-admin/auth.css", "utf8");
+  assert.match(auth, /font-family:Inter,system-ui,sans-serif/);
+});
+
+test("toClientView hides the email flag and any email address", async () => {
+  const { toClientView } = await import("../lib/client-requests");
+  const view = toClientView({
+    id: "req-1",
+    clientId: "client-n",
+    clientName: "Priya",
+    clientEmail: "priya@example.com",
+    title: "Booking form not sending",
+    description: "The form says sent.",
+    type: "bug",
+    priority: "critical",
+    screenshots: [],
+    status: "qa",
+    autoHandle: true,
+    discussWithShane: false,
+    clarifierRounds: 0,
+    adminNote: "staff only",
+    agreedChange: "Update the form",
+    createdAt: "2026-10-26T00:00:00.000Z",
+    updatedAt: "2026-10-28T00:00:00.000Z",
+    timeline: [
+      {
+        id: "s1",
+        kind: "status",
+        authorKind: "admin",
+        authorName: "Shane Goldberg <shane@saabai.ai>",
+        body: "Status: New → QA / Review · Client not emailed",
+        createdAt: "2026-10-28T00:00:00.000Z",
+      },
+      {
+        id: "c1",
+        kind: "comment",
+        authorKind: "admin",
+        authorName: "Shane Goldberg <shane@saabai.ai>",
+        body: "Thanks Priya, we are looking at it now.",
+        createdAt: "2026-10-28T00:01:00.000Z",
+      },
+      {
+        id: "n1",
+        kind: "internal_note",
+        authorKind: "admin",
+        authorName: "Designer <designer@saabai.ai>",
+        body: "Old number is hard coded. Client not emailed.",
+        internal: true,
+        createdAt: "2026-10-28T00:02:00.000Z",
+      },
+    ],
+  });
+  const output = JSON.stringify(view);
+  assert.doesNotMatch(output, /emailed/i);
+  assert.doesNotMatch(output, /not emailed/i);
+  assert.doesNotMatch(output.replaceAll("priya@example.com", ""), /@/);
+  assert.doesNotMatch(JSON.stringify(view.timeline), /@/);
+  assert.equal("adminNote" in view, false);
+  assert.equal(view.timeline.length, 2);
+  assert.equal(view.timeline[0].body, "Status set to QA / Review.");
+  assert.equal(view.timeline[0].authorName, "Saabai");
+  assert.equal(view.timeline[1].authorName, "Shane Goldberg");
+  assert.equal(view.timeline.some((t) => /designer@saabai\.ai|hard coded/.test(`${t.authorName} ${t.body}`)), false);
+});
+
+test("a second status save cannot tag the other status note", async () => {
+  const { createRequest, updateRequest, annotateStatusEmail, toClientView } = await import("../lib/client-requests");
+  const created = await createRequest({
+    description: "Please change the number.",
+    type: "other",
+    screenshots: [],
+    clientId: "client-race",
+    clientName: "Sam",
+    clientEmail: "sam@example.com",
+    title: "Phone number wrong on homepage",
+    priority: "normal",
+  });
+  const first = await updateRequest(created.id, { status: "in_progress" });
+  assert.ok(!("error" in first));
+  if ("error" in first) return;
+  const firstId = first.request.timeline.filter((t) => t.kind === "status" && !t.internal).at(-1)?.id;
+  const second = await updateRequest(created.id, { status: "qa" });
+  assert.ok(!("error" in second));
+  if ("error" in second) return;
+  const secondId = second.request.timeline.filter((t) => t.kind === "status" && !t.internal).at(-1)?.id;
+  assert.ok(firstId && secondId && firstId !== secondId);
+
+  const noted = await annotateStatusEmail(created.id, "new", "in_progress", false, "Shane Goldberg <shane@saabai.ai>", firstId);
+  assert.ok(noted);
+  const qaLine = noted!.timeline.find((t) => t.id === secondId);
+  assert.equal(qaLine?.body, "Status set to QA / Review.");
+  assert.equal(qaLine?.authorName, "Saabai");
+  const aboutFirst = noted!.timeline.filter((t) => t.internal && t.refId === firstId);
+  assert.equal(aboutFirst.length, 1);
+  assert.match(aboutFirst[0].body, /In progress/);
+  assert.match(aboutFirst[0].body, /Client not emailed/);
+  assert.doesNotMatch(aboutFirst[0].body, /QA/);
+
+  const missed = await annotateStatusEmail(created.id, "qa", "done", true, "Other <other@saabai.ai>", "missing-status-id");
+  assert.ok(missed);
+  assert.equal(missed!.timeline.filter((t) => t.internal && t.kind === "status").length, 1);
+
+  const client = toClientView(missed!);
+  const output = JSON.stringify(client.timeline);
+  assert.doesNotMatch(output, /emailed/i);
+  assert.doesNotMatch(output, /@/);
 });
