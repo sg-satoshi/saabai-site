@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { PageHeader } from "../ui/PageHeader";
 import { PRIORITIES, RM_AREAS, STATUSES, STATUS_LABEL, filterView, type RoadmapPriority, type RoadmapStatus, type RoadmapView } from "../../../lib/roadmap-core";
 
 const COLORS: Record<RoadmapStatus, { bg: string; fg: string }> = {
@@ -85,14 +86,14 @@ export default function RoadmapClient() {
 
   return (
     <div style={{ fontFamily: "var(--font-admin-sans), system-ui, sans-serif" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
-        <div>
-          <h1 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800 }}>Roadmap</h1>
-          <p style={{ margin: gh.ok && gh.fetchedAt ? "0 0 6px" : "0 0 16px", fontSize: 13, color: "#5f6580" }}>Open issues, open pull requests, and workstreams (issues labelled type:workstream) have their own sections. Every merged pull request is listed under Shipped or Deployed. Link an item to an issue or PR and the status follows it.</p>
-          {gh.ok && gh.fetchedAt && <p style={{ margin: "0 0 16px", fontSize: 12, color: "#8a8fa6" }}>GitHub checked {ago(gh.fetchedAt)}.</p>}
-        </div>
-        {canWrite && <button type="button" style={{ ...btn, background: "#0e7482", color: "#fff" }} onClick={() => setDraft({ ...blank })}>Add item</button>}
-      </div>
+      <PageHeader
+        title="Roadmap"
+        meta={<>
+          <p style={{ margin: 0 }}>Open issues, open pull requests, and workstreams (issues labelled type:workstream) have their own sections. Every merged pull request is listed under Shipped or Deployed. Link an item to an issue or PR and the status follows it.</p>
+          {gh.ok && gh.fetchedAt && <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>GitHub checked {ago(gh.fetchedAt)}.</p>}
+        </>}
+        actions={canWrite ? <button type="button" style={{ ...btn, background: "#0e7482", color: "#fff", fontSize: 14, padding: "9px 16px" }} onClick={() => setDraft({ ...blank })}>Add item</button> : undefined}
+      />
 
       {!gh.ok && <p role="status" style={{ background: "#fff6e0", border: "1px solid #f0d890", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "#7a5600" }}>GitHub is unavailable. Open issues, open pull requests and merged status are not listed. Manual items stay as they were saved.</p>}
       {gh.ok && gh.deployedAt === null && <p style={{ fontSize: 12, color: "#8a8fa6", margin: "0 0 10px" }}>Production deploy state unknown right now, so merged PRs show as Shipped.</p>}
@@ -117,8 +118,8 @@ export default function RoadmapClient() {
           ["Open issues", openWork.openIssues],
           ["Open pull requests", openWork.openPrs],
         ] as const).map(([label, group]) => group.length ? (
-          <section key={label} aria-label={label} style={{ marginBottom: 16 }}>
-            <h2 style={{ fontWeight: 700, fontSize: 14, margin: "6px 0 8px" }}>{label} <span style={{ color: "#8a8fa6", fontWeight: 500 }}>({group.length})</span></h2>
+          <section key={label} aria-label={label} style={{ marginBottom: 24 }}>
+            <h2 style={{ fontWeight: 700, fontSize: 18, lineHeight: "26px", color: "#0b092e", margin: "8px 0 10px" }}>{label} <span style={{ color: "#64748b", fontWeight: 500 }}>({group.length})</span></h2>
             <div style={{ display: "grid", gap: 8 }}>
               {group.map((i) => (
                 <div key={i.id} style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "12px 14px" }}>
@@ -142,8 +143,8 @@ export default function RoadmapClient() {
           if (!group.length) return null;
           const collapsed = (s === "shipped" || s === "deployed") && status === "all" && !q;
           return (
-            <details key={s} open={!collapsed} style={{ marginBottom: 16 }}>
-              <summary style={{ cursor: "pointer", fontWeight: 700, fontSize: 14, margin: "6px 0 8px" }}>{STATUS_LABEL[s]} <span style={{ color: "#8a8fa6", fontWeight: 500 }}>({group.length})</span></summary>
+            <details key={s} open={!collapsed} style={{ marginBottom: 24 }}>
+              <summary style={{ cursor: "pointer", fontWeight: 700, fontSize: 18, lineHeight: "26px", color: "#0b092e", margin: "8px 0 10px" }}>{STATUS_LABEL[s]} <span style={{ color: "#64748b", fontWeight: 500 }}>({group.length})</span></summary>
               <div style={{ display: "grid", gap: 8 }}>
                 {group.map((i, idx) => (
                   <div key={i.id} style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "12px 14px", display: "flex", gap: 12, justifyContent: "space-between", flexWrap: "wrap" }}>
@@ -181,8 +182,8 @@ export default function RoadmapClient() {
 
       {draft && (
         <div role="dialog" aria-label={draft.id ? "Edit roadmap item" : "Add roadmap item"} style={{ position: "fixed", inset: 0, background: "rgba(10,15,30,0.4)", display: "flex", justifyContent: "flex-end", zIndex: 50 }} onClick={() => setDraft(null)}>
-          <form onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); save(); }} style={{ background: "#fff", width: "min(440px, 100%)", padding: 20, display: "grid", gap: 10, alignContent: "start", overflowY: "auto" }}>
-            <h2 style={{ margin: 0, fontSize: 17 }}>{draft.id ? "Edit item" : "Add item"}</h2>
+          <form onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); save(); }} style={{ background: "#fff", width: "min(440px, 100%)", padding: 20, display: "grid", gap: 10, alignContent: "start", overflowY: "auto", scrollbarWidth: "none" }} className="rm-drawer">
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#0b092e" }}>{draft.id ? "Edit item" : "Add item"}</h2>
             <label style={{ fontSize: 12 }}>Title<input required minLength={2} maxLength={140} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} style={{ ...input, width: "100%", boxSizing: "border-box" }} /></label>
             <label style={{ fontSize: 12 }}>Description<textarea rows={4} maxLength={1200} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} style={{ ...input, width: "100%", boxSizing: "border-box" }} /></label>
             <label style={{ fontSize: 12 }}>Status<select value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as RoadmapStatus })} style={{ ...input, width: "100%" }}>{STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}</select></label>

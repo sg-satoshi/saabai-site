@@ -80,3 +80,6 @@
  .au-card-hd{padding:16px 16px 12px}.au-card-bd{padding:16px}
  .au-stats{gap:10px}
 }
+
+/* Roadmap edit drawer: scrolls without a visible scrollbar */
+.rm-drawer::-webkit-scrollbar{display:none}
