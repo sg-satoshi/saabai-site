@@ -13,6 +13,7 @@ import {
   voiceCapMessage,
 } from "@/lib/voice-demo/config";
 import { type TranscriptLine } from "@/lib/voice-demo/events";
+import { setLachiePhase } from "@/lib/conversation-activity";
 import { startVoiceCall, type VoicePhase } from "./voice-call";
 import { trackMarketingLachieStart, trackMarketingLead } from "../../../lib/marketing/browser";
 import { contactInText } from "../../../lib/marketing/public";
@@ -119,6 +120,7 @@ export default function VoiceDemo({
   const [line, setLine] = useState("");
   const [root, setRoot] = useState<Element | null>(null);
   const callRef = useRef<{ stop: () => void; lines: () => TranscriptLine[] } | null>(null);
+  const phaseRef = useRef<Phase>("idle");
   const sessionRef = useRef<{ sessionId: string; secret: string } | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const pulseRef = useRef<number | null>(null);
@@ -133,11 +135,20 @@ export default function VoiceDemo({
     return () => {
       callRef.current?.stop();
       if (pulseRef.current) window.clearInterval(pulseRef.current);
+      const current = phaseRef.current;
+      if (current === "connecting" || current === "live") setLachiePhase("ended");
+      else if (current === "consent") setLachiePhase("idle");
     };
   }, []);
 
+  function movePhase(next: Phase) {
+    phaseRef.current = next;
+    setLachiePhase(next);
+    setPhase(next);
+  }
+
   function closeConsent() {
-    setPhase("idle");
+    movePhase("idle");
     setMessage("");
   }
 
@@ -181,13 +192,13 @@ export default function VoiceDemo({
       window.clearInterval(pulseRef.current);
       pulseRef.current = null;
     }
-    setPhase("idle");
+    movePhase("idle");
     setMessage("");
   }
 
   async function begin() {
     const attempt = ++attemptRef.current;
-    setPhase("connecting");
+    movePhase("connecting");
     setMessage("");
     setElapsed(0);
     setLine("");
@@ -202,7 +213,7 @@ export default function VoiceDemo({
     } catch (err) {
       if (attemptRef.current !== attempt) return;
       const name = err instanceof DOMException ? err.name : "";
-      setPhase("error");
+      movePhase("error");
       if (name === "NotAllowedError" || name === "PermissionDeniedError" || name === "SecurityError") {
         setMessage(VOICE_COPY.denied);
       } else if (name === "NotFoundError" || name === "OverconstrainedError") {
@@ -232,7 +243,7 @@ export default function VoiceDemo({
     }
     if (!payload || !payload.ok) {
       stream.getTracks().forEach((track) => track.stop());
-      setPhase("error");
+      movePhase("error");
       const reason = payload?.error;
       if (reason === "visitor" || reason === "site" || reason === "busy") {
         setMessage(payload?.message || voiceCapMessage(reason));
@@ -244,7 +255,7 @@ export default function VoiceDemo({
 
     sessionRef.current = { sessionId: payload.sessionId, secret: payload.secret };
     setAgentName(payload.agentName);
-    setPhase("live");
+    movePhase("live");
 
     const call = startVoiceCall({
       token: payload.token,
@@ -268,7 +279,7 @@ export default function VoiceDemo({
           const lines = callRef.current?.lines() ?? [];
           callRef.current = null;
           void release(lines);
-          setPhase("ended");
+          movePhase("ended");
           setMessage(reason === "error" ? VOICE_COPY.failed : VOICE_COPY.ended);
         },
       },
@@ -317,12 +328,12 @@ export default function VoiceDemo({
         ? "Call ended"
         : VOICE_COPY.button;
   const buttonSub = ttlState === "connecting"
-    ? "Calling Lachie, your AI receptionist"
+    ? "Starting the Lachie voice demo"
     : ttlState === "live"
-      ? `AI receptionist · ${clock}`
+      ? `Voice demo · ${clock}`
       : ttlState === "ended"
-        ? "Thanks for calling. Tap to call again"
-        : "AI receptionist";
+        ? "Demo ended. Tap to try again"
+        : "Voice demo";
 
   const dialog = phase === "idle" ? null : (
     <div className="voice-back" role="presentation">
@@ -372,9 +383,9 @@ export default function VoiceDemo({
             <Waveform state="idle" />
             <p className="voice-state">{phase === "ended" ? "Call ended" : "Something went wrong"}</p>
             <p className="voice-hint">{message}</p>
-            <NextLinks onMia={() => { openMia(); setPhase("idle"); }} />
+            <NextLinks onMia={() => { openMia(); movePhase("idle"); }} />
             <div className="voice-actions">
-              <button type="button" className="voice-quiet" onClick={() => setPhase("idle")}>Close</button>
+              <button type="button" className="voice-quiet" onClick={() => movePhase("idle")}>Close</button>
             </div>
           </>
         ) : null}
@@ -392,7 +403,7 @@ export default function VoiceDemo({
             data-theme="dark"
             data-state={ttlState}
             aria-label={`${buttonLabel}, ${buttonSub.replace(/ · /g, ", ")}`}
-            onClick={() => setPhase("consent")}
+            onClick={() => movePhase("consent")}
             disabled={phase !== "idle"}
           >
             <span className="ttl__avatar"><LachieAvatar size={48} /></span>
@@ -402,7 +413,7 @@ export default function VoiceDemo({
             </span>
             <span className="ttl__wave" aria-hidden="true"><i /><i /><i /><i /><i /><i /></span>
           </button>
-          {showSupport ? <LachieLockup second="Legend" descriptor="Saabai's AI receptionist." /> : null}
+          {showSupport ? <LachieLockup second="Legend" descriptor="A demo of Saabai's AI voice receptionist." /> : null}
         </span>
       ) : (
         <button type="button" className="btn ghost" disabled style={{ cursor: "not-allowed" }}>{VOICE_COPY.comingSoon}</button>

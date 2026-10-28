@@ -5,7 +5,7 @@
  * This is the single source of truth — no env vars, no code-level derivation.
  */
 
-export type ProductId = "rex" | "leadgen" | "lex";
+export type ProductId = "leadgen" | "lex";
 
 export interface ProductInfo {
   id: ProductId;
@@ -16,13 +16,6 @@ export interface ProductInfo {
 }
 
 export const ALL_PRODUCTS: Record<ProductId, ProductInfo> = {
-  rex: {
-    id: "rex",
-    label: "Rex",
-    icon: "🤖",
-    href: "/rex-dashboard",
-    description: "AI chat agent for trade & e-commerce",
-  },
   leadgen: {
     id: "leadgen",
     label: "LeadGen",
@@ -39,20 +32,19 @@ export const ALL_PRODUCTS: Record<ProductId, ProductInfo> = {
   },
 };
 
-export const PRODUCT_IDS: ProductId[] = ["rex", "leadgen", "lex"];
+export const PRODUCT_IDS: ProductId[] = ["leadgen", "lex"];
 
 export const PRODUCT_LABELS: Record<ProductId, string> = {
-  rex: "Rex",
   leadgen: "LeadGen",
   lex: "Lex",
 };
 
 /**
  * Get display info for a list of product IDs.
- * Returns in a consistent order: rex → leadgen → lex
+ * Returns in a consistent order: leadgen → lex
  */
 export function getProductInfos(productIds: ProductId[]): ProductInfo[] {
-  const order: ProductId[] = ["rex", "leadgen", "lex"];
+  const order: ProductId[] = ["leadgen", "lex"];
   return order
     .filter((id) => productIds.includes(id))
     .map((id) => ALL_PRODUCTS[id]);
@@ -85,7 +77,6 @@ export function userProducts(user: {
 export function productsFromDashboardUrl(dashboardUrl: string): ProductId[] {
   const url = dashboardUrl.toLowerCase();
 
-  if (url.includes("/rex")) return ["rex"];
   if (url.includes("/leadgen")) return ["leadgen"];
   if (url.includes("/lex")) return ["lex"];
 

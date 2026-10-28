@@ -17,7 +17,10 @@ const PAGES: Array<{ path: string; priority: number; changeFrequency: Freq; upda
   { path: "/process", updated: "2026-10-13", priority: 0.8, changeFrequency: "monthly" },
   { path: "/calculator", updated: "2026-05-15", priority: 0.8, changeFrequency: "monthly" },
   { path: "/faq", updated: "2026-10-13", priority: 0.8, changeFrequency: "monthly" },
-  { path: "/insights", updated: "2026-10-14", priority: 0.8, changeFrequency: "weekly" },
+  { path: "/pricing", updated: "2026-10-26", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/compare", updated: "2026-10-26", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/seo-ai-search", updated: "2026-10-26", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/custom-ai-agents", updated: "2026-10-26", priority: 0.8, changeFrequency: "monthly" },
   { path: "/legal", updated: "2026-10-25", priority: 0.7, changeFrequency: "monthly" },
   { path: "/legal/lex-vs-ai-legal-tools", updated: "2026-10-25", priority: 0.7, changeFrequency: "monthly" },
   { path: "/ai-chatbot-law-firms", updated: "2026-10-25", priority: 0.8, changeFrequency: "monthly" },
@@ -27,7 +30,6 @@ const PAGES: Array<{ path: string; priority: number; changeFrequency: Freq; upda
   { path: "/contact", updated: "2026-10-17", priority: 0.5, changeFrequency: "yearly" },
   { path: "/terms", updated: "2026-10-17", priority: 0.3, changeFrequency: "yearly" },
   { path: "/privacy", updated: "2026-10-14", priority: 0.3, changeFrequency: "yearly" },
-  { path: "/ai-news", updated: "2026-05-15", priority: 0.5, changeFrequency: "daily" },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

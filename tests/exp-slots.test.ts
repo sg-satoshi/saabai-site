@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { assignAll, defaultVariant, parseExpCookie, validateExperiment, variantFromHeader, kindOf, type Experiment } from "../lib/exp/core";
-import { SLOTS, SEED_EXPERIMENTS, slotToExperiment } from "../lib/exp/seed";
+import { SLOTS, SEED_EXPERIMENTS, slotToExperiment, qualifyHoursClaim } from "../lib/exp/seed";
 import { applyAction } from "../lib/exp/mutate";
 import { checkSuggestion, cleanSuggestions, suggestSystem, buildSuggestPrompt } from "../lib/exp/suggest";
 import { getExperiments, resetExpCache } from "../lib/exp/config";
@@ -148,7 +148,7 @@ test("AI suggestion clean-up for a button drops emphasis and keeps rules", () =>
 
 test("headline suggestion rules are unchanged by default", () => {
   assert.ok(checkSuggestion({ text: "Get 100 leads", emphasis: "", rationale: "" }, []));
-  assert.equal(checkSuggestion({ text: "Know where AI fits,", emphasis: "in 48\u00a0hours.", rationale: "" }, []), null);
+  assert.equal(checkSuggestion({ text: "Know where AI fits,", emphasis: "in 48\u00a0hours.", rationale: "" }, []), "in 48 hours is not a claim we can make");
 });
 
 test("button suggestions use the button prompt and noun", () => {
@@ -170,4 +170,14 @@ test("Experiment type accepts old stored experiments with no kind (treated as he
   const old = head() as Experiment; delete old.kind;
   assert.ok(validateExperiment(old));
   assert.equal(kindOf(old), "headline");
+});
+
+test("the 48 hours headline filter keeps the full stop", () => {
+  const out = qualifyHoursClaim("Know exactly where AI will", "save your business hours, in 48 hours.");
+  assert.equal(out.text, "Know exactly where AI will");
+  assert.equal(out.emphasis, "save your business hours.");
+  assert.equal(qualifyHoursClaim("Your AI plan, in 48\u00a0hours.").text, "Your AI plan.");
+  assert.equal(qualifyHoursClaim("A clear plan in 48 hours for the shop.").text, "A clear plan for the shop.");
+  assert.equal(qualifyHoursClaim("See which jobs AI can take off your plate.").text, "See which jobs AI can take off your plate.");
+  assert.deepEqual(qualifyHoursClaim("Know where AI fits.", "in 48 hours."), { text: "Know where AI fits." });
 });

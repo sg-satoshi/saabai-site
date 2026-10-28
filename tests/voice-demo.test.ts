@@ -64,8 +64,8 @@ test("name, intro and consent are config values and say this is an AI", () => {
   assert.match(voiceIntro(), /an AI assistant/);
   assert.match(voiceIntro(), /transcribed, not recorded/);
   assert.equal(VOICE_COPY.button, "Talk to Lachie");
-  assert.equal(VOICE_COPY.support, "Meet Lachie Legend, Saabai's AI receptionist.");
-  assert.equal(VOICE_COPY.consent, "You're talking to Lachie, Saabai's AI receptionist. This chat is transcribed, not recorded.");
+  assert.equal(VOICE_COPY.support, "Meet Lachie Legend, a demo of Saabai's AI voice receptionist.");
+  assert.equal(VOICE_COPY.consent, "You're talking to Lachie, a demo of Saabai's AI voice receptionist. This chat is transcribed, not recorded.");
   assert.doesNotMatch(VOICE_COPY.consent, /calls may be recorded/);
   assert.ok(!DASH.test(VOICE_COPY.consent));
   assert.ok(!DASH.test(voiceIntro()));
@@ -165,8 +165,10 @@ test("legal variant is chosen on the server and a client prompt is rejected", ()
   const page = read("app/legal/page.tsx");
   const demos = read("app/components/legal-demos/HarbourDemos.tsx");
   assert.match(page, /LachieLegalDemo/);
-  assert.match(demos, /LachieLockup as="h2" second="Legal"/);
-  assert.match(demos, /Your AI phone answering service\. He picks up when you can't\./);
+  assert.match(demos, /LachieLockup as="h2" second="Legend"/);
+  assert.match(demos, /A demo of Saabai's AI voice receptionist\. Live phone answering is coming soon\./);
+  assert.match(demos, /Lex is the legal assistant on this page/);
+  assert.doesNotMatch(demos, /second="Legal"|phone answering service|picks up when you can't|Lachie Legal/);
   assert.match(demos, /variant="legal"/);
   assert.match(demos, /href="\/contact"/);
   assert.doesNotMatch(page, /24\/7|Answers your business phone/);
@@ -390,7 +392,7 @@ test("voice and legal demo routes are public and a neighbouring admin route stay
   assert.match(pub, /public \/legal demo, fictional firm, no lead capture; origin and limits inside/);
 });
 
-test("the demo is mounted on the homepage and /legal, and the privacy policy has the APP 8 line", () => {
+test("the demo is mounted on the homepage and /legal, and the privacy policy names the chat providers", () => {
   const hits = walk("app")
     .filter((file) => file.endsWith(".ts") || file.endsWith(".tsx"))
     .filter((file) => read(file).includes("VoiceDemo"));
@@ -403,11 +405,21 @@ test("the demo is mounted on the homepage and /legal, and the privacy policy has
   assert.match(read("app/ai-chatbot-law-firms/page.tsx"), /LachieLegalDemo/);
   assert.match(read("app/ai-chatbot-law-firms/page.tsx"), /LexWebsiteDemo/);
   const privacy = read("app/privacy/page.tsx");
-  assert.match(privacy, /Australian Privacy Principle 8/);
-  assert.match(privacy, /overseas AI service provider/);
+  assert.match(privacy, /sole trader business operated by Shane Goldberg/);
+  assert.match(privacy, /Supabase in Tokyo, Japan/);
+  assert.match(privacy, /xAI/);
   assert.match(privacy, /United States/);
+  assert.match(privacy, /China/);
+  assert.match(privacy, /DeepSeek/);
+  assert.match(privacy, /90 days/);
   assert.match(privacy, /text transcripts only, not audio recordings/);
-  assert.doesNotMatch(privacy, /xAI|Grok/);
+  assert.match(privacy, /Vercel keeps standard server logs/);
+  assert.match(privacy, /11 minutes/);
+  assert.match(privacy, /26 hours/);
+  assert.doesNotMatch(privacy, /Australian Privacy Principle/);
+  assert.doesNotMatch(privacy, /reasonable steps/);
+  assert.doesNotMatch(privacy, /\/api\//);
+  assert.doesNotMatch(privacy, /Grok/);
   assert.doesNotMatch(privacy, /calls may be recorded/);
   assert.ok(!DASH.test(privacy));
   const widget = ["app/components/sb/VoiceDemo.tsx", "app/components/sb/voice-call.ts", "app/page.tsx"].map(read).join("\n");

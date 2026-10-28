@@ -9,15 +9,16 @@ import { NAP } from "./seo-entity";
 export const publicPageMeta = {
   home: pageMeta({
     path: "/",
-    title: "AI Chatbots for Australian Businesses | Saabai, Gold Coast",
+    rawCanonical: true,
+    title: "Know exactly where AI will save your business hours | Saabai",
     description:
-      "Custom AI chatbots and websites for Australian small businesses and law firms. Saabai is based in Merrimac on the Gold Coast, with alerts by email, SMS, WhatsApp or Telegram.",
+      "Custom AI chatbots and websites for Australian small businesses and law firms. Saabai is based in Merrimac on the Gold Coast, and the chatbot answers visitors and keeps a log of each chat.",
   }),
   contact: pageMeta({
     path: "/contact",
     title: "Contact Saabai | Gold Coast and Brisbane",
     description:
-      `Email ${NAP.email} to reach Saabai in ${NAP.addressLine}. We serve the Gold Coast, Brisbane and Queensland, and clients across Australia online.`,
+      `Email ${NAP.email} to reach Saabai in ${NAP.addressLine}. We usually reply within 1 business day and serve the Gold Coast, Brisbane, Queensland and clients across Australia.`,
   }),
   terms: pageMeta({
     path: "/terms",
@@ -71,19 +72,19 @@ export const publicPageMeta = {
     path: "/ai-chatbot-developer-queensland",
     title: "Custom AI Chatbot Developer in Queensland | Saabai",
     description:
-      "Saabai builds custom AI chatbots for Queensland businesses in Brisbane, the Gold Coast and the Sunshine Coast. Alerts go out by email, SMS, WhatsApp or Telegram.",
+      "Saabai builds custom AI chatbots for Queensland businesses in Brisbane, the Gold Coast and the Sunshine Coast. The chatbot answers visitors and keeps a log of each chat.",
   }),
   receptionist: pageMeta({
     path: "/ai-receptionist-gold-coast",
     title: "AI Receptionist for Gold Coast Businesses | Saabai",
     description:
-      "A Gold Coast built AI receptionist for your website, from Saabai in Merrimac. It answers enquiries day and night and alerts you by email, SMS, WhatsApp or Telegram.",
+      "A Gold Coast built AI receptionist for your website, from Saabai in Merrimac. It answers visitors day and night and keeps a log of each chat.",
   }),
   lawFirms: pageMeta({
     path: "/ai-chatbot-law-firms",
     title: "AI Chatbot for Law Firms | Saabai, Gold Coast",
     description:
-      "Custom AI chatbots and Lex for Australian law firms, built by Saabai on the Gold Coast. Capture after-hours enquiries and get alerts by email, SMS or WhatsApp.",
+      "Custom AI chatbots and Lex for Australian law firms, built by Saabai on the Gold Coast. The chatbot answers after-hours questions and keeps a log of each chat.",
   }),
   blueprint: pageMeta({
     path: "/blueprint",
@@ -113,37 +114,38 @@ export const publicPageMeta = {
     path: "/case-studies",
     title: "Saabai Case Studies | Gold Coast AI Results",
     description:
-      "Real results from Saabai, a Gold Coast AI business, including AI agents that answer enquiries and quote around the clock. Start with a Blueprint from $497.",
+      "One published example from Saabai, a Gold Coast AI business: a custom AI sales agent that answers product questions and prices cut-to-size jobs.",
   }),
   rexCase: pageMeta({
     path: "/case-studies/rex-plastics-online",
-    title: "Rex Case Study | AI Sales Agent | Saabai",
+    title: "Rex Plastics Case Study | AI Sales Agent | Saabai",
     description:
-      "How a national plastics supplier used Rex, an AI sales agent built by Saabai on the Gold Coast. The team recovered 60% of the sales day, with 344 leads in 30 days.",
+      "A custom AI sales agent Saabai built on the Gold Coast for Rex Plastics. It answers product questions and prices cut-to-size jobs from that supplier's catalogue.",
   }),
   process: pageMeta({
     path: "/process",
     title: "Saabai AI Process | Gold Coast",
     description:
-      "Saabai's process on the Gold Coast runs from a Blueprint to a live automation. Most small businesses have a first automation live within 2 to 4 weeks.",
+      "Saabai's process on the Gold Coast runs from a Blueprint to a live automation. Simple automations can go live in one to two weeks, and more complex workflows typically take four to six weeks.",
   }),
   insights: pageMeta({
     path: "/insights",
     title: "Saabai Insights | AI for Small Business, Gold Coast",
     description:
       "Patterns from building websites, AI agents and automation for Australian small businesses. Written by Saabai on the Gold Coast.",
+    robots: { index: false, follow: true },
   }),
   useCases: pageMeta({
     path: "/use-cases",
     title: "AI Use Cases for Small Business | Saabai, Gold Coast",
     description:
-      "Practical AI and automation examples for Australian small businesses, from Saabai on the Gold Coast, including enquiry agents, quoting, follow-up and admin. Blueprint audits start from $497.",
+      "Practical AI and automation examples for Australian small businesses, from Saabai on the Gold Coast. Chatbots answer at any hour, quoting and reminders are custom work, and Blueprint audits start from $497.",
   }),
   leadgen: pageMeta({
     path: "/leadgen",
     title: "Saabai LeadGen | AI Lead Capture, Gold Coast",
     description:
-      "Saabai LeadGen turns website visitors into booked jobs for Australian service businesses, and alerts you by email, SMS or WhatsApp. Built on the Gold Coast.",
+      "Saabai LeadGen is an AI lead capture widget for Australian service businesses on the Gold Coast. It can collect a name and phone at any hour.",
   }),
   calculator: pageMeta({
     path: "/calculator",
@@ -156,6 +158,31 @@ export const publicPageMeta = {
     title: "AI News | Saabai, Gold Coast",
     description:
       "Live AI news and research, curated by Saabai on the Gold Coast. Updated from leading AI publications and discussions.",
+    robots: { index: false, follow: true },
+  }),
+  pricing: pageMeta({
+    path: "/pricing",
+    title: "Saabai Pricing | Websites and AI, Gold Coast",
+    description:
+      "Published Saabai prices in Australian dollars. Website care plans start from $100 a month on the Gold Coast, and the Blueprint starts from $497.",
+  }),
+  compare: pageMeta({
+    path: "/compare",
+    title: "Saabai, an agency, or a DIY site builder | Gold Coast",
+    description:
+      "How a Saabai care plan compares with a traditional web agency and with DIY builders such as Wix and Squarespace. Saabai is based on the Gold Coast, and care plans start from $100 a month.",
+  }),
+  seoAiSearch: pageMeta({
+    path: "/seo-ai-search",
+    title: "SEO and AI Search Visibility | Saabai, Gold Coast",
+    description:
+      "SEO and AI search checks are included in every Saabai Blueprint, from $497. Saabai is based in Merrimac on the Gold Coast and looks at Google, ChatGPT, Claude, Perplexity and Gemini.",
+  }),
+  customAgents: pageMeta({
+    path: "/custom-ai-agents",
+    title: "Custom AI Agents for Australian Businesses | Saabai",
+    description:
+      "Custom AI agents for Australian businesses, scoped in a Saabai Blueprint and quoted before any build. Saabai is based on the Gold Coast, and you can book a call for a quote.",
   }),
   changelog: pageMeta({
     path: "/saabai-changelog",

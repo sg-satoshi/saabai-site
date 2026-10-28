@@ -27,7 +27,7 @@ export default function PrivacyPolicy() {
       {/* Content */}
       <div style={{ maxWidth: 800, margin: "0 auto", padding: "64px 32px" }}>
         <h1 style={{ fontSize: 36, fontWeight: 800, color: NAVY, marginBottom: 8 }}>Privacy Policy</h1>
-        <p style={{ color: "#5C6670", fontSize: 14, marginBottom: 48 }}>Last updated: January 2025</p>
+        <p style={{ color: "#5C6670", fontSize: 14, marginBottom: 48 }}>Last updated: 27 October 2026</p>
 
         {[
           {
@@ -69,6 +69,10 @@ export default function PrivacyPolicy() {
           {
             heading: "10. Contact Us",
             body: "If you have any questions about this Privacy Policy or how we handle your personal information, please contact us at: info@boconsulting.com.au",
+          },
+          {
+            heading: "11. Christina, the website chatbot",
+            body: "The chat on this website is Christina, an AI assistant. The first message says that she is an AI assistant. We collect the messages you type. Those messages are sent to an AI provider, which may process them in the United States. A copy of the conversation is stored in Japan (Tokyo) and deleted after 90 days, unless it is linked to an enquiry we are still handling. Do not type identity documents, tax file numbers or bank details into the chat. This chat gives general information about BO Consulting. It does not make hiring decisions.",
           },
         ].map((section, i) => (
           <section key={i} style={{ marginBottom: 40 }}>

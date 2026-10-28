@@ -108,7 +108,6 @@ function inferFiles(input: string): string[] {
   // UI hinting
   if (input.includes("ui") || input.includes("layout")) {
     if (input.includes("lex")) return ["app/lex/page.tsx"];
-    if (input.includes("rex")) return ["app/rex-dashboard/page.tsx"];
   }
 
   if (input.includes("theme") || input.includes("globals")) {

@@ -19,11 +19,6 @@ const envSchema = z.object({
   MAKE_LINKEDIN_WEBHOOK_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
-  HEYGEN_API_KEY: z.string().optional(),
-  HEYGEN_AVATAR_ID: z.string().optional(),
-
-  // Dashboard Auth
-  REX_DASHBOARD_PASSWORD: z.string().optional(),
 
   // AI Model Overrides
   LEX_MODEL: z.string().optional(),
@@ -31,14 +26,6 @@ const envSchema = z.object({
 
   // Resend (Email)
   RESEND_API_KEY: z.string().optional(),
-
-  // WooCommerce
-  WOO_CONSUMER_KEY: z.string().optional(),
-  WOO_CONSUMER_SECRET: z.string().optional(),
-  WOO_API_URL: z.string().optional(),
-
-  // Pipedrive
-  PIPEDRIVE_API_TOKEN: z.string().optional(),
 
   // Node environment
   NODE_ENV: z.enum(["development", "production", "test"]).default("production"),

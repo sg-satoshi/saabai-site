@@ -110,19 +110,16 @@ test("Lex title and H1 say AI legal assistant, and the workspace is distinguishe
   assert.ok(!/[\u2012-\u2015]/.test(compare));
 });
 
-test("the law firms page copies the Tributum case study quote and its attribution", () => {
+test("the law firms page and case studies do not cite Tributum", () => {
   const firms = read("app/ai-chatbot-law-firms/page.tsx");
   const study = read("app/case-studies/page.tsx");
-  const quote = "The clients calling about ATO disputes are stressed. They want to know someone&apos;s there. Lex answers that in 90 seconds, any time of day. The difference it&apos;s made to our conversion rate has been significant.";
-  assert.ok(study.includes("The clients calling about ATO disputes are stressed."));
-  assert.ok(study.includes("someone&apos;s there."));
-  assert.ok(study.includes("difference it&apos;s made to our conversion rate has been significant."));
-  assert.match(study, /, Principal, Tributum Law/);
-  assert.match(study, /An Adelaide law firm serving clients across Australia and internationally/);
+  for (const src of [firms, study]) {
+    assert.doesNotMatch(src, /Tributum/);
+    assert.doesNotMatch(src, /Adelaide law firm/);
+    assert.doesNotMatch(src, /ATO disputes are stressed/);
+  }
+  assert.match(study, /national plastics supplier/i);
   assert.doesNotMatch(study, /Brisbane/);
-  assert.ok(firms.includes(quote));
-  assert.match(firms, /, Principal, Tributum Law/);
-  assert.match(firms, /Tributum Law is an Adelaide law firm serving clients across Australia and internationally/);
   assert.doesNotMatch(firms, /Brisbane practice|Brisbane firm|firm, Brisbane/);
   assert.match(firms, /different product from the website chatbot demo/);
   assert.match(firms, /ai-chatbot-developer-queensland/);

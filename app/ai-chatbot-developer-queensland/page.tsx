@@ -5,10 +5,12 @@ import JsonLd from "../components/JsonLd";
 import { serviceSchema, schemaGraph, SITE_URL } from "@/lib/seo-entity";
 import { breadcrumbNode, faqNode } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
+import { formatAud, WEBSITE_TIERS } from "@/lib/website-tiers";
 import "../components/sb/sb.css";
 import "../components/sb/home.css";
 
 const PATH = "/ai-chatbot-developer-queensland";
+const entryTier = WEBSITE_TIERS[0];
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 const copyLink = { color: "var(--teal)", textDecoration: "underline", textUnderlineOffset: 3 } as const;
 
@@ -23,11 +25,11 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "What is the difference between a custom chatbot and a DIY chatbot tool?",
-    a: "With a DIY tool you set up and train the bot yourself. With Saabai, we build and train the chatbot on your business for you and set up your alerts.",
+    a: "With a DIY tool you set up and train the bot yourself. With Saabai, we build and train the chatbot on your business for you.",
   },
   {
     q: "How will I receive enquiries from the chatbot?",
-    a: "By email on every plan. We can also send alerts to Telegram, WhatsApp or SMS.",
+    a: "The chatbot answers visitors and keeps a log of each chat. Enquiry alerts by email, Telegram, WhatsApp or SMS are coming soon.",
   },
   {
     q: "How much does a custom AI chatbot cost?",
@@ -43,8 +45,16 @@ const schema = schemaGraph([
     name: "Custom AI chatbot development in Queensland",
     serviceType: "Custom AI chatbot development",
     description:
-      "Saabai builds custom AI chatbots for business websites in Brisbane, the Gold Coast and the Sunshine Coast. Alerts by email on all plans, plus Telegram, WhatsApp or SMS.",
+      "Saabai builds custom AI chatbots for business websites in Brisbane, the Gold Coast and the Sunshine Coast. The chatbot answers visitors and keeps a log of each chat. Enquiry alerts are coming soon.",
     url: `${SITE_URL}${PATH}`,
+    offers: {
+      "@type": "Offer",
+      name: `${entryTier.name} website with chatbot`,
+      price: String(entryTier.buildFrom),
+      priceCurrency: "AUD",
+      url: `${SITE_URL}/websites`,
+      description: `${entryTier.name} starts from ${formatAud(entryTier.buildFrom)} plus ${formatAud(entryTier.monthly)} a month care. A custom build is quoted on a call.`,
+    },
     areaServed: [
       { "@type": "City", name: "Brisbane" },
       { "@type": "City", name: "Gold Coast" },
@@ -77,6 +87,9 @@ export default function QueenslandChatbotPage() {
           <p style={{ maxWidth: 720, margin: "18px auto 0", fontSize: 18 }}>
             Saabai builds custom AI chatbots for business websites across Queensland. We are based in Merrimac on the Gold Coast and work with clients in Brisbane, the Sunshine Coast and beyond.
           </p>
+          <p style={{ maxWidth: 720, margin: "14px auto 0", fontSize: 17, color: "var(--teal)", fontWeight: 600 }}>
+            From {formatAud(entryTier.buildFrom)} plus {formatAud(entryTier.monthly)} a month on a website care plan. For a custom build, book a free 30 minute call for a quote.
+          </p>
           <div className="ctas" style={{ marginTop: 32 }}>
             <a className="btn" href={CALENDLY} target="_blank" rel="noopener noreferrer">Book a free 30-min call</a>
           </div>
@@ -96,7 +109,7 @@ export default function QueenslandChatbotPage() {
             <h2 style={{ fontSize: 26, lineHeight: 1.25 }}>Trained on your business, not a template</h2>
             <div style={{ display: "grid", gap: 12, marginTop: 12, fontSize: 17 }}>
               <p>Your chatbot learns your services, hours, prices and policies.</p>
-              <p>It answers visitors in your words and captures their details when they want to get in touch.</p>
+              <p>It answers visitors in your words and keeps a log of the chat.</p>
             </div>
           </div>
           <div className="card">
@@ -114,10 +127,10 @@ export default function QueenslandChatbotPage() {
             </div>
           </div>
           <div className="card">
-            <h2 style={{ fontSize: 26, lineHeight: 1.25 }}>Alerts where you already work</h2>
+            <h2 style={{ fontSize: 26, lineHeight: 1.25 }}>Answers today, alerts coming soon</h2>
             <div style={{ display: "grid", gap: 12, marginTop: 12, fontSize: 17 }}>
-              <p>Every new enquiry arrives by email on all plans.</p>
-              <p>We can also send alerts to Telegram, WhatsApp or SMS, so you see leads while you are on the go.</p>
+              <p>The chatbot answers visitors and keeps a log of each chat.</p>
+              <p>Enquiry alerts by email, Telegram, WhatsApp or SMS are coming soon.</p>
             </div>
           </div>
           <div className="card">

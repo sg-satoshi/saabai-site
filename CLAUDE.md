@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Tailwind CSS with custom CSS variables for brand theming
 - Vercel (Node.js runtime) for API routes
 - AI SDK (`ai` package v6) with `streamText` + `stepCountIs`
-- Resend for email, Pipedrive for CRM, Make.com webhooks
+- Resend for email, Make.com webhooks
 - Upstash Redis (`@upstash/redis`) for persistence — NOT ioredis
 
 ## Commands
@@ -26,24 +26,15 @@ git push          # triggers Vercel auto-deploy
 
 | File | Purpose |
 |------|---------|
-| `app/components/PeterAvatarWidget.tsx` | Rex chat widget UI — launcher, chat window, voice mode, end panel |
-| `app/api/pete-chat/route.ts` | Rex AI backend — system prompt, tools (searchProducts, captureLead, calculatePrice) |
-| `lib/rex-knowledge.ts` | Rex knowledge base — all pricing tables, product info, company details |
-| `app/api/rex-leads/route.ts` | Lead capture — Resend emails, Pipedrive CRM, Make.com webhook |
-| `app/rex-widget/page.tsx` | Embeddable iframe page (`/rex-widget`) — used on client websites |
-| `app/rex-changelog/ChangelogClient.tsx` | Rex changelog UI |
 | `app/components/ChatWidget.tsx` | Mia — Saabai's own AI widget |
-| `lib/woo-client.ts` | WooCommerce REST API — product search + cut-to-size pricing |
 | `lib/chat-config.ts` | Model selection helper — use this for all model references |
 | `lib/redis.ts` | All Redis operations — conversations, leads, Edge memory, social queues |
 | `scripts/update-changelog.js` | Auto-update script run by post-commit git hook |
 
 ## Architecture
 
-- `/rex-widget` is an iframe-embeddable page. Parent sites embed it with a small fixed iframe (88×88px) that resizes to 420×720px on open via `postMessage({ rexWidget: "open"|"closed" })`.
-- Rex widget CSS uses scoped CSS variables (`--saabai-teal: #25D366`, etc.) so branding doesn't bleed into host pages.
-- Conversation persistence via `localStorage` key `rex_conversation` with 24hr TTL.
-- Quick replies are randomised from a pool of 12 on each session.
+- Mia is `app/components/ChatWidget.tsx` and posts to `/api/chat`. Its model is `getSaabaiModel()` (`SAABAI_CHAT_MODEL`), not `DEFAULT_CHAT_MODEL`.
+- Other client chats call `getDefaultModel()` or their own route. Do not point them at another client's key when a route is removed.
 
 ---
 
@@ -63,7 +54,7 @@ Never tell the operator something is "live" until you have confirmed the Vercel 
 
 ### 2. Changelog is auto-updated — do NOT manually add entries
 
-A post-commit git hook runs `scripts/update-changelog.js` after every commit. It automatically adds an entry to `app/rex-changelog/ChangelogClient.tsx` based on the commit message.
+A post-commit git hook runs `scripts/update-changelog.js` after every commit. It automatically adds an entry to `app/saabai-changelog/SaabaiChangelogClient.tsx` based on the commit message.
 
 **Do not manually edit ChangelogClient.tsx to add entries for your own commits** — the hook does this automatically. Only manually edit it to correct or backfill entries that were missed.
 
@@ -139,7 +130,7 @@ export async function GET(req: Request) {
 
 | Env Var | Value | Used by |
 |---------|-------|---------|
-| `DEFAULT_CHAT_MODEL` | `xai:grok-3-mini` | Rex default tier, Mia |
-| `PREMIUM_CHAT_MODEL` | `anthropic:claude-sonnet-4-6` | Rex qualified leads |
-| `SAABAI_CHAT_MODEL` | `xai:grok-3-mini` | Saabai internal chat |
+| `DEFAULT_CHAT_MODEL` | `xai:grok-3-mini` | Client chats and site factory (`getDefaultModel`) |
+| `PREMIUM_CHAT_MODEL` | `anthropic:claude-sonnet-4-6` | Lex research and site-factory generation |
+| `SAABAI_CHAT_MODEL` | `xai:grok-3-mini` | Mia (`getSaabaiModel`) |
 | Edge chat | `anthropic:claude-opus-4-6` | Hardcoded — Shane's personal coach |

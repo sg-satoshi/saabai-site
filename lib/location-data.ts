@@ -15,13 +15,6 @@ export interface LocationFaq {
   a: string;
 }
 
-export interface LocationCaseStudy {
-  client: string;
-  industry: string;
-  context: string;
-  outcome: string;
-}
-
 export interface LocationIndustryLink {
   /** e.g. "Website Care Plans" */
   industry: string;
@@ -38,6 +31,8 @@ export interface LocationConfig {
   stateCode: string;
   heroHeadline: string;
   heroSubheading: string;
+  /** Optional price line under the headline. Published prices only. */
+  heroPrice?: string;
   industries: string[];
   /** 3-4 paragraphs, ~80-120 words each */
   marketContext: string[];
@@ -47,7 +42,6 @@ export interface LocationConfig {
   howWeHelpIntro: string;
   /** 6 per city */
   services: Array<{ title: string; detail: string }>;
-  caseStudy: LocationCaseStudy;
   /** 3 per city, linking to existing industry pages */
   industryLinks: LocationIndustryLink[];
   /** 7 per city, genuinely city-specific questions */
@@ -86,6 +80,7 @@ export const BRISBANE: LocationConfig = {
   state: "Queensland",
   stateCode: "QLD",
   heroHeadline: "Websites and AI systems for Brisbane small businesses",
+  heroPrice: "Websites from $2,000 plus $100 a month.",
   heroSubheading:
     "From growth-corridor trades in Logan and Moreton Bay to CBD practices, we build, host and manage websites that win work, and map exactly where AI can take the admin off your plate with a Saabai Blueprint.",
   industries: [
@@ -165,14 +160,6 @@ export const BRISBANE: LocationConfig = {
         "Private AI assistants trained on your own procedures and documentation, so staff find the right answer in seconds rather than interrupting a senior colleague.",
     },
   ],
-  caseStudy: {
-    client: "PlasticOnline (Holland Plastics)",
-    industry: "Manufacturing & Industrial Supply",
-    context:
-      "Holland Plastics sells cut-to-size plastics where every order needs individual pricing based on material, dimensions and finishing. Quoting was a manual, expert-dependent task that capped how many enquiries the team could handle in a day.",
-    outcome:
-      "We built Rex, a custom AI pricing agent that quotes cut-to-size orders instantly from the company's own pricing logic. Enquiries are answered in seconds rather than hours, freeing the team to focus on complex orders and customer relationships while routine pricing runs itself.",
-  },
   industryLinks: [
     {
       industry: "Website Care Plans",
@@ -199,7 +186,7 @@ export const BRISBANE: LocationConfig = {
     paragraphs: [
       "Saabai builds custom AI chatbots for business websites in Brisbane, the Gold Coast and the Sunshine Coast.",
       "We are based in Merrimac on the Gold Coast and work with Brisbane clients mostly remotely.",
-      "Your chatbot learns your services, hours and policies. New enquiries arrive by email, and we can also send alerts to Telegram, WhatsApp or SMS.",
+      "Your chatbot learns your services, hours and policies. It answers visitors and keeps a log of each chat. Enquiry alerts are coming soon.",
     ],
     linkHref: "/ai-chatbot-developer-queensland",
     linkLabel: "Custom AI chatbots in Queensland",
@@ -344,14 +331,6 @@ export const GOLD_COAST: LocationConfig = {
         "Private AI assistants that give staff instant answers from your own procedures, so the owner isn't the only person who knows how everything works.",
     },
   ],
-  caseStudy: {
-    client: "PlasticOnline (Holland Plastics)",
-    industry: "Manufacturing & Industrial Supply",
-    context:
-      "Gold Coast-based Holland Plastics sells cut-to-size plastics, where every order is individually priced on material, size and finishing. Manual quoting limited how many enquiries the small team could process and tied up expert staff in routine pricing.",
-    outcome:
-      "We built Rex, an AI pricing agent that quotes cut-to-size orders instantly from the company's own pricing logic. The lean team now handles far more enquiries without adding headcount, with routine quoting running itself and people freed for complex orders and relationships.",
-  },
   industryLinks: [
     {
       industry: "Website Care Plans",

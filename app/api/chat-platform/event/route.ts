@@ -1,0 +1,35 @@
+import { NextRequest } from "next/server";
+import { domainsForBot } from "@/lib/chatbot/personas";
+import { isWidgetEvent } from "@/lib/chatbot/events";
+import { cors, optionsResponse, originDecision } from "@/lib/chatbot/handler";
+import { recordChatEvent } from "@/lib/chatbot/store";
+import { SLUG_RE } from "@/lib/chat-origin";
+import { getSiteBySlug } from "@/lib/site-registry";
+
+export const runtime = "nodejs";
+
+export const OPTIONS = (req: NextRequest) => optionsResponse(req);
+
+/**
+ * Widget beacon for a handoff click (call or email). Counts the event and sends nothing.
+ * A client chat is never notified. There is no admin send here either: if that is added,
+ * it must use adminTelegramDestination and send nothing when that returns null.
+ * This route does not post to a lead endpoint.
+ */
+export async function POST(req: NextRequest) {
+  const origin = req.headers.get("origin");
+  const headers = cors(origin);
+  const body = await req.json().catch(() => ({}));
+  const slug = typeof body?.slug === "string" ? body.slug.trim().toLowerCase() : "";
+  if (!slug || !SLUG_RE.test(slug)) return Response.json({ ok: false }, { status: 400, headers });
+  if (!isWidgetEvent(body?.event)) return Response.json({ ok: false }, { status: 400, headers });
+
+  const site = await getSiteBySlug(slug);
+  if (!site) return Response.json({ ok: false }, { status: 404, headers });
+  if ((await originDecision(req, slug, domainsForBot(slug, site.domains))) === "block") {
+    return Response.json({ ok: false }, { status: 403, headers });
+  }
+
+  await recordChatEvent(slug, "handoff");
+  return Response.json({ ok: true }, { headers });
+}

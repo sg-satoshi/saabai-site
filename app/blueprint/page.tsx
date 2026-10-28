@@ -63,6 +63,7 @@ export default function BlueprintPage() {
           <p className="lead">A clear, ranked AI plan for small businesses, with professional practices just as welcome. Every opportunity comes with the hours and dollars it saves and what it costs to build.</p>
           <div style={{ marginTop: 32, display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <a className="btn" href="/score">Not sure which? Take the free score →</a>
+            <a className="btn ghost" href="https://calendly.com/shanegoldberg/30min" target="_blank" rel="noopener noreferrer">Book a call</a>
           </div>
         </div>
       </div>
@@ -91,7 +92,7 @@ export default function BlueprintPage() {
           <div className="credit">
             <div className="big">100% credited</div>
             <div>
-              <h3>Build within 30 days and your Blueprint is free</h3>
+              <h3>Build with us within 30 days and your Blueprint fee (from {TIERS.starter.priceLabel}) is credited to your build</h3>
               <p style={{ fontSize: 14, marginTop: 4 }}>Credit applies to implementation costs only, not care plans or monthly fees. Any unused credit expires after 30 days.</p>
               <p style={{ fontSize: 15, marginTop: 4 }}>Book any build with Saabai within 30 days of delivery and the full Blueprint fee comes off your build invoice.</p>
             </div>
