@@ -435,7 +435,7 @@ export default function LexSettingsClient() {
 
   return (
     <AdminShell activePath="/saabai-admin/lex-settings">
-      <div style={{ maxWidth: 920, paddingBottom: 40 }}>
+      <div style={{ paddingBottom: 40 }}>
 
         {/* Header */}
         <div className="mc-head">

@@ -6,6 +6,7 @@ import { TIERS, isTier, type BlueprintTier } from "@/lib/blueprint";
 import GaEvent from "../../components/GaEvent";
 import MarketingPurchase from "../../components/MarketingPurchase";
 import { portalAllowed } from "@/lib/portal-blueprint/flag";
+import MarkConverted from "@/app/components/MarkConverted";
 
 export const metadata: Metadata = { title: "You're in: Saabai Blueprint", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -47,6 +48,7 @@ export default async function ConfirmationPage({ searchParams }: { searchParams:
       ) : o.paid && t && o.ref ? (
         <GaEvent name="purchase" onceKey={`purchase:${o.ref}`} params={{ transaction_id: o.ref, currency: "AUD", value: t.price, items: [{ item_id: `blueprint_${o.tier}`, item_name: `Saabai Blueprint ${t.name}`, item_category: "blueprint", price: t.price, quantity: 1 }] }} />
       ) : null}
+      {o.paid ? <MarkConverted /> : null}
       <SbNav minimal right={o.ref ? <span className="dim" style={{ fontSize: 14 }}>Order {o.ref}</span> : undefined} />
       <div style={{ position: "relative" }}>
         <div className="glow" />

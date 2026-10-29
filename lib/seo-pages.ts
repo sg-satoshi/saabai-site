@@ -9,7 +9,6 @@ import { NAP } from "./seo-entity";
 export const publicPageMeta = {
   home: pageMeta({
     path: "/",
-    rawCanonical: true,
     title: "Know exactly where AI will save your business hours | Saabai",
     description:
       "Custom AI chatbots and websites for Australian small businesses and law firms. Saabai is based in Merrimac on the Gold Coast, and the chatbot answers visitors and keeps a log of each chat.",
@@ -118,9 +117,9 @@ export const publicPageMeta = {
   }),
   rexCase: pageMeta({
     path: "/case-studies/rex-plastics-online",
-    title: "Rex Plastics Case Study | AI Sales Agent | Saabai",
+    title: "PlasticOnline.com.au Case Study | Rex AI Sales Agent | Saabai",
     description:
-      "A custom AI sales agent Saabai built on the Gold Coast for Rex Plastics. It answered product questions and priced cut-to-size jobs from that supplier's catalogue.",
+      "Rex, a custom AI sales agent Saabai built on the Gold Coast for PlasticOnline.com.au. It answered product questions and priced cut-to-size jobs from that supplier's catalogue.",
   }),
   process: pageMeta({
     path: "/process",
@@ -180,9 +179,9 @@ export const publicPageMeta = {
   }),
   customAgents: pageMeta({
     path: "/custom-ai-agents",
-    title: "Custom AI Agents for Australian Businesses | Saabai",
+    title: "Custom AI Agents for Gold Coast Businesses | Saabai",
     description:
-      "Custom AI agents for Australian businesses, scoped in a Saabai Blueprint and quoted before any build. Saabai is based on the Gold Coast, and you can book a call for a quote.",
+      "Custom AI agents for Gold Coast and Australian businesses, scoped with you and quoted to the job before any build. Book a call for a quote.",
   }),
   changelog: pageMeta({
     path: "/saabai-changelog",

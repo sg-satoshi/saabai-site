@@ -46,6 +46,7 @@ export const founderSchema = {
   jobTitle: "Founder",
   worksFor: { "@id": ORG_ID },
   url: `${SITE_URL}/about`,
+  image: `${SITE_URL}/shane-goldberg.jpg`,
   sameAs: [...SAME_AS],
 };
 
@@ -129,13 +130,15 @@ export const lexServiceSchema = withContext(
 );
 
 /**
- * Monthly care prices published on /websites.
- * Build prices stay in the description so the Offer price is the monthly figure.
+ * Prices published on /websites.
+ * Offer.price stays the monthly care figure. The one-off build is a second
+ * UnitPriceSpecification (minPrice), matching the "from" build price on the page.
  */
 const WEBSITE_CARE = WEBSITE_TIERS.map((tier) => ({
   name: tier.name,
   monthly: String(tier.monthly),
   build: formatAud(tier.buildFrom),
+  buildFrom: tier.buildFrom,
 }));
 
 export const websitesServiceNode = serviceSchema({
@@ -154,13 +157,22 @@ export const websitesServiceNode = serviceSchema({
     priceCurrency: "AUD",
     availability: "https://schema.org/InStock",
     url: `${SITE_URL}/websites`,
-    priceSpecification: {
-      "@type": "UnitPriceSpecification",
-      price: t.monthly,
-      priceCurrency: "AUD",
-      unitCode: "MON",
-      referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" },
-    },
+    priceSpecification: [
+      {
+        "@type": "UnitPriceSpecification",
+        price: t.monthly,
+        priceCurrency: "AUD",
+        unitCode: "MON",
+        referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" },
+      },
+      {
+        "@type": "UnitPriceSpecification",
+        minPrice: t.buildFrom,
+        priceCurrency: "AUD",
+        description:
+          "One-off build, from. The price only goes above the from figure for custom integrations or other additional work, and we quote that in writing before any work starts.",
+      },
+    ],
   })),
 });
 
@@ -327,7 +339,7 @@ export const aboutPageSchema = schemaGraph([
   },
   {
     ...founderSchema,
-    image: `${SITE_URL}/shane-goldberg.png`,
+    image: `${SITE_URL}/shane-goldberg.jpg`,
     description:
       "Shane Goldberg is the founder of Saabai, a sole trader business based in Merrimac on the Gold Coast, Queensland.",
   },

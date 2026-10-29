@@ -8,6 +8,7 @@ const OFFERS = [
   { label: "Web Solutions", href: "/websites" },
   { label: "Saabai Blueprint", href: "/blueprint" },
   { label: "Free AI score", href: "/score" },
+  { label: "Services", href: "/services" },
   { label: "Pricing", href: "/pricing" },
 ];
 
@@ -32,7 +33,7 @@ const PRODUCTS = [
   { label: "AI receptionist", href: "/ai-receptionist-gold-coast" },
   { label: "Custom AI agents", href: "/custom-ai-agents" },
   { label: "SEO and AI search", href: "/seo-ai-search" },
-  { label: "Rex Plastics", href: "/case-studies/rex-plastics-online" },
+  { label: "PlasticOnline.com.au", href: "/case-studies/rex-plastics-online" },
 ];
 
 function Column({

@@ -956,7 +956,7 @@ export default function PaymentsClient({ publishableKey }: { publishableKey: str
 
   return (
     <AdminShell activePath="/saabai-admin/payments">
-      <div style={{ maxWidth: 1040 }}>
+      <div>
         <div className="ph">
           <div>
             <h1>Payments</h1>

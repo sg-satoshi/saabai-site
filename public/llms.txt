@@ -4,7 +4,7 @@
 
 ## Products
 
-- [Website care plans](https://www.saabai.ai/websites): Saabai builds, hosts and manages small business websites with an AI enquiry chatbot built in. Care plans: Presence $100/month, Growth $200/month, Signature $300/month. Builds start from $2,000.
+- [Website care plans](https://www.saabai.ai/websites): Saabai builds, hosts and manages small business websites with an AI enquiry chatbot built in. Care plans: Presence $100/month, Growth $200/month, Signature $300/month. Builds: Presence from $2,000, Growth from $4,000, Signature from $6,500. The price only goes above the from figure for custom integrations or other additional work, quoted in writing before work starts.
 - [Saabai Blueprint AI audit](https://www.saabai.ai/blueprint): a ranked AI plan showing where AI saves hours and dollars. Starter $497 (within 48 hours), Pro $1,497 (3 business days, reviewed by Shane, 30 min walkthrough), Business $3,500 (2 to 3 weeks, team discovery, 12 month roadmap). Fee credited if you build with Saabai within 30 days.
 - [Free AI Readiness Score](https://www.saabai.ai/score): a free 3 minute, 12 question quiz with an instant score out of 100 and three quick wins.
 - [Lex](https://www.saabai.ai/legal): an AI legal assistant for Australian law firms. It cites ATO rulings and Commonwealth legislation. The Firm plan is $299 a month.
@@ -16,10 +16,28 @@
 - [LeadGen](https://www.saabai.ai/leadgen): AI lead capture for service businesses. Starter $197/month, Pro $397/month, Enterprise $997/month.
 - [Pricing](https://www.saabai.ai/pricing): the published prices collected on one page.
 
+## Case studies
+
+- [Rex Plastics](https://www.saabai.ai/case-studies/rex-plastics-online): a custom AI sales agent that answered product questions and priced cut-to-size jobs from that supplier's catalogue. The shop is [plasticonline.com.au](https://www.plasticonline.com.au).
+- [All case studies](https://www.saabai.ai/case-studies)
+
+## Service areas
+
+- [Gold Coast](https://www.saabai.ai/gold-coast), [Brisbane](https://www.saabai.ai/brisbane), Queensland and Australia-wide online.
+
+## Terms
+
+Price, cancellation and refund lines below are copied from the terms page.
+
+- Prices: Prices are in Australian dollars. Saabai is not registered for GST, so GST is not applicable and invoices are not tax invoices.
+- Cancellation: You can cancel a care plan at any time by emailing hello@saabai.ai. Cancellation takes effect at the end of the period you have already paid for, and we do not give part-month refunds unless the law requires it.
+- Refunds: Our services come with guarantees that cannot be excluded under the Australian Consumer Law. Nothing in these terms limits those rights. If something is not right, email us and we will work with you to fix it.
+- Liability: To the extent the law allows, our liability is limited to resupplying the service or refunding the amount paid for it. We do not guarantee particular search rankings, traffic or sales results.
+- Full terms: https://www.saabai.ai/terms
+
 ## About
 
 - [About Saabai and Shane Goldberg](https://www.saabai.ai/about)
-- [Case studies](https://www.saabai.ai/case-studies)
 - [FAQ](https://www.saabai.ai/faq)
 - [Privacy policy](https://www.saabai.ai/privacy)
 

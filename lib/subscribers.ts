@@ -12,7 +12,15 @@ export interface Subscriber {
   countryCode?: string;
   city?: string;
   region?: string;
+  /** "score_link" for the exit pop-up. Empty for older sign-ups (retired checklist). */
+  offer?: string;
+  /** Only "yes" may receive marketing broadcasts. Older sign-ups have no flag and stay out until they opt in. */
+  marketingConsent?: "yes" | "no";
+  consentAt?: string;
 }
+
+/** Marketing broadcasts go only to active subscribers who ticked the optional consent box (rule lives in subscriber-rules so the browser can use it). */
+export { canReceiveMarketing } from "./subscriber-rules";
 
 export async function saveSubscriber(
   sub: Omit<Subscriber, "subscribedAt" | "status">
@@ -44,6 +52,53 @@ export async function saveSubscriber(
   await redis.incr("subscribers:count");
 
   return { isNew: true };
+}
+
+/**
+ * Exit pop-up "Email me the link". New addresses are added with their consent choice.
+ * An existing address keeps its record; a ticked box upgrades it to consented, an unticked box never removes consent.
+ * Returns false when storage is unavailable.
+ */
+export async function saveScoreLinkSubscriber(rec: { email: string; source: string; marketingConsent: boolean; ip?: string }): Promise<boolean> {
+  const redis = getRedis();
+  if (!redis) return false;
+  const key = `subscriber:${rec.email}`;
+  const now = new Date().toISOString();
+  const exists = await redis.hexists(key, "email");
+  if (exists) {
+    if (rec.marketingConsent) await redis.hset(key, { marketingConsent: "yes", consentAt: now });
+    return true;
+  }
+  const record: Record<string, string> = {
+    email: rec.email,
+    firstName: "",
+    industry: "",
+    source: rec.source,
+    subscribedAt: now,
+    status: "active",
+    offer: "score_link",
+    marketingConsent: rec.marketingConsent ? "yes" : "no",
+  };
+  if (rec.marketingConsent) record.consentAt = now;
+  if (rec.ip) record.ip = rec.ip;
+  await redis.hset(key, record);
+  await redis.lpush("subscribers:list", rec.email);
+  await redis.incr("subscribers:count");
+  return true;
+}
+
+/** One score-link email per address per window. Null when storage is unavailable. */
+export async function claimScoreLinkSlot(email: string, seconds: number): Promise<boolean | null> {
+  const redis = getRedis();
+  if (!redis) return null;
+  const res = await redis.set(`scorelink:rl:${email}`, "1", { nx: true, ex: seconds });
+  return res === "OK";
+}
+
+export async function releaseScoreLinkSlot(email: string): Promise<void> {
+  const redis = getRedis();
+  if (!redis) return;
+  await redis.del(`scorelink:rl:${email}`);
 }
 
 export async function getSubscribers(limit = 200): Promise<Subscriber[]> {
@@ -79,10 +134,31 @@ export async function getSubscribers(limit = 200): Promise<Subscriber[]> {
       countryCode: raw.countryCode || undefined,
       city: raw.city || undefined,
       region: raw.region || undefined,
+      offer: raw.offer || undefined,
+      marketingConsent: raw.marketingConsent === "yes" ? "yes" : raw.marketingConsent === "no" ? "no" : undefined,
+      consentAt: raw.consentAt || undefined,
     });
   }
 
   return subscribers;
+}
+
+/**
+ * "Mark unsubscribed" from the admin page (#345). Sets status to unsubscribed and keeps the
+ * record, including the consent history. Returns the addresses that exist and were updated.
+ */
+export async function setSubscribersUnsubscribed(emails: string[]): Promise<string[]> {
+  const redis = getRedis();
+  if (!redis || !emails.length) return [];
+  const now = new Date().toISOString();
+  const done: string[] = [];
+  for (const email of emails) {
+    const key = `subscriber:${email}`;
+    if (!(await redis.hexists(key, "email"))) continue;
+    await redis.hset(key, { status: "unsubscribed", unsubscribedAt: now });
+    done.push(email);
+  }
+  return done;
 }
 
 export async function deleteSubscribers(emails: string[]): Promise<number> {

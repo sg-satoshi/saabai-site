@@ -176,7 +176,7 @@ ${warnings}
 
 SUGGESTED SEARCH TERMS (use these with the available search tools):
 ${searchTerms}
-
+${docType.draftingGuide?.length ? `\nDOCUMENT STRUCTURE (follow this order):\n${docType.draftingGuide.map((g) => `- ${g}`).join("\n")}\n` : ""}
 MANDATORY FIRST STEP: Before drafting a single clause, search for the governing legislation using searchLegislation and verifySection. Case citations in the licensed snapshot (NSW Caselaw, Federal Court and High Court, cutoff 10 March 2025) are checked with checkCitation, which returns a citation, court, date and link, not judgment text. Family Court decisions are not in that snapshot. Do not treat searchAustLII, searchFamilyLaw or searchCorporationsLaw as a complete set of Australian courts.`;
 }
 

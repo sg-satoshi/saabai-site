@@ -96,6 +96,28 @@ export async function listDocs<T extends Doc>(coll: string, limit = 200): Promis
   return ids.map((id) => parse<T>(vals?.[id])).filter(Boolean) as T[];
 }
 
+/** Which of these ids exist in a collection, in one query (or one HMGET per 200 on Redis). */
+export async function existingDocIds(coll: string, ids: string[]): Promise<Set<string>> {
+  check(coll);
+  const out = new Set<string>();
+  const uniq = [...new Set(ids)];
+  if (!uniq.length) return out;
+  const sql = await getSql();
+  if (sql) {
+    const rows = await sql(`select id from growth_docs where coll=$1 and id = any($2::text[])`, [coll, uniq]);
+    for (const r of rows) out.add(String(r.id));
+    return out;
+  }
+  const r = getRedis();
+  if (!r) return out;
+  for (let i = 0; i < uniq.length; i += 200) {
+    const chunk = uniq.slice(i, i + 200);
+    const vals = (await r.hmget(rk(coll), ...chunk)) as Record<string, unknown> | null;
+    for (const id of chunk) if (vals?.[id] != null) out.add(id);
+  }
+  return out;
+}
+
 export async function patchDoc<T extends Doc>(coll: string, id: string, patch: Partial<T>): Promise<T | null> {
   const cur = await getDoc<T>(coll, id);
   if (!cur) return null;

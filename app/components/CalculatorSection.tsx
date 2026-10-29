@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { gaEvent } from "@/lib/ga";
+import { CONVERTED_KEY, markFlag } from "@/lib/exit-popup";
 
 function formatHours(h: number) {
   return h.toLocaleString("en-AU", { maximumFractionDigits: 0 });
@@ -41,6 +42,7 @@ export default function CalculatorSection() {
       });
       setEmailSubmitted(true);
       gaEvent("generate_lead", { form: "calculator_homepage" });
+      try { markFlag(localStorage, CONVERTED_KEY); } catch { /* storage blocked */ }
     } finally {
       setEmailSubmitting(false);
     }

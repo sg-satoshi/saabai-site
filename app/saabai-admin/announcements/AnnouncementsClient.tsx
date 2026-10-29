@@ -161,7 +161,7 @@ export default function AnnouncementsClient() {
   );
 
   return (
-    <div style={{ maxWidth: 960, color: "var(--n-900)" }}>
+    <div style={{ color: "var(--n-900)" }}>
       {pinned && previewAnn && <AnnouncementView ann={previewAnn} ended={!!pTimer && endPrev} offset={0} preview onClose={() => setPin(false)} innerRef={pinRef} />}
       <style>{`.btn[aria-pressed="true"]{background:var(--navy-900);border-color:var(--navy-900);color:#fff}.btn:disabled{opacity:.5;cursor:not-allowed}@media (max-width:767px){.ann-grid{grid-template-columns:1fr!important}.ann-grid>*{grid-column:1/-1!important;min-width:0}.ann-panel{position:static!important}}`}</style>
       <div className="ph"><div><h1>Announcements</h1>

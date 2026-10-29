@@ -26,7 +26,10 @@ test("sitemap lists the Queensland chatbot page and the Lex comparison", () => {
 test("Queensland page uses the approved title, H1, cost FAQ and links", () => {
   assert.equal(titleOf(publicPageMeta.queenslandChatbot), "Custom AI Chatbot Developer in Queensland | Saabai");
   const page = read("app/ai-chatbot-developer-queensland/page.tsx");
-  assert.match(page, /Custom AI chatbots built in Queensland/);
+  assert.match(page, /Custom AI chatbots that turn Queensland website visitors into leads/);
+  assert.match(page, /href="https:\/\/plasticonline\.com\.au"/);
+  assert.match(page, /href="\/case-studies\/rex-plastics-online"/);
+  assert.doesNotMatch(page, /Rex Plastics/);
   assert.match(page, /How much does a custom AI chatbot cost\?/);
   assert.match(page, /Book a free 30 minute call for a quote/);
   assert.match(page, /href="\/ai-chatbot-law-firms"/);
@@ -123,4 +126,13 @@ test("the law firms page and case studies do not cite Tributum", () => {
   assert.doesNotMatch(firms, /Brisbane practice|Brisbane firm|firm, Brisbane/);
   assert.match(firms, /different product from the website chatbot demo/);
   assert.match(firms, /ai-chatbot-developer-queensland/);
+});
+
+test("Rex case study names the business PlasticOnline.com.au and keeps its slug", () => {
+  const page = read("app/case-studies/rex-plastics-online/page.tsx");
+  assert.match(page, /PlasticOnline\.com\.au/);
+  assert.doesNotMatch(page, /Rex Plastics|withheld/i);
+  assert.match(page, /\/case-studies\/rex-plastics-online/);
+  assert.match(titleOf(publicPageMeta.rexCase) ?? "", /PlasticOnline\.com\.au/);
+  assert.ok(!/[\u2012-\u2015]/.test(page));
 });

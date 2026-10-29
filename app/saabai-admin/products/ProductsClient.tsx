@@ -565,7 +565,7 @@ export default function ProductsClient({ publishableKey }: { publishableKey: str
 
   return (
     <AdminShell activePath="/saabai-admin/products">
-      <div style={{ maxWidth: 1100 }}>
+      <div>
         {/* Header */}
         <div className="mc-head" style={{ marginBottom: 6, alignItems: "center" }}>
           <h1 className="mc-h1">Products</h1>

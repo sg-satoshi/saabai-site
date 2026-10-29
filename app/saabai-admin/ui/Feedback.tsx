@@ -60,13 +60,15 @@ const toneStyle: Record<Tone, { bg: string; fg: string; bd: string }> = {
 export function FeedbackHost() {
   const [s, setS] = useState<State>(state);
   const okRef = useRef<HTMLButtonElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     listeners.add(setS);
     return () => { listeners.delete(setS); };
   }, []);
   useEffect(() => {
     if (!s.confirm) return;
-    okRef.current?.focus();
+    // Destructive confirms start on Cancel, so Enter never deletes by accident (#345).
+    (s.confirm.danger ? cancelRef : okRef).current?.focus();
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closeConfirm(false); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -86,8 +88,8 @@ export function FeedbackHost() {
           <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: "min(100%, 420px)", padding: 20, background: "#fff" }}>
             <p style={{ margin: "0 0 18px", fontSize: 14.5, lineHeight: 1.5, color: "var(--n-900)", whiteSpace: "pre-wrap" }}>{s.confirm.message}</p>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-              <button type="button" className="btn" onClick={() => closeConfirm(false)}>Cancel</button>
-              <button type="button" ref={okRef} className={`btn ${s.confirm.danger ? "dg" : "pri"}`} onClick={() => closeConfirm(true)}>{s.confirm.confirmLabel}</button>
+              <button type="button" ref={cancelRef} className="btn" onClick={() => closeConfirm(false)}>Cancel</button>
+              <button type="button" ref={okRef} className={`btn ${s.confirm.danger ? "ds" : "pri"}`} onClick={() => closeConfirm(true)}>{s.confirm.confirmLabel}</button>
             </div>
           </div>
         </div>
