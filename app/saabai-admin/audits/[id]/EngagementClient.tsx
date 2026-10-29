@@ -65,7 +65,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 type Tab = "overview" | "factfind" | "portal" | "assessment" | "reports" | "notes";
 
-export default function EngagementClient({ id }: { id: string }) {
+export default function EngagementClient({ id, reviewRequired = false }: { id: string; reviewRequired?: boolean }) {
   const [eng, setEng] = useState<AuditEngagement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("overview");
@@ -691,7 +691,7 @@ export default function EngagementClient({ id }: { id: string }) {
                     <a href={r.url} download={r.filename} style={{ ...btnGhost, textDecoration: "none", display: "inline-block" }}>
                       Download .docx
                     </a>
-                    {!r.deliveredAt && !r.reviewedAt && (
+                    {reviewRequired && !r.deliveredAt && !r.reviewedAt && (
                       <button onClick={() => markReviewed(r.id)} disabled={busy === "review"} style={btnGhost}>
                         Mark reviewed
                       </button>

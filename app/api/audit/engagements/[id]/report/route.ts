@@ -14,7 +14,8 @@ import { recordEvent } from "@/lib/growth/events";
 
 import { put } from "@vercel/blob";
 import { after } from "next/server";
-import { canDeliver, markReviewed, reviewRequired } from "../../../../../../lib/portal-blueprint/deliver";
+import { handleReportPatch } from "../../../../../../lib/portal-blueprint/report-routes";
+import { getRedis } from "../../../../../../lib/redis";
 import { reportReadyEmail } from "../../../../../../lib/portal-blueprint/emails";
 import { EMAIL_BRAND, sendBrandedEmail } from "../../../../../../lib/email/branded-layout";
 import { portalBaseUrl } from "../../../../../../lib/portal-blueprint/links";
@@ -92,86 +93,37 @@ export async function POST(_req: Request, { params }: Params) {
 }
 
 export async function PATCH(req: Request, { params }: Params) {
-  const auth = await requireAdmin();
-  if (!auth.ok) return auth.response;
-
   const { id } = await params;
-  const engagement = await getEngagement(id);
-  if (!engagement)
-    return Response.json({ error: "Not found" }, { status: 404 });
-
-  let body: { reportId?: string; action?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return Response.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-
-  if (typeof body.reportId !== "string") return Response.json({ error: "reportId required" }, { status: 400 });
-
-  if (body.action === "review") {
-    const reviewed = markReviewed(engagement.reports ?? [], body.reportId);
-    if (!reviewed) return Response.json({ error: "Report not found" }, { status: 404 });
-    const r = reviewed.find((x) => x.id === body.reportId);
-    await updateEngagement(id, { reports: reviewed });
-    const upd = await logEvent(id, "report_reviewed", `Report v${r?.version ?? "?"} reviewed`, r?.filename);
-    return Response.json({ engagement: upd });
-  }
-
-  const check = canDeliver(engagement, body.reportId);
-  if (!check.ok) return Response.json({ error: check.error }, { status: check.status });
-  const alreadyDelivered = Boolean((engagement.reports ?? []).find((x) => x.id === body.reportId)?.deliveredAt);
-
-  const reports = (engagement.reports ?? []).map((r) =>
-    r.id === body.reportId
-      ? { ...r, deliveredAt: new Date().toISOString() }
-      : r
-  );
-  if (!reports.some((r) => r.id === body.reportId))
-    return Response.json({ error: "Report not found" }, { status: 404 });
-
-  const deliveredReport = reports.find((r) => r.id === body.reportId);
-  await updateEngagement(id, {
-    reports,
-    status: "delivered",
-    // First delivery starts the credit clock. Later versions do not move it.
-    ...(engagement.deliveredAt || !deliveredReport?.deliveredAt
-      ? {}
-      : { deliveredAt: deliveredReport.deliveredAt }),
-  });
-  const updated = await logEvent(
-    id,
-    "report_delivered",
-    `Report v${deliveredReport?.version ?? "?"} delivered to client`,
-    deliveredReport?.filename
-  );
-
-  await recordEvent({
-    contactId: engagement.contactEmail, type: "report_delivered", refId: id,
-    meta: { tier: engagement.tier, version: deliveredReport?.version },
-  });
-  // Growth: schedule the upsell and testimonial request. Both wait for Shane's approval before anything is sent.
-  try {
-    const who = { email: engagement.contactEmail, name: engagement.contactName, auditId: id, tier: engagement.tier, deliveredAt: deliveredReport?.deliveredAt };
-    await Promise.all([scheduleUpsell(who), scheduleTestimonial(who)]);
-  } catch (err) { console.error("[growth] schedule after delivery failed", err); }
-
-  // Portal buyers get a "ready" email with a link into their portal. Only on first delivery of this version.
-  if (!alreadyDelivered && reviewRequired(engagement)) {
-    const base = portalBaseUrl(req);
-    after(async () => {
+  const base = portalBaseUrl(req);
+  return handleReportPatch(req, id, {
+    requireAdmin,
+    getEngagement,
+    updateEngagement: (eid, patch) => updateEngagement(eid, patch),
+    logEvent: (eid, type, summary, detail) => logEvent(eid, type, summary, detail),
+    afterDelivery: async (engagement, delivered) => {
+      await recordEvent({
+        contactId: engagement.contactEmail, type: "report_delivered", refId: id,
+        meta: { tier: engagement.tier, version: delivered.version },
+      });
+      // Growth: schedule the upsell and testimonial request. Both wait for Shane's approval before anything is sent.
       try {
-        await sendBrandedEmail({
-          to: engagement.contactEmail,
-          email: reportReadyEmail({ name: engagement.contactName, tierName: TIER_NAMES[engagement.tier], portalUrl: `${base}/portal/${engagement.id}` }),
-          from: process.env.BLUEPRINT_FROM_EMAIL || EMAIL_BRAND.fromShane,
-          replyTo: EMAIL_BRAND.supportEmail,
-        });
-      } catch (err) {
-        console.error("[blueprint-portal] report ready email failed", err instanceof Error ? err.message : err);
-      }
-    });
-  }
-
-  return Response.json({ engagement: updated });
+        const who = { email: engagement.contactEmail, name: engagement.contactName, auditId: id, tier: engagement.tier, deliveredAt: delivered.deliveredAt };
+        await Promise.all([scheduleUpsell(who), scheduleTestimonial(who)]);
+      } catch (err) { console.error("[growth] schedule after delivery failed", err); }
+    },
+    claimSendOnce: async (key) => {
+      const redis = getRedis();
+      if (!redis) return true; // no Redis: the "first delivery of this version" check still applies
+      return (await redis.set(key, "1", { nx: true, ex: 60 * 60 * 24 * 90 })) === "OK";
+    },
+    sendReady: async (engagement) => {
+      await sendBrandedEmail({
+        to: engagement.contactEmail,
+        email: reportReadyEmail({ name: engagement.contactName, tierName: TIER_NAMES[engagement.tier], portalUrl: `${base}/portal/${engagement.id}` }),
+        from: process.env.BLUEPRINT_FROM_EMAIL || EMAIL_BRAND.fromShane,
+        replyTo: EMAIL_BRAND.supportEmail,
+      });
+    },
+    defer: (fn) => after(fn),
+  });
 }

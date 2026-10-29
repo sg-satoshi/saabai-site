@@ -35,8 +35,3 @@ export function deliveredReports(e: Pick<AuditEngagement, "reports">): PublicRep
     .sort((a, b) => b.version - a.version)
     .map((r) => ({ id: r.id, version: r.version, deliveredAt: r.deliveredAt }));
 }
-
-export function deliveredReportUrl(e: Pick<AuditEngagement, "reports">, reportId: string): string | null {
-  const r = (e.reports ?? []).find((x) => x.id === reportId && x.deliveredAt);
-  return r ? r.url : null;
-}

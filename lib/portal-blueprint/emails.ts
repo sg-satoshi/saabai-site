@@ -109,6 +109,7 @@ export function reportReadyEmail(o: { name?: string; tierName: string; portalUrl
       "",
       "Your Blueprint has been reviewed by our team and is ready in your portal. You can download it there any time.",
       `Open it here: ${o.portalUrl}`,
+      "Sign in with just your email at saabai.ai/portal/login. Questions? Reply to this email.",
     ],
   });
 }

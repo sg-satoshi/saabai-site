@@ -6,7 +6,7 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { canDeliver, deliveredReportUrl, deliveredReports, markReviewed, reviewRequired } from "../lib/portal-blueprint/deliver";
+import { canDeliver, deliveredReports, markReviewed, reviewRequired } from "../lib/portal-blueprint/deliver";
 import { reportReadyEmail } from "../lib/portal-blueprint/emails";
 import type { AuditReport } from "../lib/audit-types";
 
@@ -45,8 +45,6 @@ test("client sees delivered versions only, newest first, with no URL", () => {
   const list = deliveredReports(e);
   assert.deepEqual(list.map((r) => r.id), ["c", "a"]);
   assert.ok(list.every((r) => !("url" in r)));
-  assert.equal(deliveredReportUrl(e, "b"), null);
-  assert.equal(deliveredReportUrl(e, "c"), "https://blob.example/c");
 });
 
 test("ready email: escaped name, no em dash, no free claim, no price", () => {
@@ -57,4 +55,5 @@ test("ready email: escaped name, no em dash, no free claim, no price", () => {
   assert.ok(!/\bfree\b/i.test(all));
   assert.ok(!/\$\d/.test(all));
   assert.ok(all.includes("https://saabai.ai/portal/x"));
+  assert.ok(m.text.includes("saabai.ai/portal/login"));
 });
