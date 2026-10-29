@@ -1,5 +1,7 @@
 "use client";
 
+import { OCR_NOTE } from "../../../lib/lex-upload-client";
+import { LEX_DOC_ACCEPT } from "../../../lib/lex-doc-accept";
 import { forwardRef, useEffect, useRef, useState } from "react";
 import { ALL_SCOPES, LEX_SCOPES, isFullScope, scopeLabel, type LexScopeKey } from "../../../lib/lex-scope";
 import type { LexStep } from "../../../lib/lex-steps";
@@ -20,7 +22,7 @@ export const FOLLOW_UPS = [
   "What should I check before advising the client?",
 ];
 
-export type Attachment = { name: string; text: string; words: number; privacy?: string };
+export type Attachment = { name: string; text: string; words: number; privacy?: string; ocr?: boolean };
 
 type ComposerProps = {
   value: string; onChange: (v: string) => void; onSend: () => void; disabled?: boolean;
@@ -58,7 +60,7 @@ export const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function 
     <div className="lx-cbox">
       {attachment && (
         <div className="lx-attached">
-          <Icon name="attach" size={14} /><b>{attachment.name}</b><span>{attachment.words.toLocaleString("en-AU")} words, sent with your next question{attachment.privacy ? `. ${attachment.privacy}` : ""}</span>
+          <Icon name="attach" size={14} /><b>{attachment.name}</b><span>{attachment.words.toLocaleString("en-AU")} words, sent with your next question{attachment.ocr ? `. ${OCR_NOTE}` : ""}{attachment.privacy ? `. ${attachment.privacy}` : ""}</span>
           <button type="button" aria-label="Remove attachment" onClick={onClearAttachment}><Icon name="close" size={14} /></button>
         </div>
       )}
@@ -88,7 +90,7 @@ export const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function 
         <button type="button" className="lx-chip btn" onClick={() => fileRef.current?.click()} disabled={attaching} title="Attach a PDF, Word or text file as context">
           <Icon name="attach" size={13} />{attaching ? "Reading file..." : "Attach"}
         </button>
-        <input ref={fileRef} type="file" hidden accept=".pdf,.docx,.doc,.txt"
+        <input ref={fileRef} type="file" hidden accept={LEX_DOC_ACCEPT}
           onChange={(e) => { const f = e.target.files?.[0]; if (f) onAttach?.(f); e.target.value = ""; }} />
         <button type="button" className="lx-send" onClick={onSend} disabled={disabled || attaching || !value.trim()} aria-label="Send">
           <Icon name="send" />

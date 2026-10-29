@@ -10,6 +10,8 @@ import {
 import { JURISDICTIONS } from "./Drafting";
 import { ErrorCard } from "./States";
 import { Icon } from "./icons";
+import { addLexFiles, LexUploadError, OCR_NOTE } from "../../../lib/lex-upload-client";
+import { LEX_DOC_ACCEPT } from "../../../lib/lex-doc-accept";
 import "./drafting.css";
 import "./review.css";
 
@@ -36,6 +38,8 @@ type InputMode = "upload" | "paste";
 export type ReviewProps = {
   /** Active matter: its known parties are masked server side. */
   matterId?: string;
+  /** The document was read from a scan by text recognition. */
+  ocr?: boolean;
   direction: "incoming" | "outgoing"; setDirection: (v: "incoming" | "outgoing") => void;
   docType: string; setDocType: (v: string) => void;
   actingFor: string; setActingFor: (v: string) => void;
@@ -61,10 +65,10 @@ function Drop({ file, onFile, small, label }: { file: File | null; onFile: (f: F
       onClick={() => ref.current?.click()} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ref.current?.click(); } }}
       onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
       onDrop={(e) => { e.preventDefault(); setOver(false); const f = e.dataTransfer.files[0]; if (f) onFile(f); }}>
-      <input ref={ref} type="file" accept=".pdf,.docx,.doc,.txt" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
+      <input ref={ref} type="file" accept={LEX_DOC_ACCEPT} hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
       <Icon name={file ? "check" : "attach"} size={small ? 16 : 22} />
       {file ? <><b>{file.name}</b><small>{Math.max(1, Math.round(file.size / 1024)).toLocaleString("en-AU")} KB, click to change</small></>
-        : <><b>{label}</b><small>PDF, DOCX, DOC or TXT, up to 10MB</small></>}
+        : <><b>{label}</b><small>PDF, DOCX or TXT, up to 25MB. Scans are read with text recognition</small></>}
     </div>
   );
 }
@@ -97,6 +101,7 @@ export function ReviewView(p: ReviewProps) {
   const [cmpLoading, setCmpLoading] = useState(false);
   const [cmpResult, setCmpResult] = useState("");
   const [cmpError, setCmpError] = useState<LexError | null>(null);
+  const [cmpOcr, setOcrNote] = useState(false);
   const pageRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -127,10 +132,16 @@ export function ReviewView(p: ReviewProps) {
 
   async function extract(f: File): Promise<string | LexError> {
     const form = new FormData();
-    form.append("file", f);
+    try { await addLexFiles(form, "file", [f]); }
+    catch (e) { return { kind: "empty", title: "File not uploaded", message: e instanceof LexUploadError ? e.message : `Could not upload ${f.name}.`, canRetry: false, signIn: false }; }
     const res = await fetch("/api/lex-extract", { method: "POST", body: form });
+    if (res.status === 422 || res.status === 400) {
+      const bad = await res.json().catch(() => null) as { error?: string } | null;
+      if (bad?.error) return { kind: "empty", title: "No text found", message: bad.error, canRetry: false, signIn: false };
+    }
     if (!res.ok) return lexErrorFromResponse(res, "comparison");
-    const data = await res.json() as { text?: string };
+    const data = await res.json() as { text?: string; ocr?: boolean };
+    if (data.ocr) setOcrNote(true);
     return data.text?.trim() || { kind: "empty", title: "No text found", message: `No text could be read from ${f.name}. Try a text-based PDF or DOCX, or paste the text.`, canRetry: false, signIn: false };
   }
 
@@ -326,6 +337,7 @@ export function ReviewView(p: ReviewProps) {
             <div className="lxr-wrap">
               <aside className="lxr-sum" aria-label="Risk summary">
                 <span className="k">Risk summary</span>
+                {(p.ocr || cmpOcr) && <p className="lxr-ocr" role="note">{OCR_NOTE}</p>}
                 <div className={`big r-${r.riskLevel}`}>{RISK_LABEL[r.riskLevel] ?? r.riskLevel}</div>
                 <div className="sbar" aria-hidden="true">
                   {counts.critical > 0 && <span className="b-bad" style={{ flex: counts.critical / total }} />}

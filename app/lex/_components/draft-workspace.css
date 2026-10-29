@@ -77,6 +77,7 @@
 .lxw-files small{grid-column:1/-1;font-size:12px}
 .lxw-kind{color:var(--ink-2)}
 .lxw-mask{color:#0e7482}
+.lxw-ocr{color:#8a4b00;font-weight:600}
 .lxw-err{color:#b42318}
 .lxw-files li.bad .lxw-st{color:#b42318}
 .lxw-note{margin-top:12px;font-size:13px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 14px;color:var(--ink-2)}

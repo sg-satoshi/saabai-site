@@ -16,6 +16,8 @@ import { DOCUMENT_TYPES, fillPartiesTemplate, type DocumentType } from "../../..
 import { DOC_KIND_LABELS, prefillChecklist, profileFor, sourceLabel, type MergedDeed, type PrepState } from "../../../lib/lex-doc-extract";
 import { needDone, needsFor } from "../../../lib/lex-doc-needs";
 import { describeDocumentPrivacy } from "../../../lib/lex-privacy/document-privacy-text";
+import { addLexFiles, LexUploadError, OCR_NOTE } from "../../../lib/lex-upload-client";
+import { LEX_DOC_ACCEPT } from "../../../lib/lex-doc-accept";
 import {
   GROUP_LABELS, draftGate, formProgress, groupsOf, parseForm, setAnswer, type FormField, type FormGroupId, groupSummary, fieldText } from "../../../lib/lex-draft-form";
 import type { LexError } from "../../../lib/lex-errors";
@@ -31,10 +33,11 @@ const CATEGORY_LABELS: Record<string, string> = { trust: "Trusts", "family-law":
 /** Short tile lines. Employment per QA round 1: no compliance claims. */
 const TILE_LINES: Record<string, string> = { employment: "Pay, duties and leave" };
 const FILE_ERRORS: Record<string, string> = {
-  scanned: "This looks like a scanned image, so its text could not be read. Type those details in, or upload a text PDF or Word copy.",
+  scanned: "This looks like a scanned image and no text could be read from it, even with text recognition. Type those details in, or upload a clearer scan, a text PDF or a Word copy.",
+  "doc-legacy": "Old Word .doc files can't be read. Save it as .docx or PDF and upload it again.",
   unreadable: "Couldn't read this file.",
   unsupported: "Only PDF, Word (.docx) or text files.",
-  "too-large": "Too large (max 10MB).",
+  "too-large": "Too large (max 25MB).",
   empty: "No text found in this file.",
 };
 
@@ -142,14 +145,14 @@ export function DraftWorkspace(p: WorkspaceProps) {
     setLoading(names); setErr(null); setStage("upload");
     try {
       const fd = new FormData();
-      Array.from(list).forEach((f) => fd.append("files", f));
+      await addLexFiles(fd, "files", Array.from(list));
       fd.append("documentType", p.typeId);
       const res = await fetch("/api/lex-doc-extract", { method: "POST", body: fd });
       const data = (await res.json().catch(() => null)) as (MergedDeed & { error?: string }) | null;
       if (!res.ok || !data || data.error) { setErr(data?.error && res.status === 400 ? data.error : "Lex could not read those files. Try again, or fill in the form by hand."); return; }
       p.setPrep({ ...p.prep, extracted: data });
-    } catch {
-      setErr("Lex could not read those files. Try again, or fill in the form by hand.");
+    } catch (e) {
+      setErr(e instanceof LexUploadError ? e.message : "Lex could not read those files. Try again, or fill in the form by hand.");
     } finally {
       setLoading(null);
     }
@@ -338,6 +341,7 @@ export function DraftWorkspace(p: WorkspaceProps) {
               <b>{f.file}</b>
               <span className="lxw-st">{f.error ? "Failed" : "Read"}</span>
               {f.error ? <small className="lxw-err">{FILE_ERRORS[f.error] ?? FILE_ERRORS.unreadable}</small> : <small className="lxw-kind">{f.kind ? DOC_KIND_LABELS[f.kind] : "Document"}{f.documentDate ? `, ${f.documentDate}` : ""}</small>}
+              {!f.error && f.ocr && <small className="lxw-ocr">{OCR_NOTE}</small>}
               {!f.error && <small className="lxw-mask">{f.privacy ? describeDocumentPrivacy({ ...f.privacy, ner: "skipped" }) : "Names are masked before Lex's model reads them."}</small>}
             </li>
           ))}
@@ -565,7 +569,7 @@ export function DraftWorkspace(p: WorkspaceProps) {
 
   return (
     <div className="lxw" data-no-feedback>
-      <input ref={fileInput} type="file" multiple accept=".pdf,.docx,.doc,.txt" hidden onChange={(e) => { void upload(e.target.files); e.target.value = ""; }} />
+      <input ref={fileInput} type="file" multiple accept={LEX_DOC_ACCEPT} hidden onChange={(e) => { void upload(e.target.files); e.target.value = ""; }} />
       {bar}
       <div className="lxw-body">
         {stage === "home" && home}
