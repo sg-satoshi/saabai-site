@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { DOCUMENT_TYPES } from "../../../lib/lex-document-types";
+import { DOCUMENT_TYPES, fillPartiesTemplate } from "../../../lib/lex-document-types";
 import type { LexError } from "../../../lib/lex-errors";
 import {
   type QAReport, type QASection, splitDraft, segmentDraft, verifyMarkers, draftReferences,
@@ -108,7 +108,7 @@ export function DraftingView(p: DraftingProps) {
       <label className="lxd-f">
         <span>Parties</span>
         {doc?.partiesTemplate && !p.parties.trim() && (
-          <button type="button" className="lxd-fill" onClick={() => p.setParties(doc.partiesTemplate!)} disabled={busy}>Fill in the {doc.name} checklist</button>
+          <button type="button" className="lxd-fill" onClick={() => p.setParties(fillPartiesTemplate(doc.partiesTemplate!))} disabled={busy}>Fill in the {doc.name} checklist</button>
         )}
         <textarea rows={doc?.partiesTemplate ? 10 : 4} value={p.parties} onChange={(e) => p.setParties(e.target.value)} disabled={busy}
           placeholder={"e.g.\nTrustee: Smith Holdings Pty Ltd (ACN 123 456 789)\nSettlor: Jane Smith\nBeneficiaries: Smith Family"} />
