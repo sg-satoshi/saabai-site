@@ -293,9 +293,6 @@ function BroadcastPanel({
     <p style="margin:0;font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.3px;">Saabai<span style="color:#00bfa5;">.</span>ai</p>
   </td></tr>
   <tr><td style="padding:36px 40px 28px;">${paragraphs}</td></tr>
-  <tr><td style="padding:20px 40px;border-top:1px solid #f3f4f6;text-align:center;">
-    <p style="margin:0;font-size:12px;color:#9ca3af;">You're receiving this as a Saabai subscriber · <a href="https://saabai.ai" style="color:#00bfa5;text-decoration:none;">saabai.ai</a></p>
-  </td></tr>
 </table></td></tr></table></body></html>`;
   }
 
