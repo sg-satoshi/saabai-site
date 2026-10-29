@@ -1,13 +1,22 @@
 /**
  * LeadGen — Create/list client configurations
+ *
+ * Auth (proxy.ts sends anonymous callers a 401 before this runs; each handler checks again):
+ *   GET   full admin only (returns every client's settings, emails and phones)
+ *   POST  full admin only (creates a client)
+ *   PATCH full admin, or the signed-in LeadGen client editing its own record
  */
 
 import { NextRequest } from "next/server";
 import { createClient, listClients } from "../../../../lib/leadgen-config";
+import { leadgenConfigAccess } from "../../../../lib/leadgen-config-auth";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
+  const access = await leadgenConfigAccess(req);
+  if (access.kind === "anon") return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (access.kind !== "admin") return Response.json({ error: "Forbidden" }, { status: 403 });
   try {
     const body = await req.json();
     const { slug, businessName, niche, description, phone, email, serviceArea, businessHours, branding } = body;
@@ -17,6 +26,11 @@ export async function POST(req: NextRequest) {
         { error: "slug, businessName, and email are required" },
         { status: 400 }
       );
+    }
+
+    // One record per slug: a second record with the same slug is how duplicates like bne-emergency-plumbing arise.
+    if ((await listClients()).some((c) => c.slug === slug)) {
+      return Response.json({ error: "slug already exists" }, { status: 409 });
     }
 
     const client = await createClient({
@@ -66,21 +80,27 @@ export async function POST(req: NextRequest) {
     return Response.json({ client }, { status: 201 });
   } catch (e) {
     console.error("leadgen-config POST error:", e);
-    return Response.json({ error: String(e) }, { status: 500 });
+    return Response.json({ error: "Server error" }, { status: 500 });
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const access = await leadgenConfigAccess(req);
+  if (access.kind === "anon") return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (access.kind !== "admin") return Response.json({ error: "Forbidden" }, { status: 403 });
   try {
     const clients = await listClients();
     return Response.json({ clients });
   } catch (e) {
     console.error("leadgen-config GET error:", e);
-    return Response.json({ error: String(e) }, { status: 500 });
+    return Response.json({ error: "Server error" }, { status: 500 });
   }
 }
 
 export async function PATCH(req: NextRequest) {
+  const access = await leadgenConfigAccess(req);
+  if (access.kind === "anon") return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (access.kind === "none") return Response.json({ error: "Forbidden" }, { status: 403 });
   try {
     const body = await req.json();
     const { id, businessName, phone, serviceArea, businessHours, description, branding,
@@ -91,6 +111,11 @@ export async function PATCH(req: NextRequest) {
 
     if (!id) {
       return Response.json({ error: "id required" }, { status: 400 });
+    }
+
+    // A LeadGen client may only edit its own record; admins may edit any.
+    if (access.kind === "client" && access.leadgenId !== id) {
+      return Response.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { updateClient } = await import("../../../../lib/leadgen-config");
@@ -122,6 +147,6 @@ export async function PATCH(req: NextRequest) {
     return Response.json({ success: true });
   } catch (e) {
     console.error("leadgen-config PATCH error:", e);
-    return Response.json({ error: String(e) }, { status: 500 });
+    return Response.json({ error: "Server error" }, { status: 500 });
   }
 }

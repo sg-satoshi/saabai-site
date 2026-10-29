@@ -125,7 +125,7 @@ const PUBLIC_API = [
   "/api/voice/transcript",
   "/api/voice/end",
   "/api/leadgen/widget",
-  "/api/leadgen/config",
+  // /api/leadgen/config is NOT public: it lists every client's settings. Session required here; the route checks admin or own-record.
   // Saabai AI Agent public widget + chat (self-authenticated by slug; config
   // injected server-side, no API key or tenant data reaches the browser)
   "/api/ai-agent/widget",
