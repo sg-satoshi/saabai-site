@@ -169,6 +169,26 @@ export default function EngagementClient({ id }: { id: string }) {
     }
   }
 
+  async function markReviewed(reportId: string) {
+    setBusy("review");
+    try {
+      const res = await fetch(`/api/audit/engagements/${id}/report`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reportId, action: "review" }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setEng(data.engagement);
+        showFlash("Marked reviewed. You can deliver it now.");
+      } else {
+        showFlash(data.error ?? "Failed.");
+      }
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function markDelivered(reportId: string) {
     setBusy("deliver");
     try {
@@ -663,6 +683,7 @@ export default function EngagementClient({ id }: { id: string }) {
                     </div>
                     <div style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>
                       Generated {new Date(r.generatedAt).toLocaleString("en-AU")}
+                      {r.reviewedAt && ` · reviewed ${new Date(r.reviewedAt).toLocaleString("en-AU")}`}
                       {r.deliveredAt && ` · delivered ${new Date(r.deliveredAt).toLocaleString("en-AU")}`}
                     </div>
                   </div>
@@ -670,6 +691,11 @@ export default function EngagementClient({ id }: { id: string }) {
                     <a href={r.url} download={r.filename} style={{ ...btnGhost, textDecoration: "none", display: "inline-block" }}>
                       Download .docx
                     </a>
+                    {!r.deliveredAt && !r.reviewedAt && (
+                      <button onClick={() => markReviewed(r.id)} disabled={busy === "review"} style={btnGhost}>
+                        Mark reviewed
+                      </button>
+                    )}
                     {!r.deliveredAt && (
                       <button onClick={() => markDelivered(r.id)} disabled={busy === "deliver"} style={btn}>
                         Mark delivered
