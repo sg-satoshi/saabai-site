@@ -220,3 +220,17 @@ export const VERIFY_MARK = /\[\s*verify/i;
 function verifyMessage(n: number): string {
   return `Lex cannot draft yet. ${n === 1 ? "One answer still needs" : `${n} answers still need`} verifying. Confirm or correct ${n === 1 ? "it" : "them"} in the form, then draft again.`;
 }
+
+/** Whitespace-insensitive form of a field value, matching what parseForm stores. */
+function looseText(s: string): string {
+  return s.split("\n").map((l) => l.replace(/\s+([,.;])/g, "$1").replace(/\s+/g, " ").trim()).join("\n").trim();
+}
+
+/**
+ * The text a field input should show. The stored answer is trimmed on every save, so showing it
+ * directly would eat a space as it is typed ("South " -> "South"). Keep what the user typed while it
+ * still matches the stored answer; otherwise (upload prefill, confirm, reset) show the stored answer.
+ */
+export function fieldText(typed: string | undefined, stored: string): string {
+  return typed !== undefined && looseText(typed) === looseText(stored) ? typed : stored;
+}
