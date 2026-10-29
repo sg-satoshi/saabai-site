@@ -281,7 +281,7 @@ export function DraftWorkspace(p: WorkspaceProps) {
                 <label>
                   <input type="checkbox" checked={done} disabled={p.busy}
                     onChange={() => p.setPrep({ ...p.prep, manual: p.prep.manual.includes(n.id) ? p.prep.manual.filter((x) => x !== n.id) : [...p.prep.manual, n.id] })} />
-                  {n.label}{n.optional && <em> if any</em>}
+                  <span>{n.label}{n.optional && <em> if any</em>}</span>
                 </label>
               </li>
             );
