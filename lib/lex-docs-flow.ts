@@ -42,7 +42,9 @@ export const DOCS_FLOW_COPY = {
   /** Shown with in-progress copy wherever a matter is active. Finished drafts never auto-save to a matter. */
   finishedDraftsNote: "Finished drafts are only saved to a matter if you choose Save to matter.",
   saveToMatter: "Save to matter",
+  savingToMatter: "Saving…",
   savedToMatter: "Saved to matter",
+  matterSaveError: "That could not be saved to the matter. Try again.",
   researchMatterNote: "Research in this matter is saved to it on our servers so your firm can see it.",
   reviewNote: "Reviews are only saved to a matter if you choose Save to matter.",
 };
