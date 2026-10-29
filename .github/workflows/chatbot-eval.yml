@@ -17,3 +17,4 @@ jobs:
       - run: npm ci
       - run: npx tsx scripts/chatbot-eval.ts
       - run: npx tsx --test tests/chatbot-template.test.ts
+      - run: npx tsx --test tests/chatbot-lead-capture.test.ts
