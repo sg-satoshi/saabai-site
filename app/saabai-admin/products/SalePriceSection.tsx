@@ -55,7 +55,7 @@ export default function SalePriceSection({
   const [mode, setMode] = useState<Mode>(s?.saleEndsAt ? "date" : "open");
   const [days, setDays] = useState("7");
   const [endDate, setEndDate] = useState(s?.saleEndsAt ? bneYmd(s.saleEndsAt) : "");
-  const [startDate, setStartDate] = useState(s && Date.parse(s.saleStartsAt) > Date.now() ? bneYmd(s.saleStartsAt) : "");
+  const [startDate, setStartDate] = useState(() => (s && Date.parse(s.saleStartsAt) > Date.now() ? bneYmd(s.saleStartsAt) : ""));
   const [countdown, setCountdown] = useState(s?.showCountdown ?? false);
   const [slot, setSlot] = useState<PublicSlotId | "">(s?.publicSlot ?? "");
   const [busy, setBusy] = useState(false);
