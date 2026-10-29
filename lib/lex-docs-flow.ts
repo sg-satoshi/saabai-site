@@ -39,7 +39,28 @@ export const DOCS_FLOW_COPY = {
   draftFooter: "Drafting assistance only, not legal advice. Check every reference and Verify marker before this document is used.",
   noAnswers: "No answers found in these files. Fill in the form or add another file.",
   queuedMask: "Privacy check runs before Lex reads it.",
+  /** Shown with in-progress copy wherever a matter is active. Finished drafts never auto-save to a matter. */
+  finishedDraftsNote: "Finished drafts are only saved to a matter if you choose Save to matter.",
+  saveToMatter: "Save to matter",
+  savedToMatter: "Saved to matter",
+  researchMatterNote: "Research in this matter is saved to it on our servers so your firm can see it.",
+  reviewNote: "Reviews are only saved to a matter if you choose Save to matter.",
 };
+
+/** One-line notice beside the Save to matter button in Draft Documents. */
+export function matterSaveNotice(matterName: string): string {
+  return `Saves the finished draft to ${matterName} on our servers so your firm can see it.`;
+}
+
+/** One-line notice beside the Save to matter button in Review. */
+export function reviewMatterSaveNotice(matterName: string): string {
+  return `Saves this review, including the document text, to ${matterName} on our servers so your firm can see it.`;
+}
+
+/** Save to matter is offered only for a finished draft (or review) while a matter is active. */
+export function canSaveToMatter(o: { activeMatterId?: string | null; hasResult: boolean; busy: boolean }): boolean {
+  return !!o.activeMatterId && o.hasResult && !o.busy;
+}
 
 /** Top bar: "Saved in this browser 3:52 PM". */
 export function savedLabel(time: string): string {
@@ -47,7 +68,7 @@ export function savedLabel(time: string): string {
 }
 
 /**
- * Resume card label, desktop only (the mobile card has none). Drafts are not linked to matters, so never
+ * Resume card label, desktop only (the mobile card has none). Drafts in progress are not linked to matters (a finished draft is only saved to one with Save to matter), so never
  * "Matter:". Trust resolutions read "Draft: Harbour Pines, FY2027 distributions".
  */
 export function draftLabel(docName: string, trustName?: string, financialYearLine?: string): string {

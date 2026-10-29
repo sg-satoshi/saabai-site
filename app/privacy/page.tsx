@@ -4,7 +4,8 @@ import { NAP } from "@/lib/seo-entity";
 import { publicPageMeta } from "@/lib/seo-pages";
 import BreadcrumbLd from "../components/BreadcrumbLd";
 import { lexBlobUploadsEnabled } from "@/lib/lex-upload";
-import { LEX_BLOB_PRIVACY_COPY } from "@/lib/lex-upload-copy";
+import { LEX_BLOB_PRIVACY_COPY, LEX_MATTERS_PRIVACY_COPY } from "@/lib/lex-upload-copy";
+
 
 export const metadata: Metadata = publicPageMeta.privacy;
 
@@ -27,7 +28,7 @@ const SECTIONS: { heading: string; body: string }[] = [
   },
   {
     heading: "5. Lex Draft Documents",
-    body: `When you upload a trust deed or other file to Lex Draft Documents, we read it to fill in your draft and then discard it. ${lexBlobUploadsEnabled() ? LEX_BLOB_PRIVACY_COPY : "We do not store uploaded files on our servers."} Your draft progress is saved only in your web browser, on the device you are using, for 30 days after your last edit. It is not saved on our servers and does not follow you to another device or browser. You can clear it at any time with Start over or by clearing your browser data.`,
+    body: `When you upload a trust deed or other file to Lex Draft Documents, we read it to fill in your draft and then discard it. ${lexBlobUploadsEnabled() ? LEX_BLOB_PRIVACY_COPY : "We do not store uploaded files on our servers."} Your draft progress is saved only in your web browser, on the device you are using, for 30 days after your last edit. It is not saved on our servers and does not follow you to another device or browser. You can clear it at any time with Start over or by clearing your browser data. ${LEX_MATTERS_PRIVACY_COPY}`,
   },
   {
     heading: "6. How we use it",

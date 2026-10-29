@@ -4,3 +4,6 @@
  */
 export const LEX_BLOB_PRIVACY_COPY = "Large files are held briefly in secure temporary storage while being read, then deleted automatically within an hour.";
 export const LEX_PRIVACY_S5_DEFAULT = "We do not store uploaded files on our servers.";
+
+/** Lex matters, research chats and redaction logs, as the code stores them. */
+export const LEX_MATTERS_PRIVACY_COPY = "If you work inside a matter, some of your work is kept on our servers with that matter, where everyone in your firm can see it. Research chats in a matter are saved to it automatically. A finished draft or a document review (including the document's text) is only saved to a matter if you choose Save to matter. Items saved to a matter are kept until someone in your firm removes them; they do not expire automatically. Your research chats are also kept on our servers for 90 days after your last change, so you can return to them. Names and identifiers in documents you attach to a research chat are masked before the chat is saved, but the questions you type and the drafts and reviews you save to a matter keep real names. Each time Lex masks text we keep a log of the types and number of items masked (for example two names and one email), never the text itself.";
