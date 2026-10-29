@@ -234,7 +234,7 @@ export default function About() {
             </p>
             <p className="text-lg text-saabai-text-muted leading-relaxed">
               Lex searches ATO rulings, the Federal Register of Legislation (including Act status), ASIC and the Fair Work Commission, and answers cite their sources.
-              Drafts cover ten document types: discretionary and unit trust deeds, binding financial agreements for married and de facto couples, financial settlement consent orders, separation agreements, service agreements, shareholders agreements, employment contracts and commercial leases. A custom document can be drafted from your own instructions, and every draft gets a QA pass.
+              Drafts cover eleven document types: discretionary and unit trust deeds, trust distribution resolutions, binding financial agreements for married and de facto couples, financial settlement consent orders, separation agreements, service agreements, shareholders agreements, employment contracts and commercial leases. A custom document can be drafted from your own instructions, and every draft gets a QA pass.
               Case law is a licensed snapshot of NSW Caselaw, Federal Court and High Court decisions, cutoff 10 March 2025. It is not current law and not every court. Lex does not give legal advice.
             </p>
             <p className="text-lg text-saabai-text-muted leading-relaxed">
