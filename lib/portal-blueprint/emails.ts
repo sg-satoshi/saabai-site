@@ -90,3 +90,26 @@ export function unlockedEmail(o: { name?: string; portalUrl: string }): BrandedE
     textBody: [`Hi ${first(o.name)},`, "", "We have reopened your fact-find so you can update your answers. Review and submit again when you are happy."],
   });
 }
+
+export function reportReadyEmail(o: { name?: string; tierName: string; portalUrl: string }): BrandedEmail {
+  const f = escapeHtml(first(o.name));
+  return renderBrandedEmail({
+    subject: "Your Saabai Blueprint is ready",
+    preheader: "Open your portal to download it.",
+    eyebrow: `${o.tierName} Blueprint`,
+    title: "Your Blueprint is ready",
+    bodyHtml: [
+      p(`Hi ${f},`),
+      p("Your Blueprint has been reviewed by our team and is ready in your portal. You can download it there any time."),
+      muted("Sign in with just your email at saabai.ai/portal/login. Questions? Reply to this email."),
+    ].join(""),
+    cta: { href: o.portalUrl, label: "Open my Blueprint" },
+    textBody: [
+      `Hi ${first(o.name)},`,
+      "",
+      "Your Blueprint has been reviewed by our team and is ready in your portal. You can download it there any time.",
+      `Open it here: ${o.portalUrl}`,
+      "Sign in with just your email at saabai.ai/portal/login. Questions? Reply to this email.",
+    ],
+  });
+}

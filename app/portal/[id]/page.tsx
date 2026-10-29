@@ -1,10 +1,13 @@
 import Link from "next/link";
 import Shell from "../_c/Shell";
 import { loadPortalPage } from "../_c/load";
+import { deliveredReports } from "../../../lib/portal-blueprint/deliver";
 
 export default async function Home({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { snap, ref, plan } = await loadPortalPage(id);
+  const { e, snap, ref, plan } = await loadPortalPage(id);
+  const reports = deliveredReports(e);
+  const fmt = (iso: string) => new Date(iso).toLocaleDateString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "long", year: "numeric" });
   const p = snap.progress;
   const first = (snap.contactName || "").split(/\s+/)[0] || "there";
   const next = p.sections.find((s) => s.state !== "done");
@@ -14,6 +17,21 @@ export default async function Home({ params }: { params: Promise<{ id: string }>
     <Shell id={id} active="home" orderRef={ref} planName={plan} name={first}>
       <h1>{p.answered === 0 ? `Welcome, ${first}.` : `Welcome back, ${first}.`}</h1>
       <p className="lead">{snap.locked ? "Your fact-find is submitted and with our team." : "Pick up where you left off. Everything saves as you go."}</p>
+      {reports.length > 0 && (
+        <section className="bp-card" aria-label="Your Blueprint">
+          <span className="bp-eyebrow mono">Ready</span>
+          <h2>Your Blueprint</h2>
+          <p style={{ margin: "0 0 12px", color: "var(--muted)" }}>Reviewed by our team and ready to download.</p>
+          <div className="bp-list">
+            {reports.map((r, i) => (
+              <a key={r.id} href={`/api/portal/blueprint/${id}/report/${r.id}`} rel="noopener">
+                <span>Blueprint version {r.version}{i === 0 ? " (latest)" : ""}<span style={{ color: "var(--muted)", marginLeft: 10 }}>{fmt(r.deliveredAt)}</span></span>
+                <span className="bp-chip ok">Download</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
       <section className="bp-card" aria-label="Overall progress">
         <div className="bp-row" style={{ alignItems: "flex-end" }}>
           <div>

@@ -157,6 +157,7 @@ export type AuditEventType =
   | "status_changed"
   | "assessment_generated"
   | "report_generated"
+  | "report_reviewed"
   | "report_delivered"
   | "credit_applied"
   | "onboarding_saved"
@@ -189,6 +190,8 @@ export interface AuditReport {
   filename: string;
   url: string; // Vercel Blob URL (unguessable)
   generatedAt: string;
+  /** Set when an admin has checked this version. Required before delivery for portal buyers. */
+  reviewedAt?: string;
   deliveredAt?: string;
 }
 
