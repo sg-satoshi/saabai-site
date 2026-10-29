@@ -111,7 +111,7 @@ const faqs = [
       },
       {
         q: "Do you work with e-commerce or product businesses?",
-        a: "Yes. Product businesses with high enquiry volume lose leads every hour they can't respond. We build AI agents that handle product questions, custom quoting, order lookups and lead capture around the clock.",
+        a: "Yes. Product businesses with high enquiry volume lose leads every hour they can't respond. We build AI agents that handle product questions, order lookups and lead capture at any hour. Quoting is custom work, scoped and quoted.",
       },
     ],
   },

@@ -68,7 +68,7 @@ const useCases = [
       "Order status lookups without staff involvement",
       "Qualified leads automatically routed to CRM with full conversation context",
     ],
-    outcome: "Inbound enquiries can get a fast response. Leads can be captured and followed up, day and night.",
+    outcome: "Inbound enquiries can get a fast response. Leads can be captured at any hour and queued for follow-up.",
   },
   {
     category: "Compliance & Document Automation",
@@ -85,7 +85,7 @@ const useCases = [
 ];
 
 const CASE_LINKS: Record<string, { label: string; href: string }> = {
-  "Trade & E-commerce": { label: "Read the Rex Plastics case study", href: "/case-studies/rex-plastics-online" },
+  "Trade & E-commerce": { label: "Read the PlasticOnline case study", href: "/case-studies/rex-plastics-online" },
   "Real Estate Agencies": { label: "Read the FAQ", href: "/faq" },
   "Clinics, Studios & Salons": { label: "Read the FAQ", href: "/faq" },
 };
