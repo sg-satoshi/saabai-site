@@ -9,6 +9,8 @@
  */
 
 import { NextRequest } from "next/server";
+import { getClientBySlug } from "../../../../lib/leadgen-config";
+import { widgetButtonLabel, escapeHtml } from "../../../../lib/leadgen-widget-label";
 
 export const runtime = "edge";
 
@@ -16,12 +18,16 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const slug = searchParams.get("slug") || "demo";
   const apiBase = process.env.NEXT_PUBLIC_BASE_URL || "https://www.saabai.ai";
+  let client = null;
+  try { client = await getClientBySlug(slug); } catch { client = null; }
+  const btnLabel = escapeHtml(widgetButtonLabel(client));
 
   const script = `(function(){
 'use strict';
 var SLUG = ${JSON.stringify(slug)};
 var API = ${JSON.stringify(apiBase + "/api/leadgen/chat")};
 var STORAGE_KEY = "lg_conv_" + SLUG;
+var BTN_LABEL = ${JSON.stringify(btnLabel)};
 
 // ── Saabai Brand Colours ─────────────────────────────────
 var GOLD = "#c9a227";
@@ -89,7 +95,7 @@ container.innerHTML = [
   // ── Desktop pill button ──
   '<button id="lg-btn" class="lg-desktop" aria-label="Chat with us">',
   '<div class="lg-btn-av"><img src="' + AVATAR_URL + '" alt="Tradie" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>',
-  '<span class="lg-btn-label">24/7 Emergency Help</span>',
+  '<span class="lg-btn-label">' + BTN_LABEL + '</span>',
   '</button>',
   // ── Mobile circle button ──
   '<button id="lg-btn-mobile" aria-label="Chat with us">',
