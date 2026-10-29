@@ -27,6 +27,11 @@ export async function POST(req: NextRequest) {
     const customerEmail = session.customer_details?.email ?? "";
     const customerName  = session.customer_details?.name  ?? "New client";
 
+    // Legacy duplicate of app/api/stripe/webhook (the canonical route). Lex and Blueprint are handled
+    // there only; this route must never provision or announce them.
+    if (session.metadata?.product === "lex" || session.metadata?.product === "blueprint") {
+      return NextResponse.json({ received: true, skipped: "handled by /api/stripe/webhook" });
+    }
     if (session.metadata?.source === "saabai-sell") {
       const productName = session.metadata?.product_name ?? "your purchase";
       if (customerEmail) {
@@ -52,17 +57,16 @@ export async function POST(req: NextRequest) {
         console.error("[stripe webhook] failed to send sale notification email", err);
       }
     } else {
-      const plan  = session.metadata?.plan ?? "unknown";
-      const label = session.metadata?.label ?? plan;
+      // Unknown checkout: alert only. No longer labelled as a Lex signup.
       try {
         await sendBrandedEmail({
           to: "hello@saabai.ai",
           from: EMAIL_BRAND.from,
           email: adminSaleNotificationEmail({
-            productName: `Lex ${label}`,
+            productName: `Unrecognised checkout (product: ${session.metadata?.product ?? "none"})`,
             customerName,
             customerEmail: customerEmail || null,
-            detailLines: [`Plan: ${label}`, `Session: ${session.id}`],
+            detailLines: [`Session: ${session.id}`, "Nothing was provisioned. Check it in Stripe."],
             adminUrl: "https://dashboard.stripe.com",
           }),
         });

@@ -1,0 +1,17 @@
+.lxs{min-height:100vh;background:#f6f7f9;color:#14172b;font-family:var(--font-lex-sans),system-ui,sans-serif;padding:48px 16px}
+.lxs-card{max-width:520px;margin:0 auto;background:#fff;border:1px solid #e3e6ec;border-radius:14px;padding:32px}
+.lxs h1{font-size:24px;margin:0 0 6px;letter-spacing:-.01em}
+.lxs .lede{color:#555d6e;font-size:14px;line-height:1.6;margin:0 0 22px}
+.lxs label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px}
+.lxs label small{font-weight:400;color:#7a8191}
+.lxs input[type=text],.lxs input[type=email],.lxs input[type=tel]{width:100%;box-sizing:border-box;border:1px solid #cfd4dd;border-radius:8px;padding:10px 12px;font-size:14px;background:#fff;color:#14172b}
+.lxs input:focus{outline:2px solid #1b2559;outline-offset:1px}
+.lxs .check{display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:13px;line-height:1.5;margin-top:18px}
+.lxs .check input{margin-top:3px}
+.lxs a{color:#1b2559}
+.lxs .btn{display:inline-block;width:100%;margin-top:22px;background:#1b2559;color:#fff;border:0;border-radius:9px;padding:13px 16px;font-size:15px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none}
+.lxs .btn:hover{background:#121a42}
+.lxs .btn[disabled]{opacity:.6;cursor:wait}
+.lxs .err{color:#b42318;font-size:13px;margin-top:12px}
+.lxs .note{font-size:12px;color:#7a8191;line-height:1.6;margin-top:16px}
+.lxs .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}

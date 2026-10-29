@@ -1,0 +1,86 @@
+"use client";
+/** Firm Settings: seats (3 on the Firm plan) and Manage billing. Light mode, navy buttons. */
+import { useEffect, useState } from "react";
+
+type Plan = {
+  plan: "firm" | null; firmName?: string; isAdmin?: boolean; status?: "active" | "grace" | "lapsed";
+  graceUntil?: string | null; cancelAtPeriodEnd?: boolean; periodEnd?: string | null;
+  seats?: { used: number; cap: number }; admin?: string; members?: string[]; error?: string; cap?: boolean;
+};
+
+const navy: React.CSSProperties = { background: "#1b2559", color: "#fff", border: 0, borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" };
+const plain: React.CSSProperties = { background: "#fff", color: "#1b2559", border: "1px solid #cfd4dd", borderRadius: 8, padding: "4px 10px", fontSize: 12, cursor: "pointer" };
+const day = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric", timeZone: "Australia/Brisbane" }) : "");
+
+export default function FirmPlan() {
+  const [plan, setPlan] = useState<Plan | null>(null);
+  const [email, setEmail] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/lex/team").then((r) => r.json()).then(setPlan).catch(() => setPlan({ plan: null }));
+  }, []);
+
+  if (!plan?.plan) return null;
+  const used = plan.seats?.used ?? 1;
+  const cap = plan.seats?.cap ?? 3;
+  const full = used >= cap;
+
+  async function act(action: "invite" | "revoke", who: string) {
+    setBusy(true); setMsg(null);
+    try {
+      const r = await fetch("/api/lex/team", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, email: who }) });
+      const d = (await r.json()) as Plan;
+      if (d.seats) setPlan(d);
+      if (!r.ok) setMsg(d.error || "Something went wrong");
+      else if (action === "invite") { setEmail(""); setMsg(`Invite sent to ${who}`); }
+    } catch { setMsg("Something went wrong"); }
+    setBusy(false);
+  }
+
+  async function billing() {
+    setBusy(true); setMsg(null);
+    try {
+      const r = await fetch("/api/lex/billing-portal", { method: "POST" });
+      const d = await r.json();
+      if (d.url) { window.location.href = d.url; return; }
+      setMsg(d.error || "Could not open billing");
+    } catch { setMsg("Could not open billing"); }
+    setBusy(false);
+  }
+
+  return (
+    <div className="field" style={{ borderTop: "1px solid #e3e6ec", paddingTop: 14, marginTop: 6 }}>
+      <label>Firm plan</label>
+      {plan.status === "grace" ? <p style={{ fontSize: 13, color: "#b42318", margin: "0 0 8px" }}>Your last payment didn&apos;t go through. Please update your card by {day(plan.graceUntil)} to keep Lex on.</p> : null}
+      {plan.cancelAtPeriodEnd ? <p style={{ fontSize: 13, color: "#555d6e", margin: "0 0 8px" }}>Cancelled. Lex stays on until {day(plan.periodEnd)}.</p> : null}
+      <p style={{ fontSize: 13, color: "#555d6e", margin: "0 0 8px" }}>Seats used: <strong>{used} of {cap}</strong></p>
+      {plan.isAdmin ? (
+        <>
+          <ul style={{ listStyle: "none", padding: 0, margin: "0 0 10px", fontSize: 13 }}>
+            <li style={{ padding: "4px 0" }}>{plan.admin} <span style={{ color: "#7a8191" }}>(owner)</span></li>
+            {(plan.members ?? []).map((m) => (
+              <li key={m} style={{ padding: "4px 0", display: "flex", justifyContent: "space-between", gap: 8 }}>
+                <span>{m}</span>
+                <button type="button" style={plain} disabled={busy} onClick={() => act("revoke", m)}>Remove</button>
+              </li>
+            ))}
+          </ul>
+          {full ? (
+            <p style={{ fontSize: 13, margin: "0 0 10px" }}>Need more seats? <a href="/contact" style={{ color: "#1b2559", fontWeight: 600 }}>Ask about Enterprise</a></p>
+          ) : (
+            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="colleague@yourfirm.com.au" aria-label="Colleague's email" style={{ flex: 1 }} />
+              <button type="button" style={navy} disabled={busy || !email.trim() || plan.status !== "active"} onClick={() => act("invite", email.trim())}>Invite</button>
+            </div>
+          )}
+          <button type="button" style={navy} disabled={busy} onClick={billing}>Manage billing</button>
+        </>
+      ) : (
+        <p style={{ fontSize: 13, color: "#555d6e", margin: 0 }}>Seats and billing are managed by {plan.admin}.</p>
+      )}
+      {msg ? <p role="status" style={{ fontSize: 13, color: "#1b2559", marginTop: 8 }}>{msg}</p> : null}
+    </div>
+  );
+}

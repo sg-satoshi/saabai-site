@@ -1,5 +1,6 @@
 "use client";
 
+import FirmPlan from "./_components/FirmPlan";
 import { addLexFiles, LexUploadError, timeoutMessage } from "../../lib/lex-upload-client";
 import { PORTAL_REQUESTS_HREF } from "@/lib/portal-pages";
 
@@ -1303,6 +1304,7 @@ export default function LexPage() {
                 </div>
               )}
             </div>
+            <FirmPlan />
             <div className="row">
               <button type="button" className="lx-btn" onClick={() => setSettingsOpen(false)}>Cancel</button>
               <button
