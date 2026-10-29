@@ -1,8 +1,10 @@
 "use client";
 import { confirmDialog } from "../ui/Feedback";
 import { escapeHtml } from "../../../lib/html-escape";
+import { NONE_SENT_MSG, broadcastResult } from "../../../lib/broadcast-result";
+import { MERGE_FIELDS, SAMPLE_VALUES, mergeToken, personaliseHtml, personaliseText, valuesFor } from "../../../lib/personalise";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import AdminShell from "../AdminSidebar";
 
 // ── Light theme tokens ────────────────────────────────────────────────────────
@@ -33,7 +35,11 @@ interface Subscriber {
   countryCode?: string;
   city?: string;
   region?: string;
+  marketingConsent?: string;
 }
+
+/** Same rule as the server (lib/subscribers canReceiveMarketing): only these get a real broadcast. */
+const optedIn = (s: Subscriber) => s.status === "active" && s.marketingConsent === "yes";
 
 const INDUSTRY_CONFIG: Record<string, { color: string; bg: string; dot: string }> = {
   "Law / Legal":          { color: "#818cf8", bg: "rgba(99,102,241,0.15)",  dot: "#6366f1" },
@@ -145,6 +151,33 @@ const SEGMENTS = [
 
 // ── Broadcast Panel ───────────────────────────────────────────────────────────
 
+/** Full-screen overlay for the broadcast panel: starts at the top, Escape or the backdrop closes it, page scroll is locked. */
+function BroadcastModal({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      // Leave Escape to the confirm dialog while it is open.
+      if (e.key === "Escape" && !document.querySelector("[data-bc-confirm]")) onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+  }, [onClose]);
+  return (
+    <div
+      className="bc-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="bc-title"
+      onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, zIndex: 1500, background: "rgba(15,23,42,0.45)", overflowY: "auto", scrollbarWidth: "none", padding: "32px 16px 48px" }}
+    >
+      <style>{`.bc-overlay::-webkit-scrollbar{display:none}`}</style>
+      <div style={{ maxWidth: 880, margin: "0 auto" }}>{children}</div>
+    </div>
+  );
+}
+
 function BroadcastPanel({
   recipients, allSubs, onClose, onSelectSegment,
 }: {
@@ -157,10 +190,36 @@ function BroadcastPanel({
   const [body, setBody] = useState("");
   const [preview, setPreview] = useState(false);
   const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<{ sent: number; failed: number } | null>(null);
+  const [result, setResult] = useState<{ kind: "ok" | "none" | "error"; msg: string } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const subjectRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const lastField = useRef<"subject" | "body">("body");
+  const optedInCount = recipients.filter(optedIn).length;
+
+  // Open focused on the subject so the panel is in view and ready to type.
+  useEffect(() => { subjectRef.current?.focus(); }, []);
+
+  /** Insert a personalisation token at the cursor in the subject or body (whichever was used last). */
+  function insertToken(token: string) {
+    const target = lastField.current;
+    if (target === "body" && preview) setPreview(false);
+    const el = target === "subject" ? subjectRef.current : bodyRef.current;
+    const value = target === "subject" ? subject : body;
+    const start = el?.selectionStart ?? value.length;
+    const end = el?.selectionEnd ?? value.length;
+    const next = value.slice(0, start) + token + value.slice(end);
+    if (target === "subject") setSubject(next); else setBody(next);
+    const caret = start + token.length;
+    window.requestAnimationFrame(() => {
+      const node = target === "subject" ? subjectRef.current : bodyRef.current;
+      if (!node) return;
+      node.focus();
+      node.setSelectionRange(caret, caret);
+    });
+  }
 
   const inputStyle: React.CSSProperties = {
     width: "100%", padding: "10px 13px", fontSize: 13,
@@ -169,25 +228,33 @@ function BroadcastPanel({
     boxSizing: "border-box" as const,
   };
 
+  // Preview with the first selected subscriber's real values (blank fields show their fallback), or sample values.
   const previewSub = recipients[0];
-  const previewHtml = body
-    .split("\n").map(l => escapeHtml(l).replace(/\{\{firstName\}\}/g, escapeHtml(previewSub?.firstName || "there"))).map(l => `<p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.7;">${l || "&nbsp;"}</p>`).join("");
+  const previewValues = previewSub ? valuesFor(previewSub) : SAMPLE_VALUES;
+  const previewHtml = personaliseHtml(body
+    .split("\n").map(l => `<p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.7;">${escapeHtml(l) || "&nbsp;"}</p>`).join(""), previewValues);
+  const previewSubject = personaliseText(subject, previewValues);
 
   async function send() {
-    setSending(true);
     setResult(null);
+    if (optedInCount === 0) {
+      setConfirmOpen(false);
+      setResult({ kind: "none", msg: NONE_SENT_MSG });
+      return;
+    }
+    setSending(true);
     try {
       const res = await fetch("/api/subscribers/broadcast", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ emails: recipients.map(s => s.email), subject: subject.trim(), html: buildHtml(body) }),
       });
-      const data = await res.json();
-      setResult({ sent: data.sent ?? 0, failed: data.failed ?? 0 });
-      setConfirmOpen(false);
+      const data = await res.json().catch(() => ({}));
+      setResult(broadcastResult(res.ok, data));
     } catch {
-      setResult({ sent: 0, failed: recipients.length });
+      setResult({ kind: "error", msg: "The broadcast did not go out. Check your connection and try again." });
     } finally {
+      setConfirmOpen(false);
       setSending(false);
     }
   }
@@ -203,7 +270,7 @@ function BroadcastPanel({
         body: JSON.stringify({ subject: subject.trim(), html: buildHtml(body) }),
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok && data.ok) setTestResult({ ok: true, msg: `Test sent to hello@saabai.ai as "${data.subject}". Check that inbox.` });
+      if (res.ok && data.ok) setTestResult({ ok: true, msg: `Test sent to hello@saabai.ai as "${data.subject}", with sample values in the personalisation fields. Check that inbox.` });
       else setTestResult({ ok: false, msg: data.error || "Test send failed" });
     } catch {
       setTestResult({ ok: false, msg: "Test send failed" });
@@ -233,22 +300,49 @@ function BroadcastPanel({
   }
 
   const ready = subject.trim().length > 0 && body.trim().length > 0 && recipients.length > 0;
+  const labelStyle: React.CSSProperties = { margin: "0 0 7px", fontSize: 11, fontWeight: 700, letterSpacing: 1.2, color: D.muted, textTransform: "uppercase" };
   const testReady = subject.trim().length > 0 && body.trim().length > 0 && !testing && !sending;
 
   return (
-    <div style={{ background: D.card, border: `1px solid ${D.border}`, borderRadius: 16, overflow: "hidden" }}>
+    <div style={{ background: D.card, border: `1px solid ${D.border}`, borderRadius: 16, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.18)" }}>
 
       {/* Panel header */}
-      <div style={{ background: "rgba(8,145,178,0.06)", borderBottom: `1px solid ${D.border}`, padding: "18px 28px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ background: "rgba(8,145,178,0.06)", borderBottom: `1px solid ${D.border}`, padding: "18px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" as const }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(8,145,178,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900, color: D.teal }}>BC</div>
           <div>
-            <p style={{ margin: 0, fontSize: 22, fontWeight: 700, color: D.text, letterSpacing: -0.2 }}>Broadcast Email</p>
-            <p style={{ margin: 0, fontSize: 11, color: D.secondary }}>{recipients.length} recipient{recipients.length !== 1 ? "s" : ""} selected</p>
+            <h2 id="bc-title" style={{ margin: 0, fontSize: 24, fontWeight: 700, color: D.text, letterSpacing: -0.3 }}>Broadcast Email</h2>
+            <p style={{ margin: "2px 0 0", fontSize: 12, color: D.secondary }}>
+              {recipients.length} selected · {optedInCount} opted in to marketing (only they receive it)
+            </p>
           </div>
         </div>
-        <button onClick={onClose} style={{ background: "none", border: "none", color: D.muted, cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "4px 6px" }}>×</button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button
+            type="button"
+            onClick={sendTest}
+            disabled={!testReady}
+            title="Sends one copy, with [TEST] in the subject and sample values in the fields, to hello@saabai.ai only. Never to subscribers. Works with no recipients selected."
+            style={{
+              padding: "9px 16px", borderRadius: 8,
+              border: `1px dashed ${testReady ? D.teal : D.borderHi}`,
+              background: testReady ? "rgba(8,145,178,0.06)" : "transparent",
+              color: testReady ? D.teal : D.muted,
+              fontSize: 13, fontWeight: 700, cursor: testReady ? "pointer" : "not-allowed",
+            }}
+          >
+            {testing ? "Sending test..." : "Send test to hello@"}
+          </button>
+          <button onClick={onClose} aria-label="Close broadcast" style={{ background: "none", border: "none", color: D.muted, cursor: "pointer", fontSize: 22, lineHeight: 1, padding: "4px 8px" }}>×</button>
+        </div>
       </div>
+
+      {/* Test result, right under the header so it is seen */}
+      {testResult && (
+        <div role="status" style={{ margin: "16px 28px 0", padding: "12px 16px", borderRadius: 10, background: testResult.ok ? "rgba(8,145,178,0.08)" : "rgba(220,38,38,0.1)", border: `1px solid ${testResult.ok ? "rgba(8,145,178,0.3)" : "rgba(220,38,38,0.3)"}` }}>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: testResult.ok ? D.teal : "#dc2626" }}>{testResult.msg}</p>
+        </div>
+      )}
 
       <div style={{ padding: "24px 28px", display: "flex", flexDirection: "column" as const, gap: 20 }}>
 
@@ -293,14 +387,45 @@ function BroadcastPanel({
 
         {/* Subject */}
         <div>
-          <p style={{ margin: "0 0 7px", fontSize: 10, fontWeight: 700, letterSpacing: 1.2, color: D.muted, textTransform: "uppercase" as const }}>Subject Line</p>
-          <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="e.g. The AI audit results are in" style={inputStyle} />
+          <label htmlFor="bc-subject" style={{ ...labelStyle, display: "block" }}>Subject Line</label>
+          <input
+            id="bc-subject"
+            ref={subjectRef}
+            value={subject}
+            onChange={e => setSubject(e.target.value)}
+            onFocus={() => { lastField.current = "subject"; }}
+            placeholder="e.g. {{firstName|there}}, your AI score results"
+            style={inputStyle}
+          />
+        </div>
+
+        {/* Insert personalisation field */}
+        <div>
+          <p style={labelStyle}>Insert personalisation field</p>
+          <div role="group" aria-label="Insert personalisation field" style={{ display: "flex", flexWrap: "wrap" as const, gap: 7 }}>
+            {MERGE_FIELDS.map(f => (
+              <button
+                key={f.key}
+                type="button"
+                // Keep the cursor where it is in the subject or body.
+                onMouseDown={e => e.preventDefault()}
+                onClick={() => insertToken(mergeToken(f))}
+                title={`Inserts ${mergeToken(f)}. If a subscriber's ${f.label.toLowerCase()} is blank, "${f.fallback}" is used.`}
+                style={{ padding: "6px 12px", borderRadius: 20, border: "1px solid rgba(8,145,178,0.35)", background: "rgba(8,145,178,0.08)", color: D.teal, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+              >
+                + {f.label}
+              </button>
+            ))}
+          </div>
+          <p style={{ margin: "6px 0 0", fontSize: 12, color: D.muted, lineHeight: 1.5 }}>
+            Adds the field where your cursor is, in the subject or the message. The word after the | is used when that field is blank, for example {"{{firstName|there}}"} gives &quot;Hi there&quot;. Edit it to change the fallback.
+          </p>
         </div>
 
         {/* Body */}
         <div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7 }}>
-            <p style={{ margin: 0, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, color: D.muted, textTransform: "uppercase" as const }}>Message Body</p>
+            <label htmlFor="bc-body" style={{ ...labelStyle, margin: 0 }}>Message Body</label>
             <div style={{ display: "flex", gap: 2 }}>
               {["Write", "Preview"].map(tab => (
                 <button
@@ -321,13 +446,16 @@ function BroadcastPanel({
           {!preview ? (
             <>
               <textarea
+                id="bc-body"
+                ref={bodyRef}
                 value={body}
                 onChange={e => setBody(e.target.value)}
-                placeholder={`Hi {{firstName}},\n\nWrite your message here.\n\nTalk soon,\nShane`}
+                onFocus={() => { lastField.current = "body"; }}
+                placeholder={`Hi {{firstName|there}},\n\nWrite your message here.\n\nTalk soon,\nShane`}
                 rows={10}
-                style={{ ...inputStyle, resize: "vertical" as const, lineHeight: 1.7 }}
+                style={{ ...inputStyle, resize: "vertical" as const, lineHeight: 1.7, minHeight: 160, scrollbarWidth: "none" as const }}
               />
-              <p style={{ margin: "5px 0 0", fontSize: 10, color: D.muted }}>Use {"{{firstName}}"} for personalisation</p>
+              <p style={{ margin: "5px 0 0", fontSize: 12, color: D.muted }}>Each subscriber gets their own values. Blank fields use the fallback after the |. Check the Preview tab before sending.</p>
             </>
           ) : (
             <div style={{ border: `1px solid ${D.border}`, borderRadius: 8, overflow: "hidden", minHeight: 200 }}>
@@ -335,10 +463,10 @@ function BroadcastPanel({
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }} />
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#f59e0b" }} />
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e" }} />
-                <span style={{ marginLeft: 8, fontSize: 11, color: D.muted }}>Email preview · To: {previewSub?.email ?? "subscriber@example.com"}</span>
+                <span style={{ marginLeft: 8, fontSize: 11, color: D.muted }}>Email preview · {previewSub ? `As ${previewSub.email} would see it` : "Sample values (no recipient selected)"}</span>
               </div>
               <div style={{ padding: "20px 24px", background: D.card }}>
-                <p style={{ margin: "0 0 12px", fontSize: 13, fontWeight: 700, color: D.text }}>{subject || <em style={{ color: D.muted }}>No subject yet</em>}</p>
+                <p style={{ margin: "0 0 12px", fontSize: 13, fontWeight: 700, color: D.text }}>{previewSubject || <em style={{ color: D.muted }}>No subject yet</em>}</p>
                 {body ? (
                   <div style={{ color: D.secondary, fontSize: 13, lineHeight: 1.7 }} dangerouslySetInnerHTML={{ __html: previewHtml }} />
                 ) : (
@@ -351,19 +479,8 @@ function BroadcastPanel({
 
         {/* Result banner */}
         {result && (
-          <div style={{ padding: "12px 16px", borderRadius: 10, background: result.failed === 0 ? "rgba(5,150,105,0.1)" : "rgba(220,38,38,0.1)", border: `1px solid ${result.failed === 0 ? "rgba(5,150,105,0.3)" : "rgba(220,38,38,0.3)"}` }}>
-            <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: result.failed === 0 ? "#34d399" : "#f87171" }}>
-              {result.failed === 0
-                ? `Sent successfully to ${result.sent} subscriber${result.sent !== 1 ? "s" : ""}`
-                : `${result.sent} sent · ${result.failed} failed`}
-            </p>
-          </div>
-        )}
-
-        {/* Test result banner */}
-        {testResult && (
-          <div role="status" style={{ padding: "12px 16px", borderRadius: 10, background: testResult.ok ? "rgba(8,145,178,0.08)" : "rgba(220,38,38,0.1)", border: `1px solid ${testResult.ok ? "rgba(8,145,178,0.3)" : "rgba(220,38,38,0.3)"}` }}>
-            <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: testResult.ok ? D.teal : "#dc2626" }}>{testResult.msg}</p>
+          <div role="status" style={{ padding: "12px 16px", borderRadius: 10, background: result.kind === "ok" ? "rgba(5,150,105,0.1)" : result.kind === "none" ? "rgba(217,119,6,0.1)" : "rgba(220,38,38,0.1)", border: `1px solid ${result.kind === "ok" ? "rgba(5,150,105,0.3)" : result.kind === "none" ? "rgba(217,119,6,0.3)" : "rgba(220,38,38,0.3)"}` }}>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: result.kind === "ok" ? "#047857" : result.kind === "none" ? "#b45309" : "#dc2626" }}>{result.msg}</p>
           </div>
         )}
 
@@ -377,23 +494,7 @@ function BroadcastPanel({
               Cancel
             </button>
             <button
-              type="button"
-              onClick={sendTest}
-              disabled={!testReady}
-              title="Sends one copy, with [TEST] in the subject, to hello@saabai.ai only. Never to subscribers."
-              style={{
-                padding: "9px 16px", borderRadius: 8,
-                border: `1px dashed ${testReady ? D.teal : D.borderHi}`,
-                background: "transparent",
-                color: testReady ? D.teal : D.muted,
-                fontSize: 12, fontWeight: 700, cursor: testReady ? "pointer" : "not-allowed",
-                marginRight: 6,
-              }}
-            >
-              {testing ? "Sending test..." : "Send test to hello@"}
-            </button>
-            <button
-              onClick={() => setConfirmOpen(true)}
+              onClick={() => { if (optedInCount === 0) { setResult({ kind: "none", msg: NONE_SENT_MSG }); return; } setConfirmOpen(true); }}
               disabled={!ready || sending}
               style={{
                 padding: "9px 22px", borderRadius: 8, border: "none",
@@ -402,7 +503,7 @@ function BroadcastPanel({
                 fontSize: 12, fontWeight: 700, cursor: ready && !sending ? "pointer" : "not-allowed",
               }}
             >
-              {sending ? "Sending…" : `Send to ${recipients.length}`}
+              {sending ? "Sending…" : `Send to ${optedInCount} opted in`}
             </button>
           </div>
         </div>
@@ -410,12 +511,13 @@ function BroadcastPanel({
 
       {/* Confirm modal */}
       {confirmOpen && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div data-bc-confirm style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
           <div style={{ background: D.card, border: `1px solid ${D.borderHi}`, borderRadius: 16, width: "100%", maxWidth: 440, padding: "28px 32px" }}>
             <p style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 800, color: D.text }}>Confirm broadcast</p>
             <p style={{ margin: "0 0 20px", fontSize: 13, color: D.secondary, lineHeight: 1.6 }}>
-              You're about to send <strong style={{ color: D.text }}>"{subject}"</strong> to{" "}
-              <strong style={{ color: D.text }}>{recipients.length} subscriber{recipients.length !== 1 ? "s" : ""}</strong>. This cannot be undone.
+              You&apos;re about to send <strong style={{ color: D.text }}>&quot;{subject}&quot;</strong> to{" "}
+              <strong style={{ color: D.text }}>{optedInCount} opted-in subscriber{optedInCount !== 1 ? "s" : ""}</strong>
+              {recipients.length > optedInCount ? ` (${recipients.length - optedInCount} of your selection have not opted in and are skipped)` : ""}. Anyone who unsubscribed is also skipped. This cannot be undone.
             </p>
             <div style={{ background: D.surface, borderRadius: 10, padding: "12px 16px", marginBottom: 20 }}>
               {SEGMENTS.filter(seg => recipients.every(seg.filter) || recipients.some(seg.filter)).slice(0, 3).map(seg => {
@@ -558,11 +660,9 @@ export default function SubscriberDashboard() {
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             {someSelected && <span style={{ fontSize: 12, color: D.teal, fontWeight: 600 }}>{selected.size} selected</span>}
             {exportMsg && <span style={{ fontSize: 12, color: D.teal }}>{exportMsg}</span>}
-            {someSelected && (
-              <button onClick={() => setBroadcastOpen(true)} style={{ padding: "8px 18px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: D.teal, border: "none", color: "#ffffff", cursor: "pointer" }}>
-                Send Email →
-              </button>
-            )}
+            <button onClick={() => setBroadcastOpen(true)} aria-haspopup="dialog" style={{ padding: "8px 18px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: D.teal, border: "none", color: "#ffffff", cursor: "pointer" }}>
+              {someSelected ? `Broadcast to ${selected.size}` : "Broadcast"}
+            </button>
             {someSelected && (
               <button onClick={deleteSelected} disabled={deleting} style={{ padding: "8px 18px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", cursor: deleting ? "not-allowed" : "pointer", opacity: deleting ? 0.6 : 1 }}>
                 {deleting ? "Deleting…" : `Delete ${selected.size}`}
@@ -676,6 +776,9 @@ export default function SubscriberDashboard() {
                 <option value="name">Name A–Z</option>
                 <option value="industry">Industry</option>
               </select>
+              <button onClick={() => setBroadcastOpen(true)} aria-haspopup="dialog" style={{ padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: D.teal, border: "none", color: "#ffffff", cursor: "pointer" }}>
+                {someSelected ? `Send Email to ${selected.size}` : "Broadcast"}
+              </button>
             </div>
           </div>
 
@@ -736,7 +839,7 @@ export default function SubscriberDashboard() {
                 <div style={{ width: 30, height: 30, borderRadius: "50%", background: avatarBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "#fff" }}>
                   {initials}
                 </div>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: D.text }}>{s.firstName || "—"}</p>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: D.text }}>{s.firstName || "-"}</p>
                 <a href={`mailto:${s.email}`} style={{ margin: 0, fontSize: 12, color: "#818cf8", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
                   {s.email}
                 </a>
@@ -751,7 +854,7 @@ export default function SubscriberDashboard() {
                       {locationStr}
                     </p>
                   ) : (
-                    <p style={{ margin: 0, fontSize: 12, color: D.muted }}>—</p>
+                    <p style={{ margin: 0, fontSize: 12, color: D.muted }}>-</p>
                   )}
                   {s.ip && <p style={{ margin: "2px 0 0", fontSize: 10, color: D.muted, fontFamily: "monospace" }} title={`IP: ${s.ip}`}>{s.ip}</p>}
                 </div>
@@ -765,16 +868,38 @@ export default function SubscriberDashboard() {
           })}
         </div>
 
-        {/* Broadcast Panel */}
+        {/* Selection action bar: stays on screen while subscribers are ticked */}
+        {someSelected && !broadcastOpen && (
+          <>
+            <div aria-hidden style={{ height: 84 }} />
+            <div role="toolbar" aria-label="Selected subscribers" style={{ position: "fixed", left: "50%", bottom: 20, transform: "translateX(-50%)", zIndex: 1200, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const, justifyContent: "center", maxWidth: "calc(100vw - 32px)", padding: "10px 14px 10px 18px", background: D.card, border: `1px solid ${D.borderHi}`, borderRadius: 14, boxShadow: "0 12px 32px rgba(0,0,0,0.18)" }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: D.text }}>{selected.size} selected</span>
+              <button onClick={() => setBroadcastOpen(true)} aria-haspopup="dialog" style={{ padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: D.teal, border: "none", color: "#ffffff", cursor: "pointer" }}>
+                Send Email
+              </button>
+              <button onClick={exportCSV} style={{ padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "rgba(8,145,178,0.1)", border: "1px solid rgba(8,145,178,0.25)", color: D.teal, cursor: "pointer" }}>
+                Export {selected.size}
+              </button>
+              <button onClick={deleteSelected} disabled={deleting} style={{ padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", cursor: deleting ? "not-allowed" : "pointer", opacity: deleting ? 0.6 : 1 }}>
+                {deleting ? "Deleting…" : `Delete ${selected.size}`}
+              </button>
+              <button onClick={() => setSelected(new Set())} style={{ padding: "8px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "transparent", border: "none", color: D.secondary, cursor: "pointer" }}>
+                Clear
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Broadcast Panel: a modal over the page, opened at the top and focused */}
         {broadcastOpen && (
-          <div style={{ marginTop: 24 }}>
+          <BroadcastModal onClose={() => setBroadcastOpen(false)}>
             <BroadcastPanel
               recipients={subs.filter(s => selected.has(s.email))}
               allSubs={subs}
               onClose={() => setBroadcastOpen(false)}
               onSelectSegment={(emails) => { setSelected(emails); }}
             />
-          </div>
+          </BroadcastModal>
         )}
 
       </div>
