@@ -19,3 +19,5 @@ jobs:
         run: npx tsx --test tests/invoice-number-input.test.ts
       - name: Portal onboarding
         run: npx tsx --test tests/portal-onboarding.test.ts
+      - name: LeadGen config auth
+        run: npx tsx --test tests/leadgen-config-auth.test.ts
