@@ -8,6 +8,7 @@ import "../components/sb/score.css";
 import { CATEGORIES, QUESTIONS, TIERS, scoreAnswers } from "@/lib/blueprint";
 import { gaEvent } from "@/lib/ga";
 import { SCORE_CONSENT_WORDING } from "@/lib/score-consent";
+import { CONVERTED_KEY, ENTRY_KEY, SCORE_DONE_KEY, cleanEntry, markFlag, readGroup } from "@/lib/exit-popup";
 import { ARROW_DESKTOP, ARROW_MOBILE } from "./arrowSvg";
 import ReportView from "../components/scan/ReportView";
 import ScanSteps, { type ScanDetails } from "./ScanSteps";
@@ -32,6 +33,20 @@ function ScoreArrow() {
   );
 }
 
+/** Funnel attribution for the exit pop-up test: where the visitor came from, and their holdout group. */
+function funnelParams(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const out: Record<string, string> = {};
+  try {
+    const entry = sessionStorage.getItem(ENTRY_KEY);
+    if (entry) out.entry = entry;
+  } catch { /* storage blocked */ }
+  try {
+    out.exit_group = readGroup(localStorage) ?? "none";
+  } catch { /* storage blocked */ }
+  return out;
+}
+
 export default function ScoreClient({ children }: { children?: React.ReactNode }) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
@@ -44,6 +59,14 @@ export default function ScoreClient({ children }: { children?: React.ReactNode }
     let alive = true;
     fetch("/api/site-scan/status", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (alive && j?.enabled === true) setScanOn(true); }).catch(() => {});
     return () => { alive = false; };
+  }, []);
+
+  // Keep ?from= (for example exit-popup or exit-email) for the whole visit, so later score events carry it.
+  useEffect(() => {
+    try {
+      const from = cleanEntry(new URLSearchParams(window.location.search).get("from"));
+      if (from) sessionStorage.setItem(ENTRY_KEY, from);
+    } catch { /* storage blocked */ }
   }, []);
 
   const restart = () => { setAnswers({}); setStep(0); setDone(false); setScanPhase(false); setScan(null); };
@@ -92,7 +115,7 @@ export default function ScoreClient({ children }: { children?: React.ReactNode }
                 aria-checked={selected === i}
                 key={o.label}
                 className={`opt${selected === i ? " sel" : ""}`}
-                onClick={() => { if (Object.keys(answers).length === 0) gaEvent("score_quiz_start", { quiz: "ai_readiness" }); setAnswers({ ...answers, [q.id]: i }); }}
+                onClick={() => { if (Object.keys(answers).length === 0) gaEvent("score_quiz_start", { quiz: "ai_readiness", ...funnelParams() }); setAnswers({ ...answers, [q.id]: i }); }}
               >
                 <span className="r" />
                 <div>{o.label}<small>{o.hint}</small></div>
@@ -105,7 +128,7 @@ export default function ScoreClient({ children }: { children?: React.ReactNode }
               {step + 1 === total ? "See my score →" : "Next →"}
             </button>
           </div>
-          <p className="dim" style={{ fontSize: 13, marginTop: 28, textAlign: "center" }}>Your answers are private. We only use them to calculate your score.</p>
+          <p className="dim" style={{ fontSize: 13, marginTop: 28, textAlign: "center" }}>Your answers stay private. We use them to work out your score, and to email your report if you ask. <Link href="/privacy" className="score-privacy-link">Privacy policy</Link></p>
         </div>
       </div>
     </div>
@@ -116,7 +139,8 @@ function Result({ answers, scan, onRestart }: { answers: Record<string, number>;
   const r = useMemo(() => scoreAnswers(answers), [answers]);
   const rec = TIERS[r.recommended];
   useEffect(() => {
-    gaEvent("score_quiz_complete", { quiz: "ai_readiness", recommended_tier: r.recommended });
+    gaEvent("score_quiz_complete", { quiz: "ai_readiness", recommended_tier: r.recommended, ...funnelParams() });
+    try { markFlag(localStorage, SCORE_DONE_KEY); } catch { /* storage blocked */ }
   }, [r.recommended]);
   const [email, setEmail] = useState(scan?.details.email ?? "");
   const [consent, setConsent] = useState(scan?.details.consent ?? false);
@@ -139,7 +163,10 @@ function Result({ answers, scan, onRestart }: { answers: Record<string, number>;
         body: JSON.stringify({ email: email.trim(), answers, pdf: true, consent, pageUrl: window.location.href, ...(scan ? { scanId: scan.report.id, name: scan.details.name, industry: scan.details.industry, suburb: scan.details.suburb, goal: scan.details.goal } : {}) }),
       });
       setState(res.ok ? "sent" : "error");
-      if (res.ok) gaEvent("generate_lead", { form: "score_result_email", recommended_tier: r.recommended, pdf: true, marketing_consent: consent });
+      if (res.ok) {
+        gaEvent("generate_lead", { form: "score_result_email", recommended_tier: r.recommended, pdf: true, marketing_consent: consent, ...funnelParams() });
+        try { markFlag(localStorage, CONVERTED_KEY); } catch { /* storage blocked */ }
+      }
     } catch {
       setState("error");
     }

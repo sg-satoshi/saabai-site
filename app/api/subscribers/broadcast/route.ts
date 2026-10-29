@@ -1,5 +1,6 @@
-import { escapeHtml } from "../../../../lib/html-escape";
 import { getSubscribers } from "../../../../lib/subscribers";
+import { broadcastEmail, broadcastRecipients } from "../../../../lib/broadcast";
+import { isSuppressed, unsubHeaders, unsubUrl } from "../../../../lib/growth/consent";
 
 export const runtime = "nodejs";
 
@@ -16,14 +17,13 @@ export async function POST(req: Request) {
   if (!subject?.trim()) return Response.json({ error: "subject required" }, { status: 400 });
   if (!html?.trim()) return Response.json({ error: "html required" }, { status: 400 });
 
-  // Verify all emails are real subscribers
+  // Only real subscribers who opted in to marketing email, minus anyone who unsubscribed
+  // (the suppression list that /api/unsubscribe writes to). Older sign-ups from the retired
+  // checklist pop-up have no consent flag and stay out until they opt in.
   const allSubs = await getSubscribers(500);
-  const subMap = new Map(allSubs.map(s => [s.email, s]));
-  const recipients = emails
-    .map(e => subMap.get(e.toLowerCase()))
-    .filter((s): s is NonNullable<typeof s> => s != null && s.status !== "unsubscribed");
+  const { recipients, suppressed } = await broadcastRecipients(emails, allSubs, isSuppressed);
 
-  if (!recipients.length) return Response.json({ error: "No valid active subscribers in selection" }, { status: 400 });
+  if (!recipients.length) return Response.json({ error: "No subscribers in the selection have opted in to marketing email (unsubscribed people are excluded)", suppressed }, { status: 400 });
 
   const resendKey = (process.env.RESEND_API_KEY ?? "").replace(/[\s\n]/g, "");
   if (!resendKey) return Response.json({ error: "Resend not configured" }, { status: 500 });
@@ -36,13 +36,8 @@ export async function POST(req: Request) {
   for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
     const batch = recipients.slice(i, i + BATCH_SIZE);
 
-    const payload = batch.map(s => ({
-      from: `${fromName} <hello@saabai.ai>`,
-      to: [s.email],
-      subject,
-      // Personalise the greeting using firstName
-      html: html.replace(/\{\{firstName\}\}/g, escapeHtml(s.firstName || "there")),
-    }));
+    // Each email carries the sender ID, an unsubscribe footer and one-click unsubscribe headers.
+    const payload = batch.map(s => broadcastEmail(s, { subject, html, fromName }, { unsubUrl, unsubHeaders }));
 
     try {
       const res = await fetch("https://api.resend.com/emails/batch", {
@@ -63,8 +58,8 @@ export async function POST(req: Request) {
     }
   }
 
-  console.log(`[broadcast] subject="${subject}" recipients=${recipients.length} sent=${sent} failed=${failed}`);
+  console.log(`[broadcast] subject="${subject}" recipients=${recipients.length} suppressed=${suppressed} sent=${sent} failed=${failed}`);
   if (errors.length) console.error("[broadcast] errors:", errors);
 
-  return Response.json({ ok: true, sent, failed, total: recipients.length, errors: errors.slice(0, 3) });
+  return Response.json({ ok: true, sent, failed, total: recipients.length, suppressed, errors: errors.slice(0, 3) });
 }
