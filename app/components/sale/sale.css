@@ -1,0 +1,23 @@
+/* Sale price block (Designer spec 30 Oct 2026, src/pub.css). Teal and white only: no gold (Legend only). */
+.sp{--sp-bg:#0b092e;--sp-teal:#62c5d1;--sp-teal2:#7dd9e3;--sp-muted:#a5b4fc;--sp-dim:#8d9cc4;margin-top:12px}
+.sp-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.sp-was{display:block;font-size:18px;font-weight:500;color:var(--sp-dim);text-decoration:line-through;text-decoration-color:var(--sp-teal2);text-decoration-thickness:2px}
+.sp-now{display:flex;align-items:baseline;gap:6px;margin-top:2px}
+.sp-amt{font-size:44px;line-height:1.05;font-weight:700;letter-spacing:-.03em;color:#fff;font-variant-numeric:tabular-nums}
+.sp-per{font-size:16px;font-weight:500;color:var(--sp-muted)}
+.sp-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.sp-bdg{display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:999px;font-size:14px;font-weight:700}
+.sp-save{background:var(--sp-teal);color:var(--sp-bg)}
+.sp-pct{color:var(--sp-teal2);border:1.5px solid var(--sp-teal2)}
+.sp-cd{display:inline-flex;align-items:center;gap:8px;margin-top:14px;font-size:14px;font-weight:500;color:var(--sp-muted)}
+.sp-cd svg{width:16px;height:16px;stroke:var(--sp-teal);fill:none;stroke-width:2}
+.sp-cd.sp-urgent{color:#fff;background:rgba(98,197,209,.12);border:1.5px solid var(--sp-teal);border-radius:10px;padding:6px 12px}
+.sp-cd.sp-urgent b{font-family:var(--font-geist-mono,ui-monospace,monospace);font-variant-numeric:tabular-nums;font-weight:600;color:var(--sp-teal2)}
+.sp-ended{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:14px;color:#a5b4fc}
+.sp-ribbon{position:absolute;top:18px;right:-34px;transform:rotate(45deg);width:130px;text-align:center;background:#62c5d1;color:#0b092e;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:5px 0;box-shadow:0 2px 10px rgba(0,0,0,.35);pointer-events:none}
+.sp-inline s{color:#8d9cc4;text-decoration-color:#7dd9e3}
+.sp-inline b{color:#fff;font-weight:700}
+.sp-inline .sp-ipct{display:inline-flex;align-items:center;height:22px;padding:0 8px;margin-left:4px;border-radius:999px;background:#62c5d1;color:#0b092e;font-size:12px;font-weight:700;vertical-align:middle}
+@media (max-width:639px){.sp-was{font-size:16px}.sp-amt{font-size:40px}.sp-per{font-size:15px}}
+@media (prefers-reduced-motion:reduce){.sp *{transition:none!important}}
+.sp-ribbon-clip{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none}

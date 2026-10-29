@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
   // by this route, so make sure they're bundled with it.
   outputFileTracingIncludes: {
     "/api/wholesale-files/[file]": ["./private/wholesale-homes/**/*"],
+    // Sale pricing: llms files are rewritten with live sale prices (see rewrites below).
+    "/api/llms-txt": ["./public/llms.txt", "./public/llms-full.txt"],
     // Lex privacy name model (open source, runs inside these functions; fetched at build time).
     // The ONNX runtime loads libonnxruntime.so.1 natively, which file tracing cannot see.
     ...Object.fromEntries(LEX_NER_ROUTES.map((r) => [r, [
@@ -77,12 +79,21 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    return [
+    // Sale pricing (off by default): llms files follow a live sale. Only on saabai.ai, never client hosts.
+    const saleOn = /^(1|true)$/i.test((process.env.SALE_PRICING_ENABLED || "").trim());
+    const beforeFiles = saleOn
+      ? [
+          { source: "/llms.txt", destination: "/api/llms-txt", missing: CLIENT_HOST },
+          { source: "/llms-full.txt", destination: "/api/llms-txt?file=full", missing: CLIENT_HOST },
+        ]
+      : [];
+    const afterFiles = [
       // Tributum Law (Mathew): friendly URL for the Site Factory site "tributum-law".
       { source: "/sites/tributumlaw", destination: "/sites/tributum-law" },
       { source: "/sites/tributumlaw/:path*", destination: "/sites/tributum-law/:path*" },
       { source: "/clients/lmm-site", destination: "/clients/lmm-site/index.html" },
     ];
+    return { beforeFiles, afterFiles, fallback: [] };
   },
 };
 

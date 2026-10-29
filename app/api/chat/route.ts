@@ -8,6 +8,8 @@ import {
 import { z } from "zod";
 import { getSaabaiModel } from "../../../lib/chat-config";
 import { SYSTEM_PROMPT } from "../../../lib/chat-prompt";
+import { getPublicSales } from "../../../lib/public-sales";
+import { renderSaleFactsForPrompt } from "../../../lib/mia-offers";
 import { saveLead, saveConversation } from "../../../lib/redis";
 import { CTA_STEPS } from "../../../lib/mia-cta";
 import { noDashesTransform } from "../../../lib/no-dashes";
@@ -66,9 +68,10 @@ function extractConversationPersistenceFields(
 function buildSystemPrompt(
   pageContext?: string,
   returningVisitor?: boolean,
-  visitorProfile?: Record<string, unknown>
+  visitorProfile?: Record<string, unknown>,
+  saleFacts = ""
 ): string {
-  let system = SYSTEM_PROMPT;
+  let system = SYSTEM_PROMPT + saleFacts;
 
   if (pageContext) {
     system += `
@@ -225,7 +228,7 @@ export async function POST(req: Request) {
 
   const cachedSystem: SystemModelMessage = {
     role: "system",
-    content: buildSystemPrompt(pageContext, returningVisitor, visitorProfile),
+    content: buildSystemPrompt(pageContext, returningVisitor, visitorProfile, renderSaleFactsForPrompt(await getPublicSales())),
     providerOptions: {
       anthropic: { cacheControl: { type: "ephemeral" } },
     },

@@ -1,5 +1,7 @@
 /**
- * Sale price for one catalogue product. Admin only. Writes the `sale` field to the
+ * Sale price for one catalogue product. Admin only: isAdminRequest = isAdminOrGranted, the same
+ * gate as the existing /api/admin/products routes (admin sessions plus staff granted the Products
+ * section), so whoever may edit a product's price may also put it on sale. Writes the `sale` field to the
  * product record and nothing else: no Stripe calls, no price changes.
  *   PUT    { salePrice, saleStartsAt?, saleEndsAt?, showCountdown?, publicSlot? }
  *   POST   { action: "end" }  ends the sale now (kept for the record as Ended)
@@ -8,7 +10,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProduct, saveProduct } from "../../../../../../lib/product-catalogue";
 import { isAdminRequest } from "../../../../../../lib/product-stripe";
-import { basePriceCents, parseSaleInput } from "../../../../../../lib/sale-price";
+import { revalidatePath } from "next/cache";
+import { parseSaleInput, toBrisbaneIso } from "../../../../../../lib/sale-price";
+
+/** Pages and files that print a published price: refreshed on every sale change (start/end within 60s via revalidate). */
+const PRICE_PATHS = ["/pricing", "/blueprint", "/websites", "/leadgen", "/llms.txt", "/llms-full.txt", "/api/llms-txt"];
+function refreshPrices() {
+  for (const p of PRICE_PATHS) {
+    try { revalidatePath(p); } catch { /* not fatal */ }
+  }
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,10 +38,11 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
   const { res, product } = await load(ctx);
   if (res) return res;
   const body = await req.json().catch(() => null);
-  const { sale, error } = parseSaleInput(body, basePriceCents(product!));
+  const { sale, error } = parseSaleInput(body, product!);
   if (error) return NextResponse.json({ error }, { status: 400 });
   const updated = { ...product!, sale: sale ?? null, updatedAt: new Date().toISOString() };
   await saveProduct(updated);
+  refreshPrices();
   return NextResponse.json({ product: updated });
 }
 
@@ -45,12 +57,13 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const sale = {
     ...product!.sale,
     // A scheduled sale that never started is ended at its own start so it never goes live.
-    saleStartsAt: start > now.getTime() ? now.toISOString() : product!.sale.saleStartsAt,
-    saleEndsAt: now.toISOString(),
+    saleStartsAt: start >= now.getTime() ? toBrisbaneIso(new Date(now.getTime() - 1000)) : product!.sale.saleStartsAt,
+    saleEndsAt: toBrisbaneIso(now),
+    showCountdown: false,
   };
-  if (Date.parse(sale.saleStartsAt) >= Date.parse(sale.saleEndsAt)) sale.saleStartsAt = new Date(now.getTime() - 1000).toISOString();
   const updated = { ...product!, sale, updatedAt: now.toISOString() };
   await saveProduct(updated);
+  refreshPrices();
   return NextResponse.json({ product: updated });
 }
 
@@ -59,5 +72,6 @@ export async function DELETE(_req: NextRequest, ctx: Ctx) {
   if (res) return res;
   const updated = { ...product!, sale: null, updatedAt: new Date().toISOString() };
   await saveProduct(updated);
+  refreshPrices();
   return NextResponse.json({ product: updated });
 }

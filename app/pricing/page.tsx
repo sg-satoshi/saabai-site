@@ -11,12 +11,21 @@ import { CARE_PLAN_CANCELLATION } from "@/lib/care-faqs";
 import "../components/sb/sb.css";
 import SalePrice from "../components/sale/SalePrice";
 import { getPublicSales, type PublicSales } from "@/lib/public-sales";
-import { offerPriceFields, type PublicSlotId } from "@/lib/sale-price";
+import SaleInline from "../components/sale/SaleInline";
+import { SaleRibbon, OnSaleLabel } from "../components/sale/SalePrice";
+import { applySalesToText, offerPriceOr, careSlot, buildSlot, leadgenSlot, blueprintSlot } from "@/lib/sale-price";
 
 // An ended sale stops showing within about a minute (the countdown also hides itself at 0).
 export const revalidate = 60;
 
-export const metadata: Metadata = publicPageMeta.pricing;
+/** Meta and OG description follow a live sale and revert when it ends. */
+export async function generateMetadata(): Promise<Metadata> {
+  const sales = await getPublicSales();
+  const base = publicPageMeta.pricing;
+  if (!Object.keys(sales).length) return base;
+  const description = applySalesToText(String(base.description ?? ""), sales);
+  return { ...base, description, openGraph: { ...base.openGraph, description }, twitter: { ...base.twitter, description } };
+}
 
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 const PATH = "/pricing";
@@ -33,37 +42,32 @@ const buildSchema = (sales: PublicSales) => schemaGraph([
     id: `${SITE_URL}${PATH}#service`,
     name: "Saabai published prices",
     serviceType: "Website care, AI audit and chat products",
-    description: String(publicPageMeta.pricing.description),
+    description: applySalesToText(String(publicPageMeta.pricing.description), sales),
     url: `${SITE_URL}${PATH}`,
     offers: [
       ...WEBSITE_TIERS.map((tier) => ({
         "@type": "Offer",
         name: `${tier.name} care plan`,
-        price: String(tier.monthly),
-        priceCurrency: "AUD",
+        ...offerPriceOr(sales[careSlot(tier.name)], tier.monthly),
         url: `${SITE_URL}/websites`,
         description: `${tier.name} care is ${formatAud(tier.monthly)} a month. Builds start from ${formatAud(tier.buildFrom)}.`,
       })),
       ...TIER_ORDER.map((id) => ({
         "@type": "Offer",
         name: `Blueprint ${TIERS[id].name}`,
-        ...(sales[`blueprint-${id}` as PublicSlotId]
-          ? offerPriceFields(sales[`blueprint-${id}` as PublicSlotId]!)
-          : { price: String(TIERS[id].price), priceCurrency: "AUD" }),
+        ...offerPriceOr(sales[blueprintSlot(id)], TIERS[id].price),
         url: `${SITE_URL}/blueprint`,
       })),
       {
         "@type": "Offer",
         name: "Lex Firm",
-        price: String(LEX_FIRM_MONTHLY),
-        priceCurrency: "AUD",
+        ...offerPriceOr(sales["lex-firm"], LEX_FIRM_MONTHLY),
         url: `${SITE_URL}/legal`,
       },
       ...LEADGEN.map((tier) => ({
         "@type": "Offer",
         name: `LeadGen ${tier.name}`,
-        price: String(tier.monthly),
-        priceCurrency: "AUD",
+        ...offerPriceOr(sales[leadgenSlot(tier.name)], tier.monthly),
         url: `${SITE_URL}/leadgen`,
       })),
       { "@type": "Offer", name: "AI Readiness Score", price: "0", priceCurrency: "AUD", url: `${SITE_URL}/score` },
@@ -96,10 +100,15 @@ export default async function PricingPage() {
           <h2>Website care plans</h2>
           <div className="grid3" style={{ marginTop: 24 }}>
             {WEBSITE_TIERS.map((tier) => (
-              <div className={`card${tier.highlight ? " feat" : ""}`} key={tier.name}>
-                <h3>{tier.name}</h3>
-                <p style={{ marginTop: 10, color: "var(--teal)", fontSize: 28, fontWeight: 600 }}>{formatAud(tier.monthly)} a month</p>
-                <p className="dim" style={{ marginTop: 6 }}>Builds from {formatAud(tier.buildFrom)}</p>
+              <div className={`card${tier.highlight ? " feat" : ""}`} key={tier.name} style={{ position: "relative" }}>
+                <SaleRibbon sale={sales[careSlot(tier.name)] ?? sales[buildSlot(tier.name)]} />
+                <h3>{tier.name}<OnSaleLabel sale={sales[careSlot(tier.name)] ?? sales[buildSlot(tier.name)]} /></h3>
+                <SalePrice
+                  sale={sales[careSlot(tier.name)] ?? null}
+                  unit="a month"
+                  fallback={<p style={{ marginTop: 10, color: "var(--teal)", fontSize: 28, fontWeight: 600 }}>{formatAud(tier.monthly)} a month</p>}
+                />
+                <p className="dim" style={{ marginTop: 6 }}>Builds from <SaleInline sale={sales[buildSlot(tier.name)]} fallback={formatAud(tier.buildFrom)} /></p>
                 <p style={{ marginTop: 12 }}>{tier.tagline}</p>
               </div>
             ))}
@@ -111,30 +120,31 @@ export default async function PricingPage() {
           <h2 style={{ marginTop: 56 }}>Saabai Blueprint</h2>
           <div className="grid3" style={{ marginTop: 24 }}>
             {TIER_ORDER.map((id) => (
-              <div className="card" key={id}>
-                <h3>{TIERS[id].name}</h3>
+              <div className="card" key={id} style={{ position: "relative" }}>
+                <SaleRibbon sale={sales[blueprintSlot(id)]} />
+                <h3>{TIERS[id].name}<OnSaleLabel sale={sales[blueprintSlot(id)]} /></h3>
                 <SalePrice
-                  sale={sales[`blueprint-${id}` as PublicSlotId] ?? null}
+                  sale={sales[blueprintSlot(id)] ?? null}
                   fallback={<p style={{ marginTop: 10, color: "var(--teal)", fontSize: 28, fontWeight: 600 }}>{TIERS[id].priceLabel}</p>}
                 />
                 <p className="dim" style={{ marginTop: 6 }}>{TIERS[id].delivery}</p>
               </div>
             ))}
           </div>
-          <p style={{ marginTop: 16 }}>From {TIERS.starter.priceLabel}. The fee is credited if you build with Saabai within 30 days.</p>
+          <p style={{ marginTop: 16 }}>From <SaleInline sale={sales["blueprint-starter"]} fallback={TIERS.starter.priceLabel} />. The fee is credited if you build with Saabai within 30 days.</p>
           <p style={{ marginTop: 8 }}>
             <a href="/blueprint" style={{ color: "var(--teal)" }}>See the Blueprint</a>
           </p>
 
           <h2 style={{ marginTop: 56 }}>Other published prices</h2>
           <div className="card" style={{ marginTop: 24, display: "grid", gap: 18 }}>
-            <p><a href="/legal" style={{ color: "var(--teal)" }}>Lex Firm</a> is ${LEX_FIRM_MONTHLY} a month.</p>
+            <p><a href="/legal" style={{ color: "var(--teal)" }}>Lex Firm</a> is <SaleInline sale={sales["lex-firm"]} fallback={`$${LEX_FIRM_MONTHLY}`} /> a month.</p>
             <p><a href="/score" style={{ color: "var(--teal)" }}>AI Readiness Score</a> is free.</p>
             <p>
               The <a href="/ai-receptionist-gold-coast" style={{ color: "var(--teal)" }}>AI receptionist</a> on your website is the chatbot, and it is included in the website tiers, from {formatAud(WEBSITE_TIERS[0].buildFrom)} plus {formatAud(WEBSITE_TIERS[0].monthly)} a month care. Phone answering with Lachie is coming soon. It is not live.
             </p>
             <p>
-              <a href="/seo-ai-search" style={{ color: "var(--teal)" }}>SEO and AI search checks</a> are included in every Blueprint, from {TIERS.starter.priceLabel}.
+              <a href="/seo-ai-search" style={{ color: "var(--teal)" }}>SEO and AI search checks</a> are included in every Blueprint, from <SaleInline sale={sales["blueprint-starter"]} fallback={TIERS.starter.priceLabel} />.
             </p>
             <p>
               <a href="/custom-ai-agents" style={{ color: "var(--teal)" }}>Custom AI agents</a> and a <a href="/ai-chatbot-developer-queensland" style={{ color: "var(--teal)" }}>custom chatbot</a> are quoted to the job. Book a call for a quote.
@@ -143,7 +153,7 @@ export default async function PricingPage() {
               <p><a href="/leadgen" style={{ color: "var(--teal)" }}>LeadGen</a></p>
               <ul className="tick">
                 {LEADGEN.map((tier) => (
-                  <li key={tier.name}>{tier.name} {formatAud(tier.monthly)} a month</li>
+                  <li key={tier.name}>{tier.name} <SaleInline sale={sales[leadgenSlot(tier.name)]} fallback={formatAud(tier.monthly)} /> a month</li>
                 ))}
               </ul>
             </div>

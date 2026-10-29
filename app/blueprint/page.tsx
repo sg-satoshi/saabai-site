@@ -4,11 +4,24 @@ import SbFooter from "../components/sb/SbFooter";
 import "../components/sb/blueprint.css";
 import { TIERS, TIER_ORDER } from "@/lib/blueprint";
 import JsonLd from "../components/JsonLd";
+import SalePrice, { SaleRibbon, OnSaleLabel } from "../components/sale/SalePrice";
+import SaleInline from "../components/sale/SaleInline";
+import { getPublicSales } from "@/lib/public-sales";
+import { applySalesToText, blueprintSlot, offerPriceOr, type PublicSales } from "@/lib/sale-price";
 import { schemaGraph, serviceSchema } from "@/lib/seo-entity";
 import { breadcrumbNode, faqNode } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
 
-export const metadata: Metadata = publicPageMeta.blueprint;
+// Sale prices start and end within about a minute.
+export const revalidate = 60;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const sales = await getPublicSales();
+  const base = publicPageMeta.blueprint;
+  if (!Object.keys(sales).length) return base;
+  const description = applySalesToText(String(base.description ?? ""), sales);
+  return { ...base, description, openGraph: { ...base.openGraph, description }, twitter: { ...base.twitter, description } };
+}
 
 const ROWS: [string, string, string, string][] = [
   ["Ranked opportunities with $ saved", "✓", "✓", "✓"],
@@ -29,19 +42,18 @@ const FAQS = [
   ["Can I get a refund?", "If work hasn't begun, we'll refund you in full. Just reply to your confirmation email. Once work has begun, we don't give change-of-mind refunds. Your rights under the Australian Consumer Law always apply."],
 ];
 
-const blueprintSchema = schemaGraph([
+const blueprintSchema = (sales: PublicSales) => schemaGraph([
   serviceSchema({
     id: "https://www.saabai.ai/blueprint#service",
     name: "Saabai Blueprint AI audit",
     serviceType: "AI audit",
-    description: String(publicPageMeta.blueprint.description),
+    description: applySalesToText(String(publicPageMeta.blueprint.description), sales),
     url: "https://www.saabai.ai/blueprint",
     offers: TIER_ORDER.map((id) => ({
       "@type": "Offer",
       name: `Blueprint ${TIERS[id].name}`,
       description: `${TIERS[id].who} Delivery: ${TIERS[id].delivery}.`,
-      price: TIERS[id].price,
-      priceCurrency: "AUD",
+      ...offerPriceOr(sales[blueprintSlot(id)], TIERS[id].price),
       availability: "https://schema.org/InStock",
       url: "https://www.saabai.ai/blueprint",
     })),
@@ -50,10 +62,12 @@ const blueprintSchema = schemaGraph([
   breadcrumbNode([{ name: "Blueprint", path: "/blueprint" }]),
 ]);
 
-export default function BlueprintPage() {
+export default async function BlueprintPage() {
+  const sales = await getPublicSales();
+  const anySale = Object.keys(sales).some((k) => k.startsWith("blueprint-"));
   return (
     <div className="sb">
-      <JsonLd data={blueprintSchema} />
+      <JsonLd data={blueprintSchema(sales)} />
       <SbNav active="blueprint" />
       <div className="bhero">
         <div className="glow" />
@@ -74,12 +88,13 @@ export default function BlueprintPage() {
             const t = TIERS[id];
             const feat = id === "pro";
             return (
-              <div className={`card tier${feat ? " feat" : ""}`} key={id}>
+              <div className={`card tier${feat ? " feat" : ""}`} key={id} style={{ position: "relative" }}>
+                <SaleRibbon sale={sales[blueprintSlot(id)]} />
                 <div>
                   {feat && <span className="pill" style={{ float: "right" }}>Recommended</span>}
-                  <h3>{t.name}</h3>
+                  <h3>{t.name}<OnSaleLabel sale={sales[blueprintSlot(id)]} /></h3>
                 </div>
-                <div className="amt">{t.priceLabel} <small>one-off</small></div>
+                <SalePrice sale={sales[blueprintSlot(id)] ?? null} unit="one-off" fallback={<div className="amt">{t.priceLabel} <small>one-off</small></div>} />
                 <p className="who">{t.who}</p>
                 <hr />
                 <ul className="tick">{t.features.map((f) => <li key={f}>{f}</li>)}</ul>
@@ -92,7 +107,7 @@ export default function BlueprintPage() {
           <div className="credit">
             <div className="big">100% credited</div>
             <div>
-              <h3>Build with us within 30 days and your Blueprint fee (from {TIERS.starter.priceLabel}) is credited to your build</h3>
+              <h3>Build with us within 30 days and your Blueprint fee (from <SaleInline sale={sales["blueprint-starter"]} fallback={TIERS.starter.priceLabel} />{anySale ? ", the amount you paid" : ""}) is credited to your build</h3>
               <p style={{ fontSize: 14, marginTop: 4 }}>Credit applies to implementation costs only, not care plans or monthly fees. Any unused credit expires after 30 days.</p>
               <p style={{ fontSize: 15, marginTop: 4 }}>Book any build with Saabai within 30 days of delivery and the full Blueprint fee comes off your build invoice.</p>
             </div>

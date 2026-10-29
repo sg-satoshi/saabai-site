@@ -1,67 +1,90 @@
+"use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { EffectivePrice } from "@/lib/sale-price";
 import { formatCents } from "@/lib/sale-price";
 import SaleCountdown from "./SaleCountdown";
+import "./sale.css";
 
 /**
- * Public sale price block. Isolated so Designer's visual spec can replace the styling.
- * Pass `sale` only when it is live and checkout honours it (publicSaleForSlot).
+ * Public sale price block (Designer spec). Pass `sale` only from getPublicSales(), which is
+ * already gated by the flag, policy, checkout and every-surface wiring.
  * No sale: renders `fallback` untouched, so the page is unchanged.
+ * At the end time on an open page: drops the sale at once, shows "Sale ended" with the
+ * regular price, then refreshes from the server. It never shows the sale after endsAt.
  */
 export default function SalePrice({
   sale,
-  suffix,
+  unit,
   fallback,
-  priceStyle,
 }: {
-  sale: EffectivePrice | null;
-  suffix?: string;
+  sale: EffectivePrice | null | undefined;
+  unit?: string;
   fallback: React.ReactNode;
-  priceStyle?: React.CSSProperties;
 }) {
+  const router = useRouter();
+  const [now, setNow] = useState(() => new Date());
+  const endMs = sale?.endsAt ? Date.parse(sale.endsAt) : null;
+
+  useEffect(() => {
+    if (!sale?.onSale || endMs === null) return;
+    const tick = () => setNow(new Date());
+    const toNextMinute = 60_000 - (Date.now() % 60_000);
+    let iv: ReturnType<typeof setInterval> | undefined;
+    const t1 = setTimeout(() => { tick(); iv = setInterval(tick, 60_000); }, toNextMinute);
+    const t2 = setTimeout(tick, Math.max(0, endMs - Date.now()) + 50); // exactly at the end
+    return () => { clearTimeout(t1); clearTimeout(t2); if (iv) clearInterval(iv); };
+  }, [sale?.onSale, endMs]);
+
+  const ended = endMs !== null && now.getTime() >= endMs;
+  useEffect(() => {
+    if (ended) router.refresh();
+  }, [ended, router]);
+
   if (!sale || !sale.onSale) return <>{fallback}</>;
+  if (ended) {
+    return (
+      <>
+        {fallback}
+        <p className="sp-ended">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M5 12l5 5L20 7" /></svg>
+          Sale ended
+        </p>
+      </>
+    );
+  }
+  const u = unit && unit !== "one-off" ? ` ${unit}` : "";
   return (
-    <div className="sale-price" style={{ marginTop: 10 }}>
-      <div style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: 10 }}>
-        <span style={{ color: "var(--teal, #0f766e)", fontSize: 28, fontWeight: 700, ...priceStyle }}>
-          {formatCents(sale.effective)}
-          {suffix ? <span style={{ fontSize: 16, fontWeight: 500 }}> {suffix}</span> : null}
-        </span>
-        <s style={{ opacity: 0.6, fontSize: 18 }}>
-          <span className="sr-only" style={srOnly}>Was </span>
-          {formatCents(sale.original)}
-        </s>
+    <div className="sp">
+      <s className="sp-was"><span className="sp-sr">Was </span>{formatCents(sale.original)}</s>
+      <div className="sp-now">
+        <span className="sp-sr">Now </span>
+        <span className="sp-amt">{formatCents(sale.effective)}</span>
+        {unit ? <span className="sp-per">{unit}</span> : null}
       </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
-        <span style={badge}>{formatCents(sale.saveCents)} off</span>
-        <span style={badge}>{sale.savePercent}% off</span>
-      </div>
-      {sale.showCountdown && sale.endsAt ? (
-        <div style={{ marginTop: 8 }}>
-          <SaleCountdown endsAt={sale.endsAt} />
+      {sale.saveCents >= 100 && (
+        <div className="sp-badges">
+          <span className="sp-bdg sp-save">Save {formatCents(sale.saveCents)}{u}</span>
+          {sale.savePercent > 0 && <span className="sp-bdg sp-pct">{sale.savePercent}% off</span>}
         </div>
-      ) : null}
+      )}
+      {sale.showCountdown && sale.endsAt ? <SaleCountdown endsAt={sale.endsAt} now={now} /> : null}
     </div>
   );
 }
 
-const badge: React.CSSProperties = {
-  display: "inline-block",
-  padding: "3px 10px",
-  borderRadius: 999,
-  background: "#fef3c7",
-  color: "#92400e",
-  fontSize: 13,
-  fontWeight: 700,
-};
+/** Corner ribbon. The card needs position: relative; the ribbon clips itself to the card. */
+export function SaleRibbon({ sale }: { sale: EffectivePrice | null | undefined }) {
+  if (!sale?.onSale || !sale.showRibbon) return null;
+  return (
+    <div className="sp-ribbon-clip" aria-hidden="true">
+      <div className="sp-ribbon">Sale</div>
+    </div>
+  );
+}
 
-const srOnly: React.CSSProperties = {
-  position: "absolute",
-  width: 1,
-  height: 1,
-  padding: 0,
-  margin: -1,
-  overflow: "hidden",
-  clip: "rect(0,0,0,0)",
-  whiteSpace: "nowrap",
-  border: 0,
-};
+/** sr-only "(on sale)" after a product name. */
+export function OnSaleLabel({ sale }: { sale: EffectivePrice | null | undefined }) {
+  if (!sale?.onSale) return null;
+  return <span className="sp-sr"> (on sale)</span>;
+}

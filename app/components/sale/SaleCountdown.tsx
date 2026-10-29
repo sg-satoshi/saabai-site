@@ -1,21 +1,21 @@
 "use client";
-import { useEffect, useState } from "react";
-import { formatCountdown } from "@/lib/sale-price";
+import { formatCountdown, srEndText } from "@/lib/sale-price";
+import { SALE_POLICY } from "@/lib/sale-policy";
 
-/** Ticking countdown. Hides itself at 0 so an ended sale never shows a timer. */
-export default function SaleCountdown({ endsAt, className }: { endsAt: string; className?: string }) {
-  const [text, setText] = useState(() => formatCountdown(endsAt));
-  useEffect(() => {
-    const tick = () => setText(formatCountdown(endsAt));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [endsAt]);
+/**
+ * Countdown line. Rendered by SalePrice, which owns the once-a-minute clock.
+ * Over 24h: the fixed end date. Under 24h: boxed "Ends in hh mm". No seconds.
+ */
+export default function SaleCountdown({ endsAt, now }: { endsAt: string; now: Date }) {
+  const text = formatCountdown(endsAt, now);
   if (!text) return null;
+  const urgent = Date.parse(endsAt) - now.getTime() <= SALE_POLICY.countdownFixedDateAboveHours * 3_600_000;
+  const m = urgent ? /^Ends in (.+)$/.exec(text) : null;
   return (
-    <span className={className} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "#b45309", fontVariantNumeric: "tabular-nums" }} suppressHydrationWarning>
-      <span aria-hidden="true">⏱</span>
-      {text}
-    </span>
+    <div className={`sp-cd${urgent ? " sp-urgent" : ""}`} aria-live="off">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+      <span aria-hidden="true" suppressHydrationWarning>{m ? <>Ends in <b>{m[1]}</b></> : text}</span>
+      <span className="sp-sr">{srEndText(endsAt)}</span>
+    </div>
   );
 }

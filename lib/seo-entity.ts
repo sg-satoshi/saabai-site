@@ -1,4 +1,5 @@
 import { formatAud, WEBSITE_TIERS } from "./website-tiers";
+import { applySalesToText, buildSlot, careSlot, offerPriceFields, type PublicSales } from "./sale-price";
 
 export const SITE_URL = "https://www.saabai.ai";
 /** Firm plan price published on /legal. AUD per month. */
@@ -361,4 +362,33 @@ export function organizationSchemaForSegment(segment: string | null): typeof org
     return node.offers.every((offer) => BLUEPRINT_PAGE_OFFER_PRICES.has(String(offer.price)));
   }) as typeof organizationSchema["@graph"];
   return data;
+}
+
+/**
+ * Sale-aware copy of websitesServiceNode. Offer.price (monthly care) and the build minPrice
+ * follow a live, honoured sale (care-* / build-* slots) and revert when it ends.
+ * No sales: returns the original node unchanged.
+ */
+export function websitesServiceNodeFor(sales: PublicSales): typeof websitesServiceNode {
+  if (!Object.keys(sales).length) return websitesServiceNode;
+  const node = structuredClone(websitesServiceNode);
+  (node.offers as unknown as Record<string, unknown>[]).forEach((offer, i) => {
+    const tier = WEBSITE_CARE[i];
+    const care = sales[careSlot(tier.name)];
+    const build = sales[buildSlot(tier.name)];
+    const specs = offer.priceSpecification as Record<string, unknown>[];
+    if (care?.onSale) {
+      const f = offerPriceFields(care);
+      offer.price = f.price;
+      specs[0].price = f.price;
+      if (f.priceValidUntil) offer.priceValidUntil = f.priceValidUntil;
+    }
+    if (build?.onSale) {
+      const f = offerPriceFields(build);
+      specs[1].minPrice = f.price;
+      if (f.priceValidUntil) specs[1].validThrough = f.priceValidUntil;
+    }
+    if (care?.onSale || build?.onSale) offer.description = applySalesToText(String(offer.description), sales);
+  });
+  return node;
 }
