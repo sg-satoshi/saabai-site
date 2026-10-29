@@ -6,6 +6,7 @@ import AdminShell from "../AdminSidebar";
 import { CardElement, Elements, useStripe, useElements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import type { CatalogueProduct, BillingType, Interval } from "../../../lib/product-catalogue";
+import SalePriceSection from "./SalePriceSection";
 import { feeDisplay, normalizeDiscounts, type FeeKey, type FeeDisplay } from "../../../lib/product-pricing";
 
 // ── Theme (matches PaymentsClient) ────────────────────────────────────────────
@@ -447,7 +448,7 @@ function SellPanel({ product, onClose, onSold }: { product: CatalogueProduct; on
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-export default function ProductsClient({ publishableKey }: { publishableKey: string | null }) {
+export default function ProductsClient({ publishableKey, saleEnabled = false }: { publishableKey: string | null; saleEnabled?: boolean }) {
   const stripePromise = useMemo(() => (publishableKey ? loadStripe(publishableKey) : null), [publishableKey]);
   const [selling, setSelling] = useState<CatalogueProduct | null>(null);
   const [tab, setTab] = useState<"products" | "coupons">("products");
@@ -740,6 +741,18 @@ export default function ProductsClient({ publishableKey }: { publishableKey: str
                 );
               })}
             </div>
+
+            {form.id && (() => {
+              const saved = products.find((x) => x.id === form.id);
+              return saved ? (
+                <SalePriceSection
+                  key={saved.id + saved.updatedAt}
+                  product={saved}
+                  publicEnabled={saleEnabled}
+                  onSaved={(p) => setProducts((list) => list.map((x) => (x.id === p.id ? p : x)))}
+                />
+              ) : null;
+            })()}
 
             <Toggle on={form.gstInclusive} onClick={() => patch({ gstInclusive: !form.gstInclusive })} label="Prices include GST" />
             <Toggle on={form.active} onClick={() => patch({ active: !form.active })} label="Active (available to sell)" />

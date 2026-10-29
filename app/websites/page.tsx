@@ -4,14 +4,27 @@ import Footer from "../components/Footer";
 import InShort from "../components/InShort";
 import JsonLd from "../components/JsonLd";
 import SplitTestingSection from "./SplitTestingSection";
-import { schemaGraph, websitesServiceNode } from "@/lib/seo-entity";
+import { schemaGraph, websitesServiceNodeFor } from "@/lib/seo-entity";
+import { getPublicSales } from "@/lib/public-sales";
+import { applySalesToText, buildSlot, careSlot, type PublicSales } from "@/lib/sale-price";
+import SalePrice, { SaleRibbon, OnSaleLabel } from "../components/sale/SalePrice";
+import SaleInline from "../components/sale/SaleInline";
 import { breadcrumbNode, faqNode } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
 import { formatAud, SPLIT_TESTING, WEBSITE_TIERS, websiteBuildPrice, websiteCareFaqAnswer, websiteMonthlyCare } from "@/lib/website-tiers";
 import { CARE_PLAN_FAQS } from "@/lib/care-faqs";
 import LinkedText from "../components/LinkedText";
 
-export const metadata: Metadata = publicPageMeta.websites;
+// Sale prices start and end within about a minute.
+export const revalidate = 60;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const sales = await getPublicSales();
+  const base = publicPageMeta.websites;
+  if (!Object.keys(sales).length) return base;
+  const description = applySalesToText(String(base.description ?? ""), sales);
+  return { ...base, description, openGraph: { ...base.openGraph, description }, twitter: { ...base.twitter, description } };
+}
 
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 const tiers = WEBSITE_TIERS;
@@ -48,16 +61,20 @@ const faqs = [
   ...CARE_PLAN_FAQS,
 ];
 
-const websitesSchema = schemaGraph([
-  websitesServiceNode,
+/** FAQ answers that state a price follow a live sale (unchanged without one). */
+const saleFaqs = (sales: PublicSales) => faqs.map((f) => ({ ...f, a: applySalesToText(f.a, sales) }));
+
+const websitesSchema = (sales: PublicSales, faqs = saleFaqs(sales)) => schemaGraph([
+  websitesServiceNodeFor(sales),
   faqNode(faqs),
   breadcrumbNode([{ name: "Websites", path: "/websites" }]),
 ]);
 
-export default function WebsitesPage() {
+export default async function WebsitesPage() {
+  const sales = await getPublicSales();
   return (
     <div className="min-h-screen bg-saabai-bg text-saabai-text">
-      <JsonLd data={websitesSchema} />
+      <JsonLd data={websitesSchema(sales)} />
       <Nav activePage="/websites" />
 
       {/* Hero */}
@@ -77,7 +94,7 @@ export default function WebsitesPage() {
           <span className="text-gradient">employee</span>
         </h1>
         <p className="text-base font-semibold text-saabai-teal mb-6">
-          From {formatAud(tiers[0].monthly)} a month. Builds from {formatAud(tiers[0].buildFrom)}.
+          From <SaleInline sale={sales[careSlot(tiers[0].name)]} fallback={formatAud(tiers[0].monthly)} /> a month. Builds from <SaleInline sale={sales[buildSlot(tiers[0].name)]} fallback={formatAud(tiers[0].buildFrom)} />.
         </p>
         <p className="text-lg text-saabai-text-muted max-w-2xl mx-auto leading-relaxed mb-10">
           We build, host and look after websites for Australian small
@@ -99,10 +116,10 @@ export default function WebsitesPage() {
           plan: {tiers.map((tier, index) => (
             <span key={tier.name}>
               {index === 0 ? "" : index === tiers.length - 1 ? " or " : ", "}
-              <strong>{tier.name} {formatAud(tier.monthly)}</strong>
+              <strong>{tier.name} <SaleInline sale={sales[careSlot(tier.name)]} fallback={formatAud(tier.monthly)} /></strong>
             </span>
           ))} a month (AUD), with builds from{" "}
-          <strong>{formatAud(tiers[0].buildFrom)}</strong>. Hosting, security, updates and a trained AI
+          <strong><SaleInline sale={sales[buildSlot(tiers[0].name)]} fallback={formatAud(tiers[0].buildFrom)} /></strong>. Hosting, security, updates and a trained AI
           enquiry chatbot are included. Founded by Shane Goldberg on the Gold
           Coast, Queensland.
         </InShort>
@@ -205,6 +222,7 @@ export default function WebsitesPage() {
                   : undefined
               }
             >
+              <SaleRibbon sale={sales[buildSlot(tier.name)] ?? sales[careSlot(tier.name)]} />
               {tier.highlight && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-saabai-teal text-saabai-bg text-[10px] font-bold tracking-[0.18em] uppercase px-4 py-1.5 rounded-full">
                   Most Popular
@@ -213,21 +231,28 @@ export default function WebsitesPage() {
 
               <div className="mb-6">
                 <h3 className="text-2xl font-semibold tracking-tight mb-1">
-                  {tier.name}
+                  {tier.name}<OnSaleLabel sale={sales[buildSlot(tier.name)] ?? sales[careSlot(tier.name)]} />
                 </h3>
                 <p className="text-sm text-saabai-text-dim">{tier.tagline}</p>
               </div>
 
               <div className="mb-6">
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-4xl font-semibold tracking-tight text-saabai-teal stat-glow">
-                    {websiteBuildPrice(tier)}
-                  </span>
-                  <span className="text-sm text-saabai-text-dim">AUD</span>
-                </div>
+                <SalePrice
+                  sale={sales[buildSlot(tier.name)] ?? null}
+                  fallback={
+                    <div className="flex items-baseline gap-2 mb-1">
+                      <span className="text-4xl font-semibold tracking-tight text-saabai-teal stat-glow">
+                        {websiteBuildPrice(tier)}
+                      </span>
+                      <span className="text-sm text-saabai-text-dim">AUD</span>
+                    </div>
+                  }
+                />
                 <p className="text-xs text-saabai-text-dim">{tier.priceNote}</p>
                 <p className="text-xs font-medium text-saabai-teal mt-1">
-                  {websiteMonthlyCare(tier)}
+                  {sales[careSlot(tier.name)]?.onSale
+                    ? <>then <SaleInline sale={sales[careSlot(tier.name)]} fallback={null} />/mo care</>
+                    : websiteMonthlyCare(tier)}
                 </p>
               </div>
 
@@ -316,7 +341,7 @@ export default function WebsitesPage() {
           Common questions
         </h2>
         <div className="flex flex-col gap-3">
-          {faqs.map((item) => (
+          {saleFaqs(sales).map((item) => (
             <details
               key={item.q}
               className="group bg-saabai-surface border border-saabai-border rounded-xl px-6 py-5"

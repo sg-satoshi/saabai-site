@@ -2,8 +2,21 @@ import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import { publicPageMeta } from "@/lib/seo-pages";
+import SalePrice, { SaleRibbon, OnSaleLabel } from "../components/sale/SalePrice";
+import SaleInline from "../components/sale/SaleInline";
+import { getPublicSales } from "@/lib/public-sales";
+import { applySalesToText } from "@/lib/sale-price";
 
-export const metadata: Metadata = publicPageMeta.leadgen;
+// Sale prices start and end within about a minute.
+export const revalidate = 60;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const sales = await getPublicSales();
+  const base = publicPageMeta.leadgen;
+  if (!Object.keys(sales).length) return base;
+  const description = applySalesToText(String(base.description ?? ""), sales);
+  return { ...base, description, openGraph: { ...base.openGraph, description }, twitter: { ...base.twitter, description } };
+}
 
 const DEMO_SLUG = "bne-emergency-plumbing";
 
@@ -47,7 +60,8 @@ const HOW_IT_WORKS = [
   { step: "04", title: "Your team gets the details", desc: "Your team gets an email with the lead details." },
 ];
 
-export default function LeadGenPage() {
+export default async function LeadGenPage() {
+  const sales = await getPublicSales();
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
       <Nav />
@@ -216,18 +230,23 @@ export default function LeadGenPage() {
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple Pricing</h2>
           <p className="text-saabai-text-dim text-lg max-w-xl mx-auto">
-            One flat monthly fee. Published prices are Starter $197, Pro $397 and Enterprise $997.
+            One flat monthly fee. Published prices are Starter <SaleInline sale={sales["leadgen-starter"]} fallback="$197" />, Pro <SaleInline sale={sales["leadgen-pro"]} fallback="$397" /> and Enterprise <SaleInline sale={sales["leadgen-enterprise"]} fallback="$997" />.
           </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
 
           {/* Starter */}
-          <div className="bg-saabai-card rounded-2xl border border-saabai-border p-8 flex flex-col">
-            <h3 className="text-lg font-semibold mb-1">Starter</h3>
+          <div className="bg-saabai-card rounded-2xl border border-saabai-border p-8 flex flex-col relative">
+            <SaleRibbon sale={sales["leadgen-starter"]} />
+            <h3 className="text-lg font-semibold mb-1">Starter<OnSaleLabel sale={sales["leadgen-starter"]} /></h3>
             <p className="text-sm text-saabai-text-dim mb-6">For sole traders</p>
-            <div className="text-3xl font-bold mb-6">
-              $197<span className="text-sm font-normal text-saabai-text-dim">/mo</span>
+            <div className="mb-6">
+              <SalePrice
+                sale={sales["leadgen-starter"] ?? null}
+                unit="a month"
+                fallback={<div className="text-3xl font-bold">$197<span className="text-sm font-normal text-saabai-text-dim">/mo</span></div>}
+              />
             </div>
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> AI lead capture widget</li>
@@ -248,10 +267,15 @@ export default function LeadGenPage() {
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-saabai-gold text-black text-xs font-bold rounded-full">
               Most Popular
             </div>
-            <h3 className="text-lg font-semibold mb-1">Pro</h3>
+            <SaleRibbon sale={sales["leadgen-pro"]} />
+            <h3 className="text-lg font-semibold mb-1">Pro<OnSaleLabel sale={sales["leadgen-pro"]} /></h3>
             <p className="text-sm text-saabai-text-dim mb-6">For growing teams</p>
-            <div className="text-3xl font-bold mb-6">
-              $397<span className="text-sm font-normal text-saabai-text-dim">/mo</span>
+            <div className="mb-6">
+              <SalePrice
+                sale={sales["leadgen-pro"] ?? null}
+                unit="a month"
+                fallback={<div className="text-3xl font-bold">$397<span className="text-sm font-normal text-saabai-text-dim">/mo</span></div>}
+              />
             </div>
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Everything in Starter</li>
@@ -266,11 +290,16 @@ export default function LeadGenPage() {
           </div>
 
           {/* Enterprise */}
-          <div className="bg-saabai-card rounded-2xl border border-saabai-border p-8 flex flex-col">
-            <h3 className="text-lg font-semibold mb-1">Enterprise</h3>
+          <div className="bg-saabai-card rounded-2xl border border-saabai-border p-8 flex flex-col relative">
+            <SaleRibbon sale={sales["leadgen-enterprise"]} />
+            <h3 className="text-lg font-semibold mb-1">Enterprise<OnSaleLabel sale={sales["leadgen-enterprise"]} /></h3>
             <p className="text-sm text-saabai-text-dim mb-6">For multi-location businesses</p>
-            <div className="text-3xl font-bold mb-6">
-              $997<span className="text-sm font-normal text-saabai-text-dim">/mo</span>
+            <div className="mb-6">
+              <SalePrice
+                sale={sales["leadgen-enterprise"] ?? null}
+                unit="a month"
+                fallback={<div className="text-3xl font-bold">$997<span className="text-sm font-normal text-saabai-text-dim">/mo</span></div>}
+              />
             </div>
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Everything in Pro</li>

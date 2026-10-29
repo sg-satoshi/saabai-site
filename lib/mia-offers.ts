@@ -14,6 +14,8 @@ import { TIERS, TIER_ORDER } from "./blueprint";
 import { formatAud } from "./money";
 import { WEBSITE_TIERS } from "./website-tiers";
 
+import { formatBrisbaneDate, formatCents, PUBLIC_SLOTS, type EffectivePrice, type PublicSales, type PublicSlotId } from "./sale-price";
+
 export const SITE = "https://www.saabai.ai";
 export const LINKS = {
   score: `${SITE}/score`,
@@ -70,4 +72,25 @@ ${sites}
 
 Business details you may share: Saabai, founded by Shane Goldberg, Gold Coast, Queensland. Works Australia-wide online.
 `;
+}
+
+/**
+ * Live sale facts for Mia's system prompt. Empty string when no sale is live and honoured,
+ * so the prompt is unchanged. Sales come only from getPublicSales() (flag, policy, checkout
+ * and every-surface wiring already checked).
+ */
+export function renderSaleFactsForPrompt(sales: PublicSales): string {
+  const lines = (Object.entries(sales) as [PublicSlotId, EffectivePrice][])
+    .filter(([, ep]) => ep?.onSale)
+    .map(([slot, ep]) => {
+      const until = ep.endsAt ? ` until ${formatBrisbaneDate(ep.endsAt, { day: "numeric", month: "long", year: "numeric" })} (Brisbane time)` : " until further notice";
+      return `  - ${PUBLIC_SLOTS[slot].label}: ${formatCents(ep.effective)} (was ${formatCents(ep.original)}, save ${formatCents(ep.saveCents)})${until}.`;
+    });
+  if (!lines.length) return "";
+  return `
+
+## Current Sale Prices
+
+These replace the regular prices above while they run. Quote the sale price and the regular price, and say when it ends. A sale price can't be combined with a discount code. A Blueprint fee credited to a build is the amount the customer actually paid.
+${lines.join("\n")}`;
 }

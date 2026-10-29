@@ -7,6 +7,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "../../../../../lib/stripe";
+import type { PriceChange } from "../../../../../lib/sale-price";
 import {
   getProduct,
   saveProduct,
@@ -22,6 +23,21 @@ import {
 } from "../../../../../lib/product-stripe";
 
 export const runtime = "nodejs";
+
+/** Record regular price changes per fee so the sale guard (Q5) can see them. */
+function appendPriceHistory(existing: CatalogueProduct, input: { oneTimeAmount?: number; recurringAmount?: number; setupFee?: number }): PriceChange[] {
+  const out = [...(existing.priceHistory || [])];
+  const at = new Date().toISOString();
+  const pairs: [PriceChange["fee"], number | undefined, number | undefined][] = [
+    ["one_time", existing.oneTimeAmount, input.oneTimeAmount],
+    ["recurring", existing.recurringAmount, input.recurringAmount],
+    ["setup", existing.setupFee, input.setupFee],
+  ];
+  for (const [fee, from, to] of pairs) {
+    if (to != null && to !== from) out.push({ at, fee, fromCents: from ?? null, toCents: to, by: "admin" });
+  }
+  return out.slice(-50);
+}
 export const dynamic = "force-dynamic";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -78,6 +94,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const updated: CatalogueProduct = {
       id: existing.id,
       ...input,
+      sale: existing.sale ?? null, // the sale route owns this; a product save keeps it
+      priceHistory: appendPriceHistory(existing, input),
       stripeProductId: existing.stripeProductId,
       stripeSetupProductId: setupProductId,
       stripePriceIds: priceIds,

@@ -6,6 +6,7 @@
  */
 import { getRedis } from "./redis";
 import type { ProductDiscount, FeeDiscount } from "./product-pricing";
+import type { SaleFields, PriceChange } from "./sale-price";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -28,6 +29,8 @@ export interface CatalogueProduct {
   trialDays?: number;       // optional; applied at checkout, not stored on Stripe price
   discounts?: FeeDiscount[]; // per-fee sale prices (setup vs recurring vs one-time)
   discount?: ProductDiscount; // legacy single discount; read-only fallback for old records
+  priceHistory?: PriceChange[]; // regular price changes (Q5 guard), appended by the PATCH route
+  sale?: SaleFields | null; // time-boxed sale price (lib/sale-price.ts); written only by the sale route
   stripeProductId: string;
   // For setup_monthly, the setup fee lives on its own Stripe product so coupons
   // can target setup vs recurring independently.
@@ -40,7 +43,7 @@ export interface CatalogueProduct {
 // Fields a caller may set when creating/updating (server fills the rest).
 export type ProductInput = Omit<
   CatalogueProduct,
-  "id" | "stripeProductId" | "stripePriceIds" | "createdAt" | "updatedAt"
+  "id" | "stripeProductId" | "stripePriceIds" | "createdAt" | "updatedAt" | "sale" | "priceHistory"
 >;
 
 // ── Constants ───────────────────────────────────────────────────────────────

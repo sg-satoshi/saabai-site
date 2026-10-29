@@ -5,6 +5,8 @@ import { TIERS, isTier, type BlueprintTier } from "@/lib/blueprint";
 import { findActivePromo, productOfPrice, promoCoversProducts } from "@/lib/coupons/stripe";
 import { ONCE_MESSAGE, normaliseCode, promoIsOnce, promoNotStartedMessage } from "@/lib/coupons/core";
 import { hasUsed } from "@/lib/coupons/once";
+import { getCheckoutSaleCharge } from "@/lib/public-sales";
+import { blueprintLineItem, saleMetadata } from "@/lib/sale-checkout";
 
 export const runtime = "nodejs";
 
@@ -55,10 +57,13 @@ export async function POST(req: NextRequest) {
 
   const origin = req.headers.get("origin") ?? "https://saabai.ai";
   const attr = parseAttr(req.cookies.get(ATTR_COOKIE)?.value);
-  let promo = body.code ? await findActivePromo(normaliseCode(body.code)) : null;
+  // Sale price: re-checked now from the server record (flag, live window, policy, wiring).
+  // The client never sends an amount; any amount in the body is ignored.
+  const sale = await getCheckoutSaleCharge(`blueprint-${tier}`);
+  let promo = body.code && !sale ? await findActivePromo(normaliseCode(body.code)) : null;
   // A code limited to certain products (one or several) must cover this tier. Otherwise it is
   // not pre-applied and the customer is told, rather than Stripe quietly ignoring it.
-  let couponError: string | undefined;
+  let couponError: string | undefined = body.code && sale ? "Codes can't be combined with the sale price." : undefined;
   const notStarted = promo ? promoNotStartedMessage(promo) : null;
   if (promo && notStarted) {
     couponError = notStarted;
@@ -75,13 +80,14 @@ export async function POST(req: NextRequest) {
   }
   const metadata: Record<string, string> = { product: "blueprint", tier, name, business, phone, website, abn, ...attrMetadata(attr) };
   if (promo) metadata.coupon_code = promo.code;
+  if (sale) Object.assign(metadata, saleMetadata(sale));
   const embedded = body.ui_mode !== "hosted";
 
   try {
     const stripe = new Stripe(key);
     const common = {
       mode: "payment" as const,
-      line_items: [{ price, quantity: 1 }],
+      line_items: [blueprintLineItem(price, sale, `Saabai ${TIERS[tier].name} Blueprint`)],
       customer_creation: "always" as const,
       invoice_creation: {
         enabled: true,
@@ -94,7 +100,8 @@ export async function POST(req: NextRequest) {
       },
       phone_number_collection: { enabled: true },
       // A valid ?code= is pre-applied; otherwise the customer can type one.
-      ...(promo ? { discounts: [{ promotion_code: promo.id }] } : { allow_promotion_codes: true }),
+      // Q4: a sale price never stacks with a coupon.
+      ...(sale ? {} : promo ? { discounts: [{ promotion_code: promo.id }] } : { allow_promotion_codes: true }),
       metadata,
       payment_intent_data: { metadata, description: `Saabai ${TIERS[tier].name} Blueprint` },
       custom_fields: [

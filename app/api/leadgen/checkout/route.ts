@@ -2,6 +2,10 @@
  * LeadGen Stripe Checkout
  */
 import { NextRequest, NextResponse } from "next/server";
+import { getCheckoutSaleCharge } from "@/lib/public-sales";
+import { leadgenSaleCoupon, saleMetadata } from "@/lib/sale-checkout";
+import { SALE_POLICY } from "@/lib/sale-policy";
+import type { PublicSlotId } from "@/lib/sale-price";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -43,12 +47,18 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "Invalid tier" }, { status: 400, headers: CORS });
     }
 
+    // Sale price: re-checked now from the server record. Never trusts a client amount.
+    const sale = await getCheckoutSaleCharge(`leadgen-${tier}` as PublicSlotId);
+    const couponParams = sale ? leadgenSaleCoupon(sale, SALE_POLICY.recurringDiscountMonths, `LeadGen ${tier}`) : null;
+    const coupon = couponParams ? await stripe.coupons.create(couponParams) : null;
+
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
+      ...(coupon ? { discounts: [{ coupon: coupon.id }] } : {}),
       payment_method_types: ["card"],
       customer_creation: "always",
       line_items: [{ price: priceId, quantity: 1 }],
-      metadata: { tier, source: "leadgen" },
+      metadata: { tier, source: "leadgen", ...(sale && coupon ? saleMetadata(sale) : {}) },
       success_url: `${BASE()}/leadgen/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${BASE()}/leadgen`,
     });

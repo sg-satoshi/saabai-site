@@ -29,11 +29,15 @@ export interface ProductDiscount {
   label?: string;
 }
 
-/** Not past its end date? */
-export function isActiveOn(endDate?: string): boolean {
+/**
+ * Not past its end date? endDate is a Brisbane calendar day, inclusive. The +10:00
+ * offset matters: without it the server (UTC on Vercel) read the day in UTC and
+ * kept discounts running 10 hours past midnight Brisbane time.
+ */
+export function isActiveOn(endDate?: string, now: number = Date.now()): boolean {
   if (!endDate) return true;
-  const end = new Date(endDate + "T23:59:59");
-  if (!Number.isNaN(end.getTime()) && end.getTime() < Date.now()) return false;
+  const end = new Date(endDate + "T23:59:59+10:00");
+  if (!Number.isNaN(end.getTime()) && end.getTime() < now) return false;
   return true;
 }
 
@@ -76,7 +80,7 @@ export function feeDisplay(key: FeeKey, original: number, discounts?: FeeDiscoun
     discounted,
     isDiscounted: saveCents > 0,
     saveCents,
-    savePercent: Math.round((saveCents / original) * 100),
+    savePercent: Math.floor((saveCents / original) * 100), // never round a discount up
     label: d.label,
     endDate: d.endDate,
   };
