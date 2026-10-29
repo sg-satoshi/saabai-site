@@ -21,3 +21,5 @@ jobs:
         run: npx tsx --test tests/portal-onboarding.test.ts
       - name: LeadGen config auth
         run: npx tsx --test tests/leadgen-config-auth.test.ts
+      - name: Security audit 30 Oct (access, SSRF, rate limits)
+        run: npx tsx --test tests/security-audit-1030.test.ts

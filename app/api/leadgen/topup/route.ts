@@ -55,7 +55,6 @@ export async function POST(req: NextRequest) {
     return Response.json({ url: session.url });
   } catch (e: unknown) {
     console.error("[TopUp Checkout] Error:", e);
-    const msg = e instanceof Error ? e.message : "Internal server error";
-    return Response.json({ error: msg }, { status: 500 });
+    return Response.json({ error: "Could not start checkout" }, { status: 500 });
   }
 }
