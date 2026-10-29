@@ -68,7 +68,7 @@ const useCases = [
       "Order status lookups without staff involvement",
       "Qualified leads automatically routed to CRM with full conversation context",
     ],
-    outcome: "Inbound enquiries can get a fast response. Leads can be captured and followed up, day and night.",
+    outcome: "Inbound enquiries can get a fast response. Leads can be captured at any hour and queued for follow-up.",
   },
   {
     category: "Compliance & Document Automation",
