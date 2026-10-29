@@ -19,6 +19,7 @@ import { describeDocumentPrivacy } from "../../../lib/lex-privacy/document-priva
 import {
   GROUP_LABELS, draftGate, formProgress, groupsOf, parseForm, setAnswer, type FormField, type FormGroupId, groupSummary, fieldText } from "../../../lib/lex-draft-form";
 import type { LexError } from "../../../lib/lex-errors";
+import { DOCS_FLOW_COPY as COPY, DOCS_FLOW_OPTIONS, draftLabel, savedLabel, splitTiles } from "../../../lib/lex-docs-flow";
 import { ErrorCard } from "./States";
 import { Icon } from "./icons";
 import "./draft-workspace.css";
@@ -65,7 +66,7 @@ function Ring({ done, total, warn }: { done: number; total: number; warn?: boole
   return <span className="lxw-ring" aria-hidden="true" style={{ background: `conic-gradient(var(--navy) ${pct}%, transparent 0)` }} />;
 }
 
-function Chips({ f, onCheck }: { f: FormField; onCheck?: () => void }) {
+function Chips({ f, onCheck, onConfirm }: { f: FormField; onCheck?: () => void; onConfirm?: () => void }) {
   return (
     <div className="lxw-meta">
       {f.sources.map((s) => <span key={s} className="lxw-chip src" title={`From ${s}`}><span className="lxw-file" aria-hidden="true" />{s}</span>)}
@@ -74,6 +75,7 @@ function Chips({ f, onCheck }: { f: FormField; onCheck?: () => void }) {
       {f.status === "entered" && <span className="lxw-chip grey">Entered by you</span>}
       {f.status === "needs" && <span className="lxw-chip grey">{f.optional ? "Optional" : "Needs you"}</span>}
       {f.status === "verify" && onCheck && <button type="button" className="lxw-btn sm" onClick={onCheck}>Check source</button>}
+      {f.status === "verify" && onConfirm && DOCS_FLOW_OPTIONS.verifyConfirm === "inline" && !!f.value.trim() && <button type="button" className="lxw-btn sm" onClick={onConfirm}>Confirm</button>}
     </div>
   );
 }
@@ -173,7 +175,7 @@ export function DraftWorkspace(p: WorkspaceProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, [drawer]);
 
-  const legal = <p className="lxw-legal">Drafting assistance only, not legal advice. Check every reference and Verify marker before this document is used.</p>;
+  const legal = <p className="lxw-legal">{COPY.draftFooter}</p>;
 
   const bar = (
     <div className="lxw-bar">
@@ -182,7 +184,7 @@ export function DraftWorkspace(p: WorkspaceProps) {
         {stage !== "home" && stage !== "pick" && <> / <b>{docName}</b></>}
       </div>
       <span className="lx-sp" />
-      {p.savedAt ? <span className="lxw-saved"><i aria-hidden="true" />Saved {timeAEST(p.savedAt)}</span> : null}
+      {p.savedAt ? <span className="lxw-saved"><i aria-hidden="true" />{savedLabel(timeAEST(p.savedAt))}</span> : null}
       {(stage === "form" || stage === "review") && (
         <button type="button" className="lxw-btn" onClick={() => fileInput.current?.click()} disabled={p.busy || !!loading}>Add documents</button>
       )}
@@ -204,7 +206,8 @@ export function DraftWorkspace(p: WorkspaceProps) {
         <section className="lxw-card lxw-resume" aria-labelledby="lxw-resume-h">
           <p className="lxw-eyebrow" id="lxw-resume-h">Pick up where you left off</p>
           <h2>{docName}{trustName ? `, ${trustName}` : ""}</h2>
-          <p className="lxw-sub">Last edited {p.savedAt ? `${dayAEST(p.savedAt)}, ${timeAEST(p.savedAt)} AEST` : "recently"}. Progress saved in this browser.</p>
+          <p className="lxw-sub lxw-draftlabel">{draftLabel(docName, trustName, fields.find((f) => f.label.startsWith("Financial year ending"))?.value)}</p>
+          <p className="lxw-sub">Last edited {p.savedAt ? `${dayAEST(p.savedAt)}, ${timeAEST(p.savedAt)} AEST` : "recently"}. {COPY.retention}</p>
           {fields.length > 0 && (
             <>
               <div className="lxw-bar-p" aria-hidden="true"><span style={{ width: `${prog.required ? (prog.filled / prog.required) * 100 : 0}%` }} /></div>
@@ -223,11 +226,11 @@ export function DraftWorkspace(p: WorkspaceProps) {
             </button>
             {p.onReset && <button type="button" className="lxw-btn quiet" onClick={() => { p.onReset?.(); setStage("pick"); setPrefilled(null); }}>Start over</button>}
           </div>
-          <p className="lxw-fine">Progress saved in this browser for 30 days after your last edit. Uploaded files are not kept. It does not follow you to another device.</p>
+          <p className="lxw-fine">{COPY.progressSaved} Uploaded files are not kept.</p>
         </section>
         <section className="lxw-other">
-          <h3>Other drafts in progress in this browser</h3>
-          <p className="lxw-fine">None. Only progress saved in this browser shows here, so drafts started on another device or browser will not appear.</p>
+          <h3>{COPY.draftsListTitle}</h3>
+          <p className="lxw-fine">No other drafts. {COPY.retention}</p>
           <button type="button" className="lxw-btn" onClick={() => setStage("pick")}>Start a new document</button>
         </section>
         {legal}
@@ -237,13 +240,15 @@ export function DraftWorkspace(p: WorkspaceProps) {
 
   // ── Pick ──────────────────────────────────────────────────────────────────
   const q = query.trim().toLowerCase();
+  const tileSplit = splitTiles(DOCUMENT_TYPES);
+  const moreDocs = tileSplit.more.filter((d) => !q || d.name.toLowerCase().includes(q));
   const pick = (
     <div className="lxw-pick">
       <div className="lxw-pick-main">
         <h1 className="lxw-h1">What are you drafting?</h1>
         <input className="lxw-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={`Search ${DOCUMENT_TYPES.length} document types, or start blank`} aria-label="Search document types" />
         {(["trust", "family-law", "commercial", "employment", "property"] as const).map((cat) => {
-          const docs = DOCUMENT_TYPES.filter((d) => d.category === cat && (!q || d.name.toLowerCase().includes(q)));
+          const docs = tileSplit.tiles.filter((d) => d.category === cat && (!q || d.name.toLowerCase().includes(q)));
           if (!docs.length) return null;
           return (
             <div key={cat} className="lxw-tilegroup">
@@ -258,6 +263,18 @@ export function DraftWorkspace(p: WorkspaceProps) {
             </div>
           );
         })}
+        {moreDocs.length > 0 && (
+          <details className="lxw-tilegroup lxw-more">
+            <summary>More document types ({moreDocs.length})</summary>
+            <div className="lxw-tiles">
+              {moreDocs.map((d) => (
+                <button type="button" key={d.id} className={`lxw-tile${p.typeId === d.id ? " on" : ""}`} aria-pressed={p.typeId === d.id} onClick={() => p.setTypeId(d.id)} disabled={p.busy}>
+                  <b>{d.name}</b><span>{TILE_LINES[d.category] ?? d.description.split(".")[0]}</span>
+                </button>
+              ))}
+            </div>
+          </details>
+        )}
         <div className="lxw-tilegroup">
           <div className="lxw-tiles">
             <button type="button" className={`lxw-tile${p.typeId === "custom" ? " on" : ""}`} aria-pressed={p.typeId === "custom"} onClick={() => p.setTypeId("custom")} disabled={p.busy}>
@@ -308,13 +325,13 @@ export function DraftWorkspace(p: WorkspaceProps) {
         <h1 className="lxw-h1">Supporting documents</h1>
         <div className="lxw-drop" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); void upload(e.dataTransfer.files); }}>
           <b>{profile.uploadLabel}</b>
-          <p className="lxw-fine">PDF, Word or text, up to 8 files. Names are masked before Lex&apos;s model reads them, and the files are not kept.</p>
+          <p className="lxw-fine">{COPY.uploadNote}</p>
           <button type="button" className="lxw-btn" onClick={() => fileInput.current?.click()} disabled={p.busy || !!loading}>Choose files</button>
         </div>
         {err && <div className="lx-verify" role="alert"><Icon name="warn" />{err}</div>}
         <ul className="lxw-files" aria-live="polite">
           {loading?.map((n) => (
-            <li key={`l-${n}`}><b>{n}</b><span className="lxw-st">Reading</span><small className="lxw-mask">Privacy check runs before Lex reads it.</small></li>
+            <li key={`l-${n}`}><b>{n}</b><span className="lxw-st">Reading</span><small className="lxw-mask">{COPY.queuedMask}</small></li>
           ))}
           {!loading && ex?.files.map((f, i) => (
             <li key={i} className={f.error ? "bad" : ""}>
@@ -325,7 +342,7 @@ export function DraftWorkspace(p: WorkspaceProps) {
             </li>
           ))}
         </ul>
-        {!loading && ex && !found.length && <div className="lxw-note">No answers found in these files. Fill in the form or add another file.</div>}
+        {!loading && ex && !found.length && <div className="lxw-note">{COPY.noAnswers}</div>}
         {legal}
       </div>
       <aside className="lxw-card lxw-need">
@@ -408,7 +425,7 @@ export function DraftWorkspace(p: WorkspaceProps) {
           );
         })}
       </ul>
-      <p className="lxw-fine lxw-railfoot">Ticks fill in as you go. Progress saved in this browser for 30 days. Uploaded files are not kept.</p>
+      <p className="lxw-fine lxw-railfoot">{COPY.railFoot}</p>
     </nav>
   );
 
@@ -452,7 +469,7 @@ export function DraftWorkspace(p: WorkspaceProps) {
                   <div key={f.key} id={fieldId(f.key)} className={`lxw-field${f.status === "verify" ? " v" : ""}${f.multiline || f.label.length > 90 ? " wide" : ""}`}>
                     <label id={`${fieldId(f.key)}-in-l`} htmlFor={`${fieldId(f.key)}-in`}>{f.label}{f.optional && <em> optional</em>}</label>
                     {fieldInput(f)}
-                    <Chips f={f} onCheck={() => openDrawer(f.key)} />
+                    <Chips f={f} onCheck={() => openDrawer(f.key)} onConfirm={() => confirm(f.key, f.value)} />
                   </div>
                 ))}
               </div>
