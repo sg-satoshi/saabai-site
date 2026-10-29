@@ -39,9 +39,18 @@ test("llms.txt keeps published prices and does not revive held claims", () => {
   assert.match(llms, /Signature from \$6,500/);
   assert.match(llms, /Firm plan is \$299 a month/);
   assert.match(llms, /within 1 business day/);
-  assert.match(llms, /Rex Plastics/);
+  assert.match(llms, /PlasticOnline\.com\.au/);
   assert.match(llms, /plasticonline\.com\.au/);
   assert.doesNotMatch(llms, /Tributum|home-based|Holland Plastics|free trial|14-day trial|Blueprint is free/i);
   assert.doesNotMatch(llms, /If work on a service has not begun/);
   assert.doesNotMatch(llms, /change-of-mind refunds/);
+});
+
+test("llms files and public copy avoid Rex Plastics and 24/7 claims", () => {
+  const files = ["public/llms.txt", "public/llms-full.txt", "app/case-studies/page.tsx", "app/use-cases/page.tsx", "app/components/LocationPage.tsx", "app/leadgen/page.tsx"];
+  for (const f of files) {
+    const t = readFileSync(f, "utf8");
+    assert.doesNotMatch(t, /Rex Plastics/, f);
+    assert.doesNotMatch(t, /24\/7/, f);
+  }
 });

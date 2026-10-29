@@ -85,7 +85,7 @@ const useCases = [
 ];
 
 const CASE_LINKS: Record<string, { label: string; href: string }> = {
-  "Trade & E-commerce": { label: "Read the Rex Plastics case study", href: "/case-studies/rex-plastics-online" },
+  "Trade & E-commerce": { label: "Read the PlasticOnline case study", href: "/case-studies/rex-plastics-online" },
   "Real Estate Agencies": { label: "Read the FAQ", href: "/faq" },
   "Clinics, Studios & Salons": { label: "Read the FAQ", href: "/faq" },
 };

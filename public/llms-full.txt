@@ -11,7 +11,7 @@
 - [Custom AI chatbots](https://www.saabai.ai/ai-chatbot-developer-queensland): custom AI chatbots for Queensland business websites. A website chatbot is included in the care plans above. A custom build is quoted on a call.
 - [Custom AI agents](https://www.saabai.ai/custom-ai-agents): agents that answer questions. Quoting and follow-up are custom work, quoted to the job. Book a call for a quote.
 - [AI chatbot for law firms](https://www.saabai.ai/ai-chatbot-law-firms): custom AI chatbots for Australian law firms, plus Lex. The chatbot answers after-hours enquiries and keeps a log of the chat. Enquiry alerts are coming soon.
-- [AI receptionist for Gold Coast businesses](https://www.saabai.ai/ai-receptionist-gold-coast): a website chatbot for Gold Coast businesses. Included in the website tiers, from $2,000 plus $100 a month care. Answers enquiries 24/7 and keeps a log of each chat. Enquiry alerts are coming soon.
+- [AI receptionist for Gold Coast businesses](https://www.saabai.ai/ai-receptionist-gold-coast): a website chatbot for Gold Coast businesses. Included in the website tiers, from $2,000 plus $100 a month care. Answers website visitors any time of day and keeps a log of each chat. Enquiry alerts are coming soon.
 - [SEO and AI search visibility](https://www.saabai.ai/seo-ai-search): included in every Blueprint, from $497. Checks Google, ChatGPT, Claude, Perplexity and Gemini.
 - [LeadGen](https://www.saabai.ai/leadgen): AI lead capture for service businesses. Starter $197/month, Pro $397/month, Enterprise $997/month.
 - [Pricing](https://www.saabai.ai/pricing): the published prices collected on one page.

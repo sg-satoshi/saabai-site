@@ -24,7 +24,7 @@ const FEATURES = [
     icon: "🔌",
   },
   {
-    title: "Works 24/7",
+    title: "Works after hours",
     desc: "While you are on a job, asleep, or on the weekend, the AI lead agent can qualify visitors and capture their details.",
     icon: "🕐",
   },

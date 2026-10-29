@@ -38,11 +38,11 @@ export default function CaseStudies() {
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
-          One published example: a custom AI sales agent that ran on the Rex Plastics website.
+          One published example: a custom AI sales agent that ran on the PlasticOnline.com.au website.
         </p>
         <InShort>
           Saabai, a Gold Coast AI business founded by Shane Goldberg, had a custom AI
-          sales agent for Rex Plastics. It answered
+          sales agent, Rex, for PlasticOnline.com.au. It answered
           product questions and priced cut-to-size jobs from that supplier&apos;s catalogue.
           A Blueprint is optional, from{" "}
           <a href="/blueprint">the Starter Blueprint at $497</a>. Website care plans are sold on their own.
@@ -72,14 +72,14 @@ export default function CaseStudies() {
         </div>
 
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">
-          <a href="/case-studies/rex-plastics-online">Rex Plastics</a>
+          <a href="/case-studies/rex-plastics-online">PlasticOnline.com.au</a>
         </h2>
         <p className="mb-6 flex flex-wrap gap-x-8 gap-y-2">
-          <a href="/case-studies/rex-plastics-online" className="text-saabai-teal font-semibold underline underline-offset-2">Read the Rex Plastics case study</a>
+          <a href="/case-studies/rex-plastics-online" className="text-saabai-teal font-semibold underline underline-offset-2">Read the PlasticOnline case study</a>
           <a href="https://www.plasticonline.com.au" target="_blank" rel="noopener noreferrer" className="text-saabai-teal font-semibold underline underline-offset-2">plasticonline.com.au</a>
         </p>
         <p className="text-saabai-text-muted text-base mb-16 max-w-2xl leading-relaxed">
-          Rex Plastics, a national plastics supplier, trade and retail
+          PlasticOnline.com.au, a national plastics supplier, trade and retail
           customers across Australia
         </p>
 
