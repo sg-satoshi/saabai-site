@@ -106,3 +106,27 @@
 .lxd-fill{align-self:flex-start;font:inherit;font-size:12.5px;padding:6px 12px;border-radius:8px;border:1px solid var(--line-2);background:#fff;color:var(--navy);font-weight:600;cursor:pointer}
 .lxd-fill:hover{border-color:var(--teal)}
 .lxd-fill:focus-visible{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(98,197,209,.2)}
+/* Draft prep: what you'll need, supporting documents */
+.lxd-prep{display:flex;flex-direction:column;gap:12px}
+.lxd-needs{border:1px solid var(--line-2);border-radius:8px;background:#fff}
+.lxd-needs-h{display:flex;justify-content:space-between;width:100%;font:inherit;font-size:13px;background:none;border:0;padding:9px 12px;cursor:pointer;color:var(--ink)}
+.lxd-needs-h span{font-size:12px;color:var(--muted)}
+.lxd-needs ul{list-style:none;margin:0;padding:0 12px 10px;display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+.lxd-needs li label{display:flex;gap:8px;align-items:flex-start;cursor:pointer;color:var(--ink-2)}
+.lxd-needs li.done label{color:var(--muted)}
+.lxd-needs li em{font-style:normal;color:var(--subtle)}
+.lxd-needs-note{color:var(--muted);font-size:12px}
+.lxd-up{display:flex;flex-direction:column;gap:6px}
+.lxd-up small{font-size:12px;color:var(--muted)}
+.lxd-fill .lx-ic,.lxd-fill svg{vertical-align:-2px}
+.lxd-ex{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line-2);border-radius:8px;padding:10px 12px;background:#fff}
+.lxd-ex-files{font-size:12px;color:var(--ink-2);display:flex;flex-direction:column;gap:2px}
+.lxd-ex-files .bad{color:#9a3412}
+.lxd-ex-t{width:100%;border-collapse:collapse;font-size:12.5px}
+.lxd-ex-t th{text-align:left;font-weight:600;color:var(--ink-2);padding:6px 8px 6px 0;vertical-align:top;width:34%}
+.lxd-ex-t td{padding:4px 0}
+.lxd-ex-t input{width:100%;font:inherit;font-size:13px;border:1px solid var(--line-2);border-radius:6px;padding:5px 8px}
+.lxd-ex-t input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(98,197,209,.2)}
+.lxd-ex-t small{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+.lxd-ex-t small .lxd-verify{margin-left:6px}
+.lxd-link{font:inherit;font-size:12px;background:none;border:0;padding:0;color:var(--navy);text-decoration:underline;cursor:pointer}

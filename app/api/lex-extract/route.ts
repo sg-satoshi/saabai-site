@@ -1,4 +1,4 @@
-import mammoth from "mammoth";
+import { LEX_DOC_EXTS, readDocText } from "../../../lib/lex-doc-text";
 import { previewDocumentMasking } from "../../../lib/lex-privacy/document-preview";
 import { matterPartiesFor } from "../../../lib/lex-privacy/matter-parties";
 
@@ -21,26 +21,14 @@ export async function POST(request: Request): Promise<Response> {
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    let text: string;
-
-    if (ext === "pdf") {
-      // Dynamic require keeps pdf-parse out of the module graph at build time
-      // (it loads canvas at module level which breaks Next.js static analysis)
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const pdfParse = require("pdf-parse") as (buf: Buffer) => Promise<{ text: string }>;
-      const data = await pdfParse(buffer);
-      text = data.text;
-    } else if (ext === "docx" || ext === "doc") {
-      const result = await mammoth.extractRawText({ buffer });
-      text = result.value;
-    } else if (ext === "txt") {
-      text = buffer.toString("utf-8");
-    } else {
+    if (!(LEX_DOC_EXTS as readonly string[]).includes(ext)) {
       return Response.json(
         { error: `Unsupported file type: .${ext}. Supported: .pdf, .docx, .doc, .txt` },
         { status: 400 }
       );
     }
+    // Shared reader (pdf-parse v2 API). Page markers are dropped here so the review text is unchanged.
+    const text = (await readDocText(file.name, buffer)).text.replace(/^\[Page \d+\]\n/gm, "");
 
     const wordCount = text.split(/\s+/).filter(Boolean).length;
     const clauses = detectClauses(text.toLowerCase());

@@ -24,6 +24,8 @@ import { Icon } from "./_components/icons";
 import { exportAnswerToWord } from "./_components/exportAnswer";
 import { exportDraftToWord } from "./_components/exportDraft";
 import { DraftingView } from "./_components/Drafting";
+import type { PrepState } from "../../lib/lex-doc-extract";
+import { hasProgress, parseProgress, progressKey } from "../../lib/lex-draft-progress";
 import { AccountView, InvoicesView } from "./_components/Account";
 import { FirmDashboard } from "./_components/Dashboard";
 import { MattersView, MatterDetail, MatterBar, NewMatterDialog } from "./_components/Matters";
@@ -112,6 +114,23 @@ export default function LexPage() {
   const [draftParties, setDraftParties] = useState("");
   const [draftJurisdiction, setDraftJurisdiction] = useState("All Australian jurisdictions");
   const [draftInstructions, setDraftInstructions] = useState("");
+  // Draft Documents prep (what you'll need, uploaded facts) and saved progress, this browser only, per user.
+  const [draftPrep, setDraftPrep] = useState<PrepState>({ extracted: null, manual: [] });
+  const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null);
+  const draftRestored = useRef(false);
+  // Restore saved Draft Documents progress once the user is known (called from init, not an effect).
+  function restoreDraftProgress(email: string) {
+    const key = progressKey(email);
+    if (!key || draftRestored.current) return;
+    draftRestored.current = true;
+    try {
+      const saved = parseProgress(localStorage.getItem(key));
+      if (!saved) { localStorage.removeItem(key); return; }
+      if (DOCUMENT_TYPES.some(d => d.id === saved.typeId) || saved.typeId === "custom") setDraftTypeId(saved.typeId);
+      setDraftJurisdiction(saved.jurisdiction || "All Australian jurisdictions");
+      setDraftParties(saved.parties); setDraftInstructions(saved.instructions ?? ""); setDraftPrep(saved.prep); setDraftSavedAt(saved.savedAt);
+    } catch {}
+  }
   const [draftResponseLength, setDraftResponseLength] = useState<"default" | "concise" | "balanced" | "detailed">("default");
   const [draftText, setDraftText] = useState("");
   const [draftQA, setDraftQA] = useState<QAReport | null>(null);
@@ -231,6 +250,7 @@ export default function LexPage() {
         const me = portalMe?.authenticated && portalMe.email ? portalMe : { authenticated: !!(await lexMe), email: await lexMe };
         if (me.authenticated && me.email) {
           setUserEmail(me.email);
+          restoreDraftProgress(me.email);
           // Prefer user-scoped localStorage (quick win while Redis loads)
           const userKey = `lex_threads_${me.email}`;
           try {
@@ -253,6 +273,22 @@ export default function LexPage() {
     init();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Save it (debounced) as the user works.
+  useEffect(() => {
+    const key = progressKey(userEmail);
+    if (!key || !draftRestored.current) return;
+    const t = setTimeout(() => {
+      const p = { typeId: draftTypeId, jurisdiction: draftJurisdiction, parties: draftParties, instructions: draftInstructions, prep: draftPrep };
+      try {
+        if (!hasProgress(p)) { localStorage.removeItem(key); setDraftSavedAt(null); return; }
+        const savedAt = Date.now();
+        localStorage.setItem(key, JSON.stringify({ v: 1, savedAt, ...p }));
+        setDraftSavedAt(savedAt);
+      } catch {}
+    }, 800);
+    return () => clearTimeout(t);
+  }, [userEmail, draftTypeId, draftJurisdiction, draftParties, draftInstructions, draftPrep]);
 
   // Persist threads: localStorage always, Redis (debounced 2s) when authenticated
   useEffect(() => {
@@ -1170,6 +1206,8 @@ export default function LexPage() {
             onCopy={() => { navigator.clipboard.writeText(draftText); setDraftCopied(true); setTimeout(() => setDraftCopied(false), 1500); }}
             onExport={() => exportDraftToWord({ draftText, docTypeName: DOCUMENT_TYPES.find(d => d.id === draftTypeId)?.name ?? "Legal Document", jurisdiction: draftJurisdiction, firmName })}
             onSend={() => { setEmailOpen(true); setEmailSubject(`Document from Lex AI: ${DOCUMENT_TYPES.find(d => d.id === draftTypeId)?.name ?? "Legal Document"}`); }}
+            prep={draftPrep} setPrep={setDraftPrep} savedAt={draftSavedAt}
+            onReset={() => { setDraftParties(""); setDraftInstructions(""); setDraftPrep({ extracted: null, manual: [] }); const k = progressKey(userEmail); try { if (k) localStorage.removeItem(k); } catch {} setDraftSavedAt(null); }}
             onResearch={(q) => { setMode("research"); newThread(); setInput(q); setTimeout(() => inputRef.current?.focus(), 0); }}
           />
         )}

@@ -8,6 +8,8 @@ import {
   normaliseClauseId, QA_STATUS, confidenceBand, orderSections,
 } from "../../../lib/lex-draft-display";
 import { ErrorCard } from "./States";
+import { DraftPrep } from "./DraftPrep";
+import type { PrepState } from "../../../lib/lex-doc-extract";
 import { Icon } from "./icons";
 import "./drafting.css";
 
@@ -28,6 +30,8 @@ export type DraftingProps = {
   error: LexError | null; onDraft: () => void;
   copied: boolean; onCopy: () => void; onExport: () => void; onSend: () => void;
   onResearch: (q: string) => void;
+  prep: PrepState; setPrep: (s: PrepState) => void;
+  savedAt?: number | null; onReset?: () => void;
 };
 
 function brisbaneTime(d: Date) {
@@ -105,6 +109,9 @@ export function DraftingView(p: DraftingProps) {
           {JURISDICTIONS.map((j) => <option key={j}>{j}</option>)}
         </select>
       </label>
+      <DraftPrep doc={doc} typeId={p.typeId} busy={busy} parties={p.parties} setParties={p.setParties}
+        template={doc?.partiesTemplate ? fillPartiesTemplate(doc.partiesTemplate) : undefined}
+        prep={p.prep} setPrep={p.setPrep} savedAt={p.savedAt} onReset={p.onReset} />
       <label className="lxd-f">
         <span>Parties</span>
         {doc?.partiesTemplate && !p.parties.trim() && (

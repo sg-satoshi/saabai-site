@@ -40,6 +40,7 @@ export type LexRoute =
   | "lex-draft-qa"
   | "lex-review"
   | "lex-compare"
+  | "lex-doc-extract"
   | "lex-settings-test";
 
 /** Where the model comes from. Routes describe it; only the gateway builds it. */

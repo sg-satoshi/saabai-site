@@ -180,6 +180,19 @@ for (const r of ROUTES) {
   });
 }
 
+test("canary: lex-doc-extract (uploaded supporting documents): no planted value reaches the AI provider", async () => {
+  const mod = await import("../app/api/lex-doc-extract/route");
+  const fd = new FormData();
+  fd.append("files", new File([INPUT], "deed.txt", { type: "text/plain" }));
+  fd.append("files", new File([`Deed of variation. ${INPUT}`], "variation.txt", { type: "text/plain" }));
+  fd.append("documentType", "trust-distribution-resolution");
+  const res: Response = await mod.POST(new Request("http://localhost/api/lex-doc-extract", { method: "POST", headers: { cookie: await adminCookie() }, body: fd }));
+  await res.text();
+  assert.ok(providerBodies.length >= 2, "expected one provider call per file");
+  providerBodies.forEach((b, i) => assertNoCanary(b, `provider call ${i + 1}`));
+  assert.ok(!providerBodies.some((b) => b.includes("deed.txt") && b.includes(C.person)));
+});
+
 test("canary: lex-settings test call sends nothing but the fixed probe", async () => {
   const mod = await import("../app/api/lex-settings/route");
   await mod.POST(new Request("http://localhost/api/lex-settings", {

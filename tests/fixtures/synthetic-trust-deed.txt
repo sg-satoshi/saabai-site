@@ -1,0 +1,18 @@
+SYNTHETIC TEST DEED. Not a real trust. Every name and number below is invented for tests.
+
+[Page 1]
+DEED OF SETTLEMENT dated 1 March 2005
+Recital A. The Settlor wishes to establish a trust to be known as the Example Family Trust.
+Schedule item 2. Trustee: Original Trustee Pty Ltd ACN 000 000 019.
+
+[Page 2]
+1.1(k) "Income" means the income of the Trust Fund calculated in accordance with accounting principles.
+1.1(z) "Vesting Date" means the day 80 years from the date of this deed.
+
+[Page 4]
+6.1 The Trustee may pay, apply or set aside the whole or any part of the Income to any General Beneficiary.
+6.2 Any resolution under clause 6.1 must be made by 30 June in each Accounting Period.
+6.5 Income not dealt with under clause 6.1 is held for the Default Beneficiaries in equal shares.
+
+[Page 9]
+30. This deed is governed by the laws of South Australia.

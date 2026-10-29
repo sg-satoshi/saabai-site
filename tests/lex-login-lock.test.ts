@@ -56,7 +56,7 @@ test("logged out: /lex and subroutes redirect to /login with a return path", asy
 });
 
 test("logged out: /api/lex-extract and /api/lex-compare return 401", async () => {
-  for (const p of ["/api/lex-extract", "/api/lex-compare"]) {
+  for (const p of ["/api/lex-extract", "/api/lex-compare", "/api/lex-doc-extract"]) {
     const r = await call(null, "POST", p);
     assert.equal(r.status, 401, p);
   }
@@ -72,7 +72,7 @@ test("signed in: Saabai Lex user, portal (law-firm) user and admin reach /lex an
   for (const who of people) {
     assert.ok(passes(await call(who, "GET", "/lex")), `/lex ${JSON.stringify(who)}`);
     assert.ok(passes(await call(who, "GET", "/lex?q=test")), `/lex?q ${JSON.stringify(who)}`);
-    for (const p of ["/api/lex-extract", "/api/lex-compare"]) assert.ok(passes(await call(who, "POST", p)), `${p} ${JSON.stringify(who)}`);
+    for (const p of ["/api/lex-extract", "/api/lex-compare", "/api/lex-doc-extract"]) assert.ok(passes(await call(who, "POST", p)), `${p} ${JSON.stringify(who)}`);
   }
 });
 
