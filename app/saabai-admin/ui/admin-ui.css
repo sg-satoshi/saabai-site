@@ -34,8 +34,8 @@
 .au-scope input:focus,.au-scope textarea:focus,.au-scope select:focus{border-color:#62c5d1!important;box-shadow:0 0 0 2px rgba(98,197,209,.4)}
 
 /* Secondary button (navy primary stays .btn.pri) */
-.btn.au-2{height:36px;padding:0 12px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;font-size:14px;font-weight:500;box-shadow:none}
-.btn.au-2:hover:not(:disabled){background:#f8fafc;border-color:#cbd5e1;color:#1e293b;box-shadow:none;transform:none}
+.btn.au-2{height:36px;padding:0 12px;border-radius:8px;border:1px solid #c6cad6;background:#fff;color:#0b092e;font-size:14px;font-weight:500;box-shadow:none}
+.btn.au-2:hover:not(:disabled){background:#f4f5f9;border-color:#9aa0b4;color:#0b092e;box-shadow:none;transform:none}
 .au-link{background:none;border:0;padding:0 4px;height:36px;font:inherit;font-size:14px;line-height:20px;font-weight:500;color:#475569;text-underline-offset:4px;cursor:pointer}
 .au-link:hover{text-decoration:underline;color:#0f172a}
 .au-link:focus-visible{outline:none;box-shadow:0 0 0 2px #62c5d1;border-radius:4px}
