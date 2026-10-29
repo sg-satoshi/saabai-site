@@ -73,3 +73,7 @@
  .sb .pdfbox-btn{height:64px;font-size:18px}
  .sb .pdfbox input[type=email]{font-size:16px;height:60px}
 }
+
+/* /score privacy line link (exit pop-up redesign): teal bright, underlined, 44px tap area without moving layout */
+.sb .score-privacy-link{color:#7dd9e3;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(125,217,227,.6);font-weight:500;padding:14px 4px;margin:0 -4px;white-space:nowrap}
+.sb .score-privacy-link:focus-visible{outline:2px solid #62c5d1;outline-offset:1px;border-radius:4px}

@@ -19,7 +19,7 @@ export default function MobileCtaBar() {
 
   return (
     <div
-      className={`md:hidden fixed bottom-0 left-0 right-0 z-50 transition-transform duration-300 ${
+      className={`saabai-mobile-cta md:hidden fixed bottom-0 left-0 right-0 z-50 transition-transform duration-300 ${
         visible ? "translate-y-0" : "translate-y-full"
       }`}
       style={{ background: "var(--saabai-bg)" }}

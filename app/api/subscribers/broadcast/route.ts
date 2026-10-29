@@ -1,5 +1,5 @@
 import { escapeHtml } from "../../../../lib/html-escape";
-import { getSubscribers } from "../../../../lib/subscribers";
+import { canReceiveMarketing, getSubscribers } from "../../../../lib/subscribers";
 
 export const runtime = "nodejs";
 
@@ -16,14 +16,15 @@ export async function POST(req: Request) {
   if (!subject?.trim()) return Response.json({ error: "subject required" }, { status: 400 });
   if (!html?.trim()) return Response.json({ error: "html required" }, { status: 400 });
 
-  // Verify all emails are real subscribers
+  // Verify all emails are real subscribers who opted in to marketing email.
+  // Older sign-ups (retired checklist pop-up) have no consent flag and stay out until they opt in.
   const allSubs = await getSubscribers(500);
   const subMap = new Map(allSubs.map(s => [s.email, s]));
   const recipients = emails
     .map(e => subMap.get(e.toLowerCase()))
-    .filter((s): s is NonNullable<typeof s> => s != null && s.status !== "unsubscribed");
+    .filter((s): s is NonNullable<typeof s> => s != null && canReceiveMarketing(s));
 
-  if (!recipients.length) return Response.json({ error: "No valid active subscribers in selection" }, { status: 400 });
+  if (!recipients.length) return Response.json({ error: "No subscribers in the selection have opted in to marketing email" }, { status: 400 });
 
   const resendKey = (process.env.RESEND_API_KEY ?? "").replace(/[\s\n]/g, "");
   if (!resendKey) return Response.json({ error: "Resend not configured" }, { status: 500 });
