@@ -33,6 +33,8 @@ export interface LeadGenClient {
   serviceArea: string;
   /** Business hours (used by AI) */
   businessHours: string;
+  /** Optional widget button label. Falls back to businessHours ("24/7" keeps "24/7 Emergency Help"). */
+  widgetButtonLabel?: string;
   /** AI system prompt — optional, auto-generated if omitted */
   systemPrompt?: string;
 
