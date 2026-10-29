@@ -9,6 +9,8 @@ import {
 } from "../../../lib/wholesale-auth";
 import { getWholesaleAdmin } from "../../../lib/wholesale-admin-auth";
 
+import { loginBlocked, recordLoginFailure, clearLoginFailures, clientIp, tooManyResponse } from "../../../lib/login-limit";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -19,12 +21,17 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(req: Request) {
   const { email, password } = await req.json().catch(() => ({}));
+  const ip = clientIp(req);
+  const wait = await loginBlocked("wh", email, ip);
+  if (wait) return tooManyResponse(wait);
 
   const auth = await authenticateWholesale(email, password);
   if (!auth) {
+    await recordLoginFailure("wh", email, ip);
     return NextResponse.json({ success: false, error: "Invalid email or password" }, { status: 401 });
   }
 
+  await clearLoginFailures("wh", email, ip);
   const res = NextResponse.json({ success: true, name: auth.session.name });
   res.headers.append("Set-Cookie", wholesaleSessionCookie(createWholesaleSessionToken(auth)));
   return res;
