@@ -40,7 +40,9 @@ test("drafting route sends the structure, and the view offers the checklist", ()
   const route = readFileSync("app/api/lex-draft/route.ts", "utf8");
   assert.ok(route.includes("docType.draftingGuide") && route.includes("DOCUMENT STRUCTURE"));
   const view = readFileSync("app/lex/_components/Drafting.tsx", "utf8");
-  assert.ok(view.includes("doc?.partiesTemplate") && view.includes("p.setParties(fillPartiesTemplate(doc.partiesTemplate"));
+  assert.ok(view.includes("doc?.partiesTemplate") && view.includes("fillPartiesTemplate(doc.partiesTemplate)") && view.includes("<DraftWorkspace"));
+  const ws = readFileSync("app/lex/_components/DraftWorkspace.tsx", "utf8");
+  assert.ok(ws.includes("fillPartiesTemplate(doc.partiesTemplate)") && ws.includes("parseForm(p.parties, template"), "the workspace builds the checklist form from the template");
 });
 
 test("hardened against adversarial review: wording, authority, evidence, family law", () => {

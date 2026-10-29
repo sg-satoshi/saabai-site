@@ -17,8 +17,7 @@ import { DOC_KIND_LABELS, prefillChecklist, profileFor, sourceLabel, type Merged
 import { needDone, needsFor } from "../../../lib/lex-doc-needs";
 import { describeDocumentPrivacy } from "../../../lib/lex-privacy/document-privacy-text";
 import {
-  GROUP_LABELS, draftGate, formProgress, groupsOf, parseForm, setAnswer, type FormField, type FormGroupId,
-} from "../../../lib/lex-draft-form";
+  GROUP_LABELS, draftGate, formProgress, groupsOf, parseForm, setAnswer, type FormField, type FormGroupId, groupSummary } from "../../../lib/lex-draft-form";
 import type { LexError } from "../../../lib/lex-errors";
 import { ErrorCard } from "./States";
 import { Icon } from "./icons";
@@ -483,7 +482,7 @@ export function DraftWorkspace(p: WorkspaceProps) {
           {groups.map((g) => {
             const gf = fields.filter((f) => f.group === g);
             const open = gf.filter((f) => f.status === "verify");
-            const summary = gf.map((f) => f.value.replace(/\s*\n\s*/g, ", ").replace(/^\d+\.\s*/, "")).filter(Boolean).join(". ");
+            const summary = groupSummary(gf);
             return (
               <li key={g}>
                 <Ring done={1} total={1} warn={open.length > 0} />

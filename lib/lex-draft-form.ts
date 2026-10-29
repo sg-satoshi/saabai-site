@@ -174,3 +174,41 @@ export function groupsOf(fields: FormField[]): FormGroupId[] {
   const order: FormGroupId[] = [...TRUST_GROUP_ORDER, "details"];
   return order.filter((g) => fields.some((f) => f.group === g));
 }
+
+/** One field's answer for the review summary: no hint or default text, no empty "label:" pieces, no bare list markers. */
+export function summaryValue(f: FormField): string {
+  if (!f.filled || !f.value.trim()) return "";
+  const hint = f.hint.trim();
+  if (hint && f.value.trim() === hint) return "";
+  const hintParens = hint.match(/\([^()]*\)/g) ?? [];
+  const parts: string[] = [];
+  for (const line of f.value.split("\n")) {
+    let l = line.replace(/^\s*\d+[.)]\s*/, "").trim();
+    for (const h of hintParens) l = l.split(h).join("");
+    for (const piece of l.split(";")) {
+      const p = piece.replace(/\s{2,}/g, " ").trim();
+      if (!p || /^[^:]*:\s*$/.test(p) || /^\d+[.)]?$/.test(p)) continue;
+      parts.push(p.replace(/[\s,;]+$/, ""));
+    }
+  }
+  return parts.join("; ");
+}
+
+/** Review summary for a group of fields. */
+export function groupSummary(fields: FormField[]): string {
+  return fields.map(summaryValue).filter(Boolean).join(". ");
+}
+
+/**
+ * Server side of the Verify gate for checklist document types. Returns a plain message when the
+ * checklist still has an unresolved Verify, else null. Types without a checklist template are not gated.
+ */
+export function serverVerifyGate(parties: unknown, template: string | undefined, trust: boolean): string | null {
+  if (!template || typeof parties !== "string" || !parties.trim()) return null;
+  const open = draftGate(parseForm(parties, template, trust)).open.length;
+  if (/\[VERIFY/i.test(parties) || open) {
+    const n = Math.max(open, 1);
+    return `Lex cannot draft yet. ${n === 1 ? "One answer still needs" : `${n} answers still need`} verifying. Confirm or correct ${n === 1 ? "it" : "them"} in the form, then draft again.`;
+  }
+  return null;
+}

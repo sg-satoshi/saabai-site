@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { DOCUMENT_TYPES, fillPartiesTemplate } from "../lib/lex-document-types";
-import { confirmField, draftGate, formProgress, parseForm, setAnswer } from "../lib/lex-draft-form";
+import { confirmField, draftGate, formProgress, groupSummary, groupsOf, parseForm, serverVerifyGate, setAnswer } from "../lib/lex-draft-form";
 import { prefillChecklist, type MergedDeed } from "../lib/lex-doc-extract";
 import { describeDocumentPrivacy, privacyFromMasked } from "../lib/lex-privacy/document-privacy-text";
 
@@ -57,4 +57,34 @@ test("workspace copy: no server-side saving claims, no dashes, retention TODO vi
   assert.ok(!/firm's Lex account|saves to this matter|Missing items are fine/i.test(src));
   assert.ok(src.includes("[RETENTION: pending Shane]"));
   assert.ok(!/[\u2013\u2014]/.test(src + readFileSync("app/lex/_components/draft-workspace.css", "utf8")));
+});
+
+test("server Verify gate: the draft route rejects an unresolved Verify with 409", async () => {
+  const f0 = parseForm("", T, true);
+  const parties = setAnswer(T, T, f0[0].key, "Harbour Pines Family Trust (from Trust deed.pdf, cl 1.1) [VERIFY: name differs on page 2]");
+  assert.match(serverVerifyGate(parties, T, true) ?? "", /cannot draft yet\. One answer still needs verifying/);
+  assert.equal(serverVerifyGate(confirmField(parties, T, f0[0].key), T, true), null);
+  assert.ok(serverVerifyGate("Notes [verify: x]", T, true), "any [VERIFY marker blocks");
+  assert.equal(serverVerifyGate("Anything [VERIFY: x]", undefined, false), null, "types without a checklist are not gated");
+  const { POST } = await import("../app/api/lex-draft/route");
+  const res = await POST(new Request("http://local.test/api/lex-draft", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ documentType: "trust-distribution-resolution", parties, jurisdiction: "QLD" }) }));
+  assert.equal(res.status, 409);
+  assert.match((await res.json()).error, /verifying/);
+});
+
+test("review summary skips hints, defaults, empty labels and bare list markers (real template)", () => {
+  const blank = parseForm("", T, true);
+  for (const g of groupsOf(blank)) assert.equal(groupSummary(blank.filter((f) => f.group === g)), "", `blank ${g} summary is empty`);
+  const deedKey = blank.find((f) => f.label.startsWith("Deed clause numbers"))!.key;
+  let p = setAnswer(T, T, deedKey, "income definition: cl 1.12; power to appoint income:; streaming power: cl 9");
+  const benKey = blank.find((f) => f.label.startsWith("Beneficiaries and shares"))!.key;
+  p = setAnswer(p, T, benKey, "  1. Jane Citizen 60%\n  2.");
+  const f = parseForm(p, T, true);
+  const deed = groupSummary(f.filter((x) => x.group === "deed"));
+  assert.equal(deed, "income definition: cl 1.12; streaming power: cl 9");
+  const ben = groupSummary(f.filter((x) => x.group === "beneficiaries"));
+  assert.equal(ben, "Jane Citizen 60%");
+  assert.ok(!/specified individual|Interposed entity elections|\b1\.,/.test(ben));
+  const sign = groupSummary(f.filter((x) => x.group === "signing"));
+  assert.ok(!/change to an earlier year/.test(sign), sign);
 });
