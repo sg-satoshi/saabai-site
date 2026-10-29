@@ -455,3 +455,11 @@ test("onboarding is stored on the client record, resumes, and notifies admin onc
   delete process.env.PORTAL_ONBOARDING_MODE;
   delete process.env.PORTAL_ONBOARDING_ALLOW;
 });
+
+test("hasCare comes from an active paid site plan", async () => {
+  const { siteHasCare } = await import("../lib/portal-onboarding-context");
+  assert.equal(siteHasCare({ status: "active", amount: 10000 }), true);
+  assert.equal(siteHasCare({ status: "paused", amount: 10000 }), false);
+  assert.equal(siteHasCare({ status: "active", amount: 0 }), false);
+  assert.equal(siteHasCare(undefined), false);
+});

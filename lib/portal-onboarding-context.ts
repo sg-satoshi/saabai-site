@@ -44,15 +44,20 @@ export type OnboardingView =
       state: ReturnType<typeof toClientState>;
     };
 
-async function lookupSite(email: string): Promise<{ name: string; found: boolean }> {
+/** A site on an active monthly plan is a care client. */
+export function siteHasCare(billing?: { status?: string; amount?: number } | null): boolean {
+  return billing?.status === "active" && (billing.amount ?? 0) > 0;
+}
+
+async function lookupSite(email: string): Promise<{ name: string; found: boolean; care: boolean }> {
   try {
     const { listSites } = await import("./site-registry");
     const sites = await listSites();
     const site = sites.find((s) => (s.business?.email || "").toLowerCase() === email);
-    if (!site) return { name: "", found: false };
-    return { name: site.business?.name || site.name || "", found: true };
+    if (!site) return { name: "", found: false, care: false };
+    return { name: site.business?.name || site.name || "", found: true, care: siteHasCare(site.billing) };
   } catch {
-    return { name: "", found: false };
+    return { name: "", found: false, care: false };
   }
 }
 
@@ -76,7 +81,7 @@ export async function buildOnboardingView(rawEmail: string, env: NodeJS.ProcessE
     isLex,
     hasBlueprint,
     hasWebsite: site.found,
-    hasCare: false,
+    hasCare: site.care,
   });
   const clientId = lexFirm?.id || dir?.id || portal?.id || email;
   const name = dir?.name || portal?.name || email;
