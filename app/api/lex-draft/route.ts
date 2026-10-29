@@ -1,3 +1,4 @@
+import { serverVerifyGate } from "../../../lib/lex-draft-form";
 import { matterPartiesFor } from "../../../lib/lex-privacy/matter-parties";
 import { lexErrorResponse } from "../../../lib/lex-errors";
 /**
@@ -44,6 +45,7 @@ import { checkCitation, type CitationCheck } from "../../../lib/oalc-citations";
 import { CHECK_CITATION_DESCRIPTION, SEARCH_AUSTLII_DESCRIPTION, SEARCH_CORPORATIONS_DESCRIPTION, SEARCH_FAMILY_LAW_DESCRIPTION } from "../../../lib/oalc-disclosure";
 import {
   getDocumentType,
+  fillPartiesTemplate,
   type DocumentType,
 } from "../../../lib/lex-document-types";
 
@@ -197,6 +199,14 @@ export async function POST(req: Request) {
       threadId,
       matterId,
     } = await req.json();
+
+    // Verify gate, server side: a checklist that still has an unresolved Verify is not drafted.
+    if (!(requestQA && completedDraft)) {
+      const gateType = typeof documentType === "string" && documentType.toLowerCase() !== "custom" ? getDocumentType(documentType.toLowerCase()) : undefined;
+      const verifyBlock = serverVerifyGate(parties, gateType?.partiesTemplate ? fillPartiesTemplate(gateType.partiesTemplate) : undefined, gateType?.id === "trust-distribution-resolution");
+      const markBlock = typeof specialInstructions === "string" ? serverVerifyGate(specialInstructions, undefined, false) : null;
+      if (verifyBlock || markBlock) return Response.json({ error: verifyBlock ?? markBlock }, { status: 409 });
+    }
 
     // Same model rule as research: the firm's own model if saved, else LEX_RESEARCH_MODEL
     // (which falls back to PREMIUM_CHAT_MODEL).
