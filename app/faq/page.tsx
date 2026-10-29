@@ -146,7 +146,7 @@ const baseFaqs = [
   },
 ];
 
-// #314: knowledge pack FAQs, off unless KNOWLEDGE_PACK_ENABLED=1.
+// #314: knowledge pack FAQs, off unless KNOWLEDGE_PACK_ENABLED is 1 or true.
 const faqs = knowledgePackEnabled()
   ? [...baseFaqs, { id: "quick-answers", category: "Quick Answers", items: packFaqItems(SAABAI_PACK) }]
   : baseFaqs;

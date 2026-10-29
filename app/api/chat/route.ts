@@ -71,7 +71,7 @@ function buildSystemPrompt(
   visitorProfile?: Record<string, unknown>
 ): string {
   let system = SYSTEM_PROMPT;
-  // #314: knowledge pack, off unless KNOWLEDGE_PACK_ENABLED=1.
+  // #314: knowledge pack, off unless KNOWLEDGE_PACK_ENABLED is 1 or true.
   if (knowledgePackEnabled()) system += `\n\n${packPrompt(SAABAI_PACK)}`;
 
   if (pageContext) {
