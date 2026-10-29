@@ -50,12 +50,17 @@ test("per-file masking counts: types and counts only", () => {
   assert.match(route, /privacyFromMasked\(masked\)/);
 });
 
-test("workspace copy: no server-side saving claims, no dashes, retention TODO visible", () => {
+test("workspace copy: no server-side saving claims, no dashes, retention copy matches the ruling", () => {
   const src = readFileSync("app/lex/_components/DraftWorkspace.tsx", "utf8") + readFileSync("app/lex/_components/Drafting.tsx", "utf8");
   assert.ok(src.includes("Progress saved in this browser."));
   assert.ok(src.includes("Other drafts in progress in this browser"));
   assert.ok(!/firm's Lex account|saves to this matter|Missing items are fine/i.test(src));
-  assert.ok(src.includes("[RETENTION: pending Shane]"));
+  assert.ok(!src.includes("[RETENTION") && src.includes("for 30 days") && src.includes("Uploaded files are not kept"));
+  const privacy = readFileSync("app/privacy/page.tsx", "utf8");
+  assert.match(privacy, /Lex Draft Documents/);
+  assert.match(privacy, /do not store uploaded files on our servers/);
+  assert.match(privacy, /30 days after your last edit/);
+  assert.ok(!/[\u2013\u2014]/.test(privacy.slice(privacy.indexOf("Lex Draft Documents"), privacy.indexOf("How we use it"))));
   assert.ok(!/[\u2013\u2014]/.test(src + readFileSync("app/lex/_components/draft-workspace.css", "utf8")));
 });
 

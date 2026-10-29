@@ -36,7 +36,6 @@ const FILE_ERRORS: Record<string, string> = {
   "too-large": "Too large (max 10MB).",
   empty: "No text found in this file.",
 };
-export const RETENTION_TODO = "[RETENTION: pending Shane]";
 
 export type WorkspaceProps = {
   typeId: string; setTypeId: (v: string) => void;
@@ -174,7 +173,6 @@ export function DraftWorkspace(p: WorkspaceProps) {
   }, [drawer]);
 
   const legal = <p className="lxw-legal">Drafting assistance only, not legal advice. Check every reference and Verify marker before this document is used.</p>;
-  const retention = <span className="lxw-todo" title="Retention wording waits on Shane. Must be replaced before merge.">{RETENTION_TODO}</span>;
 
   const bar = (
     <div className="lxw-bar">
@@ -224,7 +222,7 @@ export function DraftWorkspace(p: WorkspaceProps) {
             </button>
             {p.onReset && <button type="button" className="lxw-btn quiet" onClick={() => { p.onReset?.(); setStage("pick"); setPrefilled(null); }}>Start over</button>}
           </div>
-          <p className="lxw-fine">Progress saved in this browser. Uploaded files are not kept. {retention}</p>
+          <p className="lxw-fine">Progress saved in this browser for 30 days after your last edit. Uploaded files are not kept. It does not follow you to another device.</p>
         </section>
         <section className="lxw-other">
           <h3>Other drafts in progress in this browser</h3>
@@ -407,7 +405,7 @@ export function DraftWorkspace(p: WorkspaceProps) {
           );
         })}
       </ul>
-      <p className="lxw-fine lxw-railfoot">Ticks fill in as you go. Progress saved in this browser. {retention}</p>
+      <p className="lxw-fine lxw-railfoot">Ticks fill in as you go. Progress saved in this browser for 30 days. Uploaded files are not kept.</p>
     </nav>
   );
 
