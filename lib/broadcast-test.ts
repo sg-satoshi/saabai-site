@@ -7,6 +7,7 @@
  * subscribers get.
  */
 import { broadcastEmail, type BroadcastEmail } from "./broadcast";
+import { SAMPLE_VALUES } from "./personalise";
 
 export const BROADCAST_TEST_TO = "hello@saabai.ai";
 export const BROADCAST_TEST_LIMIT = 5;
@@ -33,9 +34,11 @@ export function testSubject(subject: string): string {
 
 export function buildBroadcastTestEmail(msg: { subject: string; html: string; fromName?: string }, deps: Pick<BroadcastTestDeps, "unsubUrl" | "unsubHeaders">): BroadcastEmail {
   const email = broadcastEmail(
-    { email: BROADCAST_TEST_TO, firstName: "" },
+    { email: BROADCAST_TEST_TO },
     { subject: testSubject(msg.subject), html: msg.html, fromName: msg.fromName || "Shane at Saabai" },
     deps,
+    // No subscriber record is read: personalisation tokens get fixed sample values.
+    SAMPLE_VALUES,
   );
   // Belt and braces: the builder only ever gets the fixed address, but check the output too.
   if (email.to.length !== 1 || email.to[0] !== BROADCAST_TEST_TO) throw new Error("test recipient check failed");

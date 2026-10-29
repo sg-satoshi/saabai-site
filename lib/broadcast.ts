@@ -6,6 +6,7 @@
  */
 import { escapeHtml } from "./html-escape";
 import { canReceiveMarketing, type Subscriber } from "./subscribers";
+import { personaliseHtml, personaliseText, valuesFor, type MergeValues } from "./personalise";
 
 const ABN = "71 889 082 572";
 
@@ -62,17 +63,23 @@ export type BroadcastEmail = {
   headers: Record<string, string>;
 };
 
+/**
+ * One recipient's email. Every offered personalisation token ({{firstName|there}} etc., see
+ * lib/personalise.ts) is filled from that subscriber's own record, HTML-escaped in the body.
+ * `values` overrides the record (the hello@ test send uses sample values).
+ */
 export function broadcastEmail(
-  s: Pick<Subscriber, "email" | "firstName">,
+  s: Pick<Subscriber, "email"> & MergeValues,
   msg: { subject: string; html: string; fromName: string },
   deps: Pick<BroadcastDeps, "unsubUrl" | "unsubHeaders">,
+  values: MergeValues = valuesFor(s),
 ): BroadcastEmail {
-  const body = msg.html.replace(/\{\{firstName\}\}/g, escapeHtml(s.firstName || "there"));
+  const body = personaliseHtml(msg.html, values);
   const fromName = msg.fromName.replace(/[<>"\r\n]/g, "").trim() || "Shane at Saabai";
   return {
     from: `${fromName} <hello@saabai.ai>`,
     to: [s.email],
-    subject: msg.subject,
+    subject: personaliseText(msg.subject, values),
     html: withTipsFooter(body, deps.unsubUrl(s.email)),
     headers: deps.unsubHeaders(s.email),
   };
