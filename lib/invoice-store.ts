@@ -3,6 +3,7 @@
  * Mirrors the mylife.saabai.ai invoicing tool but synced server-side.
  */
 import { getRedis } from "./redis";
+import { lineTotal } from "./invoice-number-input";
 import type { Redis } from "@upstash/redis";
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -78,10 +79,7 @@ function uid(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
-function calcLineTotal(item: InvoiceLineItem): number {
-  if (item.type === "fixed") return item.total || 0;
-  return parseFloat(((item.hours || 0) * (item.rate || 0)).toFixed(2));
-}
+const calcLineTotal = (item: InvoiceLineItem): number => lineTotal(item);
 
 export function calcInvoiceTotals(items: InvoiceLineItem[]): { subtotal: number; gst: number; total: number } {
   const subtotal = items.reduce((s, li) => s + calcLineTotal(li), 0);
