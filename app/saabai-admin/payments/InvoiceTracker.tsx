@@ -3,6 +3,7 @@ import { notify, confirmDialog } from "../ui/Feedback";
 
 import { useState, useEffect, useCallback } from "react";
 import type { Invoice, InvoiceLineItem, InvoiceClient } from "../../../lib/invoice-store";
+import { lineTotal, numFieldText, numFromText, textFromNum } from "../../../lib/invoice-number-input";
 
 // ── Theme (matches PaymentsClient) ──────────────────────────────────────────
 
@@ -68,8 +69,7 @@ const PAY_INFO = {
 };
 
 function calcLineTotal(item: InvoiceLineItem): number {
-  if (item.type === "fixed") return item.total || 0;
-  return parseFloat(((item.hours || 0) * (item.rate || 0)).toFixed(2));
+  return lineTotal(item);
 }
 
 function calcTotals(items: InvoiceLineItem[]): { subtotal: number; total: number } {
@@ -78,6 +78,19 @@ function calcTotals(items: InvoiceLineItem[]): { subtotal: number; total: number
 }
 
 // ── Input helpers ───────────────────────────────────────────────────────────
+
+/** Number field that can be empty or partial ("1.", ".5") while typing; tidied on blur. */
+function NumTxt({ value, onChange, ...rest }: { value: number | undefined; onChange: (n: number) => void } & Omit<React.ComponentProps<typeof Txt>, "value" | "onChange" | "onBlur">) {
+  const [typed, setTyped] = useState<string | undefined>(undefined);
+  return (
+    <Txt
+      {...rest}
+      value={numFieldText(typed, value)}
+      onChange={v => { setTyped(v); onChange(numFromText(v)); }}
+      onBlur={() => setTyped(textFromNum(numFromText(typed ?? textFromNum(value))))}
+    />
+  );
+}
 
 function Txt({ value, onChange, placeholder, style, type, step, min, onFocus, onBlur }: {
   value: string; onChange: (v: string) => void; placeholder?: string;
@@ -256,10 +269,7 @@ export default function InvoiceTracker() {
       const next = [...prev];
       next[i] = { ...next[i], ...patch };
       // Recalc
-      const total = patch.type === "fixed"
-        ? (patch.total ?? next[i].total ?? 0)
-        : parseFloat((((patch.hours ?? next[i].hours ?? 0) * (patch.rate ?? next[i].rate ?? 0)).toFixed(2)));
-      next[i].total = total;
+      next[i].total = lineTotal(next[i]);
       return next;
     });
   }
@@ -592,16 +602,16 @@ export default function InvoiceTracker() {
                       />
                       {!isFixed && (
                         <>
-                          <Txt
-                            value={li.hours?.toString() || ""}
-                            onChange={v => updateLineItem(i, { hours: parseFloat(v) || 0 })}
+                          <NumTxt
+                            value={li.hours}
+                            onChange={n => updateLineItem(i, { hours: n })}
                             placeholder="Hrs"
                             type="number" step="0.1" min="0"
                             style={{ textAlign: "right" }}
                           />
-                          <Txt
-                            value={li.rate?.toString() || ""}
-                            onChange={v => updateLineItem(i, { rate: parseFloat(v) || 0 })}
+                          <NumTxt
+                            value={li.rate}
+                            onChange={n => updateLineItem(i, { rate: n })}
                             placeholder="Rate"
                             type="number" step="1" min="0"
                             style={{ textAlign: "right" }}
@@ -609,9 +619,9 @@ export default function InvoiceTracker() {
                         </>
                       )}
                       {isFixed && (
-                        <Txt
-                          value={li.total?.toString() || ""}
-                          onChange={v => updateLineItem(i, { total: parseFloat(v) || 0 })}
+                        <NumTxt
+                          value={li.total}
+                          onChange={n => updateLineItem(i, { total: n })}
                           placeholder="$"
                           type="number" step="0.01" min="0"
                           style={{ textAlign: "right" }}
