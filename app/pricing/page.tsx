@@ -9,6 +9,12 @@ import { formatAud, WEBSITE_TIERS } from "@/lib/website-tiers";
 import { TIERS, TIER_ORDER } from "@/lib/blueprint";
 import { CARE_PLAN_CANCELLATION } from "@/lib/care-faqs";
 import "../components/sb/sb.css";
+import SalePrice from "../components/sale/SalePrice";
+import { getPublicSales, type PublicSales } from "@/lib/public-sales";
+import { offerPriceFields, type PublicSlotId } from "@/lib/sale-price";
+
+// An ended sale stops showing within about a minute (the countdown also hides itself at 0).
+export const revalidate = 60;
 
 export const metadata: Metadata = publicPageMeta.pricing;
 
@@ -22,7 +28,7 @@ const LEADGEN = [
   { name: "Enterprise", monthly: 997 },
 ] as const;
 
-const schema = schemaGraph([
+const buildSchema = (sales: PublicSales) => schemaGraph([
   serviceSchema({
     id: `${SITE_URL}${PATH}#service`,
     name: "Saabai published prices",
@@ -41,8 +47,9 @@ const schema = schemaGraph([
       ...TIER_ORDER.map((id) => ({
         "@type": "Offer",
         name: `Blueprint ${TIERS[id].name}`,
-        price: String(TIERS[id].price),
-        priceCurrency: "AUD",
+        ...(sales[`blueprint-${id}` as PublicSlotId]
+          ? offerPriceFields(sales[`blueprint-${id}` as PublicSlotId]!)
+          : { price: String(TIERS[id].price), priceCurrency: "AUD" }),
         url: `${SITE_URL}/blueprint`,
       })),
       {
@@ -65,7 +72,9 @@ const schema = schemaGraph([
   breadcrumbNode([{ name: "Pricing", path: PATH }]),
 ]);
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const sales = await getPublicSales();
+  const schema = buildSchema(sales);
   return (
     <div className="sb">
       <JsonLd data={schema} />
@@ -104,7 +113,10 @@ export default function PricingPage() {
             {TIER_ORDER.map((id) => (
               <div className="card" key={id}>
                 <h3>{TIERS[id].name}</h3>
-                <p style={{ marginTop: 10, color: "var(--teal)", fontSize: 28, fontWeight: 600 }}>{TIERS[id].priceLabel}</p>
+                <SalePrice
+                  sale={sales[`blueprint-${id}` as PublicSlotId] ?? null}
+                  fallback={<p style={{ marginTop: 10, color: "var(--teal)", fontSize: 28, fontWeight: 600 }}>{TIERS[id].priceLabel}</p>}
+                />
                 <p className="dim" style={{ marginTop: 6 }}>{TIERS[id].delivery}</p>
               </div>
             ))}

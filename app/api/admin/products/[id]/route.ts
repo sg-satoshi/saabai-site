@@ -78,6 +78,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const updated: CatalogueProduct = {
       id: existing.id,
       ...input,
+      sale: existing.sale ?? null, // the sale route owns this; a product save keeps it
       stripeProductId: existing.stripeProductId,
       stripeSetupProductId: setupProductId,
       stripePriceIds: priceIds,
