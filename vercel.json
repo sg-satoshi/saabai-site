@@ -39,6 +39,10 @@
     {
       "path": "/api/cron/ai-visitors",
       "schedule": "30 16 * * *"
+    },
+    {
+      "path": "/api/cron/lex-tmp-sweep",
+      "schedule": "0 * * * *"
     }
   ]
 }

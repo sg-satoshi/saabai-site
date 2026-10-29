@@ -17,10 +17,10 @@ export async function POST(request: Request): Promise<Response> {
       return Response.json({ error: "No file provided" }, { status: 400 });
     }
     if ("error" in file) {
-      return Response.json({ error: file.error === "too-large" ? "File too large (max 25MB)" : "Lex could not read that file." }, { status: 400 });
+      return Response.json({ error: file.error === "too-large" ? "File too large (max 25 MB)" : "Lex could not read that file." }, { status: 400 });
     }
     if (file.size > LEX_MAX_FILE_BYTES) {
-      return Response.json({ error: "File too large (max 25MB)" }, { status: 400 });
+      return Response.json({ error: "File too large (max 25 MB)" }, { status: 400 });
     }
 
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "";

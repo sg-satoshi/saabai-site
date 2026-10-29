@@ -32,7 +32,7 @@ export async function POST(request: Request): Promise<Response> {
     const files = await collectLexFiles(form, "files", folder);
     if (!files.length) return Response.json({ error: "No file provided" }, { status: 400 });
     if (files.length > DEED_LIMITS.maxFiles) return Response.json({ error: `Up to ${DEED_LIMITS.maxFiles} files at a time` }, { status: 400 });
-    if (files.reduce((n, f) => n + f.size, 0) > DEED_LIMITS.maxTotalBytes) return Response.json({ error: "Files too large together (max 50MB)" }, { status: 400 });
+    if (files.reduce((n, f) => n + f.size, 0) > DEED_LIMITS.maxTotalBytes) return Response.json({ error: "Files too large together (max 50 MB)" }, { status: 400 });
 
     const typeId = String(form.get("documentType") ?? "custom");
     const profile = profileFor(getDocumentType(typeId));

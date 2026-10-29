@@ -1,6 +1,6 @@
 "use client";
 
-import { addLexFiles, LexUploadError } from "../../lib/lex-upload-client";
+import { addLexFiles, LexUploadError, timeoutMessage } from "../../lib/lex-upload-client";
 import { PORTAL_REQUESTS_HREF } from "@/lib/portal-pages";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -705,6 +705,8 @@ export default function LexPage() {
       const fd = new FormData();
       await addLexFiles(fd, "file", [file]);
       const res = await fetch("/api/lex-extract", { method: "POST", body: fd });
+      const tmo = timeoutMessage(res);
+      if (tmo) { setAttachError(tmo); return; }
       const data = await res.json().catch(() => null) as { text?: string; wordCount?: number; error?: string; privacy?: DocumentPrivacy; ocr?: boolean } | null;
       if (!res.ok || !data?.text?.trim()) { setAttachError(data?.error && (res.status === 400 || res.status === 422) ? data.error : "Lex could not read that file. Try a PDF, Word or text file."); return; }
       setAttachment({ name: file.name, text: data.text, words: data.wordCount ?? data.text.split(/\s+/).length, privacy: describeDocumentPrivacy(data.privacy), ocr: !!data.ocr });
@@ -938,6 +940,8 @@ export default function LexPage() {
         try { await addLexFiles(form, "file", [reviewFile]); }
         catch (e) { setReviewError({ kind: "empty", title: "File not uploaded", message: e instanceof LexUploadError ? e.message : "Could not upload that file.", canRetry: false, signIn: false }); return; }
         const extractRes = await fetch("/api/lex-extract", { method: "POST", body: form });
+        const tmo = timeoutMessage(extractRes);
+        if (tmo) { setReviewError({ kind: "empty", title: "Took too long", message: tmo, canRetry: true, signIn: false }); return; }
         if (extractRes.status === 422 || extractRes.status === 400) {
           const bad = await extractRes.clone().json().catch(() => null) as { error?: string } | null;
           if (bad?.error && bad.error !== "extract_failed") { setReviewError({ kind: "empty", title: "No text found", message: bad.error, canRetry: false, signIn: false }); return; }

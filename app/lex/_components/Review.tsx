@@ -10,7 +10,7 @@ import {
 import { JURISDICTIONS } from "./Drafting";
 import { ErrorCard } from "./States";
 import { Icon } from "./icons";
-import { addLexFiles, LexUploadError, OCR_NOTE } from "../../../lib/lex-upload-client";
+import { addLexFiles, LexUploadError, OCR_NOTE, timeoutMessage } from "../../../lib/lex-upload-client";
 import { LEX_DOC_ACCEPT } from "../../../lib/lex-doc-accept";
 import "./drafting.css";
 import "./review.css";
@@ -68,7 +68,7 @@ function Drop({ file, onFile, small, label }: { file: File | null; onFile: (f: F
       <input ref={ref} type="file" accept={LEX_DOC_ACCEPT} hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
       <Icon name={file ? "check" : "attach"} size={small ? 16 : 22} />
       {file ? <><b>{file.name}</b><small>{Math.max(1, Math.round(file.size / 1024)).toLocaleString("en-AU")} KB, click to change</small></>
-        : <><b>{label}</b><small>PDF, DOCX or TXT, up to 25MB. Scans are read with text recognition</small></>}
+        : <><b>{label}</b><small>PDF, DOCX or TXT, up to 25 MB. Scans are read with text recognition</small></>}
     </div>
   );
 }
@@ -135,6 +135,8 @@ export function ReviewView(p: ReviewProps) {
     try { await addLexFiles(form, "file", [f]); }
     catch (e) { return { kind: "empty", title: "File not uploaded", message: e instanceof LexUploadError ? e.message : `Could not upload ${f.name}.`, canRetry: false, signIn: false }; }
     const res = await fetch("/api/lex-extract", { method: "POST", body: form });
+    const tmo = timeoutMessage(res);
+    if (tmo) return { kind: "empty", title: "Took too long", message: tmo, canRetry: true, signIn: false };
     if (res.status === 422 || res.status === 400) {
       const bad = await res.json().catch(() => null) as { error?: string } | null;
       if (bad?.error) return { kind: "empty", title: "No text found", message: bad.error, canRetry: false, signIn: false };

@@ -10,7 +10,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { PDFDocument } from "pdf-lib";
 import { readDocText, LEX_DOC_EXTS, isLegacyDoc, OCR_MAX_PAGES, LEX_DOC_ACCEPT, type OcrEngine } from "../lib/lex-doc-text";
-import { isAllowedLexBlobUrl, lexBlobFolder, takeLexBlob, collectLexFiles, lexBlobUploadsEnabled, LEX_MAX_FILE_BYTES, LEX_MAX_TOTAL_BYTES, LEX_DIRECT_MAX_BYTES } from "../lib/lex-upload";
+import { isAllowedLexBlobUrl, isLexTmpUrl, lexBlobFolder, lexBlobStoreHost, collectLexFiles, lexBlobUploadsEnabled, sweepLexTmp, parseBlobRefs, LEX_MAX_BLOB_REFS, LEX_MAX_FILE_BYTES, LEX_MAX_TOTAL_BYTES, LEX_DIRECT_MAX_BYTES, type BlobDeps } from "../lib/lex-upload";
+import { LEX_BLOB_PRIVACY_COPY, LEX_PRIVACY_S5_DEFAULT } from "../lib/lex-upload-copy";
+import { TIMEOUT_MESSAGE, timeoutMessage } from "../lib/lex-upload-client";
 import { DEED_LIMITS } from "../lib/lex-doc-extract";
 
 const scan = readFileSync("tests/fixtures/synthetic-scan.pdf");
@@ -77,65 +79,174 @@ test("limits: 25 MB a file, 50 MB together, direct form path only up to 4 MB", (
   assert.equal(DEED_LIMITS.maxTotalBytes, LEX_MAX_TOTAL_BYTES);
 });
 
-test("Blob uploads are off unless the flag and token are both set", () => {
+// Fake (non-secret) test values only.
+const TOKEN = "vercel_blob_rw_AbC123store_fakesecretvalue";
+const SECRET = "test-session-secret";
+const ON = { LEX_BLOB_UPLOADS: "1", BLOB_READ_WRITE_TOKEN: TOKEN, SAABAI_SESSION_SECRET: SECRET };
+process.env.BLOB_READ_WRITE_TOKEN = TOKEN;
+process.env.SAABAI_SESSION_SECRET = SECRET;
+const HOST = "abc123store.private.blob.vercel-storage.com";
+
+test("Blob uploads are off unless the flag, token and session secret are all set", () => {
   assert.equal(lexBlobUploadsEnabled({}), false);
   assert.equal(lexBlobUploadsEnabled({ LEX_BLOB_UPLOADS: "1" }), false);
-  assert.equal(lexBlobUploadsEnabled({ BLOB_READ_WRITE_TOKEN: "x" }), false);
-  assert.equal(lexBlobUploadsEnabled({ LEX_BLOB_UPLOADS: "1", BLOB_READ_WRITE_TOKEN: "x" }), true);
+  assert.equal(lexBlobUploadsEnabled({ LEX_BLOB_UPLOADS: "1", BLOB_READ_WRITE_TOKEN: TOKEN }), false);
+  assert.equal(lexBlobUploadsEnabled({ BLOB_READ_WRITE_TOKEN: TOKEN, SAABAI_SESSION_SECRET: SECRET }), false);
+  assert.equal(lexBlobUploadsEnabled(ON), true);
 });
 
-const folder = lexBlobFolder("Someone@Example.com");
-test("blob URLs must be Vercel Blob, https, inside the caller's own hashed folder", () => {
-  assert.match(folder, /^lex-tmp\/[0-9a-f]{24}\/$/);
+const folder = lexBlobFolder("Someone@Example.com", SECRET)!;
+test("the temp folder is an HMAC keyed by SAABAI_SESSION_SECRET (not a plain hash)", () => {
+  assert.match(folder, /^lex-tmp\/[0-9a-f]{32}\/$/);
   assert.doesNotMatch(folder, /example/i);
-  assert.ok(isAllowedLexBlobUrl(`https://abc123.public.blob.vercel-storage.com/${folder}deed-x1.pdf`, folder));
-  assert.ok(!isAllowedLexBlobUrl(`https://abc123.public.blob.vercel-storage.com/${lexBlobFolder("other@x.com")}deed.pdf`, folder));
-  assert.ok(!isAllowedLexBlobUrl(`http://abc123.public.blob.vercel-storage.com/${folder}deed.pdf`, folder));
-  assert.ok(!isAllowedLexBlobUrl(`https://169.254.169.254/${folder}deed.pdf`, folder));
-  assert.ok(!isAllowedLexBlobUrl(`https://evil.com/${folder}deed.pdf`, folder));
-  assert.ok(!isAllowedLexBlobUrl(`https://abc.public.blob.vercel-storage.com:8443/${folder}d.pdf`, folder));
-  assert.ok(!isAllowedLexBlobUrl(`https://abc.public.blob.vercel-storage.com/${folder}..%2F..%2Fx`, folder));
+  assert.equal(lexBlobFolder(" someone@example.com ", SECRET), folder);
+  assert.notEqual(lexBlobFolder("Someone@Example.com", "another-secret"), folder);
+  assert.equal(lexBlobFolder("Someone@Example.com", ""), null);
+  assert.match(src("lib/lex-upload.ts"), /createHmac\("sha256", secret\)/);
 });
 
-function deps(body: Buffer | null, status = 200) {
-  const deleted: string[] = [];
-  let fetched = 0;
-  return {
-    deleted, get fetched() { return fetched; },
-    d: {
-      fetch: (async () => { fetched++; if (!body) throw new Error("net"); return new Response(new Uint8Array(body), { status }); }) as unknown as typeof fetch,
-      del: async (u: string) => { deleted.push(u); },
-    },
-  };
-}
-const url = `https://abc123.public.blob.vercel-storage.com/${folder}scan-x1.pdf`;
+test("blob URLs must be https on OUR store host, inside the caller's own folder", () => {
+  assert.equal(lexBlobStoreHost(TOKEN), HOST);
+  assert.equal(lexBlobStoreHost(""), null);
+  assert.ok(isAllowedLexBlobUrl(`https://${HOST}/${folder}deed-x1.pdf`, folder, HOST));
+  assert.ok(!isAllowedLexBlobUrl(`https://otherstore.private.blob.vercel-storage.com/${folder}deed.pdf`, folder, HOST));
+  assert.ok(!isAllowedLexBlobUrl(`https://abc123store.public.blob.vercel-storage.com/${folder}deed.pdf`, folder, HOST));
+  assert.ok(!isAllowedLexBlobUrl(`https://${HOST}/${lexBlobFolder("other@x.com", SECRET)}deed.pdf`, folder, HOST));
+  assert.ok(!isAllowedLexBlobUrl(`http://${HOST}/${folder}deed.pdf`, folder, HOST));
+  assert.ok(!isAllowedLexBlobUrl(`https://169.254.169.254/${folder}deed.pdf`, folder, HOST));
+  assert.ok(!isAllowedLexBlobUrl(`https://${HOST}:8443/${folder}d.pdf`, folder, HOST));
+  assert.ok(!isAllowedLexBlobUrl(`https://${HOST}/${folder}..%2F..%2Fx`, folder, HOST));
+  assert.ok(!isAllowedLexBlobUrl(`https://${HOST}/${folder}d.pdf`, folder, null));
+  assert.ok(isLexTmpUrl(`https://${HOST}/lex-tmp/zz/a.pdf`, HOST));
+  assert.ok(!isLexTmpUrl(`https://${HOST}/other/a.pdf`, HOST));
+  assert.ok(!isLexTmpUrl(`https://evil.com/lex-tmp/a.pdf`, HOST));
+});
 
-test("a large file is fetched once and the blob is deleted straight after (not stored)", async () => {
+function deps(body: Buffer | null) {
+  const deleted: string[] = [];
+  let reads = 0;
+  const d: BlobDeps = {
+    read: async () => { reads++; if (!body) throw new Error("net"); const b = body; return { size: b.length, bytes: async () => b }; },
+    del: async (u) => { deleted.push(...u); },
+  };
+  return { deleted, d, get reads() { return reads; } };
+}
+const url = (n: string, f = folder) => `https://${HOST}/${f}${n}`;
+const form = (refs: Array<{ url: string; name: string }>) => { const fd = new FormData(); fd.append("blobs", JSON.stringify(refs)); return fd; };
+
+test("a large private blob is read once and deleted straight after (not stored)", async () => {
   const t = deps(scan);
-  const r = await takeLexBlob({ url, name: "scan.pdf" }, folder, t.d);
-  assert.ok("buffer" in r && r.buffer.equals(scan));
-  assert.deepEqual(t.deleted, [url]);
+  const out = await collectLexFiles(form([{ url: url("scan-x1.pdf"), name: "scan.pdf" }]), "files", folder, t.d, ON);
+  assert.equal(out.length, 1);
+  assert.ok("read" in out[0] && (await out[0].read()).equals(scan));
+  assert.equal(t.reads, 1);
+  assert.deepEqual(t.deleted, [url("scan-x1.pdf")]);
+  assert.match(src("lib/lex-upload.ts"), /get\(url, \{ access: "private", useCache: false \}\)/);
+  assert.match(src("lib/lex-upload-client.ts"), /access: "private"/);
+  assert.doesNotMatch(src("lib/lex-upload-client.ts"), /access: "public"/);
 });
 
 test("the blob is deleted even when the read fails or is too large", async () => {
   const a = deps(null);
-  assert.deepEqual(await takeLexBlob({ url, name: "a.pdf" }, folder, a.d), { name: "a.pdf", error: "unreadable" });
-  assert.deepEqual(a.deleted, [url]);
+  assert.deepEqual(await collectLexFiles(form([{ url: url("a.pdf"), name: "a.pdf" }]), "files", folder, a.d, ON), [{ name: "a.pdf", size: 0, error: "unreadable" }]);
+  assert.deepEqual(a.deleted, [url("a.pdf")]);
   const b = deps(Buffer.alloc(LEX_MAX_FILE_BYTES + 1));
-  assert.deepEqual(await takeLexBlob({ url, name: "b.pdf" }, folder, b.d), { name: "b.pdf", error: "too-large" });
-  assert.deepEqual(b.deleted, [url]);
+  assert.deepEqual(await collectLexFiles(form([{ url: url("b.pdf"), name: "b.pdf" }]), "files", folder, b.d, ON), [{ name: "b.pdf", size: 0, error: "too-large" }]);
+  assert.deepEqual(b.deleted, [url("b.pdf")]);
 });
 
-test("a blob outside the caller's folder is never fetched, and needs a signed-in Lex user", async () => {
+test("EVERY ref is deleted: past the 20 cap, with no signed-in folder, and outside the caller's folder", async () => {
+  const refs = Array.from({ length: LEX_MAX_BLOB_REFS + 5 }, (_, i) => ({ url: url(`f${i}.pdf`), name: `f${i}.pdf` }));
+  assert.equal(parseBlobRefs(JSON.stringify(refs)).length, LEX_MAX_BLOB_REFS + 5);
   const t = deps(scan);
-  const other = `https://abc123.public.blob.vercel-storage.com/${lexBlobFolder("x@y.com")}a.pdf`;
-  assert.deepEqual(await takeLexBlob({ url: other, name: "a.pdf" }, folder, t.d), { name: "a.pdf", error: "unreadable" });
-  assert.equal(t.fetched, 0);
-  const fd = new FormData();
-  fd.append("blobs", JSON.stringify([{ url, name: "scan.pdf" }]));
-  const noUser = await collectLexFiles(fd, "files", null, t.d);
-  assert.deepEqual(noUser, [{ name: "scan.pdf", size: 0, error: "unreadable" }]);
-  assert.equal(t.fetched, 0);
+  const out = await collectLexFiles(form(refs), "files", folder, t.d, ON);
+  assert.equal(t.reads, LEX_MAX_BLOB_REFS);
+  assert.equal(out.length, LEX_MAX_BLOB_REFS + 5);
+  assert.deepEqual(t.deleted.sort(), refs.map((r) => r.url).sort());
+
+  const n = deps(scan);
+  const noUser = await collectLexFiles(form([{ url: url("x.pdf"), name: "x.pdf" }]), "files", null, n.d, ON);
+  assert.deepEqual(noUser, [{ name: "x.pdf", size: 0, error: "unreadable" }]);
+  assert.equal(n.reads, 0);
+  assert.deepEqual(n.deleted, [url("x.pdf")]);
+
+  const o = deps(scan);
+  const other = url("y.pdf", lexBlobFolder("x@y.com", SECRET)!);
+  await collectLexFiles(form([{ url: other, name: "y.pdf" }, { url: "https://evil.com/lex-tmp/z.pdf", name: "z.pdf" }]), "files", folder, o.d, ON);
+  assert.equal(o.reads, 0);
+  assert.deepEqual(o.deleted, [other]); // never asks Blob to delete a URL outside our store
+});
+
+test("with the flag off, blob refs are ignored entirely (never read)", async () => {
+  const t = deps(scan);
+  const out = await collectLexFiles(form([{ url: url("a.pdf"), name: "a.pdf" }]), "files", folder, t.d, {});
+  assert.deepEqual(out, []);
+  assert.equal(t.reads, 0);
+});
+
+test("the hourly sweep deletes only lex-tmp blobs older than an hour, across pages", async () => {
+  const now = Date.parse("2026-10-30T10:00:00Z");
+  const ago = (m: number) => new Date(now - m * 60_000);
+  const pages = [
+    { blobs: [{ url: "u1", uploadedAt: ago(90) }, { url: "u2", uploadedAt: ago(10) }], cursor: "c1", hasMore: true },
+    { blobs: [{ url: "u3", uploadedAt: ago(61) }, { url: "u4", uploadedAt: ago(59) }], hasMore: false },
+  ];
+  const prefixes: string[] = [], cursors: Array<string | undefined> = [], deleted: string[] = [];
+  const r = await sweepLexTmp(now, {
+    list: async (o) => { prefixes.push(o.prefix); cursors.push(o.cursor); return pages[cursors.length - 1]; },
+    del: async (u) => { deleted.push(...u); },
+  });
+  assert.deepEqual(r, { deleted: 2, kept: 2 });
+  assert.deepEqual(deleted, ["u1", "u3"]);
+  assert.deepEqual(prefixes, ["lex-tmp/", "lex-tmp/"]);
+  assert.deepEqual(cursors, [undefined, "c1"]);
+});
+
+test("the sweep cron is hourly and refuses without CRON_SECRET", async () => {
+  const cron = JSON.parse(src("vercel.json")).crons.find((c: { path: string }) => c.path === "/api/cron/lex-tmp-sweep");
+  assert.equal(cron.schedule, "0 * * * *");
+  const { GET } = await import("../app/api/cron/lex-tmp-sweep/route");
+  const saved = process.env.CRON_SECRET;
+  delete process.env.CRON_SECRET;
+  assert.equal((await GET(new Request("https://x/api/cron/lex-tmp-sweep", { headers: { authorization: "Bearer undefined" } }))).status, 401);
+  process.env.CRON_SECRET = "test-cron";
+  assert.equal((await GET(new Request("https://x/api/cron/lex-tmp-sweep"))).status, 401);
+  assert.equal((await GET(new Request("https://x/api/cron/lex-tmp-sweep", { headers: { authorization: "Bearer wrong" } }))).status, 401);
+  if (saved === undefined) delete process.env.CRON_SECRET; else process.env.CRON_SECRET = saved;
+});
+
+test("the upload token route is 404 (both methods) while the flag is off", async () => {
+  const saved = process.env.LEX_BLOB_UPLOADS;
+  delete process.env.LEX_BLOB_UPLOADS;
+  const { GET, POST } = await import("../app/api/lex-upload-token/route");
+  assert.equal((await GET(new Request("https://x/api/lex-upload-token"))).status, 404);
+  assert.equal((await POST(new Request("https://x/api/lex-upload-token", { method: "POST", body: "{}" }))).status, 404);
+  if (saved !== undefined) process.env.LEX_BLOB_UPLOADS = saved;
+});
+
+test("a 504 from the 300 s limit shows a clear timeout message at every reading call site", () => {
+  assert.equal(timeoutMessage({ status: 504 }), TIMEOUT_MESSAGE);
+  assert.equal(timeoutMessage({ status: 200 }), null);
+  assert.match(TIMEOUT_MESSAGE, /5 minute limit/);
+  const sites = src("app/lex/page.tsx") + src("app/lex/_components/Review.tsx") + src("app/lex/_components/DraftWorkspace.tsx");
+  assert.equal((sites.match(/timeoutMessage\((res|extractRes)\)/g) ?? []).length, 4);
+});
+
+test("sizes are written as '25 MB' / '50 MB' everywhere", () => {
+  for (const f of ["app/lex/_components/DraftWorkspace.tsx", "app/lex/_components/Review.tsx", "app/api/lex-extract/route.ts", "app/api/lex-doc-extract/route.ts", "lib/lex-upload-client.ts"]) {
+    assert.doesNotMatch(src(f), /\b(25|50)MB\b/, f);
+  }
+});
+
+test("privacy copy: unchanged while the flag is off; the new wording only when on", () => {
+  const p = src("app/privacy/page.tsx");
+  assert.match(p, /lexBlobUploadsEnabled\(\) \? LEX_BLOB_PRIVACY_COPY : "We do not store uploaded files on our servers\."/);
+  assert.equal(LEX_PRIVACY_S5_DEFAULT, "We do not store uploaded files on our servers.");
+  assert.equal(LEX_BLOB_PRIVACY_COPY, "Large files are held briefly in secure temporary storage while being read, then deleted automatically within an hour.");
+  const w = src("app/lex/_components/DraftWorkspace.tsx");
+  assert.match(w, /largeOn \? LEX_BLOB_PRIVACY_COPY : "Uploaded files are not kept\."/);
+  assert.match(w, /useState\(false\)/);
+  assert.match(src("lib/lex-upload-client.ts"), /if \(!r \|\| !r\.ok\) return \{ enabled: false \}/);
 });
 
 test("routes: only refuse a scan when OCR finds nothing; OCR text goes through masking; longer time limit", () => {
@@ -157,7 +268,8 @@ test("routes: only refuse a scan when OCR finds nothing; OCR text goes through m
 test("the upload token route checks the Lex user itself and binds tokens to their folder", () => {
   const r = src("app/api/lex-upload-token/route.ts");
   assert.match(r, /resolveReviewActor\(req\)/);
-  assert.match(r, /if \(!actor\) return Response\.json\(\{ error: "Not authenticated" \}, \{ status: 401 \}\)/);
+  assert.match(r, /if \(!actor\) return null;/);
+  assert.match(r, /if \(!folder\) return Response\.json\(\{ error: "Not authenticated" \}, \{ status: 401 \}\)/);
   assert.match(r, /pathname\.startsWith\(folder\)/);
   assert.match(r, /maximumSizeInBytes: LEX_MAX_FILE_BYTES/);
   assert.match(r, /lexBlobUploadsEnabled\(\)/);

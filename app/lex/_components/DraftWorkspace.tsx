@@ -16,7 +16,8 @@ import { DOCUMENT_TYPES, fillPartiesTemplate, type DocumentType } from "../../..
 import { DOC_KIND_LABELS, prefillChecklist, profileFor, sourceLabel, type MergedDeed, type PrepState } from "../../../lib/lex-doc-extract";
 import { needDone, needsFor } from "../../../lib/lex-doc-needs";
 import { describeDocumentPrivacy } from "../../../lib/lex-privacy/document-privacy-text";
-import { addLexFiles, LexUploadError, OCR_NOTE } from "../../../lib/lex-upload-client";
+import { addLexFiles, LexUploadError, OCR_NOTE, timeoutMessage, lexLargeUploadInfo } from "../../../lib/lex-upload-client";
+import { LEX_BLOB_PRIVACY_COPY } from "../../../lib/lex-upload-copy";
 import { LEX_DOC_ACCEPT } from "../../../lib/lex-doc-accept";
 import {
   GROUP_LABELS, draftGate, formProgress, groupsOf, parseForm, setAnswer, type FormField, type FormGroupId, groupSummary, fieldText } from "../../../lib/lex-draft-form";
@@ -37,7 +38,7 @@ const FILE_ERRORS: Record<string, string> = {
   "doc-legacy": "Old Word .doc files can't be read. Save it as .docx or PDF and upload it again.",
   unreadable: "Couldn't read this file.",
   unsupported: "Only PDF, Word (.docx) or text files.",
-  "too-large": "Too large (max 25MB).",
+  "too-large": "Too large (max 25 MB).",
   empty: "No text found in this file.",
 };
 
@@ -101,6 +102,9 @@ export function DraftWorkspace(p: WorkspaceProps) {
   const [prefilled, setPrefilled] = useState<{ n: number; files: number } | null>(null);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState<string[] | null>(null);
+  // Large uploads (Blob) change the retention copy, but only while LEX_BLOB_UPLOADS is on.
+  const [largeOn, setLargeOn] = useState(false);
+  useEffect(() => { let live = true; void lexLargeUploadInfo().then((i) => { if (live) setLargeOn(i.enabled); }); return () => { live = false; }; }, []);
   const [err, setErr] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
@@ -148,6 +152,8 @@ export function DraftWorkspace(p: WorkspaceProps) {
       await addLexFiles(fd, "files", Array.from(list));
       fd.append("documentType", p.typeId);
       const res = await fetch("/api/lex-doc-extract", { method: "POST", body: fd });
+      const tmo = timeoutMessage(res);
+      if (tmo) { setErr(tmo); return; }
       const data = (await res.json().catch(() => null)) as (MergedDeed & { error?: string }) | null;
       if (!res.ok || !data || data.error) { setErr(data?.error && res.status === 400 ? data.error : "Lex could not read those files. Try again, or fill in the form by hand."); return; }
       p.setPrep({ ...p.prep, extracted: data });
@@ -229,7 +235,7 @@ export function DraftWorkspace(p: WorkspaceProps) {
             </button>
             {p.onReset && <button type="button" className="lxw-btn quiet" onClick={() => { p.onReset?.(); setStage("pick"); setPrefilled(null); }}>Start over</button>}
           </div>
-          <p className="lxw-fine">{COPY.progressSaved} Uploaded files are not kept.</p>
+          <p className="lxw-fine">{COPY.progressSaved} {largeOn ? LEX_BLOB_PRIVACY_COPY : "Uploaded files are not kept."}</p>
         </section>
         <section className="lxw-other">
           <h3>{COPY.draftsListTitle}</h3>
