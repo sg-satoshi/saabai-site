@@ -7,18 +7,22 @@
  * request-access still writes for an auto-approved order, until password
  * login moves it into the directory.
  *
- * Save order:
- * 1. Directory row, when one exists.
- * 2. Otherwise the portal:users row, when that is the only account.
- * 3. Otherwise the onboarding document only, under portal:onboarding.
- *    That last case is for a signed-in client whose account is a Lex
- *    registry entry, a site, or an env client. It does not create a second
- *    login. A later directory or portal row takes the document and the
- *    extra copy is removed.
+ * Storage (field-level, no read-modify-write of the account):
+ * Every onboarding save is ONE `HSET portal:onboarding <email> <json>`. The
+ * account rows (`saabai:users`, `portal:users`) are never rewritten by an
+ * onboarding save, so a concurrent password reset, login stamp or admin edit
+ * on the same email can no longer be reverted by an onboarding click, and
+ * those writers can no longer drop onboarding progress either.
+ *
+ * Reads take `portal:onboarding` first. Older rows that still carry an
+ * embedded `onboarding` copy on the account (written before this change) are
+ * read as a fallback only, and are superseded by the first new save.
+ * Saves for one email from the client are sequential (draft then goto), so
+ * the onboarding document itself is last-write-wins per email.
  */
 import { getRedis } from "./redis";
-import { getDirectoryUser, listDirectoryUsers, saveDirectoryUser } from "./user-directory";
-import { getPortalUser, listPortalUsers, savePortalUser, type PortalUser } from "./portal-users";
+import { getDirectoryUser, listDirectoryUsers } from "./user-directory";
+import { getPortalUser, listPortalUsers } from "./portal-users";
 import {
   type OnboardingAction,
   type OnboardingState,
@@ -35,7 +39,7 @@ import {
 import { clientIsLex } from "./portal-onboarding-lex";
 import { notifyOnboardingComplete } from "./portal-onboarding-notify";
 
-const OVERFLOW_KEY = "portal:onboarding";
+const ONBOARDING_KEY = "portal:onboarding";
 
 function parse(raw: unknown): unknown {
   if (!raw) return null;
@@ -51,6 +55,12 @@ function parse(raw: unknown): unknown {
 
 export async function readStoredOnboarding(email: string): Promise<OnboardingState | null> {
   const norm = email.trim().toLowerCase();
+  const redis = getRedis();
+  if (redis) {
+    const own = normaliseStored(parse(await redis.hget(ONBOARDING_KEY, norm)), norm);
+    if (own) return own;
+  }
+  // Legacy fallback: copies embedded on the account before field-level saves.
   const dir = await getDirectoryUser(norm);
   if (dir?.onboarding) {
     const parsed = normaliseStored(dir.onboarding, norm);
@@ -61,44 +71,21 @@ export async function readStoredOnboarding(email: string): Promise<OnboardingSta
     const parsed = normaliseStored(portal.onboarding, norm);
     if (parsed) return parsed;
   }
-  const redis = getRedis();
-  if (!redis) return null;
-  const raw = await redis.hget(OVERFLOW_KEY, norm);
-  return normaliseStored(parse(raw), norm);
+  return null;
 }
 
-async function clearOverflow(email: string): Promise<void> {
-  const redis = getRedis();
-  if (!redis) return;
-  await redis.hdel(OVERFLOW_KEY, email.trim().toLowerCase());
-}
-
-async function stripPortalCopy(email: string): Promise<void> {
-  const portal = await getPortalUser(email);
-  if (!portal?.onboarding) return;
-  const { onboarding: _drop, ...rest } = portal;
-  await savePortalUser(rest as PortalUser);
-}
-
+/**
+ * One field-level HSET. Never reads or rewrites the account row. The return
+ * value says which account the email belongs to (read-only lookups).
+ */
 export async function writeStoredOnboarding(email: string, state: OnboardingState): Promise<"directory" | "portal" | "overflow"> {
   const norm = email.trim().toLowerCase();
   const stored: OnboardingState = { ...state, email: norm };
-  const dir = await getDirectoryUser(norm);
-  if (dir) {
-    await saveDirectoryUser({ ...dir, onboarding: stored });
-    await stripPortalCopy(norm);
-    await clearOverflow(norm);
-    return "directory";
-  }
-  const portal = await getPortalUser(norm);
-  if (portal) {
-    await savePortalUser({ ...portal, onboarding: stored });
-    await clearOverflow(norm);
-    return "portal";
-  }
   const redis = getRedis();
   if (!redis) throw new Error("Redis unavailable");
-  await redis.hset(OVERFLOW_KEY, { [norm]: JSON.stringify(stored) });
+  await redis.hset(ONBOARDING_KEY, { [norm]: JSON.stringify(stored) });
+  if (await getDirectoryUser(norm)) return "directory";
+  if (await getPortalUser(norm)) return "portal";
   return "overflow";
 }
 
@@ -141,35 +128,38 @@ function progressFrom(
 export async function listOnboardingProgress(): Promise<OnboardingProgress[]> {
   const [directory, portalUsers] = await Promise.all([listDirectoryUsers(), listPortalUsers()]);
   const rows = new Map<string, OnboardingProgress>();
+  const redis = getRedis();
+  const own = new Map<string, OnboardingState>();
+  if (redis) {
+    const raw = await redis.hgetall<Record<string, string>>(ONBOARDING_KEY);
+    for (const [email, value] of Object.entries(raw ?? {})) {
+      const norm = email.trim().toLowerCase();
+      const state = normaliseStored(parse(value), norm);
+      if (state) own.set(norm, state);
+    }
+  }
 
   for (const user of directory) {
-    if ((user.role === "admin" || user.role === "staff") && !user.onboarding) continue;
     const email = user.email.trim().toLowerCase();
+    if ((user.role === "admin" || user.role === "staff") && !user.onboarding && !own.has(email)) continue;
     if (!email.includes("@")) continue;
-    const state = user.onboarding ? normaliseStored(user.onboarding, email) : null;
+    const state = own.get(email) ?? (user.onboarding ? normaliseStored(user.onboarding, email) : null);
     rows.set(email, progressFrom(user.id, user.name, email, state, clientIsLex(email, user.products)));
   }
 
   for (const user of portalUsers) {
     const email = user.email.trim().toLowerCase();
     if (rows.has(email)) continue;
-    const state = user.onboarding ? normaliseStored(user.onboarding, email) : null;
+    const state = own.get(email) ?? (user.onboarding ? normaliseStored(user.onboarding, email) : null);
     rows.set(email, progressFrom(user.id, user.name, email, state, clientIsLex(email, null)));
   }
 
-  const redis = getRedis();
-  if (redis) {
-    const raw = await redis.hgetall<Record<string, string>>(OVERFLOW_KEY);
-    for (const [email, value] of Object.entries(raw ?? {})) {
-      const norm = email.trim().toLowerCase();
-      if (rows.has(norm)) continue;
-      const state = normaliseStored(parse(value), norm);
-      if (!state) continue;
-      rows.set(
-        norm,
-        progressFrom(state.clientId, state.payload.businessName || norm, norm, state, clientIsLex(norm, null)),
-      );
-    }
+  for (const [norm, state] of own) {
+    if (rows.has(norm)) continue;
+    rows.set(
+      norm,
+      progressFrom(state.clientId, state.payload.businessName || norm, norm, state, clientIsLex(norm, null)),
+    );
   }
 
   return [...rows.values()].sort((a, b) => a.name.localeCompare(b.name));

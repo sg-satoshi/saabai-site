@@ -352,9 +352,11 @@ test("onboarding is stored on the client record, resumes, and notifies admin onc
   assert.equal(lexDone.state.payload.jurisdiction, "Queensland");
   assert.deepEqual(calls, [CLIENT, LEX]);
   const stored = await getDirectoryUser(CLIENT);
-  assert.equal(stored?.onboarding?.status, "complete");
+  const storedOnb = await readStoredOnboarding(CLIENT);
+  assert.equal(storedOnb?.status, "complete");
   assert.equal(stored?.profile?.businessName, "Ada Plumbing");
-  assert.ok(stored?.onboarding?.notifiedAt);
+  assert.ok(storedOnb?.notifiedAt);
+  assert.equal(stored?.onboarding, undefined, "onboarding saves never rewrite the account row");
 
   const legacy = await saveOnboardingProgress({
     email: PORTAL_ONLY,
@@ -370,7 +372,8 @@ test("onboarding is stored on the client record, resumes, and notifies admin onc
   });
   assert.equal(legacy.where, "portal");
   assert.equal((await getDirectoryUser(PORTAL_ONLY)), null);
-  assert.equal((await getPortalUser(PORTAL_ONLY))?.onboarding?.payload.businessName, "Legacy Co");
+  assert.equal((await readStoredOnboarding(PORTAL_ONLY))?.payload.businessName, "Legacy Co");
+  assert.equal((await getPortalUser(PORTAL_ONLY))?.onboarding, undefined);
 
   await saveDirectoryUser({
     id: "legacy-moved",
@@ -395,7 +398,7 @@ test("onboarding is stored on the client record, resumes, and notifies admin onc
     notify,
   });
   assert.equal(moved.where, "directory");
-  assert.equal((await getDirectoryUser(PORTAL_ONLY))?.onboarding?.payload.businessName, "Legacy Co");
+  assert.equal((await readStoredOnboarding(PORTAL_ONLY))?.payload.businessName, "Legacy Co");
   assert.equal((await getPortalUser(PORTAL_ONLY))?.onboarding, undefined);
 
   const orphan = await saveOnboardingProgress({
@@ -436,7 +439,7 @@ test("onboarding is stored on the client record, resumes, and notifies admin onc
     }),
   );
   assert.equal(blocked.status, 403);
-  assert.equal((await getDirectoryUser(CLIENT))?.onboarding?.payload.businessName, "Ada Plumbing");
+  assert.equal((await readStoredOnboarding(CLIENT))?.payload.businessName, "Ada Plumbing");
 
   process.env.PORTAL_ONBOARDING_MODE = "allowlist";
   process.env.PORTAL_ONBOARDING_ALLOW = CLIENT;
@@ -472,4 +475,66 @@ test("hasCare comes from an active paid site plan", async () => {
   assert.equal(siteHasCare({ status: "paused", amount: 10000 }), false);
   assert.equal(siteHasCare({ status: "active", amount: 0 }), false);
   assert.equal(siteHasCare(undefined), false);
+});
+
+test("interleaved password reset and onboarding saves both survive", async () => {
+  const { saveDirectoryUser, getDirectoryUser } = await import("../lib/user-directory");
+  const { saveOnboardingProgress, readStoredOnboarding } = await import("../lib/portal-onboarding-store");
+  const EMAIL = "race@client.test";
+  const now = "2026-10-30T00:00:00.000Z";
+  await saveDirectoryUser({
+    id: "race-client", name: "Race", email: EMAIL, password: "old-hash", role: "user",
+    dashboardUrl: "/client-portal", approvedAt: now, createdAt: now,
+  });
+  const notify = async () => ({ sent: false, to: null });
+  const save = (businessName: string, at: string) =>
+    saveOnboardingProgress({
+      email: EMAIL, clientId: "race-client", name: "Race", tier: "retainer", isLex: false,
+      action: "draft", step: "business", fields: { businessName }, now: at, notify,
+    });
+
+  // 1. Reset reads the account, an onboarding save lands, then the reset writes its whole row back.
+  const resetRead = await getDirectoryUser(EMAIL);
+  await save("Race Co", "2026-10-30T00:00:01.000Z");
+  await saveDirectoryUser({ ...resetRead!, password: "new-hash" });
+  assert.equal((await getDirectoryUser(EMAIL))?.password, "new-hash");
+  assert.equal((await readStoredOnboarding(EMAIL))?.payload.businessName, "Race Co");
+
+  // 2. Onboarding save in flight while a reset reads and writes: the new password must not revert.
+  const pending = save("Race Co 2", "2026-10-30T00:00:02.000Z");
+  const again = await getDirectoryUser(EMAIL);
+  await saveDirectoryUser({ ...again!, password: "newer-hash" });
+  await pending;
+  assert.equal((await getDirectoryUser(EMAIL))?.password, "newer-hash");
+  assert.equal((await readStoredOnboarding(EMAIL))?.payload.businessName, "Race Co 2");
+
+  // 3. Many concurrent pairs: every reset and the last onboarding save survive.
+  await Promise.all(
+    Array.from({ length: 10 }, async (_, i) => {
+      await save(`Race Co ${i}`, `2026-10-30T00:01:${String(i).padStart(2, "0")}.000Z`);
+      const u = await getDirectoryUser(EMAIL);
+      await saveDirectoryUser({ ...u!, password: "final-hash" });
+    }),
+  );
+  assert.equal((await getDirectoryUser(EMAIL))?.password, "final-hash");
+  assert.match((await readStoredOnboarding(EMAIL))?.payload.businessName ?? "", /^Race Co \d$/);
+  assert.equal((await getDirectoryUser(EMAIL))?.onboarding, undefined);
+});
+
+test("a legacy onboarding copy on the account is still read until the first new save", async () => {
+  const { saveDirectoryUser } = await import("../lib/user-directory");
+  const { readStoredOnboarding, saveOnboardingProgress } = await import("../lib/portal-onboarding-store");
+  const EMAIL = "legacy-embedded@client.test";
+  const now = "2026-10-29T00:00:00.000Z";
+  const legacy = { ...freshOnboarding("legacy-embedded", EMAIL), payload: { businessName: "Old Copy" } };
+  await saveDirectoryUser({
+    id: "legacy-embedded", name: "L", email: EMAIL, password: "x", role: "user",
+    dashboardUrl: "/client-portal", approvedAt: now, createdAt: now, onboarding: legacy as never,
+  });
+  assert.equal((await readStoredOnboarding(EMAIL))?.payload.businessName, "Old Copy");
+  await saveOnboardingProgress({
+    email: EMAIL, clientId: "legacy-embedded", name: "L", tier: "retainer", isLex: false,
+    action: "draft", step: "business", fields: { businessName: "New Copy" }, now, notify: async () => ({ sent: false, to: null }),
+  });
+  assert.equal((await readStoredOnboarding(EMAIL))?.payload.businessName, "New Copy");
 });
