@@ -11,7 +11,8 @@
  */
 import { getLexConfig } from "../../../lib/lex-config";
 import { getDocumentType } from "../../../lib/lex-document-types";
-import { LEX_DOC_EXTS, docExt, readDocText } from "../../../lib/lex-doc-text";
+import { LEX_DOC_EXTS, docExt, isLegacyDoc, readDocText } from "../../../lib/lex-doc-text";
+import { collectLexFiles, lexFolderForRequest, parseBlobRefs } from "../../../lib/lex-upload";
 import { DEED_LIMITS, FileFactsSchema, extractSystem, mergeFacts, profileFor, type FileFacts, type FileResult } from "../../../lib/lex-doc-extract";
 import { LexGateway } from "../../../lib/lex-privacy/gateway";
 import { LexPrivacyError, privacyFailResponse } from "../../../lib/lex-privacy/mask";
@@ -21,15 +22,17 @@ import { lexErrorResponse } from "../../../lib/lex-errors";
 import { privacyFromMasked } from "../../../lib/lex-privacy/document-privacy-text";
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+// Scanned PDFs are read by local OCR (about 1 to 3 s a page, up to 40 pages), then the model step.
+export const maxDuration = 300;
 
 export async function POST(request: Request): Promise<Response> {
   try {
     const form = await request.formData();
-    const files = form.getAll("files").filter((f): f is File => f instanceof File);
+    const folder = parseBlobRefs(form.get("blobs")).length ? await lexFolderForRequest(request) : null;
+    const files = await collectLexFiles(form, "files", folder);
     if (!files.length) return Response.json({ error: "No file provided" }, { status: 400 });
     if (files.length > DEED_LIMITS.maxFiles) return Response.json({ error: `Up to ${DEED_LIMITS.maxFiles} files at a time` }, { status: 400 });
-    if (files.reduce((n, f) => n + f.size, 0) > DEED_LIMITS.maxTotalBytes) return Response.json({ error: "Files too large together (max 30MB)" }, { status: 400 });
+    if (files.reduce((n, f) => n + f.size, 0) > DEED_LIMITS.maxTotalBytes) return Response.json({ error: "Files too large together (max 50 MB)" }, { status: 400 });
 
     const typeId = String(form.get("documentType") ?? "custom");
     const profile = profileFor(getDocumentType(typeId));
@@ -37,14 +40,18 @@ export async function POST(request: Request): Promise<Response> {
     // 1. Read each file in memory. Problems are reported per file, the rest still run.
     const results: FileResult[] = [];
     const readable: Array<{ file: string; text: string }> = [];
+    const ocrFiles = new Set<string>();
     for (const f of files) {
-      const name = f.name.slice(0, 120);
+      const name = f.name;
+      if ("error" in f) { results.push({ file: name, error: f.error }); continue; }
       if (f.size > DEED_LIMITS.maxFileBytes) { results.push({ file: name, error: "too-large" }); continue; }
+      if (isLegacyDoc(name)) { results.push({ file: name, error: "doc-legacy" }); continue; }
       if (!(LEX_DOC_EXTS as readonly string[]).includes(docExt(name))) { results.push({ file: name, error: "unsupported" }); continue; }
       try {
-        const d = await readDocText(name, Buffer.from(await f.arrayBuffer()));
-        if (d.scanned) { results.push({ file: name, error: "scanned" }); continue; }
-        if (!d.text.trim()) { results.push({ file: name, error: "empty" }); continue; }
+        const d = await readDocText(name, await f.read());
+        // A scan is only refused when local OCR also found no text.
+        if (!d.text.trim()) { results.push({ file: name, error: d.scanned ? "scanned" : "empty" }); continue; }
+        if (d.ocr) ocrFiles.add(name);
         readable.push({ file: name, text: d.text.slice(0, DEED_LIMITS.maxCharsPerFile) });
       } catch {
         results.push({ file: name, error: "unreadable" });
@@ -82,7 +89,7 @@ export async function POST(request: Request): Promise<Response> {
     }
     const merged = mergeFacts(facts, profile);
     // Keep the per-file outcome order: errors first in upload order, then read files.
-    const withPrivacy = (f: FileResult): FileResult => (privacy.has(f.file) ? { ...f, privacy: privacy.get(f.file) } : f);
+    const withPrivacy = (f: FileResult): FileResult => ({ ...f, ...(privacy.has(f.file) ? { privacy: privacy.get(f.file) } : {}), ...(ocrFiles.has(f.file) ? { ocr: true } : {}) });
     return Response.json({ ...merged, files: [...results, ...merged.files].map(withPrivacy) });
   } catch (err) {
     console.error("[lex-doc-extract]", err instanceof Error ? err.name : "error");

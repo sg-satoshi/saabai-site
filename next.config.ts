@@ -6,22 +6,48 @@ const CLIENT_HOST = [{ type: "host" as const, value: "(www\\.)?(stuscyclerepairs
 // Lex routes that run the open-source name model.
 const LEX_NER_ROUTES = ["/api/lex-chat", "/api/lex-research", "/api/lex-draft", "/api/lex-review", "/api/lex-compare", "/api/lex-extract", "/api/lex-threads", "/api/lex-settings", "/api/lex-ner-health"];
 
+// Lex routes that read scanned PDFs with local OCR (tesseract.js). Merged into the NER includes below.
+const LEX_OCR_ROUTES = ["/api/lex-doc-extract", "/api/lex-extract"];
+const LEX_OCR_FILES = [
+  "./node_modules/@tesseract.js-data/eng/package.json",
+  "./node_modules/@tesseract.js-data/eng/4.0.0_best_int/**/*",
+  // Only the LSTM cores tesseract.js picks in Node (SIMD, with the plain one as fallback).
+  "./node_modules/tesseract.js-core/tesseract-core-simd-lstm.js",
+  "./node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm",
+  "./node_modules/tesseract.js-core/tesseract-core-lstm.js",
+  "./node_modules/tesseract.js-core/tesseract-core-lstm.wasm",
+  "./node_modules/tesseract.js/src/**/*",
+  "./node_modules/@napi-rs/canvas-linux-x64-gnu/**/*",
+];
+
+const LEX_OCR_EXCLUDES = [
+  "./node_modules/tesseract.js-core/*.wasm.js",
+  "./node_modules/tesseract.js-core/tesseract-core.*",
+  "./node_modules/tesseract.js-core/tesseract-core-simd.*",
+  "./node_modules/@tesseract.js-data/eng/4.0.0/**",
+  "./node_modules/@napi-rs/canvas-linux-x64-musl/**",
+];
+
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["mammoth", "pdf-parse", "@huggingface/transformers", "onnxruntime-node", "sharp"],
+  serverExternalPackages: ["mammoth", "pdf-parse", "tesseract.js", "tesseract.js-core", "@napi-rs/canvas", "@huggingface/transformers", "onnxruntime-node", "sharp"],
   // Members-only Wholesale files live outside public/ and are read from disk
   // by this route, so make sure they're bundled with it.
   outputFileTracingIncludes: {
     "/api/wholesale-files/[file]": ["./private/wholesale-homes/**/*"],
+    // Local OCR for scanned Lex PDFs: English model (best_int, about 3 MB), the wasm core and the canvas binary.
+    ...Object.fromEntries(LEX_OCR_ROUTES.map((r) => [r, LEX_OCR_FILES])),
     // Lex privacy name model (open source, runs inside these functions; fetched at build time).
     // The ONNX runtime loads libonnxruntime.so.1 natively, which file tracing cannot see.
     ...Object.fromEntries(LEX_NER_ROUTES.map((r) => [r, [
+      ...(LEX_OCR_ROUTES.includes(r) ? LEX_OCR_FILES : []),
       "./models/**/*",
       "./node_modules/onnxruntime-node/bin/napi-v3/linux/x64/libonnxruntime.so.1",
       "./node_modules/onnxruntime-node/bin/napi-v3/linux/x64/libonnxruntime_providers_shared.so",
     ]])),
   },
   // The name model runs on CPU: keep GPU builds and the browser runtime out of the functions.
-  outputFileTracingExcludes: Object.fromEntries(LEX_NER_ROUTES.map((r) => [r, [
+  outputFileTracingExcludes: Object.fromEntries(LEX_NER_ROUTES.concat(LEX_OCR_ROUTES.filter((r) => !LEX_NER_ROUTES.includes(r))).map((r) => [r, [
+    ...(LEX_OCR_ROUTES.includes(r) ? LEX_OCR_EXCLUDES : []),
     "./node_modules/onnxruntime-node/bin/**/libonnxruntime_providers_cuda.so",
     "./node_modules/onnxruntime-node/bin/**/libonnxruntime_providers_tensorrt.so",
     "./node_modules/onnxruntime-node/bin/napi-v3/linux/x64/libonnxruntime.so.1.21.0",

@@ -1,5 +1,6 @@
 "use client";
 
+import { addLexFiles, LexUploadError, timeoutMessage } from "../../lib/lex-upload-client";
 import { PORTAL_REQUESTS_HREF } from "@/lib/portal-pages";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -152,6 +153,7 @@ export default function LexPage() {
   const [reviewStage, setReviewStage]             = useState("Extracting document...");
   const [reviewReport, setReviewReport]           = useState<ReviewReport | null>(null);
   const [reviewError, setReviewError]             = useState<LexError | null>(null);
+  const [reviewOcr, setReviewOcr]                 = useState(false);
   const [reviewDocText, setReviewDocText]         = useState("");
   // Matter context fields
   const [reviewSubmittedBy, setReviewSubmittedBy] = useState("");
@@ -698,18 +700,19 @@ export default function LexPage() {
 
   async function attachFile(file: File) {
     setAttachError(null);
-    if (file.size > 10 * 1024 * 1024) { setAttachError("That file is over 10 MB. Attach a smaller file."); return; }
     setAttaching(true);
     try {
       const fd = new FormData();
-      fd.append("file", file);
+      await addLexFiles(fd, "file", [file]);
       const res = await fetch("/api/lex-extract", { method: "POST", body: fd });
-      const data = await res.json().catch(() => null) as { text?: string; wordCount?: number; error?: string; privacy?: DocumentPrivacy } | null;
-      if (!res.ok || !data?.text?.trim()) { setAttachError(data?.error && res.status === 400 ? data.error : "Lex could not read that file. Try a PDF, Word or text file."); return; }
-      setAttachment({ name: file.name, text: data.text, words: data.wordCount ?? data.text.split(/\s+/).length, privacy: describeDocumentPrivacy(data.privacy) });
+      const tmo = timeoutMessage(res);
+      if (tmo) { setAttachError(tmo); return; }
+      const data = await res.json().catch(() => null) as { text?: string; wordCount?: number; error?: string; privacy?: DocumentPrivacy; ocr?: boolean } | null;
+      if (!res.ok || !data?.text?.trim()) { setAttachError(data?.error && (res.status === 400 || res.status === 422) ? data.error : "Lex could not read that file. Try a PDF, Word or text file."); return; }
+      setAttachment({ name: file.name, text: data.text, words: data.wordCount ?? data.text.split(/\s+/).length, privacy: describeDocumentPrivacy(data.privacy), ocr: !!data.ocr });
       inputRef.current?.focus();
-    } catch {
-      setAttachError("Lex could not read that file. Check your connection and try again.");
+    } catch (e) {
+      setAttachError(e instanceof LexUploadError ? e.message : "Lex could not read that file. Check your connection and try again.");
     } finally {
       setAttaching(false);
     }
@@ -934,10 +937,18 @@ export default function LexPage() {
 
       if (reviewInputMode === "upload" && reviewFile) {
         const form = new FormData();
-        form.append("file", reviewFile);
+        try { await addLexFiles(form, "file", [reviewFile]); }
+        catch (e) { setReviewError({ kind: "empty", title: "File not uploaded", message: e instanceof LexUploadError ? e.message : "Could not upload that file.", canRetry: false, signIn: false }); return; }
         const extractRes = await fetch("/api/lex-extract", { method: "POST", body: form });
+        const tmo = timeoutMessage(extractRes);
+        if (tmo) { setReviewError({ kind: "empty", title: "Took too long", message: tmo, canRetry: true, signIn: false }); return; }
+        if (extractRes.status === 422 || extractRes.status === 400) {
+          const bad = await extractRes.clone().json().catch(() => null) as { error?: string } | null;
+          if (bad?.error && bad.error !== "extract_failed") { setReviewError({ kind: "empty", title: "No text found", message: bad.error, canRetry: false, signIn: false }); return; }
+        }
         if (!extractRes.ok) { setReviewError(await lexErrorFromResponse(extractRes, "review")); return; }
         const extracted = await extractRes.json();
+        setReviewOcr(!!extracted.ocr);
         documentText = extracted.text;
         wordCount = extracted.wordCount;
       } else {
@@ -1215,6 +1226,7 @@ export default function LexPage() {
         {mode === "review" && (
           <ReviewView
             matterId={activeMatterId ?? undefined}
+            ocr={reviewOcr}
             direction={reviewDirection} setDirection={setReviewDirection}
             docType={reviewDocType} setDocType={setReviewDocType}
             actingFor={reviewActingFor} setActingFor={setReviewActingFor}

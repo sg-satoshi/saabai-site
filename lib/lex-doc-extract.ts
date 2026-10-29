@@ -197,7 +197,9 @@ export type MergedField = {
   /** Set when the user changed the value by hand. */
   edited?: boolean;
 };
-export type FileResult = { file: string; kind?: DocKind; documentDate?: string; title?: string; error?: "scanned" | "unreadable" | "unsupported" | "too-large" | "empty";
+export type FileResult = { file: string; kind?: DocKind; documentDate?: string; title?: string; error?: "scanned" | "unreadable" | "unsupported" | "doc-legacy" | "too-large" | "empty";
+  /** Text was read from a scan by local OCR: the user should check the details. */
+  ocr?: boolean;
   /** Distinct details masked in this file before the model read it, by type (counts only). */
   privacy?: { masked: number; types: Record<string, number> } };
 export type MergedDeed = {
@@ -355,4 +357,4 @@ export type PrepState = { extracted: MergedDeed | null; manual: string[] };
 
 // ── Limits ──────────────────────────────────────────────────────────────────
 
-export const DEED_LIMITS = { maxFiles: 8, maxFileBytes: 10 * 1024 * 1024, maxTotalBytes: 30 * 1024 * 1024, maxCharsPerFile: 60_000 } as const;
+export const DEED_LIMITS = { maxFiles: 8, maxFileBytes: 25 * 1024 * 1024, maxTotalBytes: 50 * 1024 * 1024, maxCharsPerFile: 60_000 } as const;
