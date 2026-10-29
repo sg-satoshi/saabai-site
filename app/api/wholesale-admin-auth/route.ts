@@ -7,6 +7,8 @@ import {
   clearWholesaleAdminCookie,
 } from "../../../lib/wholesale-admin-auth";
 
+import { loginBlocked, recordLoginFailure, clearLoginFailures, clientIp, tooManyResponse } from "../../../lib/login-limit";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -22,11 +24,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: "Admin auth not configured" }, { status: 500 });
   }
 
+  const ip = clientIp(req);
+  const wait = await loginBlocked("whadmin", email, ip);
+  if (wait) return tooManyResponse(wait);
+
   const token = await authenticateWholesaleAdmin(email, password);
   if (!token) {
+    await recordLoginFailure("whadmin", email, ip);
     return NextResponse.json({ success: false, error: "Invalid credentials" }, { status: 401 });
   }
 
+  await clearLoginFailures("whadmin", email, ip);
   const res = NextResponse.json({ success: true });
   res.headers.append("Set-Cookie", wholesaleAdminCookie(token));
   return res;
