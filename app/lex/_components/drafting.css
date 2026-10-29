@@ -102,3 +102,7 @@
   .lxd-pbody{overflow:visible}
   .lxd-bar{padding:8px 12px;flex-wrap:wrap}
 }
+
+.lxd-fill{align-self:flex-start;font:inherit;font-size:12.5px;padding:6px 12px;border-radius:8px;border:1px solid var(--line-2);background:#fff;color:var(--navy);font-weight:600;cursor:pointer}
+.lxd-fill:hover{border-color:var(--teal)}
+.lxd-fill:focus-visible{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(98,197,209,.2)}

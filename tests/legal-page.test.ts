@@ -41,10 +41,10 @@ test("prices, GST line and demo CTA are as approved", () => {
 });
 
 test("every document type listed exists in the Lex drafting registry", () => {
-  const listed = [...page.matchAll(/^\s+"([^"]+)",$/gm)].map((m) => m[1]).filter((s) => /Deed|BFA|Order|Agreement|Contract|Lease/.test(s));
-  assert.equal(listed.length, 10);
+  const listed = [...page.matchAll(/^\s+"([^"]+)",$/gm)].map((m) => m[1]).filter((s) => /Deed|BFA|Order|Agreement|Contract|Lease|Resolution/.test(s));
+  assert.equal(listed.length, 11);
   const real = DOCUMENT_TYPES.filter((d) => d.id !== "custom");
-  assert.equal(real.length, 10);
+  assert.equal(real.length, 11);
   const words = (s: string) => s.toLowerCase().replace(/bfas?/g, "binding financial agreement").replace(/[^a-z ]/g, " ").split(/\s+/).filter((w) => w.length > 3).map((w) => w.replace(/s$/, ""));
   for (const l of listed) {
     const lw = words(l);

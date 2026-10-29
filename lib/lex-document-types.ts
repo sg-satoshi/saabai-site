@@ -17,6 +17,10 @@ export interface DocumentType {
   jurisdictionNotes: string;
   draftingWarnings: string[];
   searchTerms: string[];
+  /** Optional fill-in checklist placed in the Parties box, so the user supplies every field the document needs. */
+  partiesTemplate?: string;
+  /** Optional clause-by-clause structure the drafter must follow for this document type. */
+  draftingGuide?: string[];
 }
 
 export const DOCUMENT_TYPES: DocumentType[] = [
@@ -74,6 +78,118 @@ export const DOCUMENT_TYPES: DocumentType[] = [
       "section 100A ITAA97 trust income reimbursement",
       "trust income streaming franked dividends capital gains",
       "discretionary trust vesting date rule against perpetuities",
+    ],
+  },
+
+  {
+    id: "trust-distribution-resolution",
+    name: "Trust Distribution Resolution",
+    category: "trust",
+    description:
+      "Trustee resolution (minutes) of a discretionary (family) trust appointing the income of the trust for a financial year, including optional streaming of capital gains and franked distributions. Defaults to the current income year (the next 30 June) and a past year can be chosen. Must be checked against the trust deed and by your accountant or lawyer.",
+    governingLegislation: [
+      {
+        name: "Income Tax Assessment Act 1936 (Cth)",
+        keySections: ["Division 6", "s95", "s97", "s98", "s99", "s99A", "s100A", "Division 6E", "Subdiv EA of Div 7A (s109XA to s109XI)", "Schedule 2F (Subdiv 271-A and s271-15 family trust distribution tax, s271-105 beneficiary exclusion, s272-75 family group)", "Part VA Division 4 (s202DL TFN withholding, s202DP TFN report) for closely held trusts"],
+      },
+      {
+        name: "Income Tax Assessment Act 1997 (Cth)",
+        keySections: ["Subdiv 115-C (s115-215, s115-225, s115-227, s115-228)", "Subdiv 207-B (s207-55, s207-57, s207-58)"],
+      },
+      {
+        name: "Corporations Act 2001 (Cth)",
+        keySections: ["s198E (sole director powers)", "s248A (circulating resolutions)", "s248B (sole director resolutions)", "s248F (quorum)", "s191 and s194 (material personal interest)", "s251A (minutes within one month)", "s251B"],
+      },
+    ],
+    requiredElements: [
+      "Heading: name of the trust, deed date, any deeds of variation, and the trustee (with ACN for a corporate trustee)",
+      "Trustee type stated: sole director company, multi-director company, or individual trustee(s), with a recital of the trustee's authority (appointment, constitution, s248B or meeting with quorum, or all individual trustees acting jointly unless the deed allows a majority)",
+      "Financial year covered (default: the current income year ending on the next 30 June; a past year may be chosen), the date, time and place the resolution was actually made and who was present",
+      "Recital that the trustee has read the deed and any variations, identifying by clause number the income definition, the power to appoint income, any power to determine income or classes, the streaming power, the default beneficiary clause, any earlier deadline, the vesting date and the governing law clause",
+      "Recital that the vesting date has not passed and that each named beneficiary is within the beneficiary class and not an excluded person under the deed (including any foreign person exclusion)",
+      "Determination of the income of the trust estate on the basis the deed requires, using the trustee's power to determine income or classes only if the deed confers it, and noting that the share of income fixes the proportion of s95 net income assessed (Bamford proportionate approach)",
+      "Optional capital gains streaming: words that make the beneficiary specifically entitled to an amount equal to the net financial benefit referable to the gain, including capital for any discount component, recorded in the accounts or records of the trust no later than 2 months after year end (31 August) (s115-228)",
+      "Optional franked distributions streaming: specific entitlement to the net financial benefit referable to the franked distribution, recorded in writing by 30 June (s207-58), with the deed's income definition checked for franking credits",
+      "Operative appointment in present terms (the trustee determines and appoints, not intends or proposes) of the whole of the remaining income to named beneficiaries by percentage or residual share, avoiding fixed dollar amounts unless the amount is certain",
+      "Fallback appointment of any income not effectively appointed, expressed as subject to and consistent with the deed's default beneficiary clause",
+      "How each entitlement will be paid, applied or held on the beneficiary's account, including any unpaid present entitlement to a company",
+      "Director conflicts: where a director or individual trustee is also a beneficiary, the interest is disclosed and recorded, and the deed and constitution are confirmed to permit voting",
+      "Trustee confirmations: entitlements made in the course of ordinary family or commercial dealing, each beneficiary will actually benefit, no agreement to pay the benefit to another person (s100A); family trust election and interposed entity election status checked; TFNs held",
+      "Family law neutral recital: the resolution is an exercise of discretion for this year only and is not an admission about control, ownership or entitlement to trust property",
+      "Direction to notify each beneficiary in writing of their entitlement, to enter the resolution in the minute book within one month, and to keep it with the trust records",
+      "Signature block matching the trustee type, with the name, capacity and date of each signature",
+      "Prominent note that the draft must be checked against the trust deed and by an accountant or lawyer before signing",
+    ],
+    jurisdictionNotes:
+      "Income tax rules are Commonwealth and the same in every state. The trust deed and its governing law clause control how and when the resolution must be made: use the law the deed names (a trust settled in one state, such as South Australia, stays governed by that state's law unless the deed was validly changed), not the trustee's current home state. No stamp duty on a distribution resolution in any state. Foreign person land tax and duty surcharges for discretionary trusts are state based (for example Queensland, NSW, Victoria and South Australia): check whether the deed excludes foreign persons. A corporate trustee acts under the Corporations Act 2001 (Cth) and its constitution or replaceable rules.",
+    draftingWarnings: [
+      "Deadline: income resolutions must be made by 30 June (or the earlier date in the deed). A resolution cannot be backdated. If the date has passed, only minute a decision that was genuinely made in time, record when, where and by whom, and say so (ATO trustee resolutions checklist; Goldenville [2025] ARTA 1355)",
+      "Use present operative words: the trustee resolves, determines and appoints. Words such as intends, proposes or will distribute do not create a present entitlement",
+      "Match the deed's definition of income. Do not appoint accounting income if the deed equates income with net (taxable) income. The share of trust income sets the share of s95 net income (FCT v Bamford [2010] HCA 10)",
+      "Unknown income: appoint percentages of the whole of the income, or a fixed amount to one beneficiary and the whole of the balance to another. Avoid only fixed dollar amounts, which can leave income unappointed",
+      "Capital gains: check whether the deed treats gains as income. Specific entitlement under s115-228 needs the gain, or capital equal to the discount part, appointed and recorded by 31 August. But a gain that forms part of trust income cannot be streamed after 30 June if another beneficiary (including a default beneficiary) was already presently entitled to it at 30 June, so do not rely on 31 August in that case",
+      "Franked distributions: specific entitlement recorded in writing by 30 June (s207-58). Franking credits are not usually trust income",
+      "Fallback clause must not contradict the deed's own default beneficiary clause",
+      "Section 100A: no agreement for the money to benefit someone else. Check TR 2022/4 and PCG 2022/2 risk zones and keep records showing each beneficiary actually received or used the benefit",
+      "Corporate trustee: a sole director passes a resolution by signing it (s248B). Two or more directors need a meeting with quorum or a circulating resolution signed by all (s248A). Record any director who is also a beneficiary (s191, s194)",
+      "Family law: use neutral wording, no admissions about control or ownership. Check whether a former spouse is still a beneficiary or was excluded",
+      "Family trust election: distributions outside the specified individual's family group attract family trust distribution tax at 47%. Check interposed entity elections for company or trust beneficiaries",
+      "Company beneficiary: after Commissioner of Taxation v Bendel [2026] HCA 18 an unpaid entitlement alone is not a Division 7A loan, but payments or loans to shareholders or associates can still trigger Subdiv EA",
+      "Entitlement must be vested and certain at 30 June: no entitlements that depend on a future ATO adjustment",
+      "TFN: a closely held trust must hold each resident beneficiary's TFN or withhold at the top rate (s202DL). The ATO advises the quarterly TFN report (TAA 1953 Sch 1 s12-175, s202DP) ends for distributions from 1 July 2026, with the last report due 31 July 2026, and beneficiary TFNs go in the trust return statement of distribution from the 2027 year. Confirm the current position",
+    ],
+    searchTerms: [
+      "ATO trustee resolutions checklist 30 June",
+      "section 100A reimbursement agreement TR 2022/4",
+      "FCT v Bamford proportionate approach trust income",
+      "streaming capital gains specific entitlement section 115-228",
+      "franked distribution specific entitlement section 207-58",
+      "Corporations Act s248B sole director resolution",
+      "family trust distribution tax family group",
+      "Bendel unpaid present entitlement Division 7A",
+    ],
+    partiesTemplate: [
+      "Trust name: ",
+      "Trust deed date and any deeds of variation (dates): ",
+      "State the trust was settled in, and governing law clause in the deed: ",
+      "Vesting date under the deed: ",
+      "Deed clause numbers (income definition, power to appoint income, power to determine income or classes, streaming power, default beneficiaries, resolution deadline, excluded persons): ",
+      "Trustee type: sole director company / company with two or more directors / individual trustee(s)",
+      "Trustee name(s) (and ACN if a company): ",
+      "Directors or individual trustees who will sign, and any who are also beneficiaries: ",
+      "Financial year ending: 30 June {{FY_END}} (change to an earlier year if recording a past decision)",
+      "If a past year: date the decision was actually made and signed (on or before that 30 June or the deed deadline): ",
+      "Date, time and place the resolution was made, and who was present: ",
+      "Deed defines income as: accounting income / net (taxable) income / not sure",
+      "Do capital gains form part of income under the deed? yes / no / not sure",
+      "Family trust election in place? yes (specified individual: ) / no. Interposed entity elections: ",
+      "Beneficiaries and shares of the whole of the remaining income (percentage or balance), and confirm each is in the class and not excluded or a foreign person:",
+      "  1. ",
+      "  2. ",
+      "Any former spouse or partner still a beneficiary? yes / no",
+      "Capital gains to stream (beneficiary, gain, include discount capital): none",
+      "Franked distributions to stream (beneficiary, share): none",
+      "Fallback beneficiary for any income not appointed (must match the deed's default clause): ",
+      "How entitlements will be paid (cash, loan account, held for company beneficiary): ",
+      "Company beneficiaries and any Division 7A arrangements: none",
+    ].join("\n"),
+    draftingGuide: [
+      "Timing: if the financial year's 30 June (or the deed's earlier deadline) has already passed, the document must be framed only as minutes recording a decision genuinely made on or before that date, stating the actual date it was made and signed. Never present it as a fresh resolution for a past year. If the user cannot confirm a decision was made in time, say so in a VERIFY marker and do not draft operative appointments.",
+      "Title: MINUTES OF RESOLUTION OF THE TRUSTEE OF [TRUST NAME]. Use 'Resolution of the sole director' for a sole director company (Corporations Act s248B), 'Minutes of a meeting of directors' (stating quorum) or 'Circulating resolution of directors' (s248A, signed by all) for two or more directors, or 'Resolution of the trustees' for individuals (all must act unless the deed allows a majority).",
+      "Parties and background: trust name, deed date and variations, trustee and how it was appointed, financial year, and the date, time and place the resolution was made and who was present.",
+      "Authority recitals: the trustee is the current trustee, the vesting date has not passed, the resolution is within the trustee's powers under the deed (cite the clause numbers supplied) and, for a company, its constitution. Record any director or trustee who is also a beneficiary, their disclosure of that interest, and that the deed and constitution permit them to vote (Corporations Act s191, s194).",
+      "Deed recitals: the definition of income, the power to appoint income, any power to determine income or classes, whether capital gains form part of income, any earlier deadline, the governing law clause, and that each beneficiary is within the class and not an excluded person.",
+      "Resolution 1, income of the trust estate: the trustee determines income for the year on the basis the deed requires. Use operative present words: 'The Trustee resolves, determines and appoints'. Never 'intends' or 'proposes'. Note that each beneficiary's share of income determines their share of the net income under s97 (Bamford).",
+      "Resolution 2, capital gains (only if streaming): the trustee appoints to the named beneficiary an amount equal to the net financial benefit referable to the stated capital gain, appointing trust capital equal to any discount or concession component where gains are not income under the deed, so the beneficiary is specifically entitled under s115-228. Record it in the trust records no later than 31 August, but if the gain is trust income and another beneficiary was presently entitled to it at 30 June, it can no longer be streamed after 30 June.",
+      "Resolution 3, franked distributions (only if streaming): the trustee appoints to the named beneficiary the net financial benefit referable to the stated franked distributions, so they are specifically entitled under s207-58, recorded in writing by 30 June.",
+      "Resolution 4, remaining income: the trustee appoints the whole of the balance of the income to the named beneficiaries in the stated percentages, or a stated amount to one and the whole of the balance to another, so 100% is appointed even if the final figure is not yet known. Avoid fixed dollar amounts alone.",
+      "Resolution 5, fallback: subject to and consistent with the deed, any income not effectively appointed is appointed to the named fallback beneficiary, and failing that passes under the deed's default beneficiary clause.",
+      "Resolution 6, payment: how each entitlement will be paid or applied, and that unpaid amounts are held on the beneficiary's account. For a company beneficiary, note that payments or loans to its shareholders or associates may engage Division 7A Subdiv EA (Bendel [2026] HCA 18).",
+      "Confirmations: the entitlements arise in the course of ordinary family or commercial dealing, each beneficiary will actually receive or use the benefit, and there is no agreement for it to be paid to another person (s100A, TR 2022/4, PCG 2022/2); the family trust election, any interposed entity elections and the family group were checked; TFNs are held; beneficiaries will be notified in writing.",
+      "Neutral recital: this resolution is an exercise of the trustee's discretion for this year only. It is not an admission about control of the trust, ownership of trust property, or any person's entitlement in other years.",
+      "Minutes: record that the resolution was made on the date stated and not later, and that it will be entered in the minute book within one month (Corporations Act s251A). Execution under s127 is not needed for a resolution.",
+      "Signing: signature block per trustee type, with name, capacity and date of signing. A sole director signs and dates the resolution. Directors' minutes are signed by the chair. Individual trustees each sign.",
+      "End with: IMPORTANT: This draft must be checked against the trust deed and reviewed by your accountant or lawyer before it is signed. It is not tax or legal advice.",
     ],
   },
 
@@ -485,6 +601,17 @@ export const DOCUMENT_TYPES: DocumentType[] = [
     searchTerms: [],
   },
 ];
+
+/** Year of the next 30 June on or after today (Australia/Brisbane): the current income year end. */
+export function defaultFinancialYearEnd(today: Date = new Date()): number {
+  const [y, m, d] = today.toLocaleDateString("en-CA", { timeZone: "Australia/Brisbane" }).split("-").map(Number);
+  return m < 6 || (m === 6 && d <= 30) ? y : y + 1;
+}
+
+/** Fill date placeholders in a document type's checklist. */
+export function fillPartiesTemplate(t: string, today: Date = new Date()): string {
+  return t.replace(/\{\{FY_END\}\}/g, String(defaultFinancialYearEnd(today)));
+}
 
 export function getDocumentType(id: string): DocumentType | undefined {
   return DOCUMENT_TYPES.find((d) => d.id === id);
