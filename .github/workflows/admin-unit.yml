@@ -1,4 +1,4 @@
-name: Admin unit
+name: Admin unit tests
 
 on:
   pull_request:
@@ -15,4 +15,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx tsx --test tests/portal-onboarding.test.ts
+      - name: Invoice number input and line totals
+        run: npx tsx --test tests/invoice-number-input.test.ts
+      - name: Portal onboarding
+        run: npx tsx --test tests/portal-onboarding.test.ts

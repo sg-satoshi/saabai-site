@@ -138,8 +138,9 @@ export function resolveTier(input: {
 }): PortalTier {
   if (input.isLex) return "lex";
   if (input.hasBlueprint) return "blueprint";
-  if (input.hasWebsite) return "website";
+  // An active paid plan on a site means care, even though a site record also sets hasWebsite.
   if (input.hasCare) return "care";
+  if (input.hasWebsite) return "website";
   return "retainer";
 }
 

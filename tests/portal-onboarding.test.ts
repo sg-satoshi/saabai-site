@@ -15,6 +15,7 @@ import {
   nextStepCopy,
   portalOnboardingAllowed,
   portalOnboardingMode,
+  resolveTier,
   stepsFor,
 } from "../lib/portal-onboarding";
 
@@ -72,6 +73,15 @@ test("four steps for every tier, and a fifth step only for Lex", () => {
   assert.notEqual(blueprint, retainer);
   assert.doesNotMatch(blueprint, /jurisdiction/i);
   assert.equal(stepsFor(false).includes("lex"), false);
+});
+
+test("a site with active billing resolves to care, not website", () => {
+  const tier = resolveTier({ isLex: false, hasBlueprint: false, hasWebsite: true, hasCare: true });
+  assert.equal(tier, "care");
+  const copy = nextStepCopy({ tier, hasBlueprint: false, hasWebsite: true }).join(" ");
+  assert.match(copy, /care plan/);
+  assert.doesNotMatch(copy, /website build/);
+  assert.equal(resolveTier({ isLex: false, hasBlueprint: false, hasWebsite: true, hasCare: false }), "website");
 });
 
 test("copy has no em dash, no free claim, and no home-based wording", () => {
