@@ -17,7 +17,7 @@ import { DOC_KIND_LABELS, prefillChecklist, profileFor, sourceLabel, type Merged
 import { needDone, needsFor } from "../../../lib/lex-doc-needs";
 import { describeDocumentPrivacy } from "../../../lib/lex-privacy/document-privacy-text";
 import {
-  GROUP_LABELS, draftGate, formProgress, groupsOf, parseForm, setAnswer, type FormField, type FormGroupId, groupSummary } from "../../../lib/lex-draft-form";
+  GROUP_LABELS, draftGate, formProgress, groupsOf, parseForm, setAnswer, type FormField, type FormGroupId, groupSummary, fieldText } from "../../../lib/lex-draft-form";
 import type { LexError } from "../../../lib/lex-errors";
 import { ErrorCard } from "./States";
 import { Icon } from "./icons";
@@ -109,6 +109,7 @@ export function DraftWorkspace(p: WorkspaceProps) {
   const nextVerify = gate.open[0];
   const nextTodo = nextVerify ?? fields.find((f) => f.status === "needs" && !f.optional);
 
+  const [typed, setTyped] = useState<Record<string, string>>({});
   const set = (key: string, value: string) => p.setParties(setAnswer(p.parties, template, key, value));
   const confirm = (key: string, value: string) => p.setParties(setAnswer(p.parties, template, key, value, { confirm: true }));
   const fieldId = (key: string) => `lxw-f-${key.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`;
@@ -365,9 +366,11 @@ export function DraftWorkspace(p: WorkspaceProps) {
       );
     }
     const long = f.multiline || f.value.length > 70 || f.label.length > 90;
+    const text = fieldText(typed[f.key], f.value);
+    const onText = (v: string) => { setTyped((t) => ({ ...t, [f.key]: v })); set(f.key, v); };
     return long
-      ? <textarea id={id} rows={f.multiline ? Math.max(3, f.value.split("\n").length + 1) : 2} value={f.value} onChange={(e) => set(f.key, e.target.value)} placeholder={f.multiline ? "  1. \n  2. " : f.hint} disabled={p.busy} />
-      : <input id={id} value={f.value} onChange={(e) => set(f.key, e.target.value)} placeholder={f.hint} disabled={p.busy} />;
+      ? <textarea id={id} rows={f.multiline ? Math.max(3, text.split("\n").length + 1) : 2} value={text} onChange={(e) => onText(e.target.value)} placeholder={f.multiline ? "  1. \n  2. " : f.hint} disabled={p.busy} />
+      : <input id={id} value={text} onChange={(e) => onText(e.target.value)} placeholder={f.hint} disabled={p.busy} />;
   };
 
   const rail = (
