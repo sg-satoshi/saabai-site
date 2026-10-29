@@ -185,7 +185,10 @@ export function summaryValue(f: FormField): string {
   for (const line of f.value.split("\n")) {
     let l = line.replace(/^\s*\d+[.)]\s*/, "").trim();
     for (const h of hintParens) l = l.split(h).join("");
-    for (const piece of l.split(";")) {
+    // Leftover template choices in a partly answered line: "yes (specified individual: ) / no".
+    if (hint.includes(" / ")) l = l.replace(/\s*\/\s*(?:yes|no|not sure)\b/gi, "").replace(/^(?:yes|no|not sure)\s*\/\s*/i, "");
+    l = l.replace(/\s*\([^()]*:\s*\)/g, "");
+    for (const piece of l.split(/;|\.\s+/)) {
       const p = piece.replace(/\s{2,}/g, " ").trim();
       if (!p || /^[^:]*:\s*$/.test(p) || /^\d+[.)]?$/.test(p)) continue;
       parts.push(p.replace(/[\s,;]+$/, ""));
@@ -204,11 +207,16 @@ export function groupSummary(fields: FormField[]): string {
  * checklist still has an unresolved Verify, else null. Types without a checklist template are not gated.
  */
 export function serverVerifyGate(parties: unknown, template: string | undefined, trust: boolean): string | null {
-  if (!template || typeof parties !== "string" || !parties.trim()) return null;
+  if (typeof parties !== "string" || !parties.trim()) return null;
+  if (!template) return VERIFY_MARK.test(parties) ? verifyMessage(1) : null;
   const open = draftGate(parseForm(parties, template, trust)).open.length;
-  if (/\[VERIFY/i.test(parties) || open) {
-    const n = Math.max(open, 1);
-    return `Lex cannot draft yet. ${n === 1 ? "One answer still needs" : `${n} answers still need`} verifying. Confirm or correct ${n === 1 ? "it" : "them"} in the form, then draft again.`;
-  }
+  if (VERIFY_MARK.test(parties) || open) return verifyMessage(Math.max(open, 1));
   return null;
+}
+
+/** Any "[VERIFY" marker, any case or spacing. Blocks drafting for every document type. */
+export const VERIFY_MARK = /\[\s*verify/i;
+
+function verifyMessage(n: number): string {
+  return `Lex cannot draft yet. ${n === 1 ? "One answer still needs" : `${n} answers still need`} verifying. Confirm or correct ${n === 1 ? "it" : "them"} in the form, then draft again.`;
 }

@@ -65,7 +65,8 @@ test("server Verify gate: the draft route rejects an unresolved Verify with 409"
   assert.match(serverVerifyGate(parties, T, true) ?? "", /cannot draft yet\. One answer still needs verifying/);
   assert.equal(serverVerifyGate(confirmField(parties, T, f0[0].key), T, true), null);
   assert.ok(serverVerifyGate("Notes [verify: x]", T, true), "any [VERIFY marker blocks");
-  assert.equal(serverVerifyGate("Anything [VERIFY: x]", undefined, false), null, "types without a checklist are not gated");
+  assert.ok(serverVerifyGate("Anything [VERIFY: x]", undefined, false), "types without a checklist are gated on the marker");
+  assert.equal(serverVerifyGate("Anything", undefined, false), null, "and only on the marker");
   const { POST } = await import("../app/api/lex-draft/route");
   const res = await POST(new Request("http://local.test/api/lex-draft", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ documentType: "trust-distribution-resolution", parties, jurisdiction: "QLD" }) }));
   assert.equal(res.status, 409);
@@ -87,4 +88,28 @@ test("review summary skips hints, defaults, empty labels and bare list markers (
   assert.ok(!/specified individual|Interposed entity elections|\b1\.,/.test(ben));
   const sign = groupSummary(f.filter((x) => x.group === "signing"));
   assert.ok(!/change to an earlier year/.test(sign), sign);
+});
+
+test("server gate blocks any [VERIFY marker for every document type", async () => {
+  const { POST } = await import("../app/api/lex-draft/route");
+  const call = (body: object) => POST(new Request("http://local.test/api/lex-draft", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }));
+  for (const documentType of [undefined, "custom", "Custom", "no-such-type", "Trust-Distribution-Resolution", "service-agreement"]) {
+    for (const parties of ["Party A [VERIFY: name]", "Party A [ verify]", "Party A [Verify:x]"]) {
+      const res = await call({ documentType, parties, jurisdiction: "QLD" });
+      assert.equal(res.status, 409, `${documentType} / ${parties}`);
+    }
+  }
+  assert.equal((await call({ documentType: "custom", parties: "Party A", specialInstructions: "[verify this]" })).status, 409);
+  assert.ok(serverVerifyGate("x [  VERIFY", undefined, false));
+  assert.equal(serverVerifyGate("Party A, verified", undefined, false), null);
+});
+
+test("review summary: a partly answered family trust election drops the template's yes / no", () => {
+  const blank = parseForm("", T, true);
+  const key = blank.find((f) => f.label === "Family trust election in place")!.key;
+  const f = parseForm(setAnswer(T, T, key, "yes (specified individual: Jane Citizen) / no. Interposed entity elections: "), T, true);
+  const s = groupSummary(f.filter((x) => x.group === "beneficiaries"));
+  assert.equal(s, "yes (specified individual: Jane Citizen)");
+  const f2 = parseForm(setAnswer(T, T, key, "yes (specified individual: ) / no. Interposed entity elections: Smith Pty Ltd"), T, true);
+  assert.equal(groupSummary(f2.filter((x) => x.group === "beneficiaries")), "yes; Interposed entity elections: Smith Pty Ltd");
 });

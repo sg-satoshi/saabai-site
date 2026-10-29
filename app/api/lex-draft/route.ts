@@ -202,9 +202,10 @@ export async function POST(req: Request) {
 
     // Verify gate, server side: a checklist that still has an unresolved Verify is not drafted.
     if (!(requestQA && completedDraft)) {
-      const gateType = documentType && documentType !== "custom" ? getDocumentType(documentType) : undefined;
+      const gateType = typeof documentType === "string" && documentType.toLowerCase() !== "custom" ? getDocumentType(documentType.toLowerCase()) : undefined;
       const verifyBlock = serverVerifyGate(parties, gateType?.partiesTemplate ? fillPartiesTemplate(gateType.partiesTemplate) : undefined, gateType?.id === "trust-distribution-resolution");
-      if (verifyBlock) return Response.json({ error: verifyBlock }, { status: 409 });
+      const markBlock = typeof specialInstructions === "string" ? serverVerifyGate(specialInstructions, undefined, false) : null;
+      if (verifyBlock || markBlock) return Response.json({ error: verifyBlock ?? markBlock }, { status: 409 });
     }
 
     // Same model rule as research: the firm's own model if saved, else LEX_RESEARCH_MODEL
