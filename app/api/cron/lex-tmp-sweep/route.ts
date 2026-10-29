@@ -4,7 +4,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 /**
- * Hourly: deletes large Lex uploads (lex-tmp/) older than an hour, in case a tab was closed or a
+ * Every 15 minutes: deletes large Lex uploads (lex-tmp/) older than 30 minutes, in case a tab was closed or a
  * read timed out before the reading route deleted them. Vercel sends Authorization: Bearer CRON_SECRET.
  */
 export async function GET(req: Request) {

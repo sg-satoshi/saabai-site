@@ -2,8 +2,8 @@
  * Large Lex uploads (over Vercel's 4.5 MB request body limit) go straight from the browser to Vercel
  * Blob as PRIVATE blobs, with a client-upload token from /api/lex-upload-token (Lex session required).
  * The reading route reads each file once with the store token and deletes it straight away. Every
- * ref sent is deleted, even ones that are not read. An hourly cron (/api/cron/lex-tmp-sweep) deletes
- * anything under lex-tmp/ older than an hour, so a closed tab or a timed-out request can't leave a
+ * ref sent is deleted, even ones that are not read. A cron every 15 minutes (/api/cron/lex-tmp-sweep) deletes
+ * anything under lex-tmp/ older than 30 minutes (worst case about 45 minutes), so a closed tab or a timed-out request can't leave a
  * file behind.
  *
  * Off unless LEX_BLOB_UPLOADS=1, BLOB_READ_WRITE_TOKEN and SAABAI_SESSION_SECRET are all set.
@@ -15,7 +15,7 @@ export { LEX_MAX_FILE_BYTES, LEX_MAX_TOTAL_BYTES, LEX_DIRECT_MAX_BYTES } from ".
 
 export const LEX_UPLOAD_TYPES = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"];
 export const LEX_TMP_PREFIX = "lex-tmp/";
-export const LEX_TMP_MAX_AGE_MS = 60 * 60 * 1000;
+export const LEX_TMP_MAX_AGE_MS = 30 * 60 * 1000;
 /** Refs read per request. Any extra refs are still deleted. */
 export const LEX_MAX_BLOB_REFS = 20;
 
@@ -157,7 +157,7 @@ export type SweepDeps = {
   del: (urls: string[]) => Promise<void>;
 };
 
-/** Deletes everything under lex-tmp/ uploaded more than an hour ago. */
+/** Deletes everything under lex-tmp/ uploaded more than 30 minutes ago. */
 export async function sweepLexTmp(now = Date.now(), deps?: SweepDeps): Promise<{ deleted: number; kept: number }> {
   const d: SweepDeps = deps ?? (await import("@vercel/blob").then(({ list, del }) => ({ list: (o: { prefix: string; cursor?: string }) => list({ ...o, limit: 1000 }), del: (u: string[]) => del(u) })));
   let cursor: string | undefined;

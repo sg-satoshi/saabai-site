@@ -4,7 +4,7 @@
  * skip Vercel's 4.5 MB request body limit. Uploads are PRIVATE blobs. Signed-in Lex users only
  * (checked here, not just by the proxy). Each token is bound to the caller's own HMAC-named temp
  * folder, PDF/DOCX/TXT, 25 MB max, 10 minutes. The reading route deletes every blob it is sent, and
- * /api/cron/lex-tmp-sweep deletes anything left after an hour. 404 unless LEX_BLOB_UPLOADS=1.
+ * /api/cron/lex-tmp-sweep deletes anything left after 30 minutes (within about 45 minutes). 404 unless LEX_BLOB_UPLOADS=1.
  */
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { resolveReviewActor } from "../../../lib/lex-review-access";

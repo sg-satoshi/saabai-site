@@ -42,7 +42,7 @@
     },
     {
       "path": "/api/cron/lex-tmp-sweep",
-      "schedule": "0 * * * *"
+      "schedule": "*/15 * * * *"
     }
   ]
 }

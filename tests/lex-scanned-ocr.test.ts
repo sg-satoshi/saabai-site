@@ -10,7 +10,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { PDFDocument } from "pdf-lib";
 import { readDocText, LEX_DOC_EXTS, isLegacyDoc, OCR_MAX_PAGES, LEX_DOC_ACCEPT, type OcrEngine } from "../lib/lex-doc-text";
-import { isAllowedLexBlobUrl, isLexTmpUrl, lexBlobFolder, lexBlobStoreHost, collectLexFiles, lexBlobUploadsEnabled, sweepLexTmp, parseBlobRefs, LEX_MAX_BLOB_REFS, LEX_MAX_FILE_BYTES, LEX_MAX_TOTAL_BYTES, LEX_DIRECT_MAX_BYTES, type BlobDeps } from "../lib/lex-upload";
+import { isAllowedLexBlobUrl, isLexTmpUrl, lexBlobFolder, lexBlobStoreHost, collectLexFiles, lexBlobUploadsEnabled, sweepLexTmp, parseBlobRefs, LEX_MAX_BLOB_REFS, LEX_MAX_FILE_BYTES, LEX_MAX_TOTAL_BYTES, LEX_DIRECT_MAX_BYTES, LEX_TMP_MAX_AGE_MS, type BlobDeps } from "../lib/lex-upload";
 import { LEX_BLOB_PRIVACY_COPY, LEX_PRIVACY_S5_DEFAULT } from "../lib/lex-upload-copy";
 import { TIMEOUT_MESSAGE, timeoutMessage } from "../lib/lex-upload-client";
 import { DEED_LIMITS } from "../lib/lex-doc-extract";
@@ -184,12 +184,12 @@ test("with the flag off, blob refs are ignored entirely (never read)", async () 
   assert.equal(t.reads, 0);
 });
 
-test("the hourly sweep deletes only lex-tmp blobs older than an hour, across pages", async () => {
+test("the sweep deletes only lex-tmp blobs older than 30 minutes, across pages", async () => {
   const now = Date.parse("2026-10-30T10:00:00Z");
   const ago = (m: number) => new Date(now - m * 60_000);
   const pages = [
-    { blobs: [{ url: "u1", uploadedAt: ago(90) }, { url: "u2", uploadedAt: ago(10) }], cursor: "c1", hasMore: true },
-    { blobs: [{ url: "u3", uploadedAt: ago(61) }, { url: "u4", uploadedAt: ago(59) }], hasMore: false },
+    { blobs: [{ url: "u1", uploadedAt: ago(45) }, { url: "u2", uploadedAt: ago(10) }], cursor: "c1", hasMore: true },
+    { blobs: [{ url: "u3", uploadedAt: ago(31) }, { url: "u4", uploadedAt: ago(29) }], hasMore: false },
   ];
   const prefixes: string[] = [], cursors: Array<string | undefined> = [], deleted: string[] = [];
   const r = await sweepLexTmp(now, {
@@ -202,9 +202,12 @@ test("the hourly sweep deletes only lex-tmp blobs older than an hour, across pag
   assert.deepEqual(cursors, [undefined, "c1"]);
 });
 
-test("the sweep cron is hourly and refuses without CRON_SECRET", async () => {
+test("the sweep cron runs every 15 minutes and refuses without CRON_SECRET", async () => {
   const cron = JSON.parse(src("vercel.json")).crons.find((c: { path: string }) => c.path === "/api/cron/lex-tmp-sweep");
-  assert.equal(cron.schedule, "0 * * * *");
+  assert.equal(cron.schedule, "*/15 * * * *");
+  // Copy promises "within an hour": 30 min age limit + 15 min sweep interval = 45 min worst case.
+  assert.equal(LEX_TMP_MAX_AGE_MS, 30 * 60 * 1000);
+  assert.ok(LEX_TMP_MAX_AGE_MS + 15 * 60 * 1000 < 60 * 60 * 1000);
   const { GET } = await import("../app/api/cron/lex-tmp-sweep/route");
   const saved = process.env.CRON_SECRET;
   delete process.env.CRON_SECRET;
