@@ -1,6 +1,6 @@
 /** Marketing consent: signed unsubscribe links and a suppression list (Spam Act 2003). */
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { getDoc, putDoc, type Doc } from "./store";
+import { existingDocIds, getDoc, putDoc, type Doc } from "./store";
 import { contactKey, recordEvent } from "./events";
 
 const secret = () => process.env.SAABAI_SESSION_SECRET || "";
@@ -16,6 +16,11 @@ export const unsubUrl = (email: string) => `https://saabai.ai/unsubscribe?e=${en
 
 export async function isSuppressed(email: string): Promise<boolean> {
   return !!(await getDoc("suppressions", contactKey(email)));
+}
+
+/** Suppressed addresses among these, lower-cased, in one batched read (admin Subscribers page). Throws if the store cannot be read. */
+export async function suppressedSet(emails: string[]): Promise<Set<string>> {
+  return existingDocIds("suppressions", emails.map(contactKey));
 }
 
 export async function suppress(email: string, channel: "email" | "sms" | "all" = "all", reason = "unsubscribe_link"): Promise<void> {

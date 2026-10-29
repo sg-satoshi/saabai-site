@@ -68,6 +68,11 @@ export function personaliseText(text: string, values: MergeValues): string {
   return text.replace(TOKEN, (_m, key: string, fb?: string) => resolve(key, fb, values)).replace(LEFTOVER, "").replace(/[\r\n]+/g, " ");
 }
 
+/** True when the server would print this value rather than the fallback (same clean() rule, so "Other" counts). */
+export function hasValue(v: unknown): boolean {
+  return clean(v) !== "";
+}
+
 export function valuesFor(sub: Partial<Record<MergeField["key"], string | null | undefined>>): MergeValues {
   const out: MergeValues = {};
   for (const f of MERGE_FIELDS) out[f.key] = sub[f.key] ?? "";

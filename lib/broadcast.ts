@@ -5,7 +5,8 @@
  * a working unsubscribe link plus RFC 8058 one-click headers.
  */
 import { escapeHtml } from "./html-escape";
-import { canReceiveMarketing, type Subscriber } from "./subscribers";
+import { canReceiveMarketing } from "./subscriber-rules";
+import type { Subscriber } from "./subscribers";
 import { personaliseHtml, personaliseText, valuesFor, type MergeValues } from "./personalise";
 
 const ABN = "71 889 082 572";

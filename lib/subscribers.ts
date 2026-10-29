@@ -19,10 +19,8 @@ export interface Subscriber {
   consentAt?: string;
 }
 
-/** Marketing broadcasts go only to active subscribers who ticked the optional consent box. */
-export function canReceiveMarketing(sub: Pick<Subscriber, "status" | "marketingConsent">): boolean {
-  return sub.status === "active" && sub.marketingConsent === "yes";
-}
+/** Marketing broadcasts go only to active subscribers who ticked the optional consent box (rule lives in subscriber-rules so the browser can use it). */
+export { canReceiveMarketing } from "./subscriber-rules";
 
 export async function saveSubscriber(
   sub: Omit<Subscriber, "subscribedAt" | "status">
@@ -143,6 +141,24 @@ export async function getSubscribers(limit = 200): Promise<Subscriber[]> {
   }
 
   return subscribers;
+}
+
+/**
+ * "Mark unsubscribed" from the admin page (#345). Sets status to unsubscribed and keeps the
+ * record, including the consent history. Returns the addresses that exist and were updated.
+ */
+export async function setSubscribersUnsubscribed(emails: string[]): Promise<string[]> {
+  const redis = getRedis();
+  if (!redis || !emails.length) return [];
+  const now = new Date().toISOString();
+  const done: string[] = [];
+  for (const email of emails) {
+    const key = `subscriber:${email}`;
+    if (!(await redis.hexists(key, "email"))) continue;
+    await redis.hset(key, { status: "unsubscribed", unsubscribedAt: now });
+    done.push(email);
+  }
+  return done;
 }
 
 export async function deleteSubscribers(emails: string[]): Promise<number> {

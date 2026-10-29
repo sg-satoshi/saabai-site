@@ -74,7 +74,9 @@ test("/api/lex-send is not public and requires a session + rate limit", () => {
 });
 
 test("subscriber names are escaped in preview and broadcast; subscribe alert escapes input", () => {
-  assert.match(read("app/saabai-admin/subscribers/SubscriberDashboard.tsx"), /previewHtml = personaliseHtml\(/);
+  // #345: the preview is built by the server's own broadcastEmail() (which calls personaliseHtml).
+  assert.match(read("app/saabai-admin/subscribers/Composer.tsx"), /previewForRecipient\(/);
+  assert.match(read("lib/broadcast-template.ts"), /return broadcastEmail\(/);
   assert.match(read("lib/broadcast.ts"), /personaliseHtml\(msg\.html/);
   assert.match(read("lib/personalise.ts"), /escapeHtml\(resolve\(/);
   // The checklist welcome email is retired (#337). The score-link email carries no visitor text,
