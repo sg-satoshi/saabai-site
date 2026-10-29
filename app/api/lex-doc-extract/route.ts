@@ -18,6 +18,7 @@ import { LexPrivacyError, privacyFailResponse } from "../../../lib/lex-privacy/m
 import { lexFirmFromRequest } from "../../../lib/lex-privacy/firm";
 import { matterPartiesFor } from "../../../lib/lex-privacy/matter-parties";
 import { lexErrorResponse } from "../../../lib/lex-errors";
+import { privacyFromMasked } from "../../../lib/lex-privacy/document-privacy-text";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -58,13 +59,17 @@ export async function POST(request: Request): Promise<Response> {
     await gw.scanNames(readable.map((r) => r.text));
 
     const facts: Array<{ file: string; facts: FileFacts }> = [];
+    // Per-file masking counts (types and counts only, never values) for the upload rows.
+    const privacy = new Map<string, NonNullable<FileResult["privacy"]>>();
     for (const r of readable) {
       try {
+        const masked = gw.mask(r.text);
+        privacy.set(r.file, privacyFromMasked(masked));
         const { object } = await gw.generateObject<FileFacts>({
           schema: FileFactsSchema,
           schemaName: "DocumentFacts",
           system: extractSystem(profile),
-          prompt: `File: ${gw.mask(r.file)}\n\n${gw.mask(r.text)}`,
+          prompt: `File: ${gw.mask(r.file)}\n\n${masked}`,
           maxOutputTokens: 4000,
           maxRetries: 1,
           providerOptions: { anthropic: { structuredOutputMode: "jsonTool" } },
@@ -77,7 +82,8 @@ export async function POST(request: Request): Promise<Response> {
     }
     const merged = mergeFacts(facts, profile);
     // Keep the per-file outcome order: errors first in upload order, then read files.
-    return Response.json({ ...merged, files: [...results, ...merged.files] });
+    const withPrivacy = (f: FileResult): FileResult => (privacy.has(f.file) ? { ...f, privacy: privacy.get(f.file) } : f);
+    return Response.json({ ...merged, files: [...results, ...merged.files].map(withPrivacy) });
   } catch (err) {
     console.error("[lex-doc-extract]", err instanceof Error ? err.name : "error");
     return lexErrorResponse(500, "extract_failed");

@@ -1,8 +1,9 @@
 /**
  * "What you'll need" per Draft Documents type: the documents and facts to have ready before starting.
  * Items tick themselves when a matching file is uploaded, a matching field is extracted, or a matching
- * checklist line is filled in. The user can also tick an item by hand. Missing items never block drafting:
- * Lex marks them Verify.
+ * checklist line is filled in. The user can also tick an item by hand. These ticks are a guide only.
+ * Drafting is gated on Verify, not on these ticks: Lex does not draft while any answer is still marked
+ * Verify (decided 29 Oct, see lib/lex-draft-form.ts draftGate).
  */
 import type { DocKind, MergedDeed } from "./lex-doc-extract";
 

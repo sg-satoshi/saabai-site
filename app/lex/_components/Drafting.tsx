@@ -8,7 +8,8 @@ import {
   normaliseClauseId, QA_STATUS, confidenceBand, orderSections,
 } from "../../../lib/lex-draft-display";
 import { ErrorCard } from "./States";
-import { DraftPrep } from "./DraftPrep";
+import { DraftWorkspace } from "./DraftWorkspace";
+import { draftGate, parseForm } from "../../../lib/lex-draft-form";
 import type { PrepState } from "../../../lib/lex-doc-extract";
 import { Icon } from "./icons";
 import "./drafting.css";
@@ -17,7 +18,6 @@ export const JURISDICTIONS = [
   "All Australian jurisdictions", "New South Wales (NSW)", "Victoria (VIC)", "Queensland (QLD)", "Western Australia (WA)",
   "South Australia (SA)", "Tasmania (TAS)", "Australian Capital Territory (ACT)", "Northern Territory (NT)", "Cross-border / International",
 ];
-const CATEGORY_LABELS: Record<string, string> = { trust: "Trusts", "family-law": "Family Law", commercial: "Commercial", employment: "Employment", property: "Property" };
 type Length = "default" | "concise" | "balanced" | "detailed";
 
 export type DraftingProps = {
@@ -61,6 +61,7 @@ export function DraftingView(p: DraftingProps) {
   const [sel, setSel] = useState<string | null>(null);
   const [why, setWhy] = useState<string | null>(null);
   const [doneAt, setDoneAt] = useState<Date | null>(null);
+  const [editing, setEditing] = useState(false);
   const pageRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -90,62 +91,17 @@ export function DraftingView(p: DraftingProps) {
   };
   const showMarker = (i: number) => pageRef.current?.querySelectorAll(".lxd-verify")[i]?.scrollIntoView({ behavior: "smooth", block: "center" });
 
+  // Draft stays disabled while any answer is still marked Verify (same gate as the workspace review).
+  const template = doc?.partiesTemplate ? fillPartiesTemplate(doc.partiesTemplate) : "";
+  const gate = draftGate(template ? parseForm(p.parties, template, p.typeId === "trust-distribution-resolution") : []);
   const setup = (
     <div className="lxd-setup">
-      <label className="lxd-f">
-        <span>Document type</span>
-        <select value={p.typeId} onChange={(e) => p.setTypeId(e.target.value)} disabled={busy}>
-          <option value="custom">Custom or blank document</option>
-          {(["trust", "family-law", "commercial", "employment", "property"] as const).map((cat) => {
-            const docs = DOCUMENT_TYPES.filter((d) => d.category === cat);
-            return docs.length ? <optgroup key={cat} label={CATEGORY_LABELS[cat]}>{docs.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</optgroup> : null;
-          })}
-        </select>
-        {doc && <small>{doc.description}</small>}
-      </label>
-      <label className="lxd-f">
-        <span>Jurisdiction</span>
-        <select value={p.jurisdiction} onChange={(e) => p.setJurisdiction(e.target.value)} disabled={busy}>
-          {JURISDICTIONS.map((j) => <option key={j}>{j}</option>)}
-        </select>
-      </label>
-      <DraftPrep doc={doc} typeId={p.typeId} busy={busy} parties={p.parties} setParties={p.setParties}
-        template={doc?.partiesTemplate ? fillPartiesTemplate(doc.partiesTemplate) : undefined}
-        prep={p.prep} setPrep={p.setPrep} savedAt={p.savedAt} onReset={p.onReset} />
-      <label className="lxd-f">
-        <span>Parties</span>
-        {doc?.partiesTemplate && !p.parties.trim() && (
-          <button type="button" className="lxd-fill" onClick={() => p.setParties(fillPartiesTemplate(doc.partiesTemplate!))} disabled={busy}>Fill in the {doc.name} checklist</button>
-        )}
-        <textarea rows={doc?.partiesTemplate ? 10 : 4} value={p.parties} onChange={(e) => p.setParties(e.target.value)} disabled={busy}
-          placeholder={"e.g.\nTrustee: Smith Holdings Pty Ltd (ACN 123 456 789)\nSettlor: Jane Smith\nBeneficiaries: Smith Family"} />
-      </label>
-      <div className="lxd-f">
-        <span>Length</span>
-        <div className="lxd-seg" role="radiogroup" aria-label="Length">
-          {(["default", "concise", "balanced", "detailed"] as const).map((o) => (
-            <button type="button" key={o} role="radio" aria-checked={p.length === o} className={p.length === o ? "on" : ""} onClick={() => p.setLength(o)} disabled={busy}>
-              {o[0].toUpperCase() + o.slice(1)}
-            </button>
-          ))}
-        </div>
-        <small>Default uses your portal preference. Change it here for this document only.</small>
-      </div>
-      <label className="lxd-f">
-        <span>Special instructions <em>optional</em></span>
-        <textarea rows={3} value={p.instructions} onChange={(e) => p.setInstructions(e.target.value)} disabled={busy}
-          placeholder="e.g. Include a corporate trustee clause. Vesting date 80 years from establishment." />
-      </label>
-      {doc && doc.draftingWarnings.length > 0 && (
-        <div className="lx-verify lxd-risks">
-          <Icon name="warn" />
-          <div><b>Key drafting risks</b><ul>{doc.draftingWarnings.slice(0, 3).map((w, i) => <li key={i}>{w}</li>)}</ul></div>
-        </div>
-      )}
-      <button type="button" className="lxd-go" onClick={p.onDraft} disabled={busy}>
-        <Icon name="draft" />{busy ? p.thinkLabel : hasDraft ? "Redraft document" : "Draft document"}
+      <p className="lxd-fine">Change answers, the length or instructions in the form, then redraft.</p>
+      <button type="button" className="lx-btn" onClick={() => setEditing(true)} disabled={busy}>Edit answers</button>
+      <button type="button" className={`lxd-go${gate.ok ? "" : " off"}`} aria-disabled={busy || !gate.ok} onClick={() => { if (!busy && gate.ok) p.onDraft(); }}>
+        <Icon name="draft" />{busy ? p.thinkLabel : "Redraft document"}
       </button>
-      <p className="lxd-fine">Lex searches the governing legislation and checks section numbers before it drafts. Anything it could not confirm is marked Verify.</p>
+      {!gate.ok && <p className="lxd-fine">{gate.reason.replace("above ", "")}</p>}
     </div>
   );
 
@@ -225,6 +181,18 @@ export function DraftingView(p: DraftingProps) {
       <p className="lxd-fine pad">Suggestions come from Lex&apos;s QA pass over this draft only. Nothing is sent to the client.</p>
     </div>
   );
+
+  // No draft yet (or editing answers): the Draft Documents workspace.
+  if ((!hasDraft && !busy) || (editing && !busy)) {
+    return (
+      <DraftWorkspace typeId={p.typeId} setTypeId={p.setTypeId} jurisdiction={p.jurisdiction} setJurisdiction={p.setJurisdiction}
+        jurisdictions={JURISDICTIONS} parties={p.parties} setParties={p.setParties} length={p.length} setLength={p.setLength}
+        instructions={p.instructions} setInstructions={p.setInstructions} prep={p.prep} setPrep={p.setPrep}
+        savedAt={p.savedAt} onReset={p.onReset} busy={busy} thinkLabel={p.thinkLabel} error={p.error}
+        initialStage={editing ? "form" : undefined}
+        onDraft={() => { setEditing(false); p.onDraft(); }} />
+    );
+  }
 
   return (
     <div className={`lxd${panelOpen ? " open" : ""}`} data-no-feedback>

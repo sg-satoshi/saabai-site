@@ -34,3 +34,18 @@ export function describeDocumentPrivacy(p: DocumentPrivacy | null | undefined): 
     });
   return `${p.masked} ${p.masked === 1 ? "detail" : "details"} masked before Lex reads it: ${parts.join(", ")}`;
 }
+
+/**
+ * Per-file counts from already masked text: distinct placeholders by type. Types and counts only, never
+ * the values, so it is safe to return to the browser.
+ */
+export function privacyFromMasked(masked: string): { masked: number; types: Record<string, number> } {
+  const seen = new Set<string>();
+  const types: Record<string, number> = {};
+  for (const m of masked.matchAll(/\{\{([A-Z]+)_\d+\}\}/g)) {
+    if (seen.has(m[0])) continue;
+    seen.add(m[0]);
+    types[m[1]] = (types[m[1]] ?? 0) + 1;
+  }
+  return { masked: seen.size, types };
+}

@@ -130,3 +130,4 @@
 .lxd-ex-t small{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
 .lxd-ex-t small .lxd-verify{margin-left:6px}
 .lxd-link{font:inherit;font-size:12px;background:none;border:0;padding:0;color:var(--navy);text-decoration:underline;cursor:pointer}
+.lxd-go.off{background:#eceef4;color:#5f6580;cursor:not-allowed}

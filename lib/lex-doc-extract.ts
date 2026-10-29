@@ -197,7 +197,9 @@ export type MergedField = {
   /** Set when the user changed the value by hand. */
   edited?: boolean;
 };
-export type FileResult = { file: string; kind?: DocKind; documentDate?: string; title?: string; error?: "scanned" | "unreadable" | "unsupported" | "too-large" | "empty" };
+export type FileResult = { file: string; kind?: DocKind; documentDate?: string; title?: string; error?: "scanned" | "unreadable" | "unsupported" | "too-large" | "empty";
+  /** Distinct details masked in this file before the model read it, by type (counts only). */
+  privacy?: { masked: number; types: Record<string, number> } };
 export type MergedDeed = {
   profile: string; fields: MergedField[]; variations: Array<{ file: string; date?: string; title?: string }>; files: FileResult[] };
 
