@@ -5,12 +5,14 @@ import JsonLd from "../components/JsonLd";
 import { faqSchema } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
 import { CARE_PLAN_FAQS } from "@/lib/care-faqs";
+import { knowledgePackEnabled, packFaqItems } from "@/lib/knowledge-pack/core";
+import { SAABAI_PACK } from "@/lib/knowledge-pack/saabai";
 import BreadcrumbLd from "../components/BreadcrumbLd";
 import LinkedText from "../components/LinkedText";
 
 export const metadata: Metadata = publicPageMeta.faq;
 
-const faqs = [
+const baseFaqs = [
   {
     id: "the-basics",
     category: "The Basics",
@@ -143,6 +145,12 @@ const faqs = [
     items: CARE_PLAN_FAQS,
   },
 ];
+
+// #314: knowledge pack FAQs, off unless KNOWLEDGE_PACK_ENABLED=1.
+const faqs = knowledgePackEnabled()
+  ? [...baseFaqs, { id: "quick-answers", category: "Quick Answers", items: packFaqItems(SAABAI_PACK) }]
+  : baseFaqs;
+
 
 const ANSWER_LINKS = [
   { phrase: "free calculator", href: "/calculator" },
