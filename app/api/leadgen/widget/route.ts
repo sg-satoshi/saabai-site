@@ -19,7 +19,10 @@ export async function GET(req: NextRequest) {
   const slug = searchParams.get("slug") || "demo";
   const apiBase = process.env.NEXT_PUBLIC_BASE_URL || "https://www.saabai.ai";
   let client = null;
-  try { client = await getClientBySlug(slug); } catch { client = null; }
+  let lookupOk = true;
+  try { client = await getClientBySlug(slug); } catch { client = null; lookupOk = false; }
+  // Short cache when the client is missing or the lookup failed, so a fix shows quickly.
+  const cacheControl = lookupOk && client ? "public, max-age=600, s-maxage=600" : "public, max-age=60, s-maxage=60";
   const btnLabel = escapeHtml(widgetButtonLabel(client));
 
   const script = `(function(){
@@ -186,7 +189,7 @@ sendBtn.addEventListener("click", sendMessage);
   return new Response(script, {
     headers: {
       "Content-Type": "application/javascript; charset=utf-8",
-      "Cache-Control": "public, max-age=600, s-maxage=600",
+      "Cache-Control": cacheControl,
       "Access-Control-Allow-Origin": "*",
     },
   });
