@@ -159,6 +159,8 @@ function BroadcastPanel({
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ sent: number; failed: number } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
   const inputStyle: React.CSSProperties = {
     width: "100%", padding: "10px 13px", fontSize: 13,
@@ -190,6 +192,26 @@ function BroadcastPanel({
     }
   }
 
+  // Test send: the server fixes the recipient to hello@saabai.ai and never reads the subscriber list.
+  async function sendTest() {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const res = await fetch("/api/subscribers/broadcast/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subject: subject.trim(), html: buildHtml(body) }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) setTestResult({ ok: true, msg: `Test sent to hello@saabai.ai as "${data.subject}". Check that inbox.` });
+      else setTestResult({ ok: false, msg: data.error || "Test send failed" });
+    } catch {
+      setTestResult({ ok: false, msg: "Test send failed" });
+    } finally {
+      setTesting(false);
+    }
+  }
+
   function buildHtml(rawBody: string) {
     const paragraphs = rawBody
       .split("\n")
@@ -211,6 +233,7 @@ function BroadcastPanel({
   }
 
   const ready = subject.trim().length > 0 && body.trim().length > 0 && recipients.length > 0;
+  const testReady = subject.trim().length > 0 && body.trim().length > 0 && !testing && !sending;
 
   return (
     <div style={{ background: D.card, border: `1px solid ${D.border}`, borderRadius: 16, overflow: "hidden" }}>
@@ -220,7 +243,7 @@ function BroadcastPanel({
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(8,145,178,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900, color: D.teal }}>BC</div>
           <div>
-            <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: D.text }}>Broadcast Email</p>
+            <p style={{ margin: 0, fontSize: 22, fontWeight: 700, color: D.text, letterSpacing: -0.2 }}>Broadcast Email</p>
             <p style={{ margin: 0, fontSize: 11, color: D.secondary }}>{recipients.length} recipient{recipients.length !== 1 ? "s" : ""} selected</p>
           </div>
         </div>
@@ -259,7 +282,7 @@ function BroadcastPanel({
         {/* Recipient pills */}
         <div>
           <p style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 700, letterSpacing: 1.2, color: D.muted, textTransform: "uppercase" as const }}>Recipients ({recipients.length})</p>
-          <div style={{ display: "flex", flexWrap: "wrap" as const, gap: 5, maxHeight: 72, overflowY: "auto" as const }}>
+          <div style={{ display: "flex", flexWrap: "wrap" as const, gap: 5, maxHeight: 72, overflowY: "auto" as const, scrollbarWidth: "none" as const }}>
             {recipients.map(s => (
               <span key={s.email} style={{ fontSize: 11, padding: "3px 9px", borderRadius: 20, background: "rgba(8,145,178,0.1)", color: D.teal, border: "1px solid rgba(8,145,178,0.25)", fontWeight: 500 }}>
                 {s.firstName || s.email}
@@ -337,14 +360,37 @@ function BroadcastPanel({
           </div>
         )}
 
+        {/* Test result banner */}
+        {testResult && (
+          <div role="status" style={{ padding: "12px 16px", borderRadius: 10, background: testResult.ok ? "rgba(8,145,178,0.08)" : "rgba(220,38,38,0.1)", border: `1px solid ${testResult.ok ? "rgba(8,145,178,0.3)" : "rgba(220,38,38,0.3)"}` }}>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: testResult.ok ? D.teal : "#dc2626" }}>{testResult.msg}</p>
+          </div>
+        )}
+
         {/* Footer */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 4 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 4, gap: 12, flexWrap: "wrap" as const }}>
           <p style={{ margin: 0, fontSize: 12, color: D.muted }}>
             Sent from <strong style={{ color: D.secondary }}>hello@saabai.ai</strong>
           </p>
-          <div style={{ display: "flex", gap: 10 }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" as const }}>
             <button onClick={onClose} style={{ padding: "9px 18px", borderRadius: 8, border: `1px solid ${D.borderHi}`, background: "transparent", color: D.secondary, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
               Cancel
+            </button>
+            <button
+              type="button"
+              onClick={sendTest}
+              disabled={!testReady}
+              title="Sends one copy, with [TEST] in the subject, to hello@saabai.ai only. Never to subscribers."
+              style={{
+                padding: "9px 16px", borderRadius: 8,
+                border: `1px dashed ${testReady ? D.teal : D.borderHi}`,
+                background: "transparent",
+                color: testReady ? D.teal : D.muted,
+                fontSize: 12, fontWeight: 700, cursor: testReady ? "pointer" : "not-allowed",
+                marginRight: 6,
+              }}
+            >
+              {testing ? "Sending test..." : "Send test to hello@"}
             </button>
             <button
               onClick={() => setConfirmOpen(true)}
