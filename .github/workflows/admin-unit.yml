@@ -25,3 +25,5 @@ jobs:
         run: npx tsx --test tests/security-audit-1030.test.ts
       - name: Wholesale login limit
         run: npx tsx --test tests/wholesale-login-limit.test.ts
+      - name: Security headers
+        run: npx tsx --test tests/security-headers.test.ts
