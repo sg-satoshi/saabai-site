@@ -31,7 +31,8 @@ import {
   type KV,
 } from "../lib/exit-popup";
 import { handleScoreLink, scoreLinkEmailHtml, scoreLinkEmailText, SCORE_LINK_URL, type ScoreLinkDeps } from "../lib/score-link";
-import { canReceiveMarketing } from "../lib/subscribers";
+import { canReceiveMarketing, type Subscriber } from "../lib/subscribers";
+import { broadcastEmail, broadcastRecipients, tipsFooterHtml } from "../lib/broadcast";
 
 const read = (f: string) => readFileSync(f, "utf8");
 const DAY = 86_400_000;
@@ -254,7 +255,59 @@ test("marketing broadcasts only reach subscribers who opted in", () => {
   assert.equal(canReceiveMarketing({ status: "active", marketingConsent: "no" }), false);
   assert.equal(canReceiveMarketing({ status: "active" }), false, "older sign-ups stay out until they opt in");
   assert.equal(canReceiveMarketing({ status: "unsubscribed", marketingConsent: "yes" }), false);
-  assert.match(read("app/api/subscribers/broadcast/route.ts"), /canReceiveMarketing\(/);
+  assert.match(read("lib/broadcast.ts"), /canReceiveMarketing\(/);
+});
+
+const sub = (email: string, extra: Partial<Subscriber> = {}) =>
+  ({ email, firstName: "", source: "exit-popup", subscribedAt: "", status: "active", marketingConsent: "yes", ...extra }) as Subscriber;
+
+test("broadcast drops suppressed (unsubscribed) people even if they opted in", async () => {
+  const subs = [
+    sub("keep@example.com"),
+    sub("unsubbed@example.com"),
+    sub("noconsent@example.com", { marketingConsent: "no" }),
+    sub("old@example.com", { marketingConsent: undefined }),
+  ];
+  const checked: string[] = [];
+  const isSuppressed = async (e: string) => { checked.push(e); return e === "unsubbed@example.com"; };
+  const { recipients, suppressed } = await broadcastRecipients(
+    ["KEEP@example.com", "unsubbed@example.com", "noconsent@example.com", "old@example.com", "stranger@example.com", "keep@example.com"],
+    subs,
+    isSuppressed,
+  );
+  assert.deepEqual(recipients.map((s) => s.email), ["keep@example.com"]);
+  assert.equal(suppressed, 1);
+  assert.deepEqual(checked.sort(), ["keep@example.com", "unsubbed@example.com"]);
+
+  // If the suppression list cannot be read, nobody is sent to.
+  const down = await broadcastRecipients(["keep@example.com"], subs, async () => { throw new Error("store down"); });
+  assert.equal(down.recipients.length, 0);
+  assert.equal(down.suppressed, 1);
+
+  const route = read("app/api/subscribers/broadcast/route.ts");
+  assert.match(route, /broadcastRecipients\(emails, allSubs, isSuppressed\)/);
+  assert.match(route, /from "..\/..\/..\/..\/lib\/growth\/consent"/);
+});
+
+test("broadcast emails carry sender ID, unsubscribe footer and one-click headers", () => {
+  const deps = {
+    unsubUrl: (e: string) => `https://saabai.ai/unsubscribe?e=${encodeURIComponent(e)}&t=tok`,
+    unsubHeaders: (e: string) => ({ "List-Unsubscribe": `<https://saabai.ai/unsubscribe?e=${encodeURIComponent(e)}&t=tok>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }),
+  };
+  const m = broadcastEmail(sub("a@example.com", { firstName: "<b>Al</b>" }), { subject: "Tips", html: "<html><body><p>Hi {{firstName}}</p></body></html>", fromName: "Shane at Saabai" }, deps);
+  assert.equal(m.from, "Shane at Saabai <hello@saabai.ai>");
+  assert.deepEqual(m.to, ["a@example.com"]);
+  assert.ok(m.html.includes("Hi &lt;b&gt;Al&lt;/b&gt;"), "name escaped");
+  assert.ok(m.html.includes("ABN 71 889 082 572") && m.html.includes("Merrimac QLD 4226"), "sender ID");
+  assert.ok(m.html.includes('href="https://saabai.ai/unsubscribe?e=a%40example.com&amp;t=tok"'), "unsubscribe link");
+  assert.ok(m.html.indexOf("Unsubscribe") < m.html.indexOf("</body>"), "footer inside body");
+  assert.equal(m.headers["List-Unsubscribe"], "<https://saabai.ai/unsubscribe?e=a%40example.com&t=tok>");
+  assert.equal(m.headers["List-Unsubscribe-Post"], "List-Unsubscribe=One-Click");
+  // Fragment without a body tag still gets the footer; header injection in the name is stripped.
+  const f = broadcastEmail(sub("b@example.com"), { subject: "T", html: "<p>Hi {{firstName}}</p>", fromName: "Evil <x@y.z>\r\nBcc: z" }, deps);
+  assert.ok(f.html.startsWith("<p>Hi there</p>") && f.html.includes("ABN 71 889 082 572"));
+  assert.ok(!/[<>\r\n]/.test(f.from.replace(" <hello@saabai.ai>", "")));
+  assert.ok(!/[\u2013\u2014]/.test(tipsFooterHtml("u")), "no dashes");
 });
 
 test("the AI Readiness checklist email is retired", () => {
@@ -283,4 +336,14 @@ test("pop-up and /score copy match the approved wording", () => {
   assert.ok(!score.includes("We only use them to calculate your score"));
   assert.match(score, /href="\/privacy"/);
   assert.match(score, /SCORE_DONE_KEY/);
+});
+
+test("already sent or opted out shows a calm notice, not the server error", () => {
+  const popup = read("app/components/EmailCapturePopup.tsx");
+  assert.match(popup, /j\.sent === false && \(j\.reason === "rate_limited" \|\| j\.reason === "suppressed"\)/);
+  assert.match(popup, /setView\("notice"\)/);
+  assert.match(popup, /className="xp-note" id=\{errId\} role="status"/);
+  assert.ok(popup.includes("Check your inbox for an earlier one, or take the score now."));
+  // One message for both cases, so the pop-up never reveals that an address unsubscribed.
+  assert.ok(!/unsubscribed|opted out/i.test(popup.match(/const NOTICE_MSG = "([^"]+)"/)?.[1] ?? "x unsubscribed"));
 });

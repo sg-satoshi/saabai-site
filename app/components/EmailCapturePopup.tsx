@@ -38,10 +38,13 @@ import {
 
 type Surface = "modal" | "sheet";
 type Trigger = "exit_intent" | "mobile_scroll";
-type View = "default" | "email" | "sending" | "error-invalid" | "error-server" | "success";
+type View = "default" | "email" | "sending" | "error-invalid" | "error-server" | "notice" | "success";
 type DismissMethod = "close" | "no_thanks" | "escape" | "backdrop";
 
 const INVALID_MSG = "Enter a valid email address so we know where to send your link.";
+// Shown when the server declines to send again (already sent in the last 24 hours, or the address opted out).
+// Same words for both so the pop-up never reveals whether an address unsubscribed.
+const NOTICE_MSG = "We can't send another link to this address right now. Check your inbox for an earlier one, or take the score now.";
 const SERVER_MSG = "That did not send. Try again, or take the score now. You can also email hello@saabai.ai.";
 
 function fieldBusy(): boolean {
@@ -295,7 +298,12 @@ export default function EmailCapturePopup() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim().toLowerCase(), offer: "score_link", marketingConsent: consent, source: window.location.pathname }),
       });
-      const j = (await res.json().catch(() => null)) as { ok?: boolean; sent?: boolean } | null;
+      const j = (await res.json().catch(() => null)) as { ok?: boolean; sent?: boolean; reason?: string } | null;
+      if (res.ok && j?.ok === true && j.sent === false && (j.reason === "rate_limited" || j.reason === "suppressed")) {
+        setView("notice");
+        gaEvent("exit_popup_email_error", { variant: EXIT_VARIANT, surface, reason: "already_sent" });
+        return;
+      }
       if (res.ok && j?.ok === true && j.sent === true) {
         const s = stores();
         if (s) writeCap(s.local, "emailed");
@@ -310,7 +318,7 @@ export default function EmailCapturePopup() {
 
   if (!open) return null;
 
-  const isEmailView = view === "email" || view === "sending" || view === "error-invalid" || view === "error-server";
+  const isEmailView = view === "email" || view === "sending" || view === "error-invalid" || view === "error-server" || view === "notice";
   const titleId = surface === "modal" ? "xp-title" : "xp-title-m";
   const descId = surface === "modal" ? "xp-desc" : "xp-desc-m";
   const errId = "xp-err";
@@ -331,12 +339,15 @@ export default function EmailCapturePopup() {
         autoComplete="email"
         placeholder="you@yourbusiness.com.au"
         value={email}
-        onChange={(e) => { setEmail(e.target.value); if (view === "error-invalid" || view === "error-server") setView("email"); }}
+        onChange={(e) => { setEmail(e.target.value); if (view === "error-invalid" || view === "error-server" || view === "notice") setView("email"); }}
         aria-invalid={view === "error-invalid" ? true : undefined}
-        aria-describedby={view === "error-invalid" || view === "error-server" ? errId : undefined}
+        aria-describedby={view === "error-invalid" || view === "error-server" || view === "notice" ? errId : undefined}
       />
       {(view === "error-invalid" || view === "error-server") && (
         <p className="xp-err" id={errId} role="alert"><ErrIcon />{view === "error-invalid" ? INVALID_MSG : SERVER_MSG}</p>
+      )}
+      {view === "notice" && (
+        <p className="xp-note" id={errId} role="status">{NOTICE_MSG}</p>
       )}
       <label className="xp-cb" style={surface === "sheet" ? { margin: "12px 0 0" } : undefined}>
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />

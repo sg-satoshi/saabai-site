@@ -28,6 +28,7 @@
 .xp-inp[aria-invalid="true"]{border-color:var(--xp-err);outline:2px solid rgba(248,113,113,.35);outline-offset:1px}
 .xp-err{display:flex;gap:8px;align-items:flex-start;color:var(--xp-err);font-size:14px;line-height:1.45;margin-top:8px}
 .xp-err svg{flex:none;margin-top:2px}
+.xp-note{color:var(--xp-muted);font-size:14px;line-height:1.45;margin-top:8px}
 .xp-cb{display:flex;gap:10px;align-items:flex-start;margin:14px 0 16px;font-size:14px;color:var(--xp-muted);line-height:1.45;cursor:pointer}
 .xp-cb input{flex:none;width:20px;height:20px;margin:1px 0 0;accent-color:var(--xp-teal);cursor:pointer}
 .xp-done{display:flex;flex-direction:column;align-items:flex-start}
