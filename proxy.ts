@@ -5,6 +5,7 @@ import { verifySessionToken, COOKIE_NAME, resolveStaff } from "./lib/auth";
 import { ACL_HEADER, ADMIN_AUDIT_KEY, ADMIN_AUDIT_MAX, aclHeaderValue, gate } from "./lib/access";
 import { verifySession } from "./lib/portal-session";
 import { CHAT_API, chatGuard } from "./lib/chat-guard";
+import { formGuard } from "./lib/form-guard";
 import { lmmBrandAsset } from "./lib/lmm-brand";
 import { EXP_COOKIE, EXP_HEADER, EXP_MAX_AGE, EXP_OFF_COOKIE, EXP_TRACK_HEADER, assignAll, enabledSites, parseExpCookie, privacySignal, siteKeyForHost } from "./lib/exp/core";
 import { getExperiments } from "./lib/exp/config";
@@ -152,6 +153,8 @@ const ADMIN_API = [
   "/api/site-factory",      // authoring/destructive (lead is public, listed above)
   "/api/site-factory-chat",
   "/api/leadgen/leads",     // client PII
+  "/api/leadgen/topup",     // creates Stripe checkouts for any clientId; no client UI calls it
+  "/api/saabai-crm",        // Saabai sales CRM: every lead's name, phone, email (was reachable by any client or portal session)
   "/api/edge",              // Shane's personal coach data
   "/api/instagram",         // social posting (cron is public, listed above)
   "/api/linkedin",
@@ -209,6 +212,10 @@ async function getSession(req: NextRequest): Promise<{ clientId: string } | null
 
 async function apiAuth(req: NextRequest, pathname: string): Promise<NextResponse> {
   const res = await apiAuthCheck(req, pathname);
+  if (res.status === 200) {
+    const limited = await formGuard(req, redis);
+    if (limited) return limited;
+  }
   if (res.status === 200 && matches(pathname, CHAT_API)) {
     const blocked = await chatGuard(req, redis);
     if (blocked) return blocked;

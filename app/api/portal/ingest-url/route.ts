@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession } from "../../../../lib/portal-session";
+import { safeFetch } from "../../../../lib/site-scan/safe-fetch";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,21 +77,19 @@ export async function POST(req: NextRequest) {
 
   let html: string;
   try {
-    const response = await fetch(parsedUrl.toString(), {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; Saabai-Lex/1.0; +https://saabai.ai)",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      },
-      signal: AbortSignal.timeout(15000),
-    });
-    if (!response.ok) {
-      return NextResponse.json({ error: `Failed to fetch URL: HTTP ${response.status}` }, { status: 400 });
+    // Public IPs only, pinned per request and re-checked on every redirect (same fetcher as the site scan).
+    const response = await safeFetch(parsedUrl.toString(), { timeoutMs: 15000, maxRedirects: 3 });
+    if (response.error === "blocked_url") {
+      return NextResponse.json({ error: "That URL can't be fetched. Use a public website address." }, { status: 400 });
     }
-    const contentType = response.headers.get("content-type") ?? "";
+    if (!response.ok) {
+      return NextResponse.json({ error: response.status ? `Failed to fetch URL: HTTP ${response.status}` : "Failed to fetch the URL. Check that it is publicly accessible." }, { status: 400 });
+    }
+    const contentType = response.headers["content-type"] ?? "";
     if (!contentType.includes("text/html") && !contentType.includes("text/plain")) {
       return NextResponse.json({ error: "URL does not return text content" }, { status: 400 });
     }
-    html = await response.text();
+    html = response.body;
   } catch {
     return NextResponse.json({ error: "Failed to fetch the URL. Check that it is publicly accessible." }, { status: 400 });
   }

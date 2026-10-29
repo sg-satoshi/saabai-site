@@ -5,6 +5,7 @@
  */
 import { NextRequest } from "next/server";
 import { getClient, updateClient } from "../../../../lib/leadgen-config";
+import { leadGenAccessFromCookies, mayActOnLeadGenClient } from "../../../../lib/leadgen-owner";
 
 export async function PATCH(req: NextRequest) {
   try {
@@ -13,6 +14,11 @@ export async function PATCH(req: NextRequest) {
 
     if (!clientId || !notifications) {
       return Response.json({ error: "clientId and notifications required" }, { status: 400 });
+    }
+
+    // Only the client's own account (or an admin) may change its notification settings.
+    if (!mayActOnLeadGenClient(await leadGenAccessFromCookies(), String(clientId))) {
+      return Response.json({ error: "Client not found" }, { status: 404 });
     }
 
     const client = await getClient(clientId);

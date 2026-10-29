@@ -1,3 +1,4 @@
+import { isValidVoiceId } from "../../../lib/tts-voice";
 export const runtime = "edge";
 
 const VOICE_ID = process.env.ELEVENLABS_VOICE_ID ?? "WotOlpik2Jh26pUiTVLy";
@@ -7,11 +8,13 @@ const MODELS = ["eleven_flash_v2_5", "eleven_turbo_v2_5", "eleven_multilingual_v
 
 export async function POST(req: Request) {
   const { text, voiceId } = await req.json();
-  if (!text?.trim()) return new Response("No text", { status: 400 });
+  if (typeof text !== "string" || !text.trim()) return new Response("No text", { status: 400 });
 
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) return new Response("TTS not configured", { status: 500 });
 
+  // voiceId is placed in the upstream URL path: only accept a plain ElevenLabs id.
+  if (voiceId !== undefined && voiceId !== "" && !isValidVoiceId(voiceId)) return new Response("Invalid voice", { status: 400 });
   const activeVoiceId = voiceId || VOICE_ID;
 
   const cleanText = text
