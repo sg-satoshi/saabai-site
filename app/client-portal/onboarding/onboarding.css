@@ -1,0 +1,26 @@
+.onb{margin:0 0 16px;font-family:var(--font-portal-sans),Geist,system-ui,sans-serif}
+.onb-steps{display:flex;flex-wrap:wrap;gap:8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:2px 0 4px}
+.onb-steps::-webkit-scrollbar{display:none}
+.onb-step{flex:none;border:1px solid var(--n-200);background:#fff;color:var(--n-700);border-radius:999px;padding:8px 12px;font:500 13px/1.2 var(--font-portal-sans),Geist,system-ui,sans-serif;cursor:pointer}
+.onb-step.on{background:var(--navy-900);border-color:var(--navy-900);color:#fff}
+.onb-step.done{border-color:#b9e4ea;background:var(--teal-50);color:var(--teal-700)}
+.onb-step:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
+.onb-form{display:flex;flex-direction:column;gap:14px}
+.onb-field{display:flex;flex-direction:column;gap:6px}
+.onb-field span{font-weight:500;font-size:13.5px}
+.onb-field small{color:var(--n-500);font-size:12.5px}
+.onb-field input,.onb-field textarea,.onb-field select{width:100%;box-sizing:border-box;border:1px solid var(--n-200);border-radius:var(--r-md);background:#fff;color:var(--n-900);font:400 16px/1.4 var(--font-portal-sans),Geist,system-ui,sans-serif;padding:10px 12px}
+.onb-field textarea{min-height:88px;resize:vertical}
+.onb-access{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-bottom:1px solid var(--n-100)}
+.onb-access:last-child{border-bottom:0}
+.onb-choices{display:flex;flex-wrap:wrap;gap:8px}
+.onb-choices button{min-height:44px;border:1px solid var(--n-200);background:#fff;border-radius:999px;padding:8px 14px;font:500 14px/1 var(--font-portal-sans),Geist,system-ui,sans-serif;color:var(--n-700);cursor:pointer}
+.onb-choices button.on{background:var(--navy-900);border-color:var(--navy-900);color:#fff}
+.onb-actions{display:flex;flex-direction:column;gap:8px}
+.onb-actions .btn{width:100%;justify-content:center;min-height:44px}
+.onb-note{margin:0;color:var(--n-600);font-size:14px;line-height:1.5}
+.onb-error{margin:0;color:var(--bad);font-size:13.5px}
+@media (min-width:720px){
+  .onb-actions{flex-direction:row;flex-wrap:wrap}
+  .onb-actions .btn{width:auto}
+}
