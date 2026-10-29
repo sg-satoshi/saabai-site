@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Mail, Eye, EyeOff } from "lucide-react";
 import { WH_ADMIN_BASE } from "../../../../../lib/wholesale-paths";
+import { loginErrorFromResponse } from "../../../../../lib/login-limit-message";
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -31,7 +32,7 @@ export default function AdminLogin() {
         router.push(WH_ADMIN_BASE);
         router.refresh();
       } else {
-        setError("Invalid credentials. Please try again.");
+        setError(await loginErrorFromResponse(res, "Invalid credentials. Please try again."));
       }
     } catch {
       setError("Connection error.");

@@ -19,13 +19,14 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(req: Request) {
   const { email, password } = await req.json().catch(() => ({}));
-  const ip = clientIp(req);
-  const wait = await loginBlocked("whadmin", email, ip);
-  if (wait) return tooManyResponse(wait);
 
   if (!wholesaleAdminConfigured()) {
     return NextResponse.json({ success: false, error: "Admin auth not configured" }, { status: 500 });
   }
+
+  const ip = clientIp(req);
+  const wait = await loginBlocked("whadmin", email, ip);
+  if (wait) return tooManyResponse(wait);
 
   const token = await authenticateWholesaleAdmin(email, password);
   if (!token) {

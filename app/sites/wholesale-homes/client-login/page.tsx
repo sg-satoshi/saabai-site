@@ -8,6 +8,7 @@ import { Eye, EyeOff, Lock, Mail, Check } from "lucide-react";
 import { AUTH_KEY, saveJSON } from "../_lib/portal";
 import { UI, FONT_DISPLAY, FONT_UI } from "../client/_ui/primitives";
 import { RISE_CSS } from "../client/_ui/tearsheet";
+import { loginErrorFromResponse } from "../../../../lib/login-limit-message";
 
 export default function ClientLogin() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function ClientLogin() {
         saveJSON(AUTH_KEY, { email: email.trim(), loggedInAt: Date.now() });
         router.push("/client/dashboard");
       } else {
-        setError("Invalid email or password. Please try again.");
+        setError(await loginErrorFromResponse(res, "Invalid email or password. Please try again."));
       }
     } catch {
       setError("Connection error. Please try again.");

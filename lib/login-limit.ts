@@ -1,5 +1,6 @@
-import { createHash } from "crypto";
+import { createHash, createHmac } from "crypto";
 import { getRedis } from "./redis";
+import { LOCKOUT_MESSAGE } from "./login-limit-message";
 
 /**
  * Failed-login limiter for the Wholesale sign-ins (audit H5).
@@ -16,7 +17,11 @@ export function clientIp(req: Request): string {
 }
 
 function keys(scope: string, email: string, ip: string) {
-  const e = createHash("sha256").update(String(email ?? "").trim().toLowerCase()).digest("hex");
+  const norm = String(email ?? "").trim().toLowerCase();
+  // HMAC with the existing session secret so stored keys can't be matched to known emails.
+  // Falls back to plain sha256 if the secret isn't set (e.g. local dev).
+  const secret = process.env.SAABAI_SESSION_SECRET;
+  const e = secret ? createHmac("sha256", secret).update(norm).digest("hex") : createHash("sha256").update(norm).digest("hex");
   return { account: `loginlimit:${scope}:e:${e}`, ip: `loginlimit:${scope}:ip:${ip}` };
 }
 
@@ -44,8 +49,10 @@ export async function recordLoginFailure(scope: string, email: string, ip: strin
   const k = keys(scope, email, ip);
   try {
     for (const key of [k.account, k.ip]) {
-      const n = await redis.incr(key);
-      if (n === 1) await redis.expire(key, WINDOW_SECONDS);
+      // First failure creates the key with its TTL in one atomic SET NX EX, so a key can never
+      // exist without an expiry. Later failures INCR the existing key (TTL unchanged).
+      const created = await redis.set(key, 1, { nx: true, ex: WINDOW_SECONDS });
+      if (created !== "OK") await redis.incr(key);
     }
   } catch {
     /* fail open */
@@ -64,7 +71,7 @@ export async function clearLoginFailures(scope: string, email: string, ip: strin
 
 export function tooManyResponse(retryAfter: number): Response {
   return new Response(
-    JSON.stringify({ success: false, error: "Too many sign-in attempts. Please try again later." }),
+    JSON.stringify({ success: false, error: LOCKOUT_MESSAGE }),
     { status: 429, headers: { "Content-Type": "application/json", "Retry-After": String(retryAfter) } },
   );
 }

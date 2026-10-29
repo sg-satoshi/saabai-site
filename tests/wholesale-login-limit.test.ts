@@ -71,3 +71,46 @@ test("admin and client counters are separate", async () => {
   assert.equal((await post("admin", "shared2@x.test", "p", "6.6.6.2")).status, 429);
   assert.equal((await post("client", "shared2@x.test", "p", "6.6.6.2")).status, 401);
 });
+
+test("first failure sets the counter with a TTL atomically, key is HMAC not plain sha256", async () => {
+  const { createHash, createHmac } = await import("crypto");
+  const { getRedis } = await import("../lib/redis");
+  const r = getRedis()!;
+  await post("client", "ttl@x.test", "p", "7.7.7.7");
+  const plain = createHash("sha256").update("ttl@x.test").digest("hex");
+  const hmac = createHmac("sha256", process.env.SAABAI_SESSION_SECRET!).update("ttl@x.test").digest("hex");
+  assert.equal(await r.get(`loginlimit:wh:e:${plain}`), null);
+  assert.equal(Number(await r.get(`loginlimit:wh:e:${hmac}`)), 1);
+  const ttl = await r.ttl(`loginlimit:wh:e:${hmac}`);
+  assert.ok(ttl > 0 && ttl <= 900);
+  await post("client", "ttl@x.test", "p", "7.7.7.7");
+  assert.equal(Number(await r.get(`loginlimit:wh:e:${hmac}`)), 2);
+  assert.ok((await r.ttl(`loginlimit:wh:e:${hmac}`)) > 0);
+});
+
+test("admin: not-configured check runs before the limiter", async () => {
+  const saved = process.env.WHOLESALE_ADMIN_PASS;
+  delete process.env.WHOLESALE_ADMIN_PASS;
+  try {
+    for (let i = 0; i < 6; i++) assert.equal((await post("admin", "nc@x.test", "p", "8.8.8.8")).status, 500);
+  } finally { process.env.WHOLESALE_ADMIN_PASS = saved; }
+});
+
+test("UI message: 429 shows the lockout with minutes, other errors keep the fallback", async () => {
+  const { loginErrorMessage, loginErrorFromResponse, LOCKOUT_MESSAGE } = await import("../lib/login-limit-message");
+  assert.equal(loginErrorMessage(401, "x", null, "Invalid credentials."), "Invalid credentials.");
+  assert.equal(loginErrorMessage(429, LOCKOUT_MESSAGE, null, "Invalid"), LOCKOUT_MESSAGE);
+  assert.equal(loginErrorMessage(429, LOCKOUT_MESSAGE, "61", "Invalid"), "Too many sign-in attempts. Please try again in 2 minutes.");
+  assert.equal(loginErrorMessage(429, undefined, "30", "Invalid"), "Too many sign-in attempts. Please try again in 1 minute.");
+  for (let i = 0; i < 5; i++) await post("client", "ui@x.test", "p", "9.9.9.1");
+  const res = await post("client", "ui@x.test", "p", "9.9.9.2");
+  assert.match(await loginErrorFromResponse(res, "Invalid email or password."), /^Too many sign-in attempts\. Please try again in \d+ minutes?\.$/);
+});
+
+test("both Wholesale login pages use the 429-aware message", async () => {
+  const { readFileSync } = await import("fs");
+  for (const f of ["app/sites/wholesale-homes/client-login/page.tsx", "app/sites/wholesale-homes/admin/login/page.tsx"]) {
+    const src = readFileSync(f, "utf8");
+    assert.match(src, /loginErrorFromResponse\(res,/, f);
+  }
+});
