@@ -199,7 +199,7 @@ test("founding status is lost on any lapse of a paid founding subscription (unpa
   assert.equal(t.foundingMember, true, "trial lapse keeps the flag (price rule then gives $299 anyway)");
 });
 
-test("10.7 live deletion of an ended trial releases the owner email; a re-trial still needs a new code", async () => {
+test("10.7 live deletion of an ended trial releases the owner email link; a re-trial is still refused", async () => {
   const { createInvite, startTrial, sweepTrials } = await T();
   const { getFirm, sweepDataRetention } = await S();
 
@@ -520,4 +520,66 @@ test("R2 trial terms clause is a draft only (not live)", () => {
   assert.match(d, /DRAFT, NOT LIVE/);
   for (const k of [/competitive analysis/, /reverse engineer/, /scrape/, /end a free trial at any time/]) assert.match(d, k);
   assert.doesNotMatch(readFileSync("app/terms/page.tsx", "utf8"), /competitive analysis/);
+});
+
+// ── QA Part B rework ──
+test("B1 deletion sweep scrubs owner name, email, phone, address and staff emails; keeps only non-PII markers", async () => {
+  const { requestTrial, activateTrial, sweepTrials } = await T();
+  const { getFirm, sweepDataRetention, SCRUBBED } = await S();
+  const r = (await import("../lib/redis")).getRedis()!;
+  let url = "";
+  const v = { ...input("pii@scrubfirm.test"), phone: "0733335555", address: { street: "9 Secret Lane", suburb: "Paddington", state: "QLD", postcode: "4064" } };
+  assert.ok((await requestTrial(v, "", async (o) => { url = o.url; }, "https://x.test")).ok);
+  const a = await activateTrial(new URL(url).searchParams.get("token"), mailer, new Date(), async () => {});
+  assert.ok(a.ok);
+  const end = new Date(a.firm.trialEndsAt!);
+  await sweepTrials(mailer, new Date(end.getTime() + 3600_000));
+  await sweepDataRetention({ matters: async () => 0, threads: async () => {} }, (e) => `k:${e}`, async () => [], new Date(end.getTime() + 31 * DAY), { mode: "live", log: () => {} });
+  const f = (await getFirm(a.firm.firmId))!;
+  assert.ok(f.dataDeletedAt && f.piiScrubbedAt);
+  assert.equal(f.adminName, SCRUBBED);
+  assert.equal(f.phone, undefined);
+  assert.equal(f.address, undefined);
+  assert.deepEqual(f.members, []); assert.deepEqual(f.formerMembers, []); assert.deepEqual(f.granted, []);
+  assert.match(f.adminEmail, /^deleted@lf_[a-z0-9]+\.invalid$/);
+  const raw = String(await r.get(`lex:firm:${f.firmId}`));
+  for (const pii of ["pii@scrubfirm.test", "Jane Citizen", "0733335555", "Secret Lane", "Paddington"]) assert.ok(!raw.includes(pii), pii);
+  assert.equal(f.status, "lapsed"); assert.equal(f.lapseReason, "trial_ended"); assert.ok(f.createdAt && f.trialEndsAt, "non-PII markers kept");
+  assert.equal((await startTrial2("x@scrubfirm.test")).ok, false, "one-trial marker still refuses the firm");
+  const src = readFileSync("lib/lex-subscription.ts", "utf8");
+  assert.doesNotMatch(src, /a new trial still needs a new admin invite code/, "stale comment fixed");
+});
+async function startTrial2(email: string) { const { startTrial } = await T(); return startTrial(input(email), "", mailer); }
+
+test("B2 new-trial alert carries only name, firm, domain and the admin list link", async () => {
+  const { newTrialAlertText } = await T();
+  const t = newTrialAlertText({ firmName: "Smith Law", adminName: "Jane Citizen", adminEmail: "jane@smithlaw.com.au" }, "https://www.saabai.ai/");
+  assert.equal(t, "New Lex trial: Jane Citizen at Smith Law (smithlaw.com.au). Review or revoke: https://www.saabai.ai/saabai-admin/lex-trials");
+  assert.ok(!t.includes("jane@"));
+  const src = readFileSync("lib/lex-trial.ts", "utf8");
+  const body = src.slice(src.indexOf("export const alertNewTrial"), src.indexOf("export async function startTrial"));
+  assert.doesNotMatch(body, /phone|address|adminEmail\}/);
+});
+
+test("B3 claim markers are HMAC with an existing server secret (sha256 fallback); revoke logs a line", async () => {
+  const { trialClaimKey, revokeTrial, requestTrial, activateTrial } = await T();
+  const { createHash, createHmac } = await import("node:crypto");
+  const prev = process.env.LEX_PRIVACY_TOKEN_SECRET;
+  try {
+    delete process.env.LEX_PRIVACY_TOKEN_SECRET;
+    const ps = process.env.PORTAL_SESSION_SECRET, ss = process.env.SAABAI_SESSION_SECRET;
+    delete process.env.PORTAL_SESSION_SECRET; delete process.env.SAABAI_SESSION_SECRET;
+    assert.equal(trialClaimKey("a@hm.test"), `lex:trial:claim:${createHash("sha256").update("lex-trial:d:hm.test").digest("hex")}`);
+    process.env.LEX_PRIVACY_TOKEN_SECRET = "s3cret-for-test";
+    assert.equal(trialClaimKey("a@hm.test"), `lex:trial:claim:${createHmac("sha256", "s3cret-for-test").update("lex-trial:d:hm.test").digest("hex")}`);
+    if (ps) process.env.PORTAL_SESSION_SECRET = ps; if (ss) process.env.SAABAI_SESSION_SECRET = ss;
+  } finally { if (prev === undefined) delete process.env.LEX_PRIVACY_TOKEN_SECRET; else process.env.LEX_PRIVACY_TOKEN_SECRET = prev; }
+  let url = "";
+  assert.ok((await requestTrial(input("o@revlog.test"), "", async (o) => { url = o.url; }, "https://x.test")).ok);
+  const a = await activateTrial(new URL(url).searchParams.get("token"), mailer, new Date(), async () => {});
+  assert.ok(a.ok);
+  const lines: string[] = []; const orig = console.log;
+  console.log = (...x: unknown[]) => { lines.push(x.join(" ")); };
+  try { assert.ok(await revokeTrial(a.firm.firmId, "admin7", mailer)); } finally { console.log = orig; }
+  assert.ok(lines.some((l) => l.includes(`[lex trial] revoked firm=${a.firm.firmId} by=admin7`)), lines.join("|"));
 });

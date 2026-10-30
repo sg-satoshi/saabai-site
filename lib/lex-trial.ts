@@ -11,7 +11,7 @@
  *   lex:trial:invites              set of invite codes (admin list)
  *   lex:trial:firms                set of trial firm ids (sweep and admin list)
  */
-import { createHash, randomBytes } from "crypto";
+import { createHash, createHmac, randomBytes } from "crypto";
 import { getRedis } from "./redis";
 import {
   LEX_TERMS_VERSION, type LexFirm, type Mailer, type SignupInput,
@@ -235,9 +235,19 @@ export function trialIdentity(email: string): string {
   if (domain === "gmail.com") local = local.replace(/\./g, "");
   return `m:${local}@${domain}`;
 }
-/** Claim key: sha256 of the normalised identity. Only a marker ("1") is stored, never the address or domain. */
+/**
+ * Claim key: HMAC-SHA256 of the normalised identity, keyed with an existing server secret (same chain as the
+ * Lex privacy masking key; no new env var). Without a secret (local/tests) it falls back to plain sha256.
+ * Only a marker ("1") is stored, never the address or domain. Rotating the secret orphans existing markers.
+ */
+function claimSecret(): string | null {
+  return process.env.LEX_PRIVACY_TOKEN_SECRET || process.env.PORTAL_SESSION_SECRET || process.env.SAABAI_SESSION_SECRET || null;
+}
 export function trialClaimKey(email: string): string {
-  return `lex:trial:claim:${createHash("sha256").update(`lex-trial:${trialIdentity(email)}`).digest("hex")}`;
+  const id = `lex-trial:${trialIdentity(email)}`;
+  const secret = claimSecret();
+  const h = secret ? createHmac("sha256", secret).update(id).digest("hex") : createHash("sha256").update(id).digest("hex");
+  return `lex:trial:claim:${h}`;
 }
 export const TRIAL_ALREADY_USED = "A Lex free trial has already been used for this firm. To keep using Lex, subscribe or talk to us at hello@saabai.ai.";
 export const SELF_SERVE_SOURCE = "Self-serve";
@@ -254,13 +264,16 @@ async function syncDomainError(email: string): Promise<string | null> {
   return g.verdictMessage(g.domainRule(email));
 }
 
+/** Alert body: owner name, firm, domain and the admin list link only (no email, phone or address). */
+export function newTrialAlertText(f: Pick<LexFirm, "firmName" | "adminName" | "adminEmail">, site: string): string {
+  return `New Lex trial: ${f.adminName} at ${f.firmName} (${f.adminEmail.split("@")[1] ?? ""}). Review or revoke: ${site.replace(/\/$/, "")}/saabai-admin/lex-trials`;
+}
 /** New-trial alert to Saabai (never throws). */
 export type TrialAlert = (f: LexFirm) => Promise<void>;
 export const alertNewTrial: TrialAlert = async (f) => {
   try {
     const { lexAlert } = await import("./lex-subscription-emails");
-    const a = f.address ? `${f.address.street}, ${f.address.suburb} ${f.address.state} ${f.address.postcode}` : "-";
-    await lexAlert(`New Lex trial: ${f.firmName} (${f.adminEmail.split("@")[1]}). Owner ${f.adminName} <${f.adminEmail}>, phone ${f.phone ?? "-"}, address ${a}. Review or revoke in Saabai admin > Lex trials.`, { prefix: "Lex trial", title: "New Lex free trial" });
+    await lexAlert(newTrialAlertText(f, process.env.NEXT_PUBLIC_SITE_URL || "https://www.saabai.ai"), { prefix: "Lex trial", title: "New Lex free trial" });
   } catch { /* alert only */ }
 };
 
@@ -379,6 +392,7 @@ export async function revokeTrial(firmId: string, by: string, mailer: Mailer, no
     f.trialRevokedAt = now.toISOString(); f.trialRevokedBy = by;
     await lapseFirm(f, "trial_ended", mailer, now);
     done = true;
+    console.log(`[lex trial] revoked firm=${firmId} by=${by} at=${now.toISOString()}`);
   });
   return done;
 }

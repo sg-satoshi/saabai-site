@@ -52,6 +52,8 @@ export type LexFirm = {
   phone?: string; address?: FirmAddress;
   /** Set when Saabai ended a trial early from the admin trial list. */
   trialRevokedAt?: string; trialRevokedBy?: string;
+  /** Set when the retention sweep cleared personal contact details (scrubFirmPii). */
+  piiScrubbedAt?: string;
   /** founding_member: joined a trial while the founding offer was open; may convert at STRIPE_PRICE_LEX_FOUNDING. */
   foundingMember?: boolean;
   foundingLostAt?: string;
@@ -563,15 +565,35 @@ export async function sweepDataRetention(del: DataDeleter, firmKeyOf: (email: st
         for (const e of chatPeople) await del.threads(e);
         const feedback = await deleteFirmFeedback(firmKeys, people, false);
         f.dataDeletedAt = now.toISOString();
-        // An ended trial's owner email is released once its data is gone, so it can start fresh
-        // (a new trial still needs a new admin invite code). Paid firms keep the owner link for resubscribe.
+        // An ended trial's owner email link is released once its data is gone. A new trial is still refused by the
+        // hashed one-trial-per-firm claim marker. Paid firms keep the owner link for resubscribe.
         if (f.lapseReason === "trial_ended") await r.eval(RELEASE_IF_OWNER, [`lex:firm:byemail:${f.adminEmail}`], [f.firmId]);
+        scrubFirmPii(f);
         out.deleted++;
         log(`[lex retention] firm=${f.firmId} mode=live keys=${firmKeys.length} matters=${matters} chats=${chatPeople.length} feedback=${feedback} outcome=deleted`);
       });
     }
   } while (cursor !== "0" && ++pages < 100);
   return out;
+}
+
+/**
+ * After data deletion: clear personal contact details from the firm record, keeping only non-PII markers
+ * (ids, status, dates, plan flags). Owner name, phone and address always go, and so do former staff emails.
+ * The owner email is replaced for ended trials; paid firms keep it so the owner can resubscribe
+ * (their record is a billing record linked to Stripe).
+ */
+export const SCRUBBED = "[deleted]";
+export function scrubFirmPii(f: LexFirm): void {
+  f.adminName = SCRUBBED;
+  delete f.phone; delete f.address;
+  f.formerMembers = [];
+  f.members = [];
+  if (f.lapseReason === "trial_ended") {
+    f.granted = [];
+    f.adminEmail = `deleted@${f.firmId}.invalid`;
+  }
+  f.piiScrubbedAt = new Date().toISOString();
 }
 
 /**
