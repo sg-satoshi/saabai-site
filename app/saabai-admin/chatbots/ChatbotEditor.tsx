@@ -7,13 +7,15 @@ import { contrast } from "../../../lib/announce/core";
 import FaqBulkAdd from "./FaqBulkAdd";
 import GoalEditor, { EMPTY_GOAL } from "../../components/chatbot/GoalEditor";
 import type { GoalConfig } from "../../../lib/chatbot/goal";
+import EngageEditor from "../../components/chatbot/EngageEditor";
+import { DEFAULT_ENGAGE, type EngageConfig } from "../../../lib/chatbot/engage";
 
 export type EditorRow = {
   slug: string; name: string; plan: string;
   skin: { showPoweredBy?: boolean };
   resolved: PublicWidgetConfig;
   tone: Tone; knowledge: { facts: string; faqs: Faq[] };
-  goal?: GoalConfig | null; goalSource?: "saved" | "default" | "none";
+  goal?: GoalConfig | null; goalSource?: "saved" | "default" | "none"; engage?: EngageConfig;
 };
 
 const css = `
@@ -75,6 +77,9 @@ export default function ChatbotEditor({ row, onSaved }: { row: EditorRow; onSave
   const [goal, setGoal] = useState<GoalConfig>(() => row.goal ?? EMPTY_GOAL);
   const [goalErrs, setGoalErrs] = useState<Record<string, string>>({});
   const [goalMsg, setGoalMsg] = useState("");
+  const [engage, setEngage] = useState<EngageConfig>(() => row.engage ?? DEFAULT_ENGAGE);
+  const [engErrs, setEngErrs] = useState<Record<string, string>>({});
+  const [engMsg, setEngMsg] = useState("");
   const frame = useRef<HTMLIFrameElement>(null);
   const ready = useRef(false);
   const dirty = JSON.stringify(d) !== JSON.stringify(saved);
@@ -115,6 +120,14 @@ export default function ChatbotEditor({ row, onSaved }: { row: EditorRow; onSave
     setBusy(false);
     if (!a.ok) { setGoalErrs(a.j.fields ?? {}); setGoalMsg(a.j.error || "Couldn't save."); return; }
     setGoalMsg("Goal saved."); await onSaved();
+  }
+
+  async function saveEngage() {
+    setBusy(true); setEngMsg(""); setEngErrs({});
+    const a = await post({ action: "save_engage", engage });
+    setBusy(false);
+    if (!a.ok) { setEngErrs(a.j.fields ?? {}); setEngMsg(a.j.error || "Couldn't save."); return; }
+    setEngMsg("Playbook saved."); await onSaved();
   }
 
   const lowContrast = (fg: string, bgc: string) => isHex(fg) && isHex(bgc) && contrast(fg, bgc) < 4.5;
@@ -188,6 +201,15 @@ export default function ChatbotEditor({ row, onSaved }: { row: EditorRow; onSave
           <div className="bar">
             <button type="button" className="btn pri" disabled={busy} onClick={() => void saveGoal()} data-testid="goal-save">Save goal</button>
             {goalMsg && <span role="status" style={{ fontSize: 12.5, color: Object.keys(goalErrs).length ? "#b42318" : "#137a52" }}>{goalMsg}</span>}
+          </div>
+        </fieldset>
+
+        <fieldset data-testid="engage-section">
+          <h3>Conversion playbook</h3>
+          <EngageEditor value={engage} onChange={setEngage} errors={engErrs} />
+          <div className="bar">
+            <button type="button" className="btn pri" disabled={busy} onClick={() => void saveEngage()} data-testid="engage-save">Save playbook</button>
+            {engMsg && <span role="status" style={{ fontSize: 12.5, color: Object.keys(engErrs).length ? "#b42318" : "#137a52" }}>{engMsg}</span>}
           </div>
         </fieldset>
 

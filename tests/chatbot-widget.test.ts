@@ -90,7 +90,15 @@ test("widget script: one line install, session id, off, limit and error messages
   assert.match(js, /sessionId: state\.sid/); assert.match(js, /sessionStorage/); assert.match(js, /IDLE_MS = 30 \* 60 \* 1000/);
   assert.match(js, /j\.chatbotOff/); assert.match(js, /o\.s === 429/); assert.match(js, /o\.s === 403 \|\| o\.s === 404/); assert.match(js, /couldn't connect/);
   assert.match(js, /c\.active/, "stays hidden unless active"); assert.match(js, /poweredBy === false/);
-  assert.doesNotMatch(js, /lead|phone number|your email|document\.cookie|localStorage/i, "no lead capture, no cookies");
+  // Since the conversion playbook (#468): localStorage holds only nudge and review caps, and the
+  // end-of-chat email form shows only when the bot's emailCopy toggle AND the lead-capture flag are on.
+  assert.doesNotMatch(js, /lead|phone number|document\.cookie/i, "no lead capture wording, no cookies");
+  assert.match(js, /if \(eg\.emailCopy\) endForm = followForm\(\)/, "email form gated by config");
+  // localStorage keys are limited to the per-bot nudge cap, review-asked and returning-visitor flags. No ids or chat text.
+  const lsKeys = [...js.matchAll(/localStorage\.(?:getItem|setItem)\(([^,)]+)/g)].map((m) => m[1].trim());
+  assert.ok(lsKeys.length > 0);
+  for (const k of lsKeys) assert.match(k, /^KEY \+ ":(nd|rv|seen)"$/, `unexpected localStorage key ${k}`);
+  assert.doesNotMatch(js, /localStorage\.setItem\([^)]*(state|msgs|email|sid)/, "no chat text, email or session id in localStorage");
   assert.match(js, /attachShadow/);
   assert.doesNotMatch(js, /innerHTML\s*=\s*[^;'"<]*\b(m\.c|c\.botName|c\.greeting|j\.content)\b/, "visitor and bot text never goes through innerHTML");
   assert.match(js, /textContent/);

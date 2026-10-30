@@ -4,12 +4,15 @@ import React, { useEffect, useState } from "react";
 import "../../components/billing/billing.css";
 import GoalEditor, { EMPTY_GOAL } from "../../components/chatbot/GoalEditor";
 import type { GoalConfig } from "../../../lib/chatbot/goal";
+import EngageEditor from "../../components/chatbot/EngageEditor";
+import { DEFAULT_ENGAGE, type EngageConfig } from "../../../lib/chatbot/engage";
 
-type Data = { site: { name: string }; goal: GoalConfig | null; locked: string[] };
+type Data = { site: { name: string }; goal: GoalConfig | null; locked: string[]; engage: EngageConfig };
 
 export function ChatbotSettingsPanel({ readOnly }: { readOnly?: boolean }) {
   const [data, setData] = useState<Data | null>(null);
   const [goal, setGoal] = useState<GoalConfig>(EMPTY_GOAL);
+  const [engage, setEngage] = useState<EngageConfig>(DEFAULT_ENGAGE);
   const [err, setErr] = useState("");
   const [fields, setFields] = useState<Record<string, string>>({});
   const [ok, setOk] = useState("");
@@ -19,17 +22,17 @@ export function ChatbotSettingsPanel({ readOnly }: { readOnly?: boolean }) {
     fetch("/api/portal/chatbot").then(async (r) => {
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Couldn't load your chatbot");
-      setData(d); setGoal(d.goal ?? EMPTY_GOAL);
+      setData(d); setGoal(d.goal ?? EMPTY_GOAL); setEngage(d.engage ?? DEFAULT_ENGAGE);
     }).catch((e) => setErr((e as Error).message));
   }, []);
 
   async function save() {
     setBusy(true); setErr(""); setOk(""); setFields({});
     try {
-      const r = await fetch("/api/portal/chatbot", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ goal }) });
+      const r = await fetch("/api/portal/chatbot", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ goal, engage }) });
       const d = await r.json();
       if (!r.ok) { setFields(d.fields ?? {}); throw new Error(d.error || "Couldn't save"); }
-      setGoal(d.goal ?? EMPTY_GOAL); setOk("Saved. Your chatbot picks this up within about a minute.");
+      setGoal(d.goal ?? EMPTY_GOAL); setEngage(d.engage ?? DEFAULT_ENGAGE); setOk("Saved. Your chatbot picks this up within about a minute.");
     } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   }
 
@@ -46,6 +49,7 @@ export function ChatbotSettingsPanel({ readOnly }: { readOnly?: boolean }) {
       {ok && <div className="bl-ok" style={{ marginBottom: 12 }}>{ok}</div>}
       {err && <div className="bl-err" style={{ marginBottom: 12 }}>{err}</div>}
       <GoalEditor value={goal} onChange={setGoal} errors={fields} mode="client" readOnly={readOnly} />
+      <EngageEditor value={engage} onChange={setEngage} errors={fields} readOnly={readOnly} />
       <button className="bl-btn pri" onClick={() => void save()} disabled={busy || readOnly} data-testid="portal-chatbot-save">{busy ? "Saving" : "Save chatbot settings"}</button>
     </div>
   );

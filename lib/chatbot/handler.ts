@@ -4,6 +4,7 @@ import { getDefaultModel } from "../chat-config";
 import { getSiteBySlug } from "../site-registry";
 import { SLUG_RE, allowedHosts, callerHost, cleanMessages, hostAllowed, logOriginMiss, mappedHostsFor, originMode, slugLimited } from "../chat-origin";
 import { effectiveGoal, offMessage, promptAdditions } from "./core";
+import { effectiveEngage, engagePrompt, parseReview } from "./engage";
 import { goalPrompt, parseReply, resolveButtons } from "./goal";
 import { DISCLOSURE_ONCE_RULE, NOT_SURE_RULE } from "./disclosure";
 import { isNotSureReply } from "./events";
@@ -108,13 +109,17 @@ Keep responses under 120 words. End with a helpful next step when relevant.`;
     const goal = effectiveGoal(slug, config.goal);
     const gp = goalPrompt(goal);
     if (gp) system = `${system}\n\n${gp}`;
+    const engage = effectiveEngage(config.engage);
+    const ep = config.engage ? engagePrompt(engage, config.knowledge?.faqs.length ?? 0) : "";
+    if (ep) system = `${system}\n\n${ep}`;
 
     const model = getDefaultModel();
     const result = await generateText({ model, system, messages: chatMessages, maxOutputTokens: 600 });
     const u = result.usage as { inputTokens?: number; outputTokens?: number } | undefined;
     await recordTokens(slug, u?.inputTokens ?? 0, u?.outputTokens ?? 0);
     const parsed = parseReply(noDashes(result.text), goal);
-    const text = parsed.content;
+    const rv = parseReview(parsed.content, engage);
+    const text = rv.content;
     logChatTurn({
       bot: slug,
       siteId: slug,
@@ -125,11 +130,13 @@ Keep responses under 120 words. End with a helpful next step when relevant.`;
       assistantText: text,
     });
     if (isNotSureReply(text)) await recordChatEvent(slug, "not_sure");
-    if (!gp) return Response.json({ content: text }, { headers: h });
+    if (rv.review) await recordChatEvent(slug, "review_shown");
+    const review = rv.review ? { url: engage.reviews.url } : undefined;
+    if (!gp) return Response.json({ content: text, ...(review ? { review } : {}) }, { headers: h });
     const buttons = resolveButtons(goal);
     const button = parsed.button === "cta" ? buttons.cta : parsed.button === "fallback" ? buttons.fallback : null;
     if (button) await recordChatEvent(slug, "cta_shown");
-    return Response.json({ content: text, quickReplies: parsed.quickReplies, cta: button ? { ...button, kind: parsed.button } : null }, { headers: h });
+    return Response.json({ content: text, quickReplies: parsed.quickReplies, cta: button ? { ...button, kind: parsed.button } : null, ...(review ? { review } : {}) }, { headers: h });
   } catch (e) {
     console.error("chat handler error:", e);
     return say("Failed to respond", 500, h);

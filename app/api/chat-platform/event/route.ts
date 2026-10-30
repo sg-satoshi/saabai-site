@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { domainsForBot } from "@/lib/chatbot/personas";
-import { isWidgetEvent } from "@/lib/chatbot/events";
+import { isWidgetEvent, type WidgetEventName } from "@/lib/chatbot/events";
 import { cors, optionsResponse, originDecision } from "@/lib/chatbot/handler";
 import { recordChatEvent } from "@/lib/chatbot/store";
 import { SLUG_RE } from "@/lib/chat-origin";
@@ -31,9 +31,10 @@ export async function POST(req: NextRequest) {
   }
 
   // A CTA click counts as the goal reached. A fallback click counts as the fallback goal reached.
-  const event = body.event as "handoff" | "cta_click" | "fallback_click";
+  const event = body.event as WidgetEventName;
   await recordChatEvent(slug, event);
   if (event === "cta_click") await recordChatEvent(slug, "goal_reached");
   if (event === "fallback_click") await recordChatEvent(slug, "fallback_reached");
+  // Field events say a field was filled, never its value. form_submitted is server-side only.
   return Response.json({ ok: true }, { headers });
 }

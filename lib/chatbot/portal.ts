@@ -3,6 +3,7 @@
  * site. A slug in the request is never trusted: if one is sent and it is not theirs, refuse.
  */
 import { BESPOKE_SLUGS, effectiveGoal } from "./core";
+import { effectiveEngage, validateEngage, type EngageConfig } from "./engage";
 import { GOAL_FIELDS, GOAL_LABEL, GOAL_LIMITS, GOAL_TYPES, mergeClientGoal, validateGoal, type GoalConfig } from "./goal";
 
 export type PortalBotDecision =
@@ -16,10 +17,11 @@ export function decidePortalBot(opts: { site: { slug: string; name: string } | n
   return { ok: true, slug: opts.site.slug, siteName: opts.site.name };
 }
 
-export function portalView(slug: string, stored: GoalConfig | undefined) {
+export function portalView(slug: string, stored: GoalConfig | undefined, engage?: Partial<EngageConfig>) {
   const goal = effectiveGoal(slug, stored) ?? null;
   return {
     goal,
+    engage: effectiveEngage(engage),
     locked: goal?.locked ?? [],
     options: GOAL_TYPES.map((id) => ({ id, label: GOAL_LABEL[id] })),
     fields: GOAL_FIELDS,
@@ -34,4 +36,8 @@ export function clientSave(slug: string, stored: GoalConfig | undefined, input: 
   const v = validateGoal(raw);
   if (!v.ok) return v;
   return { ok: true, value: mergeClientGoal(effectiveGoal(slug, stored), v.value) };
+}
+
+export function clientSaveEngage(input: unknown) {
+  return validateEngage(input);
 }

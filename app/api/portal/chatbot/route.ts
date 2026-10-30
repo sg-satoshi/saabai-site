@@ -8,7 +8,7 @@ import { rejectIfLoginAs } from "../../../../lib/login-as";
 import { resolvePortalBilling } from "../../../../lib/billing/portal-auth";
 import { listSites } from "../../../../lib/site-registry";
 import { getConfig, saveConfig } from "../../../../lib/chatbot/store";
-import { clientSave, decidePortalBot, portalView } from "../../../../lib/chatbot/portal";
+import { clientSave, clientSaveEngage, decidePortalBot, portalView } from "../../../../lib/chatbot/portal";
 import { addChangeLogEntry } from "../../../../lib/change-log";
 
 export const runtime = "nodejs";
@@ -28,7 +28,7 @@ export async function GET(req: Request) {
   const d = decidePortalBot({ site });
   if (!d.ok) return Response.json({ error: d.error }, { status: d.status });
   const cfg = await getConfig(d.slug);
-  return Response.json({ site: { name: d.siteName }, ...portalView(d.slug, cfg.goal) });
+  return Response.json({ site: { name: d.siteName }, ...portalView(d.slug, cfg.goal, cfg.engage) });
 }
 
 export async function POST(req: Request) {
@@ -36,14 +36,16 @@ export async function POST(req: Request) {
   if (blocked) return blocked;
   const { who, site } = await clientSite(req);
   if (!who) return Response.json({ error: "Not authenticated" }, { status: 401 });
-  const body = (await req.json().catch(() => null)) as { slug?: unknown; goal?: unknown } | null;
+  const body = (await req.json().catch(() => null)) as { slug?: unknown; goal?: unknown; engage?: unknown } | null;
   if (!body) return Response.json({ error: "Bad request" }, { status: 400 });
   const d = decidePortalBot({ site, requestedSlug: body.slug });
   if (!d.ok) return Response.json({ error: d.error }, { status: d.status });
   const cfg = await getConfig(d.slug);
   const r = clientSave(d.slug, cfg.goal, body.goal);
   if (!r.ok) return Response.json({ error: "Some fields need fixing. Nothing was saved.", fields: r.errors }, { status: 400 });
-  await saveConfig({ ...cfg, goal: r.value, updatedBy: `client:${who.email}` });
+  const e = body.engage === undefined ? null : clientSaveEngage(body.engage);
+  if (e && !e.ok) return Response.json({ error: "Some fields need fixing. Nothing was saved.", fields: e.errors }, { status: 400 });
+  await saveConfig({ ...cfg, goal: r.value, ...(e && e.ok ? { engage: e.value } : {}), updatedBy: `client:${who.email}` });
   await addChangeLogEntry({ siteId: d.slug, siteName: d.siteName, summary: `Chatbot goal updated by the client (${r.value.primary})`, source: "manual", authorName: who.email }).catch(() => {});
-  return Response.json({ ok: true, ...portalView(d.slug, r.value) });
+  return Response.json({ ok: true, ...portalView(d.slug, r.value, e && e.ok ? e.value : cfg.engage) });
 }

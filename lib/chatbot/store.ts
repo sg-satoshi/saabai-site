@@ -22,7 +22,7 @@ export async function getConfig(slug: string): Promise<ChatbotConfig> {
     const v = await r.get<unknown>(cfgKey(slug));
     const o = (typeof v === "string" ? JSON.parse(v) : v) as Partial<ChatbotConfig> | null;
     if (!o || typeof o !== "object") return base;
-    return { ...base, plan: isPlan(o.plan) ? o.plan : "presence", skin: (o.skin as ChatbotConfig["skin"]) ?? {}, ...(o.tone ? { tone: o.tone } : {}), ...(o.knowledge ? { knowledge: o.knowledge } : {}), ...(o.goal && typeof o.goal === "object" ? { goal: o.goal } : {}), updatedAt: o.updatedAt, updatedBy: o.updatedBy };
+    return { ...base, plan: isPlan(o.plan) ? o.plan : "presence", skin: (o.skin as ChatbotConfig["skin"]) ?? {}, ...(o.tone ? { tone: o.tone } : {}), ...(o.knowledge ? { knowledge: o.knowledge } : {}), ...(o.goal && typeof o.goal === "object" ? { goal: o.goal } : {}), ...(o.engage && typeof o.engage === "object" ? { engage: o.engage } : {}), updatedAt: o.updatedAt, updatedBy: o.updatedBy };
   } catch {
     return base;
   }
