@@ -236,3 +236,36 @@ a.btn{text-decoration:none}
 .onb-scroll{scrollbar-width:none}
 .onb-scroll::-webkit-scrollbar{display:none}
 .onb-admin .onb-error{color:var(--bad);margin:0}
+
+/* Chat history and LeadGen clients fill the admin content area. .pg already pads the page. */
+.ch-page{width:100%;min-width:0;container-type:inline-size}
+.ch-pick{display:block;margin:0 0 20px;font-size:13px;color:var(--n-500)}
+.ch-pick select{margin-left:8px;font:400 13px var(--font-admin-sans),system-ui,sans-serif;border:1px solid var(--n-300);border-radius:var(--r-md);background:var(--n-0);color:var(--navy-900);padding:6px 8px}
+.ch-bots{display:flex;flex-wrap:wrap;gap:8px}
+.ch-alias{color:var(--n-500);font-size:13px;margin:0 0 16px}
+.ch-insights{width:100%;min-width:0;display:grid;gap:24px}
+.ch-card{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--r-lg);box-shadow:var(--sh-1);min-width:0}
+.ch-card-bd{padding:20px 24px}
+.ch-h{margin:0 0 8px;color:var(--navy-900);font-size:18px;line-height:28px;font-weight:600;letter-spacing:-.01em}
+.ch-note{margin:0 0 12px;color:var(--n-500);font-size:13px}
+.ch-funnel{width:100%;border-collapse:collapse;font-size:14px}
+.ch-funnel td{padding:8px 0;border-bottom:1px solid var(--n-100);white-space:normal;font-size:14px}
+.ch-funnel tr:last-child td{border-bottom:0}
+.ch-funnel .r{text-align:right;font-weight:600;color:var(--n-900)}
+.ch-rate{text-align:right;color:var(--n-500);font-weight:400;width:90px}
+.ch-split{display:grid;gap:16px;min-width:0}
+.ch-list{display:flex;flex-direction:column;gap:8px;min-width:0}
+.ch-list .btn{width:100%;justify-content:flex-start;text-align:left;height:auto;min-height:30px;white-space:normal}
+.ch-thread{min-width:0;border:1px solid var(--n-100);border-radius:var(--r-md);padding:16px;background:var(--n-25)}
+.ch-msg{margin:8px 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;color:var(--n-900)}
+.lg-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.lg-item{display:flex;flex-direction:column;gap:4px;padding:16px 18px;text-decoration:none;color:var(--navy-900)}
+.lg-item span{color:var(--n-500);font-size:13px}
+.lg-fields{display:grid;grid-template-columns:160px minmax(0,1fr);gap:8px 16px;margin:0}
+.lg-fields dt{color:var(--n-500);font-size:13px}
+.lg-fields dd{margin:0;min-width:0;overflow-wrap:anywhere;color:var(--n-900)}
+@container (min-width: 760px){
+  .ch-split{grid-template-columns:minmax(240px,320px) minmax(0,1fr);align-items:start}
+  .ch-thread{max-height:calc(100vh - 220px);overflow-y:auto}
+  .lg-fields{grid-template-columns:160px minmax(0,1fr) 160px minmax(0,1fr)}
+}

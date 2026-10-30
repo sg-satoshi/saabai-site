@@ -48,10 +48,10 @@ export const minLevel = (a: Level, b: Level): Level => (RANK[a] <= RANK[b] ? a :
 const AREA_PREFIXES: Record<Area, string[]> = {
   coupons: ["/saabai-admin/marketing/offers", "/api/admin/coupons"],
   products: ["/saabai-admin/products", "/api/admin/products"],
-  chatbots: ["/saabai-admin/chatbots", "/api/admin/chatbots", "/saabai-admin/site-factory", "/api/site-factory", "/api/ai-agent/agents", "/api/ai-agent/overview", "/api/ai-agent/ingest"],
+  chatbots: ["/saabai-admin/chatbots", "/saabai-admin/chat-history", "/api/admin/chatbots", "/saabai-admin/site-factory", "/api/site-factory", "/api/ai-agent/agents", "/api/ai-agent/overview", "/api/ai-agent/ingest"],
   experiments: ["/saabai-admin/experiments", "/api/admin/experiments"],
   orders: ["/saabai-admin/orders", "/api/admin/orders"],
-  customers: ["/saabai-admin/customers", "/api/admin/customers"],
+  customers: ["/saabai-admin/customers", "/saabai-admin/leadgen-clients", "/api/admin/customers"],
   announcements: ["/saabai-admin/announcements", "/api/admin/announcements"],
   billing: ["/saabai-admin/payments", "/saabai-admin/plans", "/api/admin/billing", "/api/admin/invoices", "/api/admin/invoice-clients", "/api/admin/payments"],
   roadmap: ["/saabai-admin/roadmap", "/api/admin/roadmap"],
