@@ -434,3 +434,9 @@ test("the demo is mounted on the homepage and /legal, and the privacy policy nam
     assert.ok(!DASH.test(read(file)), file);
   }
 });
+
+test("blueprint credit block uses the approved line, no '100% credited'", () => {
+  const bp = read("app/blueprint/page.tsx");
+  assert.doesNotMatch(bp, /100% credited/i);
+  assert.match(bp, /From \{TIERS\.starter\.priceLabel\}\. The fee is credited if you build with Saabai within 30 days\./);
+});
