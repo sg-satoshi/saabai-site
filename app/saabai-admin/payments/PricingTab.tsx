@@ -72,7 +72,6 @@ export function PricingTab() {
     const d = await fetch(`/api/admin/billing-clients/${id}/lines`).then((r) => r.json()).catch(() => ({}));
     setLines(d.lines || []);
   }, []);
-  useEffect(() => { void loadLines(clientId); }, [clientId, loadLines]);
 
   const edit = (i: number, patch: Partial<Line>) => { setLines((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l))); setDirty(true); renew(); };
   const remove = (i: number) => { setLines((ls) => ls.filter((_, j) => j !== i)); setDirty(true); renew(); };
@@ -121,7 +120,7 @@ export function PricingTab() {
         <div style={{ display: "flex", gap: 12, alignItems: "end", flexWrap: "wrap" }}>
           <div style={{ minWidth: 260, flex: 1 }}>
             <label style={lbl}>Client</label>
-            <select style={inp} value={clientId} onChange={(e) => setClientId(e.target.value)}>
+            <select style={inp} value={clientId} onChange={(e) => { setClientId(e.target.value); void loadLines(e.target.value); }}>
               <option value="">Choose a client</option>
               {clients.map((c) => <option key={c.id} value={c.id}>{c.firm ? `${c.firm} (${c.name})` : c.name}</option>)}
             </select>
