@@ -61,6 +61,16 @@ export const publicPageMeta = {
     description:
       "Lex is an AI legal assistant for Australian law firms, from Saabai on the Gold Coast. It cites ATO rulings and Commonwealth legislation, with a 60-day free trial and no card needed.",
   }),
+  legalTrustDeeds: pageMeta({
+    path: "/legal/ai-trust-deed-drafting",
+    title: "AI Trust Deed Drafting for Australian Law Firms | Lex by Saabai",
+    description: "Lex drafts discretionary and unit trust deeds and trust distribution resolutions for review by Australian lawyers. Drafting assistance only, not legal advice, with a 60-day free trial.",
+  }),
+  legalResearch: pageMeta({
+    path: "/legal/ai-legal-research",
+    title: "AI Legal Research for Australian Law Firms | Lex by Saabai",
+    description: "Lex searches ATO rulings, Commonwealth legislation, ASIC and the Fair Work Commission for Australian law firms and cites every source. Research assistance only, not legal advice.",
+  }),
   legalCompare: pageMeta({
     path: "/legal/lex-vs-ai-legal-tools",
     title: "Lex vs other AI legal tools 2026 | Saabai",
