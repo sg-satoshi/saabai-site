@@ -32,7 +32,10 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+import TrialBanner from "./_components/TrialBanner";
+import Watermark from "./_components/Watermark";
+
 export default function LexLayout({ children }: { children: React.ReactNode }) {
-  return <div className={`${inter.variable} ${mono.variable} ${serif.variable}`}>{children}<FeedbackButton />
+  return <div className={`${inter.variable} ${mono.variable} ${serif.variable}`}><TrialBanner />{children}<Watermark /><FeedbackButton />
       <HelpAssistantMount /></div>;
 }
