@@ -1,5 +1,5 @@
 /**
- * Lex help assistant: prompt, reply parsing and routing. The model call itself is in
+ * Lex Assist: prompt, reply parsing and routing. The model call itself is in
  * app/api/lex-help/route.ts through LexGateway (masking, fail closed). Nothing here files feedback:
  * the model may only PROPOSE a log entry, and the panel files it via /api/lex-feedback after the
  * user confirms.

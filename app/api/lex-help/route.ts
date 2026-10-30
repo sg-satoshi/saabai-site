@@ -1,5 +1,5 @@
 /**
- * POST /api/lex-help: the in-app Lex help assistant. Signed-in Lex users only (proxy session check
+ * POST /api/lex-help: the in-app Lex Assist. Signed-in Lex users only (proxy session check
  * plus resolveReviewActor). Rate limits and size caps: the shared chat guard (CHAT_API in lib/chat-guard).
  *
  *   {messages, conversationId}  -> {reply, offer?, offerId?}

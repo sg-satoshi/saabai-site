@@ -5,7 +5,7 @@ import type { Redis } from "@upstash/redis";
 export const CHAT_API = [
   "/api/chat", // Mia (saabai.ai)
   "/api/lex-chat",
-  "/api/lex-help", // in-app Lex help assistant (signed in; same per-IP limits and size caps as Lex chat)
+  "/api/lex-help", // in-app Lex Assist (signed in; same per-IP limits and size caps as Lex chat)
   "/api/lmm-chat",
   "/api/nextinvestment-chat",
   "/api/tributum-chat",
