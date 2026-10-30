@@ -26,7 +26,7 @@ export default async function LexTrialPage({ searchParams }: { searchParams: Pro
           </p>
         </div>
       </main>
-      <Footer />
+      <Footer lex />
     </div>
   );
 }
