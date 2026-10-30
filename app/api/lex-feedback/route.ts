@@ -16,7 +16,10 @@ const PER_HOUR = 20;
 export async function POST(req: Request) {
   const actor = await resolveReviewActor(req);
   if (!actor) return Response.json({ error: "Sign in to send feedback" }, { status: 401 });
-  const v = validateFeedback(await req.json().catch(() => null));
+  const body = (await req.json().catch(() => null)) as { source?: unknown } | null;
+  const v = validateFeedback(body);
+  // The help assistant files here too, only after the user taps "Yes, log it" in the panel.
+  const source = body?.source === "assistant" ? "assistant" as const : "button" as const;
   if (!v.ok) return Response.json({ error: v.error, field: v.field }, { status: 400 });
   const user = actor.kind === "firm" ? actor.email : `admin:${actor.id}`;
   try {
@@ -29,7 +32,7 @@ export async function POST(req: Request) {
     }
     const item = await saveFeedback(v.value, {
       firm: actor.kind === "firm" ? actor.firm : "saabai-staff", user,
-      browser: req.headers.get("user-agent") ?? "", appVersion: appVersion(),
+      browser: req.headers.get("user-agent") ?? "", appVersion: appVersion(), source,
     });
     await lexAlert(feedbackAlertLine(item), { prefix: "Lex feedback", title: "New Lex feedback" });
     return Response.json({ ok: true, id: item.id, screenshotSkipped: v.value.screenshotRejected });
