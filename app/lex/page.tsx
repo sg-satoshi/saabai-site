@@ -26,6 +26,8 @@ import { Icon } from "./_components/icons";
 import { exportAnswerToWord } from "./_components/exportAnswer";
 import { exportDraftToWord } from "./_components/exportDraft";
 import { DraftingView } from "./_components/Drafting";
+import { MatterSaveBar, type MatterSaveState } from "./_components/MatterSaveBar";
+import { DOCS_FLOW_COPY, canSaveToMatter, matterSaveNotice, reviewMatterSaveNotice } from "../../lib/lex-docs-flow";
 import type { PrepState } from "../../lib/lex-doc-extract";
 import { hasProgress, parseProgress, progressKey } from "../../lib/lex-draft-progress";
 import { AccountView, InvoicesView } from "./_components/Account";
@@ -405,18 +407,19 @@ export default function LexPage() {
     setMatterBusy(false);
   }
   /** Saves a snapshot to a matter. Skips when nothing changed since the last save. */
-  async function attachToMatter(matterId: string, item: { ref: string; kind: MatterItem["kind"]; title: string; data: unknown }) {
+  async function attachToMatter(matterId: string, item: { ref: string; kind: MatterItem["kind"]; title: string; data: unknown }): Promise<boolean> {
     const sig = JSON.stringify(item).length + ":" + item.title;
     const key = `${matterId}|${item.ref}`;
-    if (syncedRef.current[key] === sig) return;
+    if (syncedRef.current[key] === sig) return true;
     syncedRef.current[key] = sig;
     try {
       const r = await fetch(`/api/lex-matters/${encodeURIComponent(matterId)}/items`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(item) });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) { delete syncedRef.current[key]; return; }
+      if (!r.ok) { delete syncedRef.current[key]; return false; }
       if (d.matter) setMatters(prev => prev.map(m => m.id === d.matter.id ? d.matter : m));
       if (d.item && openMatterId === matterId) setMatterItems(prev => prev ? [d.item, ...prev.filter(i => i.ref !== d.item.ref)] : prev);
-    } catch { delete syncedRef.current[key]; }
+      return true;
+    } catch { delete syncedRef.current[key]; return false; }
   }
   async function removeMatterItem(ref: string) {
     if (!openMatterId) return;
@@ -440,7 +443,8 @@ export default function LexPage() {
     if (openMatterId) setActiveMatterId(openMatterId);
   }
 
-  // Work done while a matter is active is saved to it, so the whole firm can open it.
+  // Research done while a matter is active is saved to it automatically (disclosed on screen and in /privacy),
+  // so the whole firm can open it. Finished drafts and reviews are only saved with Save to matter.
   const hashText = (t: string) => { let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
   useEffect(() => {
     if (loading && activeMatterId && activeId) setThreads(prev => prev.map(t => t.id === activeId && !t.matterId ? { ...t, matterId: activeMatterId } : t));
@@ -457,19 +461,25 @@ export default function LexPage() {
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, researchActive, activeThread?.messages.length, activeThread?.title, matters.length]);
-  useEffect(() => {
-    if (draftLoading || draftQALoading || !draftText.trim() || !activeMatterId || mode !== "draft") return;
+  // Finished drafts and reviews are only saved to a matter when the user presses Save to matter.
+  const [matterSaved, setMatterSaved] = useState<Record<string, MatterSaveState>>({});
+  function draftMatterItem() {
     const name = DOCUMENT_TYPES.find(d => d.id === draftTypeId)?.name ?? "Document";
-    attachToMatter(activeMatterId, { ref: `draft:${hashText(draftText.slice(0, 400))}`, kind: "draft", title: name, data: { text: draftText, docType: draftTypeId, qa: draftQA } });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftLoading, draftQALoading]);
-  useEffect(() => {
-    if (reviewLoading || !reviewReport || !activeMatterId || mode !== "review") return;
-    const title = `${reviewReport.documentType || "Document"} review${reviewFile?.name ? `: ${reviewFile.name}` : ""}`;
-    attachToMatter(activeMatterId, { ref: `review:${hashText((reviewDocText || reviewReport.summary || "").slice(0, 600))}`, kind: "review", title,
-      data: { report: reviewReport, docText: reviewDocText.slice(0, 120000), fileName: reviewFile?.name ?? null } });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reviewLoading, reviewReport]);
+    return { ref: `draft:${hashText(draftText.slice(0, 400))}`, kind: "draft" as const, title: name, data: { text: draftText, docType: draftTypeId, qa: draftQA } };
+  }
+  function reviewMatterItem() {
+    const title = `${reviewReport?.documentType || "Document"} review${reviewFile?.name ? `: ${reviewFile.name}` : ""}`;
+    return { ref: `review:${hashText((reviewDocText || reviewReport?.summary || "").slice(0, 600))}`, kind: "review" as const, title,
+      data: { report: reviewReport, docText: reviewDocText.slice(0, 120000), fileName: reviewFile?.name ?? null } };
+  }
+  async function saveToMatter(kind: "draft" | "review") {
+    if (!activeMatterId) return;
+    const item = kind === "draft" ? draftMatterItem() : reviewMatterItem();
+    const k = `${activeMatterId}|${item.ref}`;
+    setMatterSaved(prev => ({ ...prev, [k]: "saving" }));
+    const ok = await attachToMatter(activeMatterId, item);
+    setMatterSaved(prev => ({ ...prev, [k]: ok ? "saved" : "error" }));
+  }
 
   function newThread() {
     // Starting new research stops any answer still in flight (its thread keeps just the question).
@@ -1113,6 +1123,9 @@ export default function LexPage() {
         {activeMatter && (mode === "research" || mode === "draft" || mode === "review") && (
           <MatterBar matter={activeMatter} onOpen={() => openMatterDetail(activeMatter.id)} onLeave={() => setActiveMatterId(null)} />
         )}
+        {activeMatter && mode === "research" && (
+          <div className="lx-matter-save" style={{ padding: "6px 16px", fontSize: 13 }}>{DOCS_FLOW_COPY.researchMatterNote}</div>
+        )}
 
         {mode === "matters" && (openMatter ? (
           <MatterDetail key={openMatter.id} matter={openMatter} items={matterItems} active={activeMatterId === openMatter.id}
@@ -1224,6 +1237,15 @@ export default function LexPage() {
           />
         )}
 
+        {mode === "draft" && activeMatter && (
+          <MatterSaveBar
+            show={canSaveToMatter({ activeMatterId, hasResult: !!draftText.trim(), busy: draftLoading || draftQALoading })}
+            state={matterSaved[`${activeMatter.id}|${draftText.trim() ? draftMatterItem().ref : ""}`]}
+            notice={matterSaveNotice(activeMatter.name)} note={DOCS_FLOW_COPY.finishedDraftsNote}
+            onSave={() => saveToMatter("draft")}
+          />
+        )}
+
         {mode === "review" && (
           <ReviewView
             matterId={activeMatterId ?? undefined}
@@ -1244,6 +1266,15 @@ export default function LexPage() {
             onExport={(comparison) => { if (reviewReport) exportReviewToWord({ report: reviewReport, fileName: reviewInputMode === "upload" ? reviewFile?.name : undefined, firmName, comparison }); }}
             onResearch={(q) => { setMode("research"); newThread(); setInput(q); setTimeout(() => inputRef.current?.focus(), 0); }}
             onReset={() => { setReviewReport(null); setReviewDocText(""); setReviewError(null); setSubmitDone(false); setSubmitError(null); }}
+          />
+        )}
+
+        {mode === "review" && activeMatter && (
+          <MatterSaveBar
+            show={canSaveToMatter({ activeMatterId, hasResult: !!reviewReport, busy: reviewLoading })}
+            state={matterSaved[`${activeMatter.id}|${reviewReport ? reviewMatterItem().ref : ""}`]}
+            notice={reviewMatterSaveNotice(activeMatter.name)} note={DOCS_FLOW_COPY.reviewNote}
+            onSave={() => saveToMatter("review")}
           />
         )}
 

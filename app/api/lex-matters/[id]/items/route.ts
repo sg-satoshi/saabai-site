@@ -5,6 +5,9 @@
  */
 import { matterActor, json } from "../../../../../lib/lex-matter-actor";
 import { putItem, removeItem } from "../../../../../lib/lex-matters";
+import { maskResearchMatterItem } from "../../../../../lib/lex-privacy/thread-attachments";
+import { lexFirmFromRequest } from "../../../../../lib/lex-privacy/firm";
+import { matterPartiesFor } from "../../../../../lib/lex-privacy/matter-parties";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,7 +20,9 @@ export async function POST(req: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") return json(400, { error: "Invalid request." });
-  const r = await putItem(who.firm, id, who.by, body);
+  // Research items: attachment text is masked before it is stored, the same way saved threads are.
+  const { item } = await maskResearchMatterItem(body as { kind?: unknown; ref?: unknown; data?: unknown }, lexFirmFromRequest(req, "lex-internal"), id, (m) => matterPartiesFor(req, m));
+  const r = await putItem(who.firm, id, who.by, item);
   if ("error" in r) return json(r.error === "not_found" ? 404 : 400, { error: r.error === "not_found" ? "Matter not found." : r.error });
   return json(200, r);
 }

@@ -28,7 +28,27 @@ const LEX_OCR_EXCLUDES = [
   "./node_modules/@napi-rs/canvas-linux-x64-musl/**",
 ];
 
+// Security headers. Global ones are safe everywhere (client sites, widgets, embeds).
+export const GLOBAL_SECURITY_HEADERS = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  // Microphone stays allowed for the homepage voice demo on our own origin.
+  { key: "Permissions-Policy", value: "camera=(), geolocation=(), payment=(), usb=(), microphone=(self)" },
+];
+// Signed-in surfaces must never be framed by another site (clickjacking). Public embeds (/embed, /lex-widget) are not listed.
+export const NO_FRAME_HEADERS = [
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+];
+export const NO_FRAME_PATHS = [
+  "/saabai-admin", "/saabai-admin/:path*", "/admin", "/admin/:path*", "/login", "/login/:path*",
+  "/dashboard", "/dashboard/:path*", "/client-portal", "/client-portal/:path*", "/lex", "/lex/:path*",
+  "/forgot-password", "/reset-password", "/reset-password/:path*", "/leadgen/portal", "/leadgen-dashboard",
+  "/mission-control", "/mission-control/:path*", "/pulse", "/edge", "/edge/:path*", "/portal", "/portal/:path*",
+];
+
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   serverExternalPackages: ["mammoth", "pdf-parse", "tesseract.js", "tesseract.js-core", "@napi-rs/canvas", "@huggingface/transformers", "onnxruntime-node", "sharp"],
   // Members-only Wholesale files live outside public/ and are read from disk
   // by this route, so make sure they're bundled with it.
@@ -61,7 +81,9 @@ const nextConfig: NextConfig = {
   async headers() {
     const noindex = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
     const embed = [{ source: "/embed/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=300, stale-while-revalidate=86400" }] }];
-    return embed.concat(["/saabai-admin", "/saabai-admin/:path*", "/admin/:path*", "/login", "/login/:path*", "/dashboard/:path*", "/dashboard", "/client-portal", "/forgot-password", "/insights", "/ai-news", "/ig"].map(
+    const security = [{ source: "/:path*", headers: GLOBAL_SECURITY_HEADERS }]
+      .concat(NO_FRAME_PATHS.map((source) => ({ source, headers: NO_FRAME_HEADERS })));
+    return security.concat(embed).concat(["/saabai-admin", "/saabai-admin/:path*", "/admin/:path*", "/login", "/login/:path*", "/dashboard/:path*", "/dashboard", "/client-portal", "/forgot-password", "/insights", "/ai-news", "/ig"].map(
       (source) => ({ source, headers: noindex })
     ));
   },

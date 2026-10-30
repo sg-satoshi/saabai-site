@@ -97,3 +97,23 @@ export async function maskThreadAttachments(
   }
   return { threads: out, stats };
 }
+
+/**
+ * Masks the attachment text in a research item before it is saved to a matter, with the same pipeline
+ * (and the same firm key) as saved threads. Typed questions keep real names, as with threads. Draft and
+ * review items are returned unchanged. Never throws: an attachment that cannot be masked is dropped.
+ */
+export async function maskResearchMatterItem<T extends { kind?: unknown; ref?: unknown; data?: unknown }>(
+  item: T,
+  firm: string,
+  matterId: string,
+  partiesFor: (matterId: unknown) => Promise<MatterParty[]> = async () => [],
+): Promise<{ item: T; stats: AttachmentStats }> {
+  const empty: AttachmentStats = { masked: 0, dropped: 0, cached: 0 };
+  const data = item?.data as { messages?: unknown } | null | undefined;
+  if (item?.kind !== "research" || !data || typeof data !== "object" || !Array.isArray(data.messages)) return { item, stats: empty };
+  const threadId = `m_${String(item.ref ?? "").replace(/^research:/, "")}`;
+  const { threads, stats } = await maskThreadAttachments([{ id: threadId, matterId, messages: data.messages }], firm, partiesFor);
+  const messages = (threads[0] as { messages: unknown[] }).messages;
+  return { item: { ...item, data: { ...data, messages } }, stats };
+}
