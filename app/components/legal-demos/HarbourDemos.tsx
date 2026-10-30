@@ -23,20 +23,20 @@ export function LexWebsiteDemo() {
   );
 }
 
-/** Phone demo. Lex is the legal assistant. Lachie is the voice demo. Live phone answering is coming soon. */
+/** Phone demo. Lex is the legal assistant. Lachie is a browser voice demo only. */
 export function LachieLegalDemo({ ready }: { ready: boolean }) {
   return (
     <div className="lx-demo-grid">
       <div className="lx-head">
         <div className="lx-eyebrow">Browser voice demo</div>
-        <LachieLockup as="h2" second="Legend" descriptor="A demo of Saabai's AI voice receptionist. Live phone answering is coming soon." />
+        <LachieLockup as="h2" second="Legend" descriptor="A browser demo of Saabai's AI voice receptionist." />
         <p className="lx-demo-line">Lex is the legal assistant on this page. Lachie is this browser demo, not a phone line. He is not the website chatbot above, and he is not the Lex research workspace.</p>
         <p className="lx-demo-fine">Harbour Street Legal is an example firm. Nothing you say is sent to a real firm.</p>
       </div>
       <div className="lx-lachie-demo">
         <VoiceDemo ready={ready} variant="legal" />
         <div className="lx-demo-cta">
-          <p>Live phone answering is coming soon. Book a call if you want to hear how this demo could fit your firm.</p>
+          <p>Book a call if you want to hear how this demo could fit your firm.</p>
           <a className="lx-btn lx-pri" href="/contact">Talk to Saabai</a>
         </div>
       </div>
