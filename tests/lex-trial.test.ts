@@ -274,5 +274,7 @@ test("paid founding conversion counts the cap once (FOUNDING_CAP_COUNTS default)
   const form = readFileSync("app/lex/signup/trial/TrialForm.tsx", "utf8") + readFileSync("app/lex/signup/trial/page.tsx", "utf8");
   assert.doesNotMatch(form, /[Ii]nvite code|[Bb]y invitation|beta invite/);
   assert.match(form, /name="website"/, "honeypot kept");
+  const verifyPage = readFileSync("app/lex/signup/trial/verify/VerifyTrial.tsx", "utf8") + readFileSync("app/lex/signup/trial/verify/page.tsx", "utf8");
+  assert.doesNotMatch(form + verifyPage, /\$\s?\d|AUD|a month/, "no public Lex price on trial pages");
   assert.match(form, /Don&apos;t pay a cent until you&apos;ve tried it/);
 });
