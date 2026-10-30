@@ -27,7 +27,6 @@ const FAQS: { q: string; a: string[] }[] = [
     q: "Website receptionist or phone receptionist?",
     a: [
       "This page is the website receptionist. It chats with people on your website and keeps a log of each chat.",
-      "Phone answering with Lachie, Saabai's AI voice receptionist, is coming soon. It is not live.",
     ],
   },
   {
@@ -139,12 +138,11 @@ export default function AiReceptionistGoldCoastPage() {
         <div className="wrap" style={{ maxWidth: 860 }}>
           <div className="card">
             <div className="voice-launch">
-              <LachiePortrait alt="Lachie, Saabai's AI voice receptionist" />
+              <LachiePortrait alt="Lachie, Saabai's AI voice demo" />
               <LachieLockup as="h2" second="Legend" descriptor="Saabai's AI receptionist." />
             </div>
             <div style={{ display: "grid", gap: 12, marginTop: 20, fontSize: 17, textAlign: "center" }}>
-              <p>Phone answering with Lachie, Saabai&apos;s AI voice receptionist, is coming soon.</p>
-              <p>It is not live. The receptionist on this page is the website chat.</p>
+              <p>The receptionist on this page is the website chat. Lachie is a browser voice demo.</p>
             </div>
             <div className="ctas" style={{ marginTop: 20 }}>
               <a className="btn" href={CALENDLY} target="_blank" rel="noopener noreferrer">Book a demo</a>

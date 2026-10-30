@@ -64,8 +64,8 @@ test("name, intro and consent are config values and say this is an AI", () => {
   assert.match(voiceIntro(), /an AI assistant/);
   assert.match(voiceIntro(), /transcribed, not recorded/);
   assert.equal(VOICE_COPY.button, "Talk to Lachie");
-  assert.equal(VOICE_COPY.support, "Meet Lachie Legend, a demo of Saabai's AI voice receptionist.");
-  assert.equal(VOICE_COPY.consent, "You're talking to Lachie, a demo of Saabai's AI voice receptionist. This chat is transcribed, not recorded.");
+  assert.equal(VOICE_COPY.support, "Meet Lachie Legend, Saabai's AI voice demo. You talk to it here in your browser.");
+  assert.equal(VOICE_COPY.consent, "You're talking to Lachie, an AI voice demo in your browser. This chat is transcribed, not recorded.");
   assert.doesNotMatch(VOICE_COPY.consent, /calls may be recorded/);
   assert.ok(!DASH.test(VOICE_COPY.consent));
   assert.ok(!DASH.test(voiceIntro()));
@@ -101,6 +101,9 @@ test("instructions reuse Mia's published prices and do not invent a voice price"
   assert.match(prompt, /Growth/);
   assert.match(prompt, /Signature/);
   assert.match(prompt, /no published price/);
+  assert.match(prompt, /browser voice demo/);
+  assert.match(prompt, /does not offer live phone answering/);
+  assert.doesNotMatch(prompt, /voice receptionist Saabai is building/);
   assert.match(prompt, /Australian English/);
   assert.ok(!DASH.test(prompt));
   assert.equal(prompt.includes("1 to 3 sentences"), false);
@@ -152,7 +155,7 @@ test("legal variant is chosen on the server and a client prompt is rejected", ()
   const widget = read("app/components/sb/VoiceDemo.tsx");
   assert.match(widget, /\/api\/voice\/session", \{ variant \}/);
   assert.doesNotMatch(widget, /voiceScript|harbour-demo-facts|buildVoiceInstructions/);
-  assert.match(widget, /AI receptionist/);
+  assert.match(widget, /AI voice demo/);
   assert.match(widget, /lachie-headset-avatar-button-96\.png/);
   assert.match(widget, /\$\{AVATAR_2X\} 2x/);
   assert.match(widget, /\["idle", "listening", "talking"\]/);
@@ -166,7 +169,8 @@ test("legal variant is chosen on the server and a client prompt is rejected", ()
   const demos = read("app/components/legal-demos/HarbourDemos.tsx");
   assert.match(page, /LachieLegalDemo/);
   assert.match(demos, /LachieLockup as="h2" second="Legend"/);
-  assert.match(demos, /A demo of Saabai's AI voice receptionist\. Live phone answering is coming soon\./);
+  assert.match(demos, /An AI voice demo you talk to in your browser\./);
+  assert.doesNotMatch(page + demos, /phone answering is coming soon/i);
   assert.match(demos, /Lex is the legal assistant on this page/);
   assert.doesNotMatch(demos, /second="Legal"|phone answering service|picks up when you can't|Lachie Legal/);
   assert.match(demos, /variant="legal"/);
@@ -431,5 +435,24 @@ test("the demo is mounted on the homepage and /legal, and the privacy policy nam
   for (const file of walk("app/api/voice").concat(walk("lib/voice-demo"))) {
     assert.doesNotMatch(read(file), /\/api\/leads|\/api\/site-factory\/lead/);
     assert.ok(!DASH.test(read(file)), file);
+  }
+});
+
+test("blueprint credit block uses the approved line, no '100% credited'", () => {
+  const bp = read("app/blueprint/page.tsx");
+  assert.doesNotMatch(bp, /100% credited/i);
+  assert.match(bp, /From \{TIERS\.starter\.priceLabel\}\. The fee is credited if you build with Saabai within 30 days\./);
+});
+
+test("no page mentions live phone answering as coming soon", () => {
+  for (const p of ["app/about/page.tsx", "app/pricing/page.tsx", "app/ai-receptionist-gold-coast/page.tsx", "app/legal/page.tsx", "app/ai-chatbot-law-firms/page.tsx", "app/components/legal-demos/HarbourDemos.tsx"]) {
+    assert.doesNotMatch(read(p), /phone answering[^.]*coming soon|coming soon[^.]*phone/i, p);
+  }
+});
+
+test("on-page voice demo copy is a browser voice demo, never a phone receptionist", () => {
+  for (const f of ["lib/voice-demo/config.ts", "app/components/sb/VoiceDemo.tsx", "app/components/sb/LachieLockup.tsx", "app/components/legal-demos/HarbourDemos.tsx"]) {
+    const src = readFileSync(f, "utf8");
+    assert.doesNotMatch(src, /voice receptionist|AI receptionist<\/small>|phone answering/i, f);
   }
 });

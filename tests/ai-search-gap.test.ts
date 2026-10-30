@@ -65,16 +65,16 @@ test("Gold Coast title, H1 and hosting FAQ match the published offer", () => {
   assert.equal(BRISBANE.seo.description, publicPageMeta.brisbane.description);
 });
 
-test("Gold Coast receptionist is a website chatbot of about 1,000 words, with Lachie coming soon and no monthly from price", () => {
+test("Gold Coast receptionist is a website chatbot of about 1,000 words, with no phone answering claim and no monthly from price", () => {
   const page = read("app/ai-receptionist-gold-coast/page.tsx");
   assert.match(page, /Website receptionist or phone receptionist\?/);
-  assert.match(page, /Phone answering with Lachie, Saabai's AI voice receptionist, is coming soon\./);
-  assert.match(page, /It is not live/);
+  assert.doesNotMatch(page, /phone answering[^.]*coming soon/i);
+
   assert.match(page, /The receptionist on this page is the website chat/);
   assert.match(page, /calendly\.com\/shanegoldberg\/30min/);
   assert.match(page, /Book a demo/);
   assert.match(page, /LachieLockup as="h2" second="Legend"/);
-  assert.match(page, /LachiePortrait alt="Lachie, Saabai's AI voice receptionist"/);
+  assert.match(page, /LachiePortrait alt="Lachie, Saabai's AI voice demo"/);
   assert.doesNotMatch(page, /VoiceDemo|LachieLegalDemo/);
   const lachie = read("app/components/sb/LachieLockup.tsx");
   assert.match(lachie, /Meet/);

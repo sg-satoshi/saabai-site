@@ -5,7 +5,8 @@
  */
 import { resolveReviewActor } from "../../../lib/lex-review-access";
 import { getRedis } from "../../../lib/redis";
-import { normalizeFlag } from "../../../lib/lex-flag";
+import { FLAG_REASONS, normalizeFlag } from "../../../lib/lex-flag";
+import { appVersion, saveFeedback } from "../../../lib/lex-feedback";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +22,12 @@ export async function POST(req: Request) {
     const by = actor.kind === "firm" ? actor.email : `admin:${actor.id}`;
     await redis.lpush("lex:flags", JSON.stringify({ ...flag, by }));
     await redis.ltrim("lex:flags", 0, 499);
+    // Also file it in the feedback inbox (triage status, tags, export). Note only: the answer text stays in lex:flags.
+    try {
+      const label = FLAG_REASONS.find((r) => r.key === flag.reason)?.label ?? flag.reason;
+      await saveFeedback({ type: "answer_flag", message: `${label}${flag.note ? `: ${flag.note}` : ""} (thread ${flag.threadId || "unknown"})`, page: "/lex (answer)", screenshot: null },
+        { firm: actor.kind === "firm" ? actor.firm : "saabai-staff", user: by, browser: req.headers.get("user-agent") ?? "", appVersion: appVersion(), source: "flag" });
+    } catch (e) { console.error("[lex-flag] feedback copy failed", e instanceof Error ? e.name : "error"); }
     return Response.json({ ok: true });
   } catch (err) {
     console.error("[lex-flag]", err instanceof Error ? err.name : err);

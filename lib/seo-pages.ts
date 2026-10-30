@@ -75,7 +75,7 @@ export const publicPageMeta = {
     path: "/legal/lex-vs-ai-legal-tools",
     title: "Lex vs other AI legal tools 2026 | Saabai",
     description:
-      "Published facts on price, sources and data location for Lex, Harvey, CoCounsel and Lexis+ AI. Lex is an AI legal assistant from Saabai on the Gold Coast, with a free 60-day trial.",
+      "Published facts for Lex vs Quillio, Smokeball Archie, LEAP, Clio, Habeas, Harvey, CoCounsel and Lexis+ AI. Lex is an AI legal research and drafting assistant for Australian firms, with a free 60-day trial.",
   }),
   queenslandChatbot: pageMeta({
     path: "/ai-chatbot-developer-queensland",
