@@ -377,7 +377,7 @@ test("r3 (#411): checkout before subscription.created: no reset, max 20 docs in 
   const p0 = resolveDocPeriod(f0, "cofirst.test", at, quiet);
   assert.equal(p0.basis, "billing");
   let used = 0;
-  for (let i = 0; i < FIRM_PLAN_MONTHLY_DOCS; i++) if ((await takeDocument(p0, `a${i}`, undefined, quiet)).ok) used++;
+  for (let i = 0; i < FIRM_PLAN_MONTHLY_DOCS; i++) { const r = await takeDocument(p0, `a${i}`, undefined, quiet); if (r.counted && !r.over) used++; }
   // Now subscription.created (and an updated) land with Stripe's start, seconds earlier.
   const sub = { id: "sub_cf", status: "active", items: { data: [{ current_period_start: stripeStart, current_period_end: stripeEnd }] } };
   assert.equal(await handleLexLifecycle({ id: "evt_cf_sc", type: "customer.subscription.created", data: { object: sub } }, mailer), "updated");
@@ -386,7 +386,7 @@ test("r3 (#411): checkout before subscription.created: no reset, max 20 docs in 
   assert.equal(f1.periodStart, f0.periodStart); assert.equal(f1.periodEnd, f0.periodEnd);
   const p1 = resolveDocPeriod(f1, "cofirst.test", at, quiet);
   assert.equal(p1.scope, p0.scope);
-  for (let i = 0; i < 5; i++) if ((await takeDocument(p1, `b${i}`, undefined, quiet)).ok) used++;
+  for (let i = 0; i < 5; i++) { const r = await takeDocument(p1, `b${i}`, undefined, quiet); assert.ok(r.over); if (!r.over) used++; }
   assert.equal(used, FIRM_PLAN_MONTHLY_DOCS); // never more than 20 in the first cycle
   // Renewal advances; then a stale replay of the first cycle's updated event must not move it back.
   const s2 = { ...sub, items: { data: [{ current_period_start: stripeEnd, current_period_end: Date.parse("2027-01-10T02:00:00Z") / 1000 }] } };
@@ -409,13 +409,13 @@ test("r4 (#411): checkout-time fallback anchor + late renewal webhook: cycle 2 s
   const p0 = resolveDocPeriod(f, "r4fb.test", at, quiet);
   assert.equal(p0.start, "2026-12-10T02:00:05.000Z");
   let used = 0;
-  for (let i = 0; i < FIRM_PLAN_MONTHLY_DOCS; i++) if ((await takeDocument(p0, `r4a${i}`, undefined, quiet)).ok) used++;
+  for (let i = 0; i < FIRM_PLAN_MONTHLY_DOCS; i++) { const r = await takeDocument(p0, `r4a${i}`, undefined, quiet); if (r.counted && !r.over) used++; }
   // Late renewal lands with Stripe's start, 5s before the stored end.
   assert.equal(advancePeriod(f, { start: "2026-12-10T02:00:00.000Z", end: "2027-01-10T02:00:00.000Z" }), true);
   assert.equal(f.periodStart, "2026-12-10T02:00:05.000Z"); assert.equal(f.periodEnd, "2027-01-10T02:00:00.000Z");
   const p1 = resolveDocPeriod(f, "r4fb.test", at, quiet);
   assert.equal(p1.scope, p0.scope);
-  for (let i = 0; i < 5; i++) if ((await takeDocument(p1, `r4b${i}`, undefined, quiet)).ok) used++;
+  for (let i = 0; i < 5; i++) { const r = await takeDocument(p1, `r4b${i}`, undefined, quiet); assert.ok(r.ok && r.over); if (!r.over) used++; } // r5: allowed, flagged over
   assert.equal(used, FIRM_PLAN_MONTHLY_DOCS);
   // A genuinely later cycle (start not near the stored end) still uses Stripe's start.
   advancePeriod(f, { start: "2027-01-10T02:00:00.000Z", end: "2027-02-10T02:00:00.000Z" });
@@ -428,12 +428,12 @@ test("r4 (#411): a lapsed firm keeps its count after the period ends (no fresh c
   const f: any = { firmId: "firm_r4lap", subscriptionId: "sub_r4lap", status: "active", periodStart: "2026-11-01T00:00:00.000Z", periodEnd: "2026-12-01T00:00:00.000Z" };
   const p0 = resolveDocPeriod(f, "r4lap.test", new Date("2026-11-15T00:00:00Z"), quiet);
   let used = 0;
-  for (let i = 0; i < FIRM_PLAN_MONTHLY_DOCS; i++) if ((await takeDocument(p0, `r4l${i}`, undefined, quiet)).ok) used++;
+  for (let i = 0; i < FIRM_PLAN_MONTHLY_DOCS; i++) { const r = await takeDocument(p0, `r4l${i}`, undefined, quiet); if (r.counted && !r.over) used++; }
   f.status = "lapsed"; f.lapseReason = "unpaid";
   for (const d of ["2026-12-05T00:00:00Z", "2027-02-05T00:00:00Z"]) {
     const p = resolveDocPeriod(f, "r4lap.test", new Date(d), quiet);
     assert.equal(p.scope, p0.scope);
-    if ((await takeDocument(p, `r4l-${d}`, undefined, quiet)).ok) used++;
+    { const r = await takeDocument(p, `r4l-${d}`, undefined, quiet); assert.ok(r.over); if (!r.over) used++; } // r5: same scope, so past 20 and flagged
   }
   assert.equal(used, FIRM_PLAN_MONTHLY_DOCS);
 });

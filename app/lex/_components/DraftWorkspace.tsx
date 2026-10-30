@@ -11,7 +11,7 @@
  *
  * Progress is saved in this browser only (lib/lex-draft-progress.ts). Uploaded files are not kept.
  */
-import { DocAllowance, docState } from "./DocAllowance";
+import { DocAllowance } from "./DocAllowance";
 import type { DocUsage } from "../../../lib/lex-doc-allowance-shared";
 import { useEffect, useRef, useState } from "react";
 import { DOCUMENT_TYPES, fillPartiesTemplate, type DocumentType } from "../../../lib/lex-document-types";
@@ -89,7 +89,6 @@ function Chips({ f, onCheck, onConfirm }: { f: FormField; onCheck?: () => void; 
 }
 
 export function DraftWorkspace(p: WorkspaceProps) {
-  const docsFull = docState(p.docUsage ?? null) === "full";
   const doc: DocumentType | undefined = DOCUMENT_TYPES.find((d) => d.id === p.typeId);
   const docName = doc?.name ?? "Custom document";
   const template = doc?.partiesTemplate ? fillPartiesTemplate(doc.partiesTemplate) : "";
@@ -565,8 +564,8 @@ export function DraftWorkspace(p: WorkspaceProps) {
           <div className="lx-verify lxd-risks"><Icon name="warn" /><div><b>Key drafting risks</b><ul>{doc.draftingWarnings.slice(0, 3).map((w, i) => <li key={i}>{w}</li>)}</ul></div></div>
         )}
         <DocAllowance usage={p.docUsage ?? null} />
-        <button type="button" className={`lxw-draft${gate.ok && !docsFull ? "" : " off"}`} aria-disabled={!gate.ok || p.busy || docsFull} aria-describedby="lxw-gate-why"
-          onClick={() => { if (gate.ok && !p.busy && !docsFull) p.onDraft(); }}>
+        <button type="button" className={`lxw-draft${gate.ok ? "" : " off"}`} aria-disabled={!gate.ok || p.busy} aria-describedby="lxw-gate-why"
+          onClick={() => { if (gate.ok && !p.busy) p.onDraft(); }}>
           <Icon name="draft" />{p.busy ? p.thinkLabel : "Draft document"}
         </button>
         <p id="lxw-gate-why" className={gate.ok ? "lxw-fine" : "lxw-why"}>{gate.ok ? "Lex searches the governing legislation and checks section numbers before it drafts." : gate.reason}</p>

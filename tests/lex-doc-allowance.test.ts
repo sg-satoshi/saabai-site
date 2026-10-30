@@ -1,7 +1,8 @@
 /** Lex Firm plan document allowance (billing cycle).   npx tsx --test tests/lex-doc-allowance.test.ts */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { takeDocument, docUsage, brisbaneMonth, resolveDocPeriod, requestFingerprint, monthlyDocCounts, docLimitMessage, FIRM_PLAN_MONTHLY_DOCS, DOC_WARN_AT, DOC_CAPS_KEY, type DocPeriod } from "../lib/lex-doc-allowance";
+import { readFileSync } from "node:fs";
+import { takeDocument, overKey, docUsage, brisbaneMonth, resolveDocPeriod, requestFingerprint, monthlyDocCounts, docLimitMessage, FIRM_PLAN_MONTHLY_DOCS, DOC_WARN_AT, DOC_CAPS_KEY, type DocPeriod } from "../lib/lex-doc-allowance";
 import { resetDateLabel } from "../lib/lex-doc-allowance-shared";
 import { docState } from "../app/lex/_components/DocAllowance";
 
@@ -65,16 +66,59 @@ test("no firm record or no current period: domain plus Brisbane calendar month, 
   assert.equal(brisbaneMonth(new Date("2026-10-31T14:30:00Z")), "2026-11");
 });
 
-test("counts up to 20, then blocks with the firm's real next reset date and no price", async () => {
-  const st = fakeStore(); const p = billing();
+test("r5 soft cap: counts up to 20, then past 20 is allowed, flagged over, recorded for admin, with the capacity notice", async () => {
+  const st = fakeStore(); const p = billing(); const logs: string[] = [];
   for (let i = 1; i <= FIRM_PLAN_MONTHLY_DOCS; i++) {
     const r = await takeDocument(p, `fp${i}`, st, quiet);
-    assert.ok(r.ok && r.counted); assert.equal(r.ok && r.usage?.used, i);
+    assert.ok(r.ok && r.counted && !r.over); assert.equal(r.usage?.used, i);
+    if (i === 20) assert.equal(r.message, "You've used 20 of 20 documents this period, and we'll be in touch about capacity.");
   }
-  const over = await takeDocument(p, "fp21", st, quiet);
-  assert.equal(over.ok, false);
-  if (!over.ok) { assert.equal(over.usage.used, 20); assert.equal(over.usage.resetsOn, PAID.periodEnd); assert.match(over.message, /12 November 2026/); assert.doesNotMatch(over.message, /\$/); }
-  assert.equal((await docUsage(p, st))!.used, 20);
+  for (let i = 21; i <= 23; i++) {
+    const r = await takeDocument(p, `fp${i}`, st, (m) => logs.push(m));
+    assert.equal(r.ok, true); assert.ok(r.counted && r.over); assert.equal(r.usage?.used, i);
+    assert.doesNotMatch(r.message ?? "", /\$/);
+  }
+  assert.equal(st.kv.get(overKey(p.scope)), "3");
+  assert.equal(logs.length, 3); assert.match(logs[0], /over allowance/);
+  assert.equal((await docUsage(p, st))!.used, 23);
+  const [row] = await monthlyDocCounts("2026-10", st);
+  assert.equal(row.used, 23); assert.equal(row.over, 3);
+  // Refund of an over-allowance take gives back both counts.
+  const r = await takeDocument(p, "fp24", st, quiet); await r.refund();
+  assert.equal((await docUsage(p, st))!.used, 23); assert.equal(st.kv.get(overKey(p.scope)), "3");
+});
+
+test("r5: regenerating a counted document (same id and type) is free, at and past the cap; a new id or type counts", async () => {
+  const st = fakeStore(); const p = billing();
+  const a = await takeDocument(p, "g1", st, quiet, { documentId: "doc-aaaaaaaa", documentType: "trust-deed" });
+  assert.ok(a.counted);
+  for (let i = 0; i < 3; i++) {
+    const r = await takeDocument(p, `g-re${i}`, st, quiet, { documentId: "doc-aaaaaaaa", documentType: "trust-deed" });
+    assert.ok(r.ok && !r.counted && r.regenerated); assert.equal(r.usage?.used, 1);
+  }
+  assert.ok((await takeDocument(p, "g2", st, quiet, { documentId: "doc-aaaaaaaa", documentType: "lease" })).counted); // type changed = new doc
+  assert.ok((await takeDocument(p, "g3", st, quiet, { documentId: "doc-bbbbbbbb", documentType: "trust-deed" })).counted);
+  assert.equal((await docUsage(p, st))!.used, 3);
+  // Past the cap, a redraft still doesn't count or flag.
+  for (let i = 0; i < 20; i++) await takeDocument(p, `fill${i}`, st, quiet);
+  const re = await takeDocument(p, "g-late", st, quiet, { documentId: "doc-bbbbbbbb", documentType: "trust-deed" });
+  assert.ok(!re.counted && !re.over && re.regenerated); assert.equal(re.usage?.used, 23);
+  // A regeneration id from an earlier period is a new document in the next period.
+  const next = resolveDocPeriod({ ...PAID, periodStart: PAID.periodEnd, periodEnd: "2026-12-12T04:00:00.000Z" }, "firm.com.au", new Date("2026-11-13T00:00:00Z"), quiet);
+  assert.ok((await takeDocument(next, "g-next", st, quiet, { documentId: "doc-bbbbbbbb", documentType: "trust-deed" })).counted);
+});
+
+test("r5: export and regenerate paths: exports are client-only (never hit the allowance); redraft reuses the document id; no 429 refusal", () => {
+  const page = readFileSync("app/lex/page.tsx", "utf8");
+  const route = readFileSync("app/api/lex-draft/route.ts", "utf8");
+  for (const f of ["exportDraft", "exportAnswer", "exportReview"]) assert.doesNotMatch(readFileSync(`app/lex/_components/${f}.ts`, "utf8").concat(""), /lex-draft|takeDocument|lex-doc/);
+  assert.match(page, /draftDocRef\.current\.key !== docKey/); assert.match(page, /documentId,/); assert.match(page, /onReset=\{\(\) => \{ draftDocRef\.current = null;/);
+  assert.match(route, /documentId: typeof documentId === "string"/);
+  assert.doesNotMatch(route, /doc_limit/); assert.doesNotMatch(route, /status: 429/);
+  const ws = readFileSync("app/lex/_components/DraftWorkspace.tsx", "utf8");
+  assert.doesNotMatch(ws, /docsFull/);
+  // QA passes (requestQA + completedDraft) still skip the allowance.
+  assert.match(route, /if \(!\(requestQA && completedDraft\)\) \{\n\s+const actor/);
 });
 
 test("a retry of the same request is not counted twice", async () => {
@@ -113,15 +157,16 @@ test("admin counts per firm period", async () => {
   const st = fakeStore(); const p = billing(); const d = resolveDocPeriod(null, "y.com", NOW, quiet);
   await takeDocument(p, "1", st, quiet); await takeDocument(p, "2", st, quiet); await takeDocument(d, "1", st, quiet);
   assert.deepEqual(await monthlyDocCounts("2026-10", st), [
-    { scope: "dom:y.com:2026-10", firm: "y.com", periodStart: "2026-10", used: 1, cap: 20 },
-    { scope: p.scope, firm: "lf_abc", periodStart: PAID.periodStart, used: 2, cap: 20 },
+    { scope: "dom:y.com:2026-10", firm: "y.com", periodStart: "2026-10", used: 1, cap: 20, over: 0 },
+    { scope: p.scope, firm: "lf_abc", periodStart: PAID.periodStart, used: 2, cap: 20, over: 0 },
   ]);
 });
 
-test("UI states: heads-up at 16, paused at 20; message names the date", () => {
+test("UI states: heads-up at 16, capacity notice at 20, over past 20 (never paused)", () => {
   const u = (used: number) => ({ used, cap: 20, periodStart: "2026-10-12", resetsOn: "2026-11-12T04:00:00.000Z", warnAt: DOC_WARN_AT, basis: "billing" as const });
-  assert.equal(docState(null), "none"); assert.equal(docState(u(15)), "ok"); assert.equal(docState(u(16)), "warn"); assert.equal(docState(u(20)), "full");
-  assert.match(docLimitMessage(20, "2026-11-12T04:00:00.000Z"), /until 12 November 2026/);
+  assert.equal(docState(null), "none"); assert.equal(docState(u(15)), "ok"); assert.equal(docState(u(16)), "warn"); assert.equal(docState(u(20)), "full"); assert.equal(docState(u(21)), "over");
+  assert.match(docLimitMessage(20, "2026-11-12T04:00:00.000Z"), /used 20 of 20 documents this period, and we'll be in touch about capacity/);
+  assert.doesNotMatch(readFileSync("app/lex/_components/DocAllowance.tsx", "utf8"), /paused/);
   void ({} as DocPeriod);
 });
 

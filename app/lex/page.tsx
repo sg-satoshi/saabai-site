@@ -111,6 +111,8 @@ export default function LexPage() {
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [firmUsage, setFirmUsage] = useState<FirmUsage | null>(null);
   const [docUsage, setDocUsage] = useState<DocUsage | null>(null);
+  /** The document being drafted: redrafting it reuses this id so the allowance doesn't count it again. */
+  const draftDocRef = useRef<{ key: string; id: string } | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [copiedMsg, setCopiedMsg] = useState<number | null>(null);
 
@@ -807,6 +809,10 @@ export default function LexPage() {
     draftAbortRef.current?.abort();
     draftAbortRef.current = new AbortController();
     const draftRequestId = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Date.now());
+    // Same document (type and matter) redrafted = regeneration, which is free. A new type or matter is a new document.
+    const docKey = `${draftTypeId}|${activeMatterId ?? ""}`;
+    if (!draftDocRef.current || draftDocRef.current.key !== docKey) draftDocRef.current = { key: docKey, id: `doc-${draftRequestId}` };
+    const documentId = draftDocRef.current.id;
 
     try {
       const res = await fetch("/api/lex-draft", {
@@ -821,6 +827,7 @@ export default function LexPage() {
           messages: [],
           matterId: activeMatterId ?? undefined,
           draftRequestId,
+          documentId,
         }),
         signal: draftAbortRef.current.signal,
       });
@@ -902,7 +909,7 @@ export default function LexPage() {
       }
       setDraftLoading(false);
     }
-  }, [draftLoading, draftTypeId, draftParties, draftJurisdiction, draftInstructions, draftResponseLength]);
+  }, [draftLoading, draftTypeId, draftParties, draftJurisdiction, draftInstructions, draftResponseLength, activeMatterId]);
 
   const submitForSupervision = useCallback(async () => {
     if (!reviewReport || submitLoading) return;
@@ -1247,7 +1254,7 @@ export default function LexPage() {
             onExport={() => exportDraftToWord({ draftText, docTypeName: DOCUMENT_TYPES.find(d => d.id === draftTypeId)?.name ?? "Legal Document", jurisdiction: draftJurisdiction, firmName })}
             onSend={() => { setEmailOpen(true); setEmailSubject(`Document from Lex AI: ${DOCUMENT_TYPES.find(d => d.id === draftTypeId)?.name ?? "Legal Document"}`); }}
             prep={draftPrep} setPrep={setDraftPrep} savedAt={draftSavedAt}
-            onReset={() => { setDraftParties(""); setDraftInstructions(""); setDraftPrep({ extracted: null, manual: [] }); const k = progressKey(userEmail); try { if (k) localStorage.removeItem(k); } catch {} setDraftSavedAt(null); }}
+            onReset={() => { draftDocRef.current = null; setDraftParties(""); setDraftInstructions(""); setDraftPrep({ extracted: null, manual: [] }); const k = progressKey(userEmail); try { if (k) localStorage.removeItem(k); } catch {} setDraftSavedAt(null); }}
             onResearch={(q) => { setMode("research"); newThread(); setInput(q); setTimeout(() => inputRef.current?.focus(), 0); }}
           />
         )}

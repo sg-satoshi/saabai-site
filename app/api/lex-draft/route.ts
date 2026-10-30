@@ -202,6 +202,7 @@ export async function POST(req: Request) {
       threadId,
       matterId,
       draftRequestId,
+      documentId,
     } = await req.json();
 
     // Verify gate, server side: a checklist that still has an unresolved Verify is not drafted.
@@ -217,8 +218,8 @@ export async function POST(req: Request) {
       const actor = await resolveReviewActor(req).catch(() => null);
       if (actor?.kind === "firm") {
         const fp = requestFingerprint([typeof draftRequestId === "string" ? draftRequestId.slice(0, 80) : null, documentType ?? null, parties ?? null, jurisdiction ?? null, specialInstructions ?? null, responseLength ?? null, matterId ?? null, messages ?? null]);
-        const take = await takeDocument(await docPeriodForUser(actor.email, actor.firm), fp);
-        if (!take.ok) return Response.json({ error: "doc_limit", message: take.message, docUsage: take.usage }, { status: 429 });
+        // Soft cap (r5): never refused. A redraft of the same document (documentId) is free.
+        const take = await takeDocument(await docPeriodForUser(actor.email, actor.firm), fp, undefined, undefined, { documentId: typeof documentId === "string" ? documentId : undefined, documentType: typeof documentType === "string" ? documentType : undefined });
         docRefund = take.refund;
       }
     }

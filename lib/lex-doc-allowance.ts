@@ -18,7 +18,8 @@
  *   lex:docs:scopes:{YYYY-MM}       set of scopes whose period started that Brisbane month (admin value reports)
  *   lex:docs:caps                   hash firmId or domain -> cap override (Enterprise). Absent = plan default.
  *
- * Only new drafts count. QA passes, research and editing an existing draft do not.
+ * Only new drafts count. QA passes, research, editing, regenerating a counted draft (same document id) and exports do not.
+ * Soft cap (r5): drafting is never refused at the cap; over-allowance documents are flagged in-app and in admin.
  * Fail open, with a log line, only when the store is missing or unreachable.
  */
 import { createHash } from "node:crypto";
@@ -147,9 +148,12 @@ export async function docCap(capKeys: string[], store: Store | null = getRedis()
   return FIRM_PLAN_MONTHLY_DOCS;
 }
 
-export function docLimitMessage(cap: number, resetsOn: string): string {
-  return `Your firm has used all ${cap} documents for this period. New drafts pause until ${resetDateLabel(resetsOn)}. Research is still unlimited, and your existing drafts stay open to view and edit. Talk to us about more documents, or book a call.`;
+/** Soft cap (Shane, 30 Oct): at or past the allowance the firm keeps drafting; this notice is shown and admin is flagged. */
+export function docOverMessage(used: number, cap: number): string {
+  return `You've used ${used} of ${cap} documents this period, and we'll be in touch about capacity.`;
 }
+/** @deprecated r5: drafts are no longer refused at the cap. Kept for callers that still import it. */
+export function docLimitMessage(cap: number, _resetsOn: string): string { return docOverMessage(cap, cap); }
 
 const usageOf = (p: DocPeriod, used: number, cap: number): DocUsage =>
   ({ used, cap, periodStart: p.start, resetsOn: p.end, warnAt: Math.min(DOC_WARN_AT, cap), basis: p.basis });
@@ -160,33 +164,57 @@ export async function docUsage(p: DocPeriod, store: Store | null = getRedis()): 
   return usageOf(p, Number(raw ?? 0) || 0, cap);
 }
 
-export type DocTake =
-  | { ok: true; counted: boolean; failOpen?: boolean; usage?: DocUsage; refund: () => Promise<void> }
-  | { ok: false; usage: DocUsage; message: string };
+/** r5 soft cap: always ok. `over` = this document is past the allowance (flagged, not refused). `regenerated` = free redraft. */
+export type DocTake = { ok: true; counted: boolean; over?: boolean; regenerated?: boolean; failOpen?: boolean; usage?: DocUsage; message?: string; refund: () => Promise<void> };
+/** Regenerating an already-counted document (same document id and type, same period) is free. */
+export type TakeOpts = { documentId?: string; documentType?: string };
+const docIdKey = (scope: string, id: string) => `lex:docs:doc:${scope}:${id}`;
+export const overKey = (scope: string) => `lex:docs:over:${scope}`;
 
 const noop = async () => {};
 
-/** Takes one document from the period's allowance. Call refund() if the draft could not start. */
-export async function takeDocument(p: DocPeriod, fingerprint: string, store: Store | null = getRedis(), log: Log = warn): Promise<DocTake> {
+/**
+ * Counts one NEW document against the period's allowance. Never refuses (r5 soft cap): past the cap the take is
+ * flagged `over`, the over-allowance count for the scope is recorded, and a log line is written for admin.
+ * Regenerating a document already counted this period (opts.documentId + same documentType) does not count.
+ * Exports never call this. Call refund() if the draft could not start.
+ */
+export async function takeDocument(p: DocPeriod, fingerprint: string, store: Store | null = getRedis(), log: Log = warn, opts: TakeOpts = {}): Promise<DocTake> {
   if (!store) { log("[lex-docs] fail-open: store not configured"); return { ok: true, counted: false, failOpen: true, refund: noop }; }
   const uk = usedKey(p.scope);
   const rk = reqKey(p.scope, fingerprint);
+  const docId = typeof opts.documentId === "string" && /^[\w-]{8,80}$/.test(opts.documentId) ? opts.documentId : null;
+  const docType = String(opts.documentType ?? "");
   try {
+    if (docId) {
+      const known = await store.get<string>(docIdKey(p.scope, docId));
+      if (known !== null && known !== undefined && String(known) === docType) {
+        const [raw, cap] = await Promise.all([store.get<number | string>(uk), docCap(p.capKeys, store)]);
+        return { ok: true, counted: false, regenerated: true, usage: usageOf(p, Number(raw ?? 0) || 0, cap), refund: noop };
+      }
+    }
     const first = await store.set(rk, "1", { nx: true, ex: REQ_TTL_SECONDS });
     if (first !== "OK") return { ok: true, counted: false, refund: noop }; // retry of a request already counted
     const cap = await docCap(p.capKeys, store);
     const n = await store.incr(uk);
     if (n === 1) await store.expire(uk, USED_TTL_SECONDS);
-    if (n > cap) {
-      await store.incrby(uk, -1);
-      await store.del(rk);
-      const usage = usageOf(p, n - 1, cap);
-      return { ok: false, usage, message: docLimitMessage(cap, usage.resetsOn) };
-    }
+    if (docId) { try { await store.set(docIdKey(p.scope, docId), docType, { ex: USED_TTL_SECONDS }); } catch { /* best effort */ } }
     try { await store.sadd(scopesKey(brisbaneMonth(new Date(p.start))), p.scope); } catch { /* report index is best effort */ }
+    const over = n > cap;
+    if (over) {
+      try { const o = await store.incr(overKey(p.scope)); if (o === 1) await store.expire(overKey(p.scope), USED_TTL_SECONDS); } catch { /* best effort */ }
+      log(`[lex-docs] over allowance: ${p.scope} at ${n} of ${cap}`);
+    }
+    const usage = usageOf(p, n, cap);
     return {
-      ok: true, counted: true, usage: usageOf(p, n, cap),
-      refund: async () => { try { await store.incrby(uk, -1); await store.del(rk); } catch { /* best effort */ } },
+      ok: true, counted: true, over, usage, message: n >= cap ? docOverMessage(n, cap) : undefined,
+      refund: async () => {
+        try {
+          await store.incrby(uk, -1); await store.del(rk);
+          if (over) await store.incrby(overKey(p.scope), -1);
+          if (docId) await store.del(docIdKey(p.scope, docId));
+        } catch { /* best effort */ }
+      },
     };
   } catch (err) {
     log(`[lex-docs] fail-open: store unreachable (${err instanceof Error ? err.name : "error"})`);
@@ -194,13 +222,14 @@ export async function takeDocument(p: DocPeriod, fingerprint: string, store: Sto
   }
 }
 
-/** Admin read: every firm period that started in a Brisbane month, with its count (for value reports). */
-export async function monthlyDocCounts(month: string, store: Store | null = getRedis()): Promise<Array<{ scope: string; firm: string; periodStart: string; used: number; cap: number }>> {
+/** Admin read: every firm period that started in a Brisbane month, with its count and over-allowance count (used past the cap). */
+export async function monthlyDocCounts(month: string, store: Store | null = getRedis()): Promise<Array<{ scope: string; firm: string; periodStart: string; used: number; cap: number; over: number }>> {
   if (!store) return [];
   const scopes = ((await store.smembers(scopesKey(month))) ?? []).map(String).sort();
   return Promise.all(scopes.map(async (scope) => {
     const [, firm, ...rest] = scope.split(":");
-    return { scope, firm, periodStart: rest.join(":"), used: Number((await store.get<number | string>(usedKey(scope))) ?? 0) || 0, cap: await docCap([firm], store) };
+    const used = Number((await store.get<number | string>(usedKey(scope))) ?? 0) || 0, cap = await docCap([firm], store);
+    return { scope, firm, periodStart: rest.join(":"), used, cap, over: Math.max(0, used - cap) };
   }));
 }
 

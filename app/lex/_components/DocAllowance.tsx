@@ -1,12 +1,13 @@
 "use client";
-/** Firm plan document allowance on the Draft Documents screen: count, heads-up at 16, pause at the cap. */
+/** Firm plan document allowance on the Draft Documents screen: count, heads-up at 16, a capacity notice (not a block) at the cap. */
 import { resetDateLabel, type DocUsage } from "../../../lib/lex-doc-allowance-shared";
 
 export const LEX_BOOK_CALL_URL = "https://calendly.com/shanegoldberg/30min";
 export const LEX_MORE_DOCS_HREF = "mailto:hello@saabai.ai?subject=" + encodeURIComponent("Lex: more documents (Enterprise)");
 
-export function docState(u: DocUsage | null): "none" | "ok" | "warn" | "full" {
+export function docState(u: DocUsage | null): "none" | "ok" | "warn" | "full" | "over" {
   if (!u) return "none";
+  if (u.used > u.cap) return "over";
   if (u.used >= u.cap) return "full";
   if (u.used >= u.warnAt) return "warn";
   return "ok";
@@ -30,9 +31,9 @@ export function DocAllowance({ usage }: { usage: DocUsage | null }) {
           {links}
         </div>
       )}
-      {st === "full" && (
+      {(st === "full" || st === "over") && (
         <div className="lxw-banner warn" role="status">
-          <p><b>New drafts are paused until {resetDateLabel(usage.resetsOn)}.</b> Your firm has used all {usage.cap} documents this period. Research is still unlimited, and your existing drafts stay open to view and edit.</p>
+          <p><b>You&apos;ve used {usage.used} of {usage.cap} documents this period, and we&apos;ll be in touch about capacity.</b> You can keep drafting. The count resets on {resetDateLabel(usage.resetsOn)}.</p>
           {links}
         </div>
       )}
