@@ -410,7 +410,7 @@ export default function LegalPage() {
             </div>
           </div>
           <div className="lx-fine">
-            <p>60-day free trial, no card needed. Pricing is set after the trial; you choose whether to subscribe.</p>
+            <p>60-day free trial. Pricing is set after the trial; you choose whether to subscribe.</p>
           </div>
         </div>
       </section>
