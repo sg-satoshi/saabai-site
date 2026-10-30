@@ -101,6 +101,9 @@ test("instructions reuse Mia's published prices and do not invent a voice price"
   assert.match(prompt, /Growth/);
   assert.match(prompt, /Signature/);
   assert.match(prompt, /no published price/);
+  assert.match(prompt, /browser voice demo/);
+  assert.match(prompt, /does not offer live phone answering/);
+  assert.doesNotMatch(prompt, /voice receptionist Saabai is building/);
   assert.match(prompt, /Australian English/);
   assert.ok(!DASH.test(prompt));
   assert.equal(prompt.includes("1 to 3 sentences"), false);
