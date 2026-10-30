@@ -13,6 +13,7 @@ import {
 import type { LexAnswerMeta } from "../../lib/lex-sources";
 import { answerWithSources, citedSources } from "../../lib/lex-cite-display";
 import { type ChatMessage, type Thread, type Project, type Mode, ATTACH_MARK } from "./_components/types";
+import { interpretThreadsLoad, planThreadsSave } from "../../lib/lex-threads-store";
 import { Sidebar, initials } from "./_components/Sidebar";
 import { AnswerSheet, brisbaneStamp } from "./_components/Answer";
 import { SourcesPanel } from "./_components/SourcesPanel";
@@ -176,6 +177,9 @@ export default function LexPage() {
   const inputRef     = useRef<HTMLTextAreaElement>(null);
   const abortRef     = useRef<AbortController | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Never save threads to the server until a load from it has succeeded (#446).
+  const [threadsLoaded, setThreadsLoaded] = useState(false);
+  const deletedThreadIdsRef = useRef<Set<string>>(new Set());
 
   // ── Email state ──────────────────────────────────────────────────────────
   const [emailOpen, setEmailOpen] = useState(false);
@@ -268,14 +272,16 @@ export default function LexPage() {
             if (localSaved.length > 0) { setThreads(localSaved); setActiveId(localSaved[0].id); }
           } catch {}
           // Load from Redis: authoritative, works across devices
-          const res = await fetch("/api/lex-threads");
-          if (res.ok) {
-            const data = await res.json();
-            if (Array.isArray(data.threads) && data.threads.length > 0) {
-              const clean = cleanThreads(data.threads as Thread[]);
+          const res = await fetch("/api/lex-threads").catch(() => null);
+          const data = res ? await res.json().catch(() => null) : null;
+          const load = interpretThreadsLoad(!!res?.ok, data);
+          if (load.loaded) {
+            if (load.threads.length > 0) {
+              const clean = cleanThreads(load.threads as Thread[]);
               setThreads(clean);
               setActiveId(clean[0].id);
             }
+            setThreadsLoaded(true);
           }
         }
       } catch {}
@@ -305,17 +311,19 @@ export default function LexPage() {
     const storageKey = userEmail ? `lex_threads_${userEmail}` : "lex_threads";
     try { localStorage.setItem(storageKey, JSON.stringify(threads)); } catch {}
 
-    if (userEmail) {
+    const sent = [...deletedThreadIdsRef.current];
+    const body = planThreadsSave({ loaded: threadsLoaded, userEmail, threads, deletedIds: sent });
+    if (body) {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => {
         fetch("/api/lex-threads", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ threads }),
-        }).catch(() => {});
+          body,
+        }).then(r => { if (r.ok) for (const id of sent) deletedThreadIdsRef.current.delete(id); }).catch(() => {});
       }, 2000);
     }
-  }, [threads, userEmail]);
+  }, [threads, userEmail, threadsLoaded]);
 
   // Persist projects
   useEffect(() => {
@@ -437,7 +445,9 @@ export default function LexPage() {
     if (i.kind === "research" && Array.isArray(d.messages)) {
       const id = `m_${i.ref.replace(/^research:/, "")}`;
       const t: Thread = { id, title: i.title, messages: d.messages as ChatMessage[], createdAt: i.at, matterId: openMatterId ?? undefined };
-      setThreads(prev => [t, ...prev.filter(x => x.id !== id && x.id !== i.ref.replace(/^research:/, ""))]);
+      const oldId = i.ref.replace(/^research:/, "");
+      if (oldId !== id) deletedThreadIdsRef.current.add(oldId);
+      setThreads(prev => [t, ...prev.filter(x => x.id !== id && x.id !== oldId)]);
       setActiveId(id); setPanelMsg(null); setSelectedCite(null); setMode("research");
     } else if (i.kind === "draft" && typeof d.text === "string") {
       if (typeof d.docType === "string") setDraftTypeId(d.docType);
@@ -506,6 +516,7 @@ export default function LexPage() {
   }
 
   function deleteThread(id: string) {
+    deletedThreadIdsRef.current.add(id);
     setThreads(prev => prev.filter(t => t.id !== id));
     if (activeId === id) {
       const remaining = threads.filter(t => t.id !== id);

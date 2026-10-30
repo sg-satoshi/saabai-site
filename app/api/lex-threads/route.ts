@@ -1,6 +1,6 @@
 /**
  * GET  /api/lex-threads  — load threads for authenticated user from Redis
- * PUT  /api/lex-threads  — save threads for authenticated user to Redis
+ * PUT  /api/lex-threads  — save threads (merged by id with what is stored; body.deletedIds removes)
  *
  * Threads are stored under  lex:threads:{email}  with a 90-day TTL.
  * Chat attachment text is masked before it is stored (thread-stable placeholders), so no readable
@@ -10,6 +10,7 @@
 
 import { verifySession } from "../../../lib/portal-session";
 import { getRedis } from "../../../lib/redis";
+import { readStoredThreads, mergeThreads, cleanDeletedIds } from "../../../lib/lex-threads-store";
 import { resolveReviewActor } from "../../../lib/lex-review-access";
 import { maskThreadAttachments } from "../../../lib/lex-privacy/thread-attachments";
 import { lexFirmFromRequest } from "../../../lib/lex-privacy/firm";
@@ -49,12 +50,15 @@ export async function GET(req: Request) {
   if (!redis) return Response.json({ threads: [] });
 
   try {
-    const raw = await redis.get<string>(`lex:threads:${session.email}`);
-    const threads = raw ? JSON.parse(raw) : [];
-    return Response.json({ threads });
+    const read = readStoredThreads(await redis.get(`lex:threads:${session.email}`));
+    if (!read.ok) {
+      console.error("[lex-threads GET] stored threads unreadable");
+      return Response.json({ error: read.error }, { status: 500 });
+    }
+    return Response.json({ threads: read.threads });
   } catch (err) {
     console.error("[lex-threads GET]", err);
-    return Response.json({ threads: [] });
+    return Response.json({ error: "threads_load_failed" }, { status: 500 });
   }
 }
 
@@ -67,9 +71,15 @@ export async function PUT(req: Request) {
 
   try {
     const body = await req.json();
-    const raw = Array.isArray(body.threads) ? body.threads : [];
-    const { threads } = await maskThreadAttachments(raw, lexFirmFromRequest(req, "lex-internal"), (matterId) => matterPartiesFor(req, matterId));
-    await redis.set(`lex:threads:${session.email}`, JSON.stringify(threads), { ex: TTL_SECONDS });
+    if (!Array.isArray(body?.threads)) return Response.json({ ok: false, error: "threads_required" }, { status: 400 });
+    const deleted = cleanDeletedIds(body.deletedIds);
+    const key = `lex:threads:${session.email}`;
+    // Merge by thread id with what's stored: threads the client didn't send are kept unless explicitly deleted.
+    const stored = readStoredThreads(await redis.get(key));
+    if (!stored.ok) return Response.json({ ok: false, error: stored.error }, { status: 409 });
+    const { threads } = await maskThreadAttachments(body.threads, lexFirmFromRequest(req, "lex-internal"), (matterId) => matterPartiesFor(req, matterId));
+    const merged = mergeThreads(stored.threads, threads as { id?: unknown }[], deleted);
+    await redis.set(key, JSON.stringify(merged), { ex: TTL_SECONDS });
     return Response.json({ ok: true });
   } catch (err) {
     console.error("[lex-threads PUT]", err);
