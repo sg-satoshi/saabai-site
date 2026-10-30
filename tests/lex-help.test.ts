@@ -80,5 +80,50 @@ test("wiring: gateway only, shared chat rate limits, masked logging, confirmed f
   assert.match(route, /o\.user !== user/);
   assert.match(route, /looksLikeLegalAdvice\(parsed\.reply\)/);
   assert.doesNotMatch(readFileSync("app/api/lex-feedback/route.ts", "utf8"), /source/);
-  assert.match(readFileSync("app/lex/layout.tsx", "utf8"), /<HelpAssistant \/>/);
+  assert.match(readFileSync("app/lex/layout.tsx", "utf8"), /<HelpAssistantMount \/>/);
+});
+
+test("knowledge: editable markdown sources, generated file fresh, retrieval ranks by question and screen", async () => {
+  const { execFileSync } = await import("node:child_process");
+  execFileSync("node", ["scripts/build-lex-help.mjs", "--check"]);
+  const { retrieveHelp, cleanRoute, LEX_HELP_SECTIONS } = await import("../lib/lex-help-knowledge");
+  assert.ok(LEX_HELP_SECTIONS.length >= 9);
+  assert.ok(LEX_HELP_SECTIONS.every((s) => !s.body.includes("{{")), "placeholders filled from live copy");
+  assert.equal(retrieveHelp("how do I change my password", null)[0].id, "account");
+  assert.equal(retrieveHelp("how do I export to word", "/lex/draft")[0].id, "draft");
+  assert.ok(retrieveHelp("hello", null).some((s) => s.id === "overview"));
+  assert.equal(cleanRoute("/lex/draft?x=client"), "/lex/draft");
+  assert.equal(cleanRoute("https://evil.test/lex"), null);
+  assert.equal(cleanRoute("/admin"), null);
+});
+
+test("firm scope: context comes from the session actor only; firm A never sees firm B", async () => {
+  const { createMockUpstash } = await import("../scripts/dev/mock-upstash.mjs");
+  const mock = createMockUpstash();
+  await new Promise<void>((r) => mock.server.listen(0, "127.0.0.1", () => r()));
+  const { port } = mock.server.address() as import("node:net").AddressInfo;
+  process.env.UPSTASH_REDIS_REST_URL = `http://127.0.0.1:${port}`; process.env.UPSTASH_REDIS_REST_TOKEN = "t";
+  try {
+    const { getRedis } = await import("../lib/redis");
+    const r = getRedis()!;
+    const firm = (id: string, email: string, status: string, members: string[]) => ({ firmId: id, firmName: id, adminEmail: email, members, granted: [], status, trialEndsAt: "2026-12-01T00:00:00Z", createdAt: "", updatedAt: "" });
+    await r.set("lex:firm:fa", JSON.stringify(firm("fa", "a@alpha.test", "trial", [])));
+    await r.set("lex:firm:byemail:a@alpha.test", "fa");
+    await r.set("lex:firm:fb", JSON.stringify(firm("fb", "b@beta.test", "active", ["x@beta.test", "y@beta.test"])));
+    await r.set("lex:firm:byemail:b@beta.test", "fb");
+    const { helpFirmContext, helpContextText } = await import("../lib/lex-help-context");
+    const now = new Date("2026-11-21T00:00:00Z");
+    const a = await helpFirmContext({ kind: "firm", email: "a@alpha.test", firm: "alpha.test" }, now);
+    assert.equal(a?.status, "trial"); assert.equal(a?.trialDaysLeft, 10); assert.equal(a?.seats, "1 of 3");
+    const txt = helpContextText("/lex", a);
+    assert.doesNotMatch(txt, /beta|fb|active|3 of 3/);
+    assert.equal(await helpFirmContext({ kind: "admin", id: "s" }), null);
+    const route = readFileSync("app/api/lex-help/route.ts", "utf8");
+    assert.match(route, /helpFirmContext\(actor\)/);
+    assert.doesNotMatch(route, /body\??\.(firm|email|firmId|user)\b/, "firm never taken from the request");
+    assert.match(route, /export async function GET[\s\S]*?resolveReviewActor[\s\S]*?status: 401/);
+    const layout = readFileSync("app/lex/layout.tsx", "utf8");
+    assert.match(layout, /<HelpAssistantMount \/>/);
+    assert.match(readFileSync("app/lex/_components/HelpAssistantMount.tsx", "utf8"), /signup\|login/);
+  } finally { mock.server.close(); }
 });

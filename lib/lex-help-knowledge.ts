@@ -1,23 +1,52 @@
 /**
- * Lex help assistant knowledge. Written from the actual Lex UI (app/lex/_components) and the live
- * terms and privacy copy, which are imported (not retyped) so the assistant never drifts from them.
- * Update this file when a Lex screen changes. Product help only: never legal advice.
+ * Lex help assistant knowledge: editable source in content/lex-help/*.md, compiled by
+ * scripts/build-lex-help.mjs into lex-help-content.generated.ts (CI checks it is fresh).
+ * Terms and privacy placeholders are filled from the live copy so they never drift.
+ * Retrieval: simple keyword scoring with a boost for the user's current screen. Product help only.
  */
 import { LEX_TERMS, LEX_TERMS_SUMMARY } from "./lex-terms";
 import { LEX_MATTERS_PRIVACY_COPY } from "./lex-upload-copy";
+import { LEX_HELP_DOCS } from "./lex-help-content.generated";
 
-export const LEX_HELP_SECTIONS: { id: string; title: string; body: string }[] = [
-  { id: "overview", title: "What Lex is", body: "Lex is Saabai's AI workspace for Australian law firms. The left sidebar switches between Dashboard, Research, Draft, Review and Matters, and holds your recent research threads and projects. Your firm name and login are at the bottom of the sidebar, which opens Account. Lex helps lawyers work faster, but a lawyer must check everything it produces before relying on it." },
-  { id: "research", title: "Research", body: "Ask a legal research question in the composer and Lex searches, reads sources and writes an answer with Conclusions and Sources. Each answer has Copy and Export to Word, and Draft to start a document from it. Use New research to start a fresh thread. Threads can be renamed, moved into a project by dragging, or opened from the sidebar. Email research thread sends all questions and answers, with citations. If an answer looks wrong, use Flag an issue with this answer under it." },
-  { id: "draft", title: "Draft documents", body: "Draft walks you through Setup questions, then writes the document. It is jurisdiction aware. Before use, the QA check runs (Checking every citation and clause) and lists References in this draft, each with Show in draft, Research this and Find on AustLII. Every draft is marked Must review before use. You can Edit answers to regenerate, Export to Word, or Send to client. Uploaded files are read to fill the draft and then discarded, and draft progress is saved only in your browser for 30 days." },
-  { id: "review", title: "Review and compare documents", body: "Review a document checks an uploaded document and lists issues for a lawyer to consider. Compare shows the differences between two versions. Your firm has a daily cap on reviews and compares; when it is reached Lex says so and the limit resets at midnight Brisbane time. A review can be sent to a supervisor and saved to a matter." },
-  { id: "matters", title: "Matters", body: "Matters keep a client's research, drafts and reviews together for your firm. Use New matter and fill in Matter name, Client name, Matter type, Area, Brief description, Other parties and aliases, Notes and deadlines. Open matters shows Next deadline and Overdue items. Inside a matter, New research in this matter, Draft a document and Review a document all save there. Leave matter (Stop working in this matter) returns to general work. Adding other parties and aliases helps Lex mask those names before anything goes to the AI model." },
-  { id: "privacy", title: "Privacy and masking", body: `Before any text reaches an AI model, Lex masks names, emails, phone numbers and other identifiers, then puts the real names back in the reply you see. If masking fails, nothing is sent. ${LEX_MATTERS_PRIVACY_COPY}` },
-  { id: "account", title: "Account, team and billing", body: "Account has Details (Your login, Firm, Email), Change password, Firm settings, Firm workspace, Billing (Manage billing opens your secure billing page), Billing history and Invoices, and Sign out. The firm owner can invite lawyers up to the plan's seats from the firm plan panel. For questions, more users or more capacity, use Contact Saabai or email hello@saabai.ai." },
-  { id: "terms", title: "Plan and terms", body: `${LEX_TERMS_SUMMARY} ${LEX_TERMS.map((t) => `${t.heading}: ${t.body}`).join(" ")} The full terms are at saabai.ai/terms (section 10) and the privacy policy at saabai.ai/privacy.` },
-  { id: "feedback", title: "Reporting problems and ideas", body: "The Report an issue / Suggest a feature button on every Lex screen sends a bug, idea or question to the Saabai team, with an optional screenshot. Please don't include client names or identifying details. This assistant can also log a problem or a feature idea for you if you confirm." },
-];
+export type HelpSection = { id: string; title: string; routes: string[]; keywords: string[]; body: string };
 
-export function helpKnowledgeText(): string {
-  return LEX_HELP_SECTIONS.map((s) => `## ${s.title}\n${s.body}`).join("\n\n");
+function fill(body: string): string {
+  return body
+    .replaceAll("{{LEX_TERMS_SUMMARY}}", LEX_TERMS_SUMMARY)
+    .replaceAll("{{LEX_TERMS}}", LEX_TERMS.map((t) => `${t.heading}: ${t.body}`).join(" "))
+    .replaceAll("{{LEX_MATTERS_PRIVACY_COPY}}", LEX_MATTERS_PRIVACY_COPY);
+}
+export const LEX_HELP_SECTIONS: HelpSection[] = LEX_HELP_DOCS.map((d) => ({ ...d, body: fill(d.body) }));
+
+const STOP = new Set("a an the and or to of in on for is it i my me how do does can what where when why with this that be you your lex".split(" "));
+const words = (s: string) => s.toLowerCase().match(/[a-z0-9]+/g)?.filter((w) => w.length > 2 && !STOP.has(w)) ?? [];
+const stem = (w: string) => w.replace(/(ing|ed|es|s)$/, "");
+
+/** Top sections for a question and screen. "overview" is always included. */
+export function retrieveHelp(question: string, route: string | null, k = 4): HelpSection[] {
+  const q = new Set(words(question).map(stem));
+  const scored = LEX_HELP_SECTIONS.map((s) => {
+    const title = new Set(words(s.title).map(stem));
+    const kw = new Set(s.keywords.map((w) => stem(w.toLowerCase())));
+    const body = new Set(words(s.body).map(stem));
+    let score = 0;
+    for (const w of q) score += (title.has(w) ? 3 : 0) + (kw.has(w) ? 2 : 0) + (body.has(w) ? 1 : 0);
+    if (route && s.routes.some((r) => route === r || route.startsWith(r + "/"))) score += 2;
+    return { s, score };
+  }).sort((a, b) => b.score - a.score);
+  const top = scored.filter((x) => x.score > 0).slice(0, k).map((x) => x.s);
+  const overview = LEX_HELP_SECTIONS.find((s) => s.id === "overview");
+  if (overview && !top.includes(overview)) top.push(overview);
+  return top;
+}
+
+export function helpKnowledgeText(sections: HelpSection[] = LEX_HELP_SECTIONS): string {
+  return sections.map((s) => `## ${s.title}\n${s.body}`).join("\n\n");
+}
+
+/** Current Lex screen from a client-sent path: Lex paths only, no query string. */
+export function cleanRoute(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const p = raw.split(/[?#]/)[0].slice(0, 120);
+  return /^\/lex(\/[a-z0-9\-/]*)?$/i.test(p) ? p.replace(/\/[a-z0-9]{16,}/gi, "/:id") : null;
 }

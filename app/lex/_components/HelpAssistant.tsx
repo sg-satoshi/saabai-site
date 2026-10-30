@@ -28,7 +28,7 @@ export default function HelpAssistant() {
     const next: Msg[] = [...msgs, { role: "user", content: q }];
     setMsgs(next); setText(""); setBusy(true); setOffer(null);
     try {
-      const r = await fetch("/api/lex-help", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: next, conversationId: cid }) });
+      const r = await fetch("/api/lex-help", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: next, conversationId: cid, page: path }) });
       const d = await r.json().catch(() => ({}));
       setMsgs([...next, { role: "assistant", content: d.reply || d.error || d.content || "Sorry, I couldn't answer that. Please try again." }]);
       setOffer(d.offer && d.offerId ? { ...d.offer, id: d.offerId } : null);

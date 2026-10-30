@@ -4,7 +4,7 @@
  * the model may only PROPOSE a log entry, and the panel files it via /api/lex-feedback after the
  * user confirms.
  */
-import { helpKnowledgeText } from "./lex-help-knowledge";
+import { helpKnowledgeText, type HelpSection } from "./lex-help-knowledge";
 
 export const HELP_LABEL = "Lex help assistant (AI). Product help only, not legal advice.";
 export type HelpOffer = { type: "bug" | "idea" | "question"; summary: string };
@@ -46,7 +46,8 @@ export function looksLikeLegalAdvice(answer: string): boolean {
 
 export const LEGAL_REFUSAL = "I'm the Lex help assistant, so I can only help with using Lex, not give legal advice. For a legal question, use Research in Lex, and have a lawyer check the answer before relying on it.";
 
-export function helpSystemPrompt(): string {
+/** sections: retrieved help (default all); context: current screen and the signed-in firm only. */
+export function helpSystemPrompt(sections?: HelpSection[], context?: string): string {
   return `You are the Lex help assistant, an AI that helps Australian law firm staff use the Lex app. You are not a lawyer.
 Rules:
 - Answer only from the HELP below about Lex screens, features, billing, terms and privacy. If the HELP does not cover it, say you don't know and suggest Contact Saabai or hello@saabai.ai. Never invent features, prices or policies.
@@ -56,8 +57,13 @@ Rules:
 OFFER|<bug or idea or question>|<one sentence summary without any names, emails or client details>
 Use idea for any feature request or wish, bug for something broken, question for something the HELP could not answer. Never say it has been logged: the user must confirm first.
 
+- CONTEXT is about the signed-in user's own firm only. Use it to answer about their plan, trial or usage today. Never guess other firms' details.
+
+CONTEXT:
+${context ?? "Current screen: unknown"}
+
 HELP:
-${helpKnowledgeText()}`;
+${helpKnowledgeText(sections)}`;
 }
 
 /** Splits the model reply into visible text and an optional offer line. */

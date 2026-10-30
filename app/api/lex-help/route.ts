@@ -19,11 +19,20 @@ import { logChatTurn } from "@/lib/chat-log";
 import { getRedis } from "@/lib/redis";
 import { alertFeedback, appVersion, saveFeedback, validateFeedback } from "@/lib/lex-feedback";
 import { lexAlert } from "@/lib/lex-subscription-emails";
+import { cleanRoute, retrieveHelp } from "@/lib/lex-help-knowledge";
+import { helpContextText, helpFirmContext } from "@/lib/lex-help-context";
 import { HELP_LABEL, LEGAL_REFUSAL, helpSystemPrompt, isLegalQuestion, latestQuestion, looksLikeLegalAdvice, normaliseHelpMessages, parseHelpReply, type HelpOffer } from "@/lib/lex-help";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const OFFER_TTL = 15 * 60;
+
+/** GET: signed-in check for mounting the panel, plus the caller's own firm context. 401 when signed out. */
+export async function GET(req: Request) {
+  const actor = await resolveReviewActor(req);
+  if (!actor) return Response.json({ error: "Sign in to use help" }, { status: 401 });
+  return Response.json({ ok: true, context: await helpFirmContext(actor).catch(() => null) });
+}
 
 export async function POST(req: Request) {
   const actor = await resolveReviewActor(req);
@@ -58,7 +67,10 @@ export async function POST(req: Request) {
   if (!gw) return privacyFailResponse();
   try {
     const masked = gw.maskMessages(messages);
-    const res = await gw.generateText({ system: helpSystemPrompt() + PRIVACY_SYSTEM_NOTE, messages: masked, maxOutputTokens: 600 });
+    // Retrieval over content/lex-help plus the current screen and the session firm's own context (never body-supplied).
+    const route = cleanRoute(body?.page);
+    const context = helpContextText(route, await helpFirmContext(actor).catch(() => null));
+    const res = await gw.generateText({ system: helpSystemPrompt(retrieveHelp(latest, route), context) + PRIVACY_SYSTEM_NOTE, messages: masked, maxOutputTokens: 600 });
     const parsed = parseHelpReply(res.text);
     const advice = looksLikeLegalAdvice(parsed.reply);
     const reply = advice ? LEGAL_REFUSAL : parsed.reply;
