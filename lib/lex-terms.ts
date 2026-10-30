@@ -1,5 +1,5 @@
 /**
- * Lex subscription terms copy. DRAFT pending Shane's approval (issue #388).
+ * Lex subscription terms copy. Approved by Shane 30 Oct 2026 (issue #388).
  * Bump LEX_TERMS_VERSION in lib/lex-subscription.ts whenever this copy changes.
  */
 export const LEX_TERMS_SUMMARY =
@@ -12,7 +12,7 @@ export const LEX_TERMS: { heading: string; body: string }[] = [
   { heading: "What happens when you cancel", body: "Your access continues until the end of the month you've already paid for. After that you won't be charged again." },
   { heading: "Refunds", body: "We don't refund part months when you cancel. If we charge you in error, or Lex doesn't work as it should, contact us and we'll put it right." },
   { heading: "Failed payments", body: "If a payment fails, we'll let you know and try again. If it still can't be paid after 7 days, we may pause access until it is." },
-  { heading: "Your data after cancelling", body: "[To be confirmed before Lex checkout opens.]" },
+  { heading: "Your data after cancelling", body: "After your plan ends, we keep your firm's Lex data (matters, saved reviews and drafts, and research chats) for 30 days, then delete it. Before then you can ask for a copy, or ask us to delete it sooner, by emailing hello@saabai.ai. If you subscribe again within the 30 days, your data is still there. Drafts you haven't saved to a matter are stored only in your browser, not on our servers." },
   { heading: "Your rights", body: "Nothing in these terms limits any rights you have under the Australian Consumer Law." },
   { heading: "Lex is a drafting tool", body: "Lex helps prepare drafts and research. It doesn't give legal advice. Your firm reviews and is responsible for anything it sends to a client." },
 ];

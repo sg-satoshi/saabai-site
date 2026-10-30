@@ -9,6 +9,7 @@ import { getStripe } from "../../../../lib/stripe";
 import { handleBillingEvent } from "../../../../lib/billing/service";
 import { recordBillingGrowthEvent } from "../../../../lib/growth/billing-events";
 import { reportCheckoutPurchase } from "../../../../lib/marketing/report-purchase";
+import { isLexStripeObject } from "../../../../lib/lex-subscription";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,6 +26,8 @@ export async function POST(req: Request) {
     return Response.json({ error: "Invalid signature" }, { status: 400 });
   }
   try {
+    // Lex is handled (and its purchase reported once) by /api/stripe/webhook. Never count it again here.
+    if (await isLexStripeObject(event.data.object, event.type)) return Response.json({ received: true, result: "lex-skipped" });
     // Expand invoice payment error (card last4) for dunning copy when needed.
     if (event.type === "invoice.payment_failed") {
       const inv = event.data.object as Stripe.Invoice & { payment_intent?: string };

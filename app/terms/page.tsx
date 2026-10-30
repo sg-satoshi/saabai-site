@@ -18,7 +18,7 @@ const SECTIONS: { heading: string; body: string; id?: string }[] = [
   { heading: "7. Liability", body: "To the extent the law allows, our liability is limited to resupplying the service or refunding the amount paid for it. We do not guarantee particular search rankings, traffic or sales results." },
   { heading: "8. Privacy", body: "How we handle personal information is explained in our Privacy Policy at saabai.ai/privacy." },
   { heading: "9. Governing law", body: "These terms are governed by the laws of Queensland, Australia." },
-  // Lex subscription terms. DRAFT pending Shane's approval (PR for issue #388); source: Sales & Marketing lex-terms-draft v2.
+  // Lex subscription terms. Approved by Shane 30 Oct 2026 (issue #388); source: Sales & Marketing lex-terms-draft v2.
   { id: "lex", heading: "10. Lex subscriptions", body: LEX_TERMS_SUMMARY },
   ...LEX_TERMS.map((t, i) => ({ heading: `10.${i + 1} ${t.heading}`, body: t.body })),
 ];

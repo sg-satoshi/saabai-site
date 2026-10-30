@@ -16,9 +16,11 @@ import { getRedis } from "./redis";
 import { getDirectoryUser, saveDirectoryUser } from "./user-directory";
 import { ensureClientAccount } from "./client-account";
 
-export const LEX_TERMS_VERSION = "lex-terms-2026-10-30-draft";
+export const LEX_TERMS_VERSION = "lex-terms-2026-10-30";
 export const LEX_SEAT_CAP = 3; // /legal: "Firm plan is $299 a month ... for 3 lawyer seats"
 export const GRACE_DAYS = 7;
+/** Clause 10.7: a cancelled firm's Lex data is kept this long, then deleted (a resubscribe within it keeps the data). */
+export const DATA_RETENTION_DAYS = 30;
 export const PENDING_TTL_SECONDS = 24 * 3600;
 const SEEN_TTL_SECONDS = 30 * 24 * 3600;
 
@@ -39,6 +41,10 @@ export type LexFirm = {
   lastPaidAt?: number;
   /** Staff released when the plan was cancelled (kept for the record only). */
   formerMembers?: string[];
+  /** Cancelled plans: Lex data (matters, reviews, research chats) is deleted after this time unless the firm resubscribes. */
+  dataDeleteAfter?: string;
+  dataDeletedAt?: string;
+  resubscribedAs?: string;
   termsVersion: string; termsAcceptedAt: string; createdAt: string; updatedAt: string;
 };
 
@@ -237,7 +243,11 @@ export async function provisionLexCheckout(eventId: string, s: CheckoutLike, mai
     if (!claimed) {
       const cur = String(await r.get(`lex:firm:byemail:${email}`));
       const curFirm = cur !== firmId ? await getFirm(cur) : null;
-      if (curFirm && curFirm.status === "lapsed" && curFirm.lapseReason === "cancelled") await r.set(`lex:firm:byemail:${email}`, firmId);
+      if (curFirm && curFirm.status === "lapsed" && curFirm.lapseReason === "cancelled") {
+        await r.set(`lex:firm:byemail:${email}`, firmId);
+        // Resubscribed within the 30 days: keep the old firm's data (matters are keyed by firm domain, so they come straight back).
+        if (!curFirm.dataDeletedAt) await withFirmLock(curFirm.firmId, async (old) => { old.dataDeleteAfter = undefined; old.resubscribedAs = firmId; });
+      }
       else if (cur !== firmId) await alert(`Lex checkout ${s.id}: ${email} is already linked to firm ${cur}. The new firm ${firmId} was provisioned but the login stays linked to the old firm. Check by hand.`);
     }
     await withFirmLock(firmId, async (f) => {
@@ -273,6 +283,7 @@ export async function lapseFirm(f: LexFirm, reason: "unpaid" | "cancelled", mail
     f.formerMembers = [...new Set([...(f.formerMembers ?? []), ...f.members])];
     f.members = [];
     f.granted = f.granted.filter((g) => g === f.adminEmail);
+    if (!f.dataDeleteAfter) f.dataDeleteAfter = new Date(Date.now() + DATA_RETENTION_DAYS * 86400_000).toISOString();
   }
 }
 /** Mutates f (caller holds the firm lock). Restoring is silent: no repeat welcome emails. */
@@ -401,4 +412,57 @@ export async function revokeMember(firmId: string, rawEmail: string): Promise<{ 
     return f;
   });
   return { ...res, firm };
+}
+
+// ── Clause 10.7: delete a cancelled firm's Lex data after 30 days ─────────
+export type DataDeleter = { matters(firmKey: string): Promise<number>; threads(email: string): Promise<void> };
+
+/**
+ * Cron: for cancelled firms past dataDeleteAfter, delete their matters (incl. saved reviews and drafts) and research chats.
+ * Matters are keyed by firm domain, so a key is skipped if anyone with Lex today shares it (another active firm, or a
+ * resubscribed owner); we never delete a live firm's data. Unsaved drafts live only in the user's browser.
+ */
+export async function sweepDataRetention(del: DataDeleter, firmKeyOf: (email: string) => string, lexUsers: () => Promise<string[]>, now = new Date()): Promise<{ deleted: number; kept: number }> {
+  const r = redis();
+  const out = { deleted: 0, kept: 0 };
+  let cursor = "0"; let pages = 0; let live: Set<string> | null = null;
+  do {
+    const [next, keys] = (await r.scan(cursor, { match: "lex:firm:lf_*", count: 200 })) as [string, string[]];
+    cursor = String(next);
+    for (const k of keys) {
+      const f0 = parse<LexFirm>(await r.get(k));
+      if (!(f0?.status === "lapsed" && f0.lapseReason === "cancelled" && f0.dataDeleteAfter && !f0.dataDeletedAt && new Date(f0.dataDeleteAfter) <= now)) continue;
+      live ??= new Set((await lexUsers()).map(firmKeyOf));
+      const liveKeys = live;
+      await withFirmLock(f0.firmId, async (f) => {
+        if (f.status !== "lapsed" || !f.dataDeleteAfter || f.dataDeletedAt) return;
+        const people = [f.adminEmail, ...(f.formerMembers ?? [])];
+        for (const key of new Set(people.map(firmKeyOf))) {
+          if (liveKeys.has(key)) out.kept++;
+          else await del.matters(key);
+        }
+        for (const e of people) if (!(await hasLexProduct(e))) await del.threads(e);
+        f.dataDeletedAt = now.toISOString();
+        out.deleted++;
+      });
+    }
+  } while (cursor !== "0" && ++pages < 100);
+  return out;
+}
+
+/**
+ * True if a Stripe checkout, subscription or invoice belongs to Lex. Lex is handled (and its purchase reported once)
+ * by /api/stripe/webhook, so other webhooks on the account use this to skip Lex events.
+ */
+export async function isLexStripeObject(o: unknown, eventType: string): Promise<boolean> {
+  const x = (o ?? {}) as {
+    id?: string; metadata?: Record<string, string> | null;
+    subscription_details?: { metadata?: Record<string, string> | null } | null;
+    parent?: { subscription_details?: { metadata?: Record<string, string> | null; subscription?: unknown } | null } | null;
+    subscription?: unknown;
+  };
+  const metas = [x.metadata, x.subscription_details?.metadata, x.parent?.subscription_details?.metadata];
+  if (metas.some((m) => m?.product === "lex")) return true;
+  const subId = eventType.startsWith("customer.subscription.") ? x.id : idOf(x.subscription) ?? idOf(x.parent?.subscription_details?.subscription);
+  return !!(subId && (await firmBySubscription(subId)));
 }

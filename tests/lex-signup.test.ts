@@ -211,6 +211,54 @@ test("round 2: signup redirects use siteUrl(); billing and team routes don't req
   assert.match(form, /\.focus\(\)/);
 });
 
+test("billing webhook skips Lex checkouts, subscriptions and invoices so a Lex purchase isn't counted twice", async () => {
+  const { isLexStripeObject } = await L();
+  assert.equal(await isLexStripeObject({ id: "cs_l", metadata: { product: "lex", plan: "firm" } }, "checkout.session.completed"), true);
+  assert.equal(await isLexStripeObject({ id: "sub_1" }, "customer.subscription.updated"), true, "known Lex subscription");
+  assert.equal(await isLexStripeObject({ id: "in_l", parent: { subscription_details: { subscription: "sub_race" } } }, "invoice.paid"), true);
+  assert.equal(await isLexStripeObject({ id: "in_l2", parent: { subscription_details: { metadata: { product: "lex" } } } }, "invoice.paid"), true);
+  assert.equal(await isLexStripeObject({ id: "cs_site", metadata: { source: "saabai-billing", siteId: "x" } }, "checkout.session.completed"), false);
+  assert.equal(await isLexStripeObject({ id: "sub_site" }, "customer.subscription.updated"), false);
+  const src = readFileSync("app/api/webhooks/billing/route.ts", "utf8");
+  const skip = src.indexOf("isLexStripeObject(event.data.object");
+  assert.ok(skip > 0 && skip < src.indexOf("recordBillingGrowthEvent(event)") && skip < src.indexOf("reportCheckoutPurchase(event"), "Lex is skipped before growth tracking and purchase reporting");
+});
+
+test("clause 10.7: cancelled firm data is deleted after 30 days, kept if the domain still has Lex, and kept on resubscribe", async () => {
+  const { savePendingSignup, provisionLexCheckout, firmBySubscription, handleLexLifecycle, sweepDataRetention, getFirm, DATA_RETENTION_DAYS, LEX_TERMS_VERSION } = await L();
+  const { LEX_TERMS } = await import("../lib/lex-terms");
+  assert.equal(DATA_RETENTION_DAYS, 30);
+  assert.doesNotMatch(LEX_TERMS_VERSION, /draft/);
+  assert.match(LEX_TERMS[6].body, /30 days/);
+  assert.match(LEX_TERMS[6].body, /hello@saabai\.ai/);
+  const key = (e: string) => e.split("@")[1];
+  const mk = async (tag: string, owner: string) => {
+    const p = await savePendingSignup({ name: "O", email: owner, firmName: tag });
+    await provisionLexCheckout(`evt_${tag}`, { id: `cs_${tag}`, payment_status: "paid", customer: `cus_${tag}`, subscription: `sub_${tag}`, metadata: { product: "lex", plan: "firm", pendingId: p.id } }, mailer, alert);
+    await handleLexLifecycle({ id: `evt_del_${tag}`, type: "customer.subscription.deleted", data: { object: { id: `sub_${tag}`, status: "canceled" } } }, mailer);
+    return (await firmBySubscription(`sub_${tag}`))!;
+  };
+  const gone = await mk("gone", "o@gone.test");
+  assert.ok(gone.dataDeleteAfter);
+  const deleted: string[] = []; const threads: string[] = [];
+  const del = { matters: async (k: string) => { deleted.push(k); return 1; }, threads: async (e: string) => { threads.push(e); } };
+  const early = new Date(Date.now() + 29 * 86400_000);
+  assert.equal((await sweepDataRetention(del, key, async () => [], early)).deleted, 0);
+  const late = new Date(Date.now() + 31 * 86400_000);
+  assert.equal((await sweepDataRetention(del, key, async () => ["someone@race.test"], late)).deleted >= 1, true);
+  assert.ok(deleted.includes("gone.test"));
+  assert.ok(threads.includes("o@gone.test"));
+  assert.ok((await getFirm(gone.firmId))?.dataDeletedAt);
+  // Resubscribe within 30 days keeps the data
+  const back = await mk("back", "o@back.test");
+  const p2 = await savePendingSignup({ name: "O", email: "o@back.test", firmName: "Back again" });
+  await provisionLexCheckout("evt_back2", { id: "cs_back2", payment_status: "paid", customer: "cus_b2", subscription: "sub_back2", metadata: { product: "lex", plan: "firm", pendingId: p2.id } }, mailer, alert);
+  assert.equal((await getFirm(back.firmId))?.dataDeleteAfter, undefined);
+  deleted.length = 0;
+  await sweepDataRetention(del, key, async () => ["o@back.test"], late);
+  assert.ok(!deleted.includes("back.test"));
+});
+
 test("webhooks: canonical route routes Lex strictly and has no old welcome copy; legacy route never provisions Lex", () => {
   const canon = readFileSync("app/api/stripe/webhook/route.ts", "utf8");
   assert.match(canon, /constructEvent/);
