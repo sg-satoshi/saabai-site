@@ -26,7 +26,7 @@ const t: Topic = {
     { q: "Does Lex draft unit trust deeds?", a: "Yes. Unit trust deeds are a built-in document type." },
     { q: "Can Lex prepare trust distribution resolutions?", a: "Yes. Lex drafts trustee resolutions appointing the income of a discretionary trust for a financial year, including optional streaming of capital gains and franked distributions. They must be checked against the trust deed and by the accountant or lawyer." },
     { q: "Is a Lex draft legal advice?", a: "No. Lex provides drafting assistance only, not legal advice. Every draft must be reviewed by a lawyer before it is used." },
-    { q: "How much does it cost?", a: "The Firm plan is $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited legal research and 20 documents a month. Book a free 30-minute demo to see it on your own matters." },
+    { q: "How much does it cost?", a: "Start with a 60-day free trial, no card needed. Pricing is set after the trial; you choose whether to subscribe. It includes 3 lawyer seats, legal research and 20 documents a month. Book a free 30-minute demo to see it on your own matters." },
   ],
 };
 

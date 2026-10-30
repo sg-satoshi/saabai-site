@@ -59,12 +59,12 @@ export const publicPageMeta = {
     path: "/legal",
     title: "Lex AI Legal Assistant | Saabai, Gold Coast",
     description:
-      "Lex is an AI legal assistant for Australian law firms, from Saabai on the Gold Coast. It cites ATO rulings and Commonwealth legislation, and the Firm plan is $299 a month.",
+      "Lex is an AI legal assistant for Australian law firms, from Saabai on the Gold Coast. It cites ATO rulings and Commonwealth legislation, with a 60-day free trial and no card needed.",
   }),
   legalTrustDeeds: pageMeta({
     path: "/legal/ai-trust-deed-drafting",
     title: "AI Trust Deed Drafting for Australian Law Firms | Lex by Saabai",
-    description: "Lex drafts discretionary and unit trust deeds and trust distribution resolutions for review by Australian lawyers. Drafting assistance only, not legal advice, on the $299 a month Firm plan.",
+    description: "Lex drafts discretionary and unit trust deeds and trust distribution resolutions for review by Australian lawyers. Drafting assistance only, not legal advice, with a 60-day free trial.",
   }),
   legalResearch: pageMeta({
     path: "/legal/ai-legal-research",
@@ -75,7 +75,7 @@ export const publicPageMeta = {
     path: "/legal/lex-vs-ai-legal-tools",
     title: "Lex vs other AI legal tools 2026 | Saabai",
     description:
-      "Published facts on price, sources and data location for Lex, Harvey, CoCounsel and Lexis+ AI. Lex is an AI legal assistant from Saabai on the Gold Coast, and the Firm plan is $299 a month.",
+      "Published facts on price, sources and data location for Lex, Harvey, CoCounsel and Lexis+ AI. Lex is an AI legal assistant from Saabai on the Gold Coast, with a free 60-day trial.",
   }),
   queenslandChatbot: pageMeta({
     path: "/ai-chatbot-developer-queensland",

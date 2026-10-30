@@ -41,7 +41,7 @@ export default function TopicPage({ t }: { t: Topic }) {
           <div className="lx-feats">
             <div className="lx-card"><h3>What Lex does</h3><ul>{t.does.map((d) => <li key={d}>{d}</li>)}</ul></div>
             <div className="lx-card"><h3>What Lex does not do</h3><ul>{t.doesNot.map((d) => <li key={d}>{d}</li>)}</ul></div>
-            <div className="lx-card"><h3>Price</h3><p>Firm plan: $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited legal research and 20 documents a month. Enterprise for larger firms. See <a href="/legal#pricing" style={{ textDecoration: "underline" }}>Lex pricing</a>.</p></div>
+            <div className="lx-card"><h3>Free trial</h3><p>60-day free trial, no card needed. Pricing is set after the trial; you choose whether to subscribe. It includes 3 lawyer seats, legal research and 20 documents a month. Enterprise for larger firms. See <a href="/legal#pricing" style={{ textDecoration: "underline" }}>Lex plans</a>.</p></div>
           </div>
         </div>
       </section>
