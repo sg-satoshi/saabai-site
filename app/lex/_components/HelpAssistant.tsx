@@ -6,6 +6,7 @@
  */
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { enabledAssistModes, type LexAssistMode } from "@/lib/lex-help-modes";
 
 type Msg = { role: "user" | "assistant"; content: string };
 type Offer = { type: "bug" | "idea" | "question"; summary: string };
@@ -19,6 +20,8 @@ export default function HelpAssistant() {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [offer, setOffer] = useState<(Offer & { id: string }) | null>(null);
+  const modes = enabledAssistModes();
+  const [mode, setMode] = useState<LexAssistMode>("ask");
   const [cid] = useState(() => Math.random().toString(36).slice(2, 12));
   if (path.startsWith("/lex/signup")) return null;
 
@@ -51,6 +54,12 @@ export default function HelpAssistant() {
             <div><strong style={{ fontSize: 14 }}>Lex Assist</strong><div style={{ fontSize: 11, color: "#6b7280" }}>AI assistant for using Lex. Not legal advice. Don&apos;t include client details.</div></div>
             <button type="button" onClick={() => setOpen(false)} aria-label="Close help" style={{ background: "none", border: 0, fontSize: 18, cursor: "pointer" }}>×</button>
           </header>
+          {modes.length > 1 ? (
+            <div role="tablist" aria-label="Lex Assist mode" style={{ display: "flex", gap: 4, padding: "6px 10px", borderBottom: "1px solid #eef0f4" }}>
+              {modes.map((m) => <button key={m.id} type="button" role="tab" aria-selected={mode === m.id} onClick={() => setMode(m.id)} style={mode === m.id ? { ...navy, padding: "4px 10px", fontSize: 12 } : { background: "none", border: "1px solid #cfd4dd", borderRadius: 8, padding: "4px 10px", fontSize: 12, cursor: "pointer" }}>{m.label}</button>)}
+            </div>
+          ) : null}
+          {mode === "ask" ? (<>
           <div style={{ flex: 1, overflowY: "auto", padding: 12, fontSize: 13, lineHeight: 1.45 }} aria-live="polite">
             {msgs.length === 0 ? <p style={{ color: "#6b7280" }}>Ask how to do something in Lex, or tell me about a problem or a feature you&apos;d like.</p> : null}
             {msgs.map((m, i) => <p key={i} style={{ whiteSpace: "pre-wrap", margin: "0 0 8px", padding: 8, borderRadius: 8, background: m.role === "user" ? "#eef1fb" : "#f7f7f9" }}><span style={{ fontSize: 10, color: "#6b7280", display: "block" }}>{m.role === "user" ? "You" : "Assistant (AI)"}</span>{m.content}</p>)}
@@ -67,6 +76,7 @@ export default function HelpAssistant() {
             <input aria-label="Ask Lex Assist" value={text} maxLength={2000} onChange={(e) => setText(e.target.value)} placeholder="How do I…" style={{ flex: 1, padding: 8, border: "1px solid #cfd4dd", borderRadius: 8, fontSize: 13 }} />
             <button type="submit" disabled={busy || !text.trim()} style={{ ...navy, padding: "6px 12px", fontSize: 13, opacity: busy ? 0.6 : 1 }}>Send</button>
           </form>
+          </>) : null /* phase 2: report / suggest panes slot in here */}
         </section>
       ) : null}
     </>

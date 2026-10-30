@@ -242,3 +242,12 @@ test("name: user-facing labels say Lex Assist", async () => {
   assert.match(LEGAL_REFUSAL, /Lex Assist/); assert.match(HELP_DECLINE, /Lex Assist covers using Lex/); assert.match(HELP_CAP_REPLY, /Lex Assist/);
   for (const t of [HELP_LABEL, LEGAL_REFUSAL, HELP_DECLINE, HELP_CAP_REPLY, helpSystemPrompt()]) assert.doesNotMatch(t, /Lex help\b/i);
 });
+
+test("Lex Assist panel: Ask is the only live mode; Report/Suggest slots are present but hidden", async () => {
+  const { LEX_ASSIST_MODES, enabledAssistModes } = await import("../lib/lex-help-modes");
+  assert.deepEqual(LEX_ASSIST_MODES.map((m) => m.id), ["ask", "report", "suggest"]);
+  assert.deepEqual(enabledAssistModes().map((m) => m.id), ["ask"]);
+  const src = (await import("node:fs")).readFileSync("app/lex/_components/HelpAssistant.tsx", "utf8");
+  assert.match(src, /modes\.length > 1 \?/);
+  assert.match(src, /mode === "ask"/);
+});
