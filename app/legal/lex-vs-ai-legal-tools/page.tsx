@@ -25,7 +25,7 @@ const AU_TOOLS: { name: string; eyebrow: string; what: string; price: string; hr
 const FAQS = [
   {
     q: "How much does Lex cost?",
-    a: "The Firm plan is $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited research and 20 documents a month. Larger firms can ask about a custom Enterprise plan.",
+    a: "Free 60-day trial; pricing after trial. No card is needed. It includes 3 lawyer seats, legal research and 20 documents a month. Larger firms can ask about a custom Enterprise plan.",
   },
   {
     q: "Which sources does Lex search?",
@@ -33,7 +33,7 @@ const FAQS = [
   },
   {
     q: "What other AI legal tools are available to Australian firms?",
-    a: "This page covers Quillio, Smokeball Archie, LEAP, Clio, Habeas, Harvey, CoCounsel and Lexis+ AI, using each company's own public pages. It is not a ranking. Lex is a research and drafting workspace: $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited legal research and 20 documents a month.",
+    a: "This page covers Quillio, Smokeball Archie, LEAP, Clio, Habeas, Harvey, CoCounsel and Lexis+ AI, using each company's own public pages. It is not a ranking. Lex is a research and drafting workspace with a free 60-day trial (pricing after trial), 3 lawyer seats, legal research and 20 documents a month.",
   },
   {
     q: "Where does Lex host data?",
@@ -46,7 +46,7 @@ const FAQS = [
 ];
 
 const SOURCES: { name: string; href: string; note: string }[] = [
-  { name: "Lex on saabai.ai", href: "https://www.saabai.ai/legal", note: "Price, sources, privacy wording and the licensed case-law snapshot limits." },
+  { name: "Lex on saabai.ai", href: "https://www.saabai.ai/legal", note: "Free trial, sources, privacy wording and the licensed case-law snapshot limits." },
   { name: "Harvey homepage", href: "https://www.harvey.ai/", note: "Product description. No price is listed on this page." },
   { name: "Harvey pricing URL", href: "https://www.harvey.ai/pricing", note: "Returned 404 on the check date. Not used as a price." },
   { name: "Harvey security", href: "https://www.harvey.ai/security", note: "Hosting and data localisation wording." },
@@ -114,7 +114,7 @@ export default function LexComparePage() {
           <div className="lx-feats">
             <div className="lx-card">
               <h3>Price</h3>
-              <p>The Firm plan is $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited research and 20 documents a month.</p>
+              <p>Free 60-day trial; pricing after trial. No card needed. It includes 3 lawyer seats, legal research and 20 documents a month.</p>
               <p style={{ marginTop: 12 }}>Enterprise is custom. Source: the <a href="/legal#pricing" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Lex pricing section</a>.</p>
             </div>
             <div className="lx-card">

@@ -55,9 +55,9 @@ const DOC_TYPES = [
 ];
 
 const LEX_FAQS = [
-  { q: "Is Lex an AI legal drafting tool for small Australian law firms?", a: "Yes. Lex is built for small and mid-sized Australian firms: the Firm plan covers 3 lawyer seats, unlimited legal research and 20 documents a month. It drafts from structured templates for Australian law, runs a QA pass on every draft, and a lawyer reviews and finalises the work. It is drafting and research assistance only, not legal advice." },
+  { q: "Is Lex an AI legal drafting tool for small Australian law firms?", a: "Yes. Lex is built for small and mid-sized Australian firms: Lex includes 3 lawyer seats, legal research and 20 documents a month, and you can start with a 60-day free trial. It drafts from structured templates for Australian law, runs a QA pass on every draft, and a lawyer reviews and finalises the work. It is drafting and research assistance only, not legal advice." },
   { q: "Can Lex draft trust deeds?", a: "Yes. Lex drafts discretionary (family) trust deeds and unit trust deeds, and annual trust distribution resolutions, with notes on the Commonwealth tax rules and state stamp duty positions that apply. Every draft must be checked by a lawyer before it is used." },
-  { q: "Can Lex do Australian legal research?", a: "Yes. Research is unlimited on the Firm plan. Lex searches ATO rulings and interpretive decisions, the Federal Register of Legislation, ASIC and the Fair Work Commission, and cites each source so you can check it. Case citations are checked against a licensed snapshot, not live case law." },
+  { q: "Can Lex do Australian legal research?", a: "Yes. Legal research is included. Lex searches ATO rulings and interpretive decisions, the Federal Register of Legislation, ASIC and the Fair Work Commission, and cites each source so you can check it. Case citations are checked against a licensed snapshot, not live case law." },
   { q: "Does Lex draft wills or conveyancing documents?", a: "Not as a built-in document type today. Lex's templates cover trusts, family law agreements and orders, and commercial agreements. You can draft a custom document from your own instructions, which a lawyer must review." },
   { q: "What is Lex?", a: "Lex is an AI legal assistant for research and drafting at Australian law firms. It searches public Australian government sources, including ATO rulings and Commonwealth legislation, and every answer cites its source." },
   { q: "Is the website chatbot the same as Lex?", a: "No. Lex is the AI legal assistant for research and drafting. The chat demo on this page is a separate website chatbot for a fictional firm. It answers visitor questions. It does not search legislation or draft documents." },
@@ -67,7 +67,7 @@ const LEX_FAQS = [
   { q: "What documents can Lex draft?", a: "Eleven document types: discretionary and unit trust deeds, trust distribution resolutions, BFAs for married and de facto couples, financial settlement consent orders, separation agreements, service agreements, shareholders agreements, employment contracts and commercial leases. You can also draft a custom document from your own instructions, and every draft gets a QA pass." },
   { q: "Does my client's information reach the AI model?", a: "Not in readable form. Names, business names, phone numbers, emails and ABNs or ACNs are swapped for placeholders before anything is sent, and the real details are put back only in the answer you see." },
   { q: "Can a firm switch the privacy masking off?", a: "No. Every Lex AI request goes through the same privacy checkpoint for every firm, including firms that use their own AI key, and if masking fails nothing is sent." },
-  { q: "How much does Lex cost?", a: "The Firm plan is $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited research and 20 documents a month. Larger firms can ask about a custom Enterprise plan." },
+  { q: "How much does Lex cost?", a: "Start with a 60-day free trial, no card needed. It includes 3 lawyer seats, legal research and 20 documents a month. Pricing is set after the trial; you choose whether to subscribe. Larger firms can ask about a custom Enterprise plan." },
   { q: "How do I get started?", a: "Book a free 30-minute demo. We will show you Lex on your own practice area, and if it suits your firm we set up your logins." },
 ];
 
@@ -85,12 +85,11 @@ const lexSchema = {
   publisher: orgRef,
   offers: {
     "@type": "Offer",
-    name: "Firm",
-    price: 299,
+    name: "Lex 60-day free trial",
+    price: 0,
     priceCurrency: "AUD",
     areaServed: { "@type": "Country", name: "Australia" },
-    description: "3 lawyer seats, unlimited legal research and 20 documents a month. AUD. GST not applicable. Enterprise plans for larger firms.",
-    priceSpecification: { "@type": "UnitPriceSpecification", price: 299, priceCurrency: "AUD", unitText: "MONTH" },
+    description: "60-day free trial, no card needed. 3 lawyer seats, legal research and 20 documents a month. Pricing is set after the trial. Enterprise plans for larger firms.",
   },
 };
 
@@ -346,15 +345,15 @@ export default function LegalPage() {
           <div className="lx-head lx-center">
             <div className="lx-eyebrow">Pricing</div>
             <h2>Lex pricing for small firms.</h2>
-            <p className="lx-lead">Firm is $299 a month. Enterprise is custom.</p>
+            <p className="lx-lead">Don&apos;t pay a cent until you&apos;ve tried it. Enterprise is custom.</p>
           </div>
           <div className="lx-plans">
             <div className="lx-plan lx-hi">
               <div className="lx-tier">Firm</div>
-              <div className="lx-price">$299<small> per month</small></div>
+              <div className="lx-price">Free<small> for 60 days</small></div>
               <p>Perfect for small-to-mid sized firms.</p>
               <ul>
-                {["Unlimited legal research", "20 documents per month", "3 lawyer seats", "Government sources and a licensed case-law snapshot", "QA verification on every draft", "Thread memory and history"].map((i) => (
+                {["Legal research included", "20 documents per month", "3 lawyer seats", "Government sources and a licensed case-law snapshot", "QA verification on every draft", "Thread memory and history"].map((i) => (
                   <li key={i}><Check />{i}</li>
                 ))}
               </ul>
@@ -373,8 +372,7 @@ export default function LegalPage() {
             </div>
           </div>
           <div className="lx-fine">
-            <p>Prices in AUD. GST not applicable.</p>
-            <p>We confirm billing with you before a firm starts.</p>
+            <p>60-day free trial, no card needed. Pricing is set after the trial; you choose whether to subscribe.</p>
           </div>
         </div>
       </section>
