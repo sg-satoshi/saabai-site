@@ -18,6 +18,7 @@ import { LexGateway, threadSeed } from "@/lib/lex-privacy/gateway";
 import { LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "@/lib/lex-privacy/mask";
 import { logChatTurn } from "@/lib/chat-log";
 import { getRedis } from "@/lib/redis";
+import { parseRedisJson } from "@/lib/redis-json";
 import { alertFeedback, appVersion, saveFeedback, validateFeedback } from "@/lib/lex-feedback";
 import { lexAlert } from "@/lib/lex-subscription-emails";
 import { cleanRoute, retrieveHelp } from "@/lib/lex-help-knowledge";
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
     if (!redis || !/^[a-f0-9]{24}$/.test(body.confirmOffer)) return Response.json({ error: "That offer has expired" }, { status: 400 });
     const key = `lex:help:offer:${body.confirmOffer}`;
     const raw = await redis.get(key);
-    const o = (typeof raw === "string" ? JSON.parse(raw) : raw) as (HelpOffer & { user: string }) | null;
+    const o = parseRedisJson<HelpOffer & { user: string }>(raw);
     if (!o || o.user !== user) return Response.json({ error: "That offer has expired" }, { status: 400 });
     await redis.del(key);
     const v = validateFeedback({ type: o.type, message: o.summary, page: body.page });
