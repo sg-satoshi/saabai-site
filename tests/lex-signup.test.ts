@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import type { AddressInfo } from "node:net";
 import { NextRequest } from "next/server";
+import type { FirmForDocs } from "../lib/lex-doc-allowance";
 import { createMockUpstash } from "../scripts/dev/mock-upstash.mjs";
 
 const mock = createMockUpstash();
@@ -52,9 +53,39 @@ test("signup validation: required fields, terms, honeypot, ABN", async () => {
   assert.ok(!bot.ok && bot.bot);
 });
 
-test("signup route: 400 on bad input, 503 (feature off) when the price env is unset", async () => {
+const portalCookie = async (email: string) => `portal_session=${(await import("../lib/portal-session")).signSession(email)}`;
+
+test("signup route: signed-out POST gets 403 and never reaches Stripe, even with Stripe configured", async () => {
   const { POST } = await import("../app/api/lex/signup/route");
-  const mk = (b: unknown) => new NextRequest("http://localhost/api/lex/signup", { method: "POST", body: JSON.stringify(b), headers: { "content-type": "application/json" } });
+  const saved = { key: process.env.STRIPE_SECRET_KEY, price: process.env.STRIPE_LEX_FIRM_PRICE_ID, fetch: globalThis.fetch };
+  const stripeCalls: string[] = [];
+  process.env.STRIPE_SECRET_KEY = "sk_test_not_real";
+  process.env.STRIPE_LEX_FIRM_PRICE_ID = "price_test_not_real";
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input instanceof Request ? input.url : input);
+    if (url.includes("stripe.com")) { stripeCalls.push(url); return new Response("{}", { status: 500 }); }
+    return saved.fetch(input, init);
+  }) as typeof fetch;
+  try {
+    const mk = (headers: Record<string, string> = {}) => new NextRequest("http://localhost/api/lex/signup", { method: "POST", body: JSON.stringify(good), headers: { "content-type": "application/json", ...headers } });
+    const r = await POST(mk());
+    assert.equal(r.status, 403);
+    assert.match((await r.json()).error, /60-day free trial/);
+    assert.equal((await POST(mk({ cookie: "portal_session=e30.forged" }))).status, 403, "forged session");
+    const { signSession } = await import("../lib/portal-session");
+    assert.equal((await POST(mk({ cookie: `portal_session=${signSession("x@firm.test", -1000)}` }))).status, 403, "expired session");
+    assert.equal(stripeCalls.length, 0, "no Stripe call for signed-out callers");
+  } finally {
+    if (saved.key === undefined) delete process.env.STRIPE_SECRET_KEY; else process.env.STRIPE_SECRET_KEY = saved.key;
+    if (saved.price === undefined) delete process.env.STRIPE_LEX_FIRM_PRICE_ID; else process.env.STRIPE_LEX_FIRM_PRICE_ID = saved.price;
+    globalThis.fetch = saved.fetch;
+  }
+});
+
+test("signup route (signed in, e.g. lapsed admin or trial firm): 400 on bad input, 503 (feature off) when the price env is unset", async () => {
+  const { POST } = await import("../app/api/lex/signup/route");
+  const cookie = await portalCookie("jane@smithlaw.test");
+  const mk = (b: unknown) => new NextRequest("http://localhost/api/lex/signup", { method: "POST", body: JSON.stringify(b), headers: { "content-type": "application/json", cookie } });
   assert.equal((await POST(mk({ ...good, acceptTerms: false }))).status, 400);
   assert.equal((await POST(mk(good))).status, 503);
 });
@@ -297,13 +328,19 @@ test("webhooks: canonical route routes Lex strictly and has no old welcome copy;
   for (const bad of [/calendly/i, /Anthropic/, /\$1,500/]) assert.doesNotMatch(emails, bad);
 });
 
-test("proxy: /lex/signup is public, /lex stays login-only, /api/lex/signup is public and rate limited", async () => {
+test("proxy: signed-out /lex/signup goes to /legal unless done page or the public trial page, bare /lex goes to /legal when signed out, deep /lex links stay login-only, /api/lex/signup is public and rate limited", async () => {
   const { proxy } = await import("../proxy");
   const go = (m: string, p: string) => proxy(new NextRequest(`http://localhost${p}`, { method: m, headers: { host: "localhost" } }));
   const s = (await go("GET", "/lex/signup"))!;
-  assert.ok(!s.headers.get("location"), "signup not redirected");
+  assert.equal(s.status, 307, "signed-out paid signup page is closed; firms start with the free trial");
+  assert.match(s.headers.get("location") ?? "", /\/legal$/);
+  for (const p of ["/lex/signup/trial", "/lex/signup/trial/", "/lex/signup/trial?code=LEX-ABCDEFGHJK", "/lex/signup/trial?code=nope"]) assert.ok(!(await go("GET", p))!.headers.get("location"), `${p} is public`);
   assert.ok(!(await go("GET", "/lex/signup/done"))!.headers.get("location"));
-  assert.ok((await go("GET", "/lex"))!.headers.get("location")?.includes("/login"));
+  assert.ok(!(await go("GET", "/lex/signup/done/"))!.headers.get("location"), "trailing slash on the Stripe return page");
+  // Signed out: bare /lex shows the public Lex page; deep links still need sign-in.
+  assert.match((await go("GET", "/lex"))!.headers.get("location") ?? "", /\/legal$/);
+  assert.ok((await go("GET", "/lex?q=trust"))!.headers.get("location")?.includes("/login"));
+  assert.ok((await go("GET", "/lex/billing"))!.headers.get("location")?.includes("/login"));
   assert.notEqual((await go("POST", "/api/lex/team"))!.status, 200);
   const { formRuleFor } = await import("../lib/form-guard");
   assert.ok(formRuleFor("/api/lex/signup"));
@@ -325,4 +362,117 @@ test("deleteFirmMatters: glob characters in a firm key never touch other firms' 
   assert.equal((await listMatters("other.test")).length, 1);
   assert.ok(await r.get(`lex:matters:seq:bob@gmail.com:${y}`));
   assert.ok(await r.get(`lex:matters:seq:other.test:${y}`));
+});
+
+test("r2 (#411): new firm right after checkout counts on its billing cycle, not the calendar month", async () => {
+  const { savePendingSignup, provisionLexCheckout, firmBySubscription, handleLexLifecycle } = await L();
+  const { resolveDocPeriod } = await import("../lib/lex-doc-allowance");
+  const quiet = () => {};
+  // subscription.created lands before checkout completes: no firm yet, so its period is stashed.
+  const ps = Date.parse("2026-10-20T05:00:00Z") / 1000, pe = Date.parse("2026-11-20T05:00:00Z") / 1000;
+  assert.equal(await handleLexLifecycle({ id: "evt_sc_new", type: "customer.subscription.created", data: { object: { id: "sub_new", status: "active", items: { data: [{ current_period_start: ps, current_period_end: pe }] } } } }, mailer), "ignored");
+  const p = await savePendingSignup({ name: "Nina New", email: "nina@newfirm.test", firmName: "New Firm" });
+  assert.equal(await provisionLexCheckout("evt_new", { id: "cs_new", payment_status: "paid", customer: "cus_new", subscription: "sub_new", created: ps, metadata: { product: "lex", plan: "firm", pendingId: p.id } }, mailer, alert), "provisioned");
+  const f = (await firmBySubscription("sub_new"))!;
+  assert.equal(f.periodStart, "2026-10-20T05:00:00.000Z"); assert.equal(f.periodEnd, "2026-11-20T05:00:00.000Z");
+  const d = resolveDocPeriod(f, "newfirm.test", new Date("2026-10-21T00:00:00Z"), quiet);
+  assert.equal(d.basis, "billing"); assert.equal(d.scope, `firm:${f.firmId}:2026-10-20T05:00:00.000Z`);
+  // No stashed event and no expanded subscription: checkout time anchors one month (clamped).
+  const p2 = await savePendingSignup({ name: "Olly Other", email: "olly@otherfirm.test", firmName: "Other Firm" });
+  const created = Date.parse("2026-01-31T02:00:00Z") / 1000;
+  await provisionLexCheckout("evt_new2", { id: "cs_new2", payment_status: "paid", customer: "cus_new2", subscription: "sub_new2", created, metadata: { product: "lex", plan: "firm", pendingId: p2.id } }, mailer, alert, created);
+  const g = (await firmBySubscription("sub_new2"))!;
+  assert.equal(g.periodStart, "2026-01-31T02:00:00.000Z"); assert.equal(g.periodEnd, "2026-02-28T02:00:00.000Z");
+});
+
+test("r2 (#411): late renewal webhook: roll-forward scope until it lands, then the same scope; invoice.paid stores the new cycle", async () => {
+  const { firmBySubscription, handleLexLifecycle } = await L();
+  const { resolveDocPeriod } = await import("../lib/lex-doc-allowance");
+  const quiet = () => {};
+  const f0 = (await firmBySubscription("sub_new"))!;
+  const late = new Date("2026-11-21T00:00:00Z"); // period ended 20 Nov, no renewal webhook yet
+  const before = resolveDocPeriod(f0, "newfirm.test", late, quiet);
+  assert.equal(before.basis, "billing"); assert.equal(before.start, "2026-11-20T05:00:00.000Z");
+  const s2 = Date.parse("2026-11-20T05:00:00Z") / 1000, e2 = Date.parse("2026-12-20T05:00:00Z") / 1000;
+  assert.equal(await handleLexLifecycle({ id: "evt_inv_ren", type: "invoice.paid", created: s2 + 60, data: { object: { id: "in_ren", parent: { subscription_details: { subscription: "sub_new" } }, lines: { data: [{ period: { start: s2, end: e2 } }] } } } }, mailer), "noop");
+  const f1 = (await firmBySubscription("sub_new"))!;
+  assert.equal(f1.periodEnd, "2026-12-20T05:00:00.000Z");
+  assert.equal(resolveDocPeriod(f1, "newfirm.test", late, quiet).scope, before.scope);
+  // An older invoice replayed later doesn't move the period back.
+  await handleLexLifecycle({ id: "evt_inv_old", type: "invoice.paid", created: s2 - 86400 * 30, data: { object: { id: "in_old", parent: { subscription_details: { subscription: "sub_new" } }, lines: { data: [{ period: { start: s2 - 86400 * 31, end: s2 } }] } } } }, mailer);
+  assert.equal((await firmBySubscription("sub_new"))!.periodEnd, "2026-12-20T05:00:00.000Z");
+});
+
+test("r3 (#411): checkout before subscription.created: no reset, max 20 docs in the first cycle; stale updated replay can't move the period back", async () => {
+  const { savePendingSignup, provisionLexCheckout, firmBySubscription, handleLexLifecycle } = await L();
+  const { resolveDocPeriod, takeDocument, FIRM_PLAN_MONTHLY_DOCS } = await import("../lib/lex-doc-allowance");
+  const quiet = () => {};
+  const stripeStart = Date.parse("2026-11-10T02:00:00Z") / 1000, stripeEnd = Date.parse("2026-12-10T02:00:00Z") / 1000;
+  const checkoutAt = stripeStart + 5; // checkout.session.completed a few seconds after Stripe's real start, no stash yet
+  const p = await savePendingSignup({ name: "First Order", email: "fo@cofirst.test", firmName: "Co First" });
+  await provisionLexCheckout("evt_cf", { id: "cs_cf", payment_status: "paid", customer: "cus_cf", subscription: "sub_cf", created: checkoutAt, metadata: { product: "lex", plan: "firm", pendingId: p.id } }, mailer, alert, checkoutAt);
+  const f0 = (await firmBySubscription("sub_cf"))!;
+  const at = new Date("2026-11-12T00:00:00Z");
+  const p0 = resolveDocPeriod(f0, "cofirst.test", at, quiet);
+  assert.equal(p0.basis, "billing");
+  let used = 0;
+  for (let i = 0; i < FIRM_PLAN_MONTHLY_DOCS; i++) { const r = await takeDocument(p0, `a${i}`, undefined, quiet); if (r.counted && !r.over) used++; }
+  // Now subscription.created (and an updated) land with Stripe's start, seconds earlier.
+  const sub = { id: "sub_cf", status: "active", items: { data: [{ current_period_start: stripeStart, current_period_end: stripeEnd }] } };
+  assert.equal(await handleLexLifecycle({ id: "evt_cf_sc", type: "customer.subscription.created", data: { object: sub } }, mailer), "updated");
+  assert.equal(await handleLexLifecycle({ id: "evt_cf_su", type: "customer.subscription.updated", data: { object: sub } }, mailer), "updated");
+  const f1 = (await firmBySubscription("sub_cf"))!;
+  assert.equal(f1.periodStart, f0.periodStart); assert.equal(f1.periodEnd, f0.periodEnd);
+  const p1 = resolveDocPeriod(f1, "cofirst.test", at, quiet);
+  assert.equal(p1.scope, p0.scope);
+  for (let i = 0; i < 5; i++) { const r = await takeDocument(p1, `b${i}`, undefined, quiet); assert.ok(r.over); if (!r.over) used++; }
+  assert.equal(used, FIRM_PLAN_MONTHLY_DOCS); // never more than 20 in the first cycle
+  // Renewal advances; then a stale replay of the first cycle's updated event must not move it back.
+  const s2 = { ...sub, items: { data: [{ current_period_start: stripeEnd, current_period_end: Date.parse("2027-01-10T02:00:00Z") / 1000 }] } };
+  await handleLexLifecycle({ id: "evt_cf_ren", type: "customer.subscription.updated", data: { object: s2 } }, mailer);
+  // r4: Stripe's renewal start is within a day of the stored (checkout-anchored) end, so the stored end stays the boundary.
+  const renewedStart = f0.periodEnd!;
+  assert.equal((await firmBySubscription("sub_cf"))!.periodStart, renewedStart);
+  await handleLexLifecycle({ id: "evt_cf_stale", type: "customer.subscription.updated", data: { object: sub } }, mailer);
+  const f2 = (await firmBySubscription("sub_cf"))!;
+  assert.equal(f2.periodStart, renewedStart); assert.equal(f2.periodEnd, "2027-01-10T02:00:00.000Z");
+});
+
+test("r4 (#411): checkout-time fallback anchor + late renewal webhook: cycle 2 stays capped at 20", async () => {
+  const { advancePeriod } = await L();
+  const { resolveDocPeriod, takeDocument, FIRM_PLAN_MONTHLY_DOCS } = await import("../lib/lex-doc-allowance");
+  const quiet = () => {};
+  // Anchored on checkout time (5s after Stripe's real start), first cycle ended, renewal webhook late.
+  const f: FirmForDocs = { firmId: "firm_r4fb", subscriptionId: "sub_r4fb", status: "active", periodStart: "2026-11-10T02:00:05.000Z", periodEnd: "2026-12-10T02:00:05.000Z" };
+  const at = new Date("2026-12-11T00:00:00Z");
+  const p0 = resolveDocPeriod(f, "r4fb.test", at, quiet);
+  assert.equal(p0.start, "2026-12-10T02:00:05.000Z");
+  let used = 0;
+  for (let i = 0; i < FIRM_PLAN_MONTHLY_DOCS; i++) { const r = await takeDocument(p0, `r4a${i}`, undefined, quiet); if (r.counted && !r.over) used++; }
+  // Late renewal lands with Stripe's start, 5s before the stored end.
+  assert.equal(advancePeriod(f, { start: "2026-12-10T02:00:00.000Z", end: "2027-01-10T02:00:00.000Z" }), true);
+  assert.equal(f.periodStart, "2026-12-10T02:00:05.000Z"); assert.equal(f.periodEnd, "2027-01-10T02:00:00.000Z");
+  const p1 = resolveDocPeriod(f, "r4fb.test", at, quiet);
+  assert.equal(p1.scope, p0.scope);
+  for (let i = 0; i < 5; i++) { const r = await takeDocument(p1, `r4b${i}`, undefined, quiet); assert.ok(r.ok && r.over); if (!r.over) used++; } // r5: allowed, flagged over
+  assert.equal(used, FIRM_PLAN_MONTHLY_DOCS);
+  // A genuinely later cycle (start not near the stored end) still uses Stripe's start.
+  advancePeriod(f, { start: "2027-01-10T02:00:00.000Z", end: "2027-02-10T02:00:00.000Z" });
+  assert.equal(f.periodStart, "2027-01-10T02:00:00.000Z");
+});
+
+test("r4 (#411): a lapsed firm keeps its count after the period ends (no fresh counter)", async () => {
+  const { resolveDocPeriod, takeDocument, FIRM_PLAN_MONTHLY_DOCS } = await import("../lib/lex-doc-allowance");
+  const quiet = () => {};
+  const f: FirmForDocs & { lapseReason?: string } = { firmId: "firm_r4lap", subscriptionId: "sub_r4lap", status: "active", periodStart: "2026-11-01T00:00:00.000Z", periodEnd: "2026-12-01T00:00:00.000Z" };
+  const p0 = resolveDocPeriod(f, "r4lap.test", new Date("2026-11-15T00:00:00Z"), quiet);
+  let used = 0;
+  for (let i = 0; i < FIRM_PLAN_MONTHLY_DOCS; i++) { const r = await takeDocument(p0, `r4l${i}`, undefined, quiet); if (r.counted && !r.over) used++; }
+  f.status = "lapsed"; f.lapseReason = "unpaid";
+  for (const d of ["2026-12-05T00:00:00Z", "2027-02-05T00:00:00Z"]) {
+    const p = resolveDocPeriod(f, "r4lap.test", new Date(d), quiet);
+    assert.equal(p.scope, p0.scope);
+    { const r = await takeDocument(p, `r4l-${d}`, undefined, quiet); assert.ok(r.over); if (!r.over) used++; } // r5: same scope, so past 20 and flagged
+  }
+  assert.equal(used, FIRM_PLAN_MONTHLY_DOCS);
 });
