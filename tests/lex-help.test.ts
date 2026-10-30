@@ -285,6 +285,9 @@ test("greetings get a friendly reply without a model call; errors are human", as
   assert.doesNotMatch(helpError(503, { error: "privacy_check_failed" }), /privacy_check_failed/);
   assert.match(helpError(500, {}), /Report an issue/);
   const fb = readFileSync("app/lex/_components/FeedbackButton.tsx", "utf8");
-  assert.ok(fb.includes("Thanks, your report is in") && fb.includes("Thank you for your feedback. It helps us make Lex the best legal assistant on the market.") && fb.includes(">Done<"));
+  assert.ok(fb.includes("Thanks, your report is in") && fb.includes("Thank you for your feedback. It helps us make Lex better for every firm.") && fb.includes(">Done<"));
   assert.ok(fb.includes("Try again") && fb.includes("!d.ok"));
+  assert.ok(!fb.includes("best legal assistant"));
+  assert.ok(fb.includes("FEEDBACK_TIMEOUT_MS = 15_000") && fb.includes("signal: ctrl.signal") && fb.includes("AbortError"));
+  assert.ok(fb.includes("doneRef.current?.focus()") && fb.includes("sendRef.current?.focus()"));
 });

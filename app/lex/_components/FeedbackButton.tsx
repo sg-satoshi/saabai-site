@@ -1,11 +1,13 @@
 "use client";
 /** "Report an issue / Suggest a feature" on every signed-in Lex screen. Light mode, navy button. */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
 const navy: React.CSSProperties = { background: "#1b2559", color: "#fff", border: 0, borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" };
 const TYPES = [{ k: "bug", l: "Report a bug" }, { k: "idea", l: "Suggest an idea" }, { k: "question", l: "Ask a question" }] as const;
 const MAX_SIDE = 1600;
+/** Client-side request timeout for sending a report; on expiry the failure state with Try again shows. */
+export const FEEDBACK_TIMEOUT_MS = 15_000;
 
 /** Downsizes an image to a JPEG data URL so it fits the upload limit (1.5 MB). */
 async function shrink(file: File): Promise<string> {
@@ -38,6 +40,10 @@ export default function FeedbackButton() {
   const [msg, setMsg] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
+  const doneRef = useRef<HTMLButtonElement>(null);
+  const sendRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => { if (sent) doneRef.current?.focus(); }, [sent]);
+  useEffect(() => { if (failed && !busy) sendRef.current?.focus(); }, [failed, busy]);
   if (path.startsWith("/lex/signup")) return null; // public signup pages: no login yet
 
   async function pick(f: File | undefined) {
@@ -49,12 +55,18 @@ export default function FeedbackButton() {
 
   async function send() {
     setBusy(true); setMsg(null); setFailed(null);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), FEEDBACK_TIMEOUT_MS);
     try {
-      const r = await fetch("/api/lex-feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type, message, screenshot: shot, page: path + (typeof window !== "undefined" ? window.location.hash : "") }) });
+      const r = await fetch("/api/lex-feedback", { signal: ctrl.signal, method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type, message, screenshot: shot, page: path + (typeof window !== "undefined" ? window.location.hash : "") }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.ok) { setFailed(feedbackError(r.status, d)); setBusy(false); return; }
       setMessage(""); setShot(null); setSent(true);
-    } catch { setFailed("We couldn't reach Saabai. Check your connection and try again. Your message is still here."); }
+    } catch (e) {
+      setFailed(e instanceof DOMException && e.name === "AbortError"
+        ? "Sending took too long. Please try again. Your message is still here."
+        : "We couldn't reach Saabai. Check your connection and try again. Your message is still here.");
+    } finally { clearTimeout(timer); }
     setBusy(false);
   }
 
@@ -75,8 +87,8 @@ export default function FeedbackButton() {
                   <path d="M16 29l8 8 16-17" fill="none" stroke="#fff" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <h2 style={{ fontSize: 19, fontWeight: 700, margin: "0 0 8px" }}>Thanks, your report is in</h2>
-                <p style={{ margin: "0 0 18px", color: "#3b4256" }}>Thank you for your feedback. It helps us make Lex the best legal assistant on the market.</p>
-                <button type="button" style={navy} onClick={() => { setOpen(false); setSent(false); }}>Done</button>
+                <p style={{ margin: "0 0 18px", color: "#3b4256" }}>Thank you for your feedback. It helps us make Lex better for every firm.</p>
+                <button ref={doneRef} type="button" style={navy} onClick={() => { setOpen(false); setSent(false); }}>Done</button>
               </div>
             ) : (<>
             <h2 style={{ fontSize: 17, margin: "0 0 10px" }}>Report an issue or suggest a feature</h2>
@@ -99,7 +111,7 @@ export default function FeedbackButton() {
             {failed ? <div role="alert" style={{ marginTop: 10, padding: 10, borderRadius: 8, background: "#fef3f2", border: "1px solid #fecdca", color: "#b42318", fontSize: 13 }}>{failed}</div> : null}
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 14 }}>
               <button type="button" onClick={() => setOpen(false)} style={{ background: "#fff", color: "#1b2559", border: "1px solid #cfd4dd", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer" }}>Close</button>
-              <button type="button" style={navy} disabled={busy || message.trim().length < 3} onClick={send}>{busy ? "Sending…" : failed ? "Try again" : "Send"}</button>
+              <button ref={sendRef} type="button" style={navy} disabled={busy || message.trim().length < 3} onClick={send}>{busy ? "Sending…" : failed ? "Try again" : "Send"}</button>
             </div>
             </>)}
           </div>
