@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import type { AddressInfo } from "node:net";
 import { NextRequest } from "next/server";
+import type { FirmForDocs } from "../lib/lex-doc-allowance";
 import { createMockUpstash } from "../scripts/dev/mock-upstash.mjs";
 
 const mock = createMockUpstash();
@@ -406,7 +407,7 @@ test("r4 (#411): checkout-time fallback anchor + late renewal webhook: cycle 2 s
   const { resolveDocPeriod, takeDocument, FIRM_PLAN_MONTHLY_DOCS } = await import("../lib/lex-doc-allowance");
   const quiet = () => {};
   // Anchored on checkout time (5s after Stripe's real start), first cycle ended, renewal webhook late.
-  const f: any = { firmId: "firm_r4fb", subscriptionId: "sub_r4fb", status: "active", periodStart: "2026-11-10T02:00:05.000Z", periodEnd: "2026-12-10T02:00:05.000Z" };
+  const f: FirmForDocs = { firmId: "firm_r4fb", subscriptionId: "sub_r4fb", status: "active", periodStart: "2026-11-10T02:00:05.000Z", periodEnd: "2026-12-10T02:00:05.000Z" };
   const at = new Date("2026-12-11T00:00:00Z");
   const p0 = resolveDocPeriod(f, "r4fb.test", at, quiet);
   assert.equal(p0.start, "2026-12-10T02:00:05.000Z");
@@ -427,7 +428,7 @@ test("r4 (#411): checkout-time fallback anchor + late renewal webhook: cycle 2 s
 test("r4 (#411): a lapsed firm keeps its count after the period ends (no fresh counter)", async () => {
   const { resolveDocPeriod, takeDocument, FIRM_PLAN_MONTHLY_DOCS } = await import("../lib/lex-doc-allowance");
   const quiet = () => {};
-  const f: any = { firmId: "firm_r4lap", subscriptionId: "sub_r4lap", status: "active", periodStart: "2026-11-01T00:00:00.000Z", periodEnd: "2026-12-01T00:00:00.000Z" };
+  const f: FirmForDocs & { lapseReason?: string } = { firmId: "firm_r4lap", subscriptionId: "sub_r4lap", status: "active", periodStart: "2026-11-01T00:00:00.000Z", periodEnd: "2026-12-01T00:00:00.000Z" };
   const p0 = resolveDocPeriod(f, "r4lap.test", new Date("2026-11-15T00:00:00Z"), quiet);
   let used = 0;
   for (let i = 0; i < FIRM_PLAN_MONTHLY_DOCS; i++) { const r = await takeDocument(p0, `r4l${i}`, undefined, quiet); if (r.counted && !r.over) used++; }
