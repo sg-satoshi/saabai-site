@@ -1,3 +1,4 @@
+import { entitySender, GST } from "@/lib/entity";
 import { PDFDocument, PDFName, PDFString, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { TIERS, type ScoreResult, type Category } from "./blueprint";
 import { ARROW_PATH, ARROW_PATH_FLIPPED } from "./score-arrow";
@@ -241,7 +242,7 @@ export async function buildScorePdfDetailed({ result: r, name, scan, now = new D
 
   // Footer
   page.drawLine({ start: { x: M, y: Y(H - 74) }, end: { x: W - M, y: Y(H - 74) }, thickness: 0.6, color: TRACK });
-  const foot = "Saabai, ABN 71 889 082 572, Merrimac QLD 4226. Prices in AUD. GST not applicable. Your answers are private and used only to calculate your score.";
+  const foot = `${entitySender()}. ${GST.pricesLine} Your answers are private and used only to calculate your score.`;
   let fy = H - 60;
   for (const l of wrap(foot, reg, 8, W - M * 2)) { page.drawText(l, { x: M, y: Y(fy), size: 8, font: reg, color: MUTED }); fy += 11; }
 
@@ -321,7 +322,7 @@ export async function buildScorePdfDetailed({ result: r, name, scan, now = new D
   const page2Bottom = q;
 
   p2.drawLine({ start: { x: M, y: Y2(H - 74) }, end: { x: W - M, y: Y2(H - 74) }, thickness: 0.6, color: TRACK });
-  const foot2 = "Saabai, ABN 71 889 082 572, Merrimac QLD 4226. Prices in AUD. GST not applicable. Estimates, not guarantees: any hours or savings are derived from your quiz answers and will vary by business. Your answers are private and used only to calculate your score.";
+  const foot2 = `${entitySender()}. ${GST.pricesLine} Estimates, not guarantees: any hours or savings are derived from your quiz answers and will vary by business. Your answers are private and used only to calculate your score.`;
   let f2 = H - 60;
   for (const l of wrap(foot2, reg, 8, W - M * 2)) { p2.drawText(l, { x: M, y: Y2(f2), size: 8, font: reg, color: MUTED }); f2 += 11; }
 
@@ -420,7 +421,7 @@ export function drawWebsitePage(o: { doc: PDFDocument; scan: ScanReport; logo: A
   p.node.set(PDFName.of("Annots"), doc.context.obj([doc.context.register(link)]));
 
   p.drawLine({ start: { x: M, y: Y(H - 74) }, end: { x: W - M, y: Y(H - 74) }, thickness: 0.6, color: TRACK });
-  const foot = `${DISCLAIMER} Saabai, ABN 71 889 082 572, Merrimac QLD 4226. Prices in AUD. GST not applicable.`;
+  const foot = `${DISCLAIMER} ${entitySender()}. ${GST.pricesLine}`;
   let fy = H - 60;
   for (const l of wrap(foot, reg, 8, W - M * 2)) { p.drawText(l, { x: M, y: Y(fy), size: 8, font: reg, color: MUTED }); fy += 11; }
 }

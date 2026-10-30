@@ -10,13 +10,17 @@ export const FOUNDER_ID = `${SITE_URL}/#shane-goldberg`;
  * Public NAP. There is no published phone number, so telephone is omitted
  * everywhere rather than guessed. Address is locality and region only.
  */
+import { LEGAL_NAME, TRADING_AS, ABN, ACN, abnDigits, GST } from "@/lib/entity";
+
 export const NAP = {
-  name: "Saabai",
-  legalName: "Saabai",
+  name: TRADING_AS,
+  legalName: LEGAL_NAME,
   url: SITE_URL,
   email: "hello@saabai.ai",
-  abn: "71 889 082 572",
-  taxID: "ABN 71 889 082 572",
+  /** Company ABN, "" until issued. Render via lib/entity helpers only. */
+  abn: ABN,
+  acn: ACN,
+  taxID: ABN ? `ABN ${ABN}` : "",
   addressLine: "Merrimac QLD 4226, Australia",
   logo: `${SITE_URL}/brand/saabai-logo.png`,
 } as const;
@@ -118,7 +122,7 @@ export const lexServiceSchema = withContext(
       name: "Firm",
       price: String(LEX_FIRM_MONTHLY),
       priceCurrency: "AUD",
-      description: "3 lawyer seats, unlimited research and 20 documents a month. AUD. GST not applicable.",
+      description: `3 lawyer seats, unlimited research and 20 documents a month. ${GST.offerSuffix}`,
       priceSpecification: {
         "@type": "UnitPriceSpecification",
         price: String(LEX_FIRM_MONTHLY),
@@ -262,8 +266,8 @@ export const organizationSchema = {
       logo: NAP.logo,
       image: `${SITE_URL}/og-image.png`,
       email: NAP.email,
-      taxID: NAP.taxID,
-      identifier: { "@type": "PropertyValue", propertyID: "ABN", value: "71889082572" },
+      ...(NAP.taxID ? { taxID: NAP.taxID } : {}),
+      ...(abnDigits() ? { identifier: { "@type": "PropertyValue", propertyID: "ABN", value: abnDigits() } } : {}),
       description:
         "Saabai builds, hosts and manages websites for small businesses, and delivers the Saabai Blueprint AI audit. Based in Merrimac on the Gold Coast, serving Brisbane, Queensland and Australia.",
       address: POSTAL_ADDRESS,
@@ -341,7 +345,7 @@ export const aboutPageSchema = schemaGraph([
     ...founderSchema,
     image: `${SITE_URL}/shane-goldberg.jpg`,
     description:
-      "Shane Goldberg is the founder of Saabai, a sole trader business based in Merrimac on the Gold Coast, Queensland.",
+      "Shane Goldberg is the founder of Saabai (Saabai Pty Ltd), based in Merrimac on the Gold Coast, Queensland.",
   },
   organizationSchema["@graph"][0],
 ]);

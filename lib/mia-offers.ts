@@ -10,6 +10,7 @@
  *
  * Saabai is not GST registered: always "GST not applicable".
  */
+import { GST, GST_REGISTERED } from "@/lib/entity";
 import { TIERS, TIER_ORDER } from "./blueprint";
 import { formatAud } from "./money";
 import { WEBSITE_TIERS } from "./website-tiers";
@@ -24,7 +25,7 @@ export const LINKS = {
   booking: "https://calendly.com/shanegoldberg/30min",
 } as const;
 
-export const GST_LINE = "All prices are in Australian dollars (AUD). GST not applicable.";
+export const GST_LINE = GST_REGISTERED ? "All prices are in Australian dollars (AUD) and include GST." : "All prices are in Australian dollars (AUD). GST not applicable.";
 
 export const WEBSITE_PLANS = WEBSITE_TIERS.map((tier) => ({
   name: tier.name,

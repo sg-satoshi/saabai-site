@@ -1,3 +1,4 @@
+import { GST } from "@/lib/entity";
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import SbFooter from "../components/sb/SbFooter";
@@ -51,7 +52,7 @@ const schema = schemaGraph([
         price: String(LEX_FIRM_MONTHLY),
         priceCurrency: "AUD",
         url: `${SITE_URL}/legal`,
-        description: "3 lawyer seats, unlimited research and 20 documents a month. AUD. GST not applicable.",
+        description: `3 lawyer seats, unlimited research and 20 documents a month. ${GST.offerSuffix}`,
       },
       ...LEADGEN.map((tier) => ({
         "@type": "Offer",
@@ -75,7 +76,7 @@ export default function PricingPage() {
       <div style={{ position: "relative" }}>
         <div className="glow" />
         <div className="wrap" style={{ position: "relative", maxWidth: 860, paddingTop: 72, paddingBottom: 40 }}>
-          <span className="eyebrow">Prices in AUD. GST not applicable.</span>
+          <span className="eyebrow">{GST.pricesLine}</span>
           <h1 style={{ marginTop: 16 }}>Pricing</h1>
           <p style={{ marginTop: 18, fontSize: 19, maxWidth: 640 }}>
             These are the prices already published on saabai.ai. Website care starts from {formatAud(WEBSITE_TIERS[0].monthly)} a month, and builds start from {formatAud(WEBSITE_TIERS[0].buildFrom)}.

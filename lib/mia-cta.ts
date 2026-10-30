@@ -4,6 +4,7 @@
  * Every link carries UTM tags plus the chat session id (utm_term) so a score,
  * purchase or Calendly booking can be tied back to the conversation.
  */
+import { GST } from "@/lib/entity";
 import { LINKS, WEBSITE_PLANS } from "./mia-offers";
 import { TIERS } from "./blueprint";
 import { formatAud } from "./money";
@@ -21,12 +22,12 @@ export const CTA_META: Record<CtaStep, { label: string; sub: string; base: strin
   score: { label: "Get my free AI score", sub: "Free · about 3 minutes", base: LINKS.score },
   blueprint: {
     label: "See the Blueprint",
-    sub: `From ${TIERS.starter.priceLabel} · GST not applicable · credited toward a build`,
+    sub: `From ${TIERS.starter.priceLabel} · ${GST.short} · credited toward a build`,
     base: LINKS.blueprint,
   },
   websites: {
     label: "See website plans",
-    sub: `From ${aud(WEBSITE_PLANS[0].build)} + ${aud(WEBSITE_PLANS[0].monthly)}/mo care · GST not applicable`,
+    sub: `From ${aud(WEBSITE_PLANS[0].build)} + ${aud(WEBSITE_PLANS[0].monthly)}/mo care · ${GST.short}`,
     base: LINKS.websites,
   },
   call: { label: "Book a call with Shane", sub: "Free · 30 minutes · No obligation", base: LINKS.booking },

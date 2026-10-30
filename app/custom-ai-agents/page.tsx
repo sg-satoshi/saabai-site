@@ -1,3 +1,4 @@
+import { GST } from "@/lib/entity";
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import SbFooter from "../components/sb/SbFooter";
@@ -417,7 +418,7 @@ export default function CustomAiAgentsPage() {
             <p className="chatline">
               Just need a chatbot that answers questions? It is included in every website tier. <a href="/websites">See website tiers</a> or <a href="/pricing">see all pricing</a>.
             </p>
-            <p className="fine">Prices in AUD. GST not applicable.</p>
+            <p className="fine">{GST.pricesLine}</p>
           </div>
         </section>
 

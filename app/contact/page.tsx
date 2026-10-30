@@ -1,3 +1,4 @@
+import { ACN, ABN, entityLegalLine, GST } from "@/lib/entity";
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import SbFooter from "../components/sb/SbFooter";
@@ -12,12 +13,14 @@ const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 export const metadata: Metadata = publicPageMeta.contact;
 
 const ROWS: [string, string][] = [
+  ["Business", entityLegalLine()],
   ["Email", NAP.email],
   ["Address", NAP.addressLine],
-  ["ABN", NAP.abn],
   ["Service areas", "Gold Coast, Brisbane and Queensland, with clients Australia-wide online"],
-  ["GST", "Not applicable"],
+  ["GST", GST.contactRow],
 ];
+if (ACN) ROWS.splice(1, 0, ["ACN", ACN]);
+if (ABN) ROWS.splice(ACN ? 2 : 1, 0, ["ABN", ABN]);
 
 export default function ContactPage() {
   return (

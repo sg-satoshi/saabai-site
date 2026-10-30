@@ -1,3 +1,4 @@
+import { GST } from "@/lib/entity";
 import type { Metadata } from "next";
 import Nav from "../../components/Nav";
 import Footer from "../../components/Footer";
@@ -15,7 +16,7 @@ const CHECKED = "25 October 2026";
 const FAQS = [
   {
     q: "How much does Lex cost?",
-    a: "The Firm plan is $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited research and 20 documents a month. Larger firms can ask about a custom Enterprise plan.",
+    a: `The Firm plan is $299 a month (${GST.pricePhrase}) for 3 lawyer seats, unlimited research and 20 documents a month. Larger firms can ask about a custom Enterprise plan.`,
   },
   {
     q: "Which sources does Lex search?",
@@ -100,7 +101,7 @@ export default function LexComparePage() {
           <div className="lx-feats">
             <div className="lx-card">
               <h3>Price</h3>
-              <p>The Firm plan is $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited research and 20 documents a month.</p>
+              <p>The Firm plan is $299 a month ({GST.pricePhrase}) for 3 lawyer seats, unlimited research and 20 documents a month.</p>
               <p style={{ marginTop: 12 }}>Enterprise is custom. Source: the <a href="/legal#pricing" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Lex pricing section</a>.</p>
             </div>
             <div className="lx-card">

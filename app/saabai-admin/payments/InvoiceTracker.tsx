@@ -1,4 +1,5 @@
 "use client";
+import { LEGAL_NAME, ABN, entityIds, issuerAddress, gstOf, GST, GST_REGISTERED } from "@/lib/entity";
 import { notify, confirmDialog } from "../ui/Feedback";
 
 import { useState, useEffect, useCallback } from "react";
@@ -54,9 +55,9 @@ const LINE_TEMPLATES = [
 ];
 
 const MY_INFO = {
-  name: "Shane Goldberg",
-  abn: "71 889 082 572",
-  address: "4302/31 Bourton Road, Merrimac QLD 4226",
+  name: LEGAL_NAME,
+  abn: ABN,
+  address: issuerAddress(),
   phone: "0415 622 733",
   email: "hello@saabai.ai",
   website: "www.saabai.ai",
@@ -645,7 +646,7 @@ export default function InvoiceTracker() {
                   <span>Subtotal</span><span>{fmt(subtotal)}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: C.muted, padding: "3px 0" }}>
-                  <span>GST</span><span>$0.00 (not registered)</span>
+                  <span>GST</span><span>{GST_REGISTERED ? `${fmt(gstOf(subtotal))} (included)` : "$0.00 (not registered)"}</span>
                 </div>
                 <div style={{
                   display: "flex", justifyContent: "space-between", fontSize: 15, fontWeight: 700,
@@ -727,13 +728,13 @@ export default function InvoiceTracker() {
               {/* Header */}
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 32 }}>
                 <div>
-                  <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>INVOICE</h1>
+                  <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>{GST.invoiceTitle}</h1>
                   <p style={{ margin: "6px 0 0", fontSize: 16, fontWeight: 600, color: "#555" }}>{inv.number}</p>
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <p style={{ margin: 0, fontWeight: 600 }}>{MY_INFO.name}</p>
-                  <p style={{ margin: "2px 0", fontSize: 12, color: "#666" }}>ABN: {MY_INFO.abn}</p>
-                  <p style={{ margin: 0, fontSize: 12, color: "#666" }}>{MY_INFO.address}</p>
+                  {entityIds() ? <p style={{ margin: "2px 0", fontSize: 12, color: "#666" }}>{entityIds()}</p> : null}
+                  {MY_INFO.address ? <p style={{ margin: 0, fontSize: 12, color: "#666" }}>{MY_INFO.address}</p> : null}
                   <p style={{ margin: "2px 0 0", fontSize: 12, color: "#666" }}>{MY_INFO.phone}</p>
                   <p style={{ margin: 0, fontSize: 12, color: "#666" }}>{MY_INFO.email}</p>
                 </div>
@@ -775,7 +776,7 @@ export default function InvoiceTracker() {
                   <span>Subtotal</span><span>${inv.subtotal.toFixed(2)}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 12, color: "#666" }}>
-                  <span>GST</span><span>$0.00</span>
+                  <span>{GST_REGISTERED ? "GST included" : "GST"}</span><span>${(GST_REGISTERED ? gstOf(inv.total) : 0).toFixed(2)}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 18, fontWeight: 700, borderTop: "1px solid #333" }}>
                   <span>TOTAL DUE</span><span>$${inv.total.toFixed(2)}</span>

@@ -6,6 +6,7 @@
  * (owner requirement) — never bare "SG-NNN.pdf". This is a real financial
  * side-effect, so the MCP tool that calls it is approval-gated upstream.
  */
+import { entityIds, GST, GST_REGISTERED, gstOf } from "@/lib/entity";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { Resend } from "resend";
 import { MY_INFO, PAY_INFO, type Invoice, type InvoiceClient } from "./invoice-store";
@@ -29,7 +30,7 @@ export async function buildInvoicePdf(invoice: Invoice, client: InvoiceClient): 
   const right = width - 48;
 
   // ── Header ───────────────────────────────────────────────────────────────
-  page.drawText("INVOICE", { x: left, y: y + 8, size: 28, font: bold, color: rgb(0.04, 0.04, 0.18) });
+  page.drawText(GST.invoiceTitle, { x: left, y: y + 8, size: 28, font: bold, color: rgb(0.04, 0.04, 0.18) });
   page.drawText(invoice.number, { x: right - 130, y: y + 8, size: 20, font: bold, color: rgb(0.25, 0.25, 0.25) });
   y -= 26;
   page.drawText(`Date: ${invoice.date}`, { x: right - 130, y: y, size: 11, font, color: rgb(0.35, 0.35, 0.35) });
@@ -42,9 +43,9 @@ export async function buildInvoicePdf(invoice: Invoice, client: InvoiceClient): 
   y -= 16;
   page.drawText(MY_INFO.name, { x: left, y, size: 12, font: bold, color: rgb(0.1, 0.1, 0.1) });
   y -= 15;
-  page.drawText(`ABN: ${MY_INFO.abn}`, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
+  if (entityIds()) page.drawText(entityIds(), { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
   y -= 15;
-  page.drawText(MY_INFO.address, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
+  if (MY_INFO.address) page.drawText(MY_INFO.address, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
   y -= 15;
   page.drawText(MY_INFO.email, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
   y -= 15;
@@ -105,7 +106,7 @@ export async function buildInvoicePdf(invoice: Invoice, client: InvoiceClient): 
     y -= 18;
   }
   totalRow("Subtotal", money(invoice.subtotal), false);
-  totalRow("GST", money(invoice.gst), false);
+  totalRow(GST_REGISTERED ? "GST incl." : "GST", money(GST_REGISTERED ? gstOf(invoice.total) : invoice.gst), false);
   totalRow("Total", money(invoice.total), true);
 
   y -= 14;
@@ -119,7 +120,7 @@ export async function buildInvoicePdf(invoice: Invoice, client: InvoiceClient): 
   y -= 15;
   page.drawText(`BSB: ${PAY_INFO.bsb} · Account: ${PAY_INFO.accountNumber}`, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
   y -= 15;
-  page.drawText(`ABN: ${MY_INFO.abn}`, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
+  if (entityIds()) page.drawText(entityIds(), { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
 
   if (invoice.notes) {
     // Move to a lower area to avoid overlap; keep it simple.
@@ -150,7 +151,7 @@ export async function sendInvoiceEmail(
   await resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `Invoice ${invoice.number} from Saabai`,
+    subject: `${GST_REGISTERED ? "Tax invoice" : "Invoice"} ${invoice.number} from Saabai`,
     html: `<p>Hi ${client.name},</p>
 <p>Please find attached invoice <strong>${invoice.number}</strong>.</p>
 <p>Total due: <strong>$${invoice.total.toFixed(2)}</strong>.</p>

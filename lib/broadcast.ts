@@ -4,16 +4,16 @@
  * tests pass mocks. Every email identifies the sender, says why it was sent, and carries
  * a working unsubscribe link plus RFC 8058 one-click headers.
  */
+import { entitySender } from "@/lib/entity";
 import { escapeHtml } from "./html-escape";
 import { canReceiveMarketing } from "./subscriber-rules";
 import type { Subscriber } from "./subscribers";
 import { personaliseHtml, personaliseText, valuesFor, type MergeValues } from "./personalise";
 
-const ABN = "71 889 082 572";
 
 /** Plain-text version of the compliance footer, with the full unsubscribe URL. */
 export function tipsFooterText(unsubUrl: string): string {
-  return `You're getting this because you asked for occasional Saabai tips by email on saabai.ai. Sent by Saabai, ABN ${ABN}, Merrimac QLD 4226, Australia (saabai.ai, hello@saabai.ai). Unsubscribe and we won't email you again: ${unsubUrl}`;
+  return `You're getting this because you asked for occasional Saabai tips by email on saabai.ai. Sent by ${entitySender()} (saabai.ai, hello@saabai.ai). Unsubscribe and we won't email you again: ${unsubUrl}`;
 }
 
 // The retired footer row ("You're receiving this as a Saabai subscriber"). The admin editor no
@@ -60,7 +60,7 @@ export function broadcastHtmlToText(html: string): string {
 }
 
 export function tipsFooterHtml(unsubUrl: string): string {
-  return `<p style="font-size:12px;color:#8a8fa8;margin-top:28px;border-top:1px solid #e8e8ec;padding-top:14px;line-height:1.6">You're getting this because you asked for occasional Saabai tips by email on saabai.ai. Sent by Saabai, ABN ${ABN}, Merrimac QLD 4226, Australia (saabai.ai, hello@saabai.ai). <a href="${escapeHtml(unsubUrl)}" style="color:#1595a6">Unsubscribe</a> and we won't email you again.</p>`;
+  return `<p style="font-size:12px;color:#8a8fa8;margin-top:28px;border-top:1px solid #e8e8ec;padding-top:14px;line-height:1.6">You're getting this because you asked for occasional Saabai tips by email on saabai.ai. Sent by ${entitySender()} (saabai.ai, hello@saabai.ai). <a href="${escapeHtml(unsubUrl)}" style="color:#1595a6">Unsubscribe</a> and we won't email you again.</p>`;
 }
 
 /** Put the footer inside the body when there is one, else append it. */

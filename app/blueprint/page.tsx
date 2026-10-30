@@ -1,3 +1,4 @@
+import { GST } from "@/lib/entity";
 import type { Metadata } from "next";
 import SbNav from "../components/sb/SbNav";
 import SbFooter from "../components/sb/SbFooter";
@@ -25,7 +26,7 @@ const FAQS = [
   ["How does the 30 day credit work?", "If you book any Saabai build within 30 days of receiving your Blueprint, the full fee is taken off that build. Credit applies to implementation costs only, not care plans or monthly fees. Any unused credit expires after 30 days."],
   ["Is this the same as your old AI review service?", "Yes, rebuilt. The Blueprint replaces it with clearer pricing and faster delivery."],
   ["Do I have to build with Saabai?", "No. The plan is yours to keep and use with any provider or your own team."],
-  ["Are prices in AUD?", "Yes. All prices are in Australian dollars. GST not applicable. You get an invoice by email straight after payment."],
+  ["Are prices in AUD?", `${GST.faq} You get an invoice by email straight after payment.`],
   ["Can I get a refund?", "If work hasn't begun, we'll refund you in full. Just reply to your confirmation email. Once work has begun, we don't give change-of-mind refunds. Your rights under the Australian Consumer Law always apply."],
 ];
 
@@ -97,7 +98,7 @@ export default function BlueprintPage() {
               <p style={{ fontSize: 15, marginTop: 4 }}>Book any build with Saabai within 30 days of delivery and the full Blueprint fee comes off your build invoice.</p>
             </div>
           </div>
-          <p className="dim" style={{ fontSize: 13, marginTop: 14, textAlign: "center" }}>Prices in AUD. GST not applicable.</p>
+          <p className="dim" style={{ fontSize: 13, marginTop: 14, textAlign: "center" }}>{GST.pricesLine}</p>
           <p style={{ fontSize: 15, marginTop: 18, textAlign: "center", display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap" }}>
             <a href="/case-studies" style={{ color: "var(--teal)" }}>See the case studies →</a>
             <a href="/process" style={{ color: "var(--teal)" }}>How we work →</a>
