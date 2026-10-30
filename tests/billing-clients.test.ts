@@ -11,10 +11,10 @@ test("client input: required fields, ABN, GST default not registered", () => {
   assert.equal(validateClientInput({ email: "a@b.co" }).error, "Name is required");
   assert.equal(validateClientInput({ name: "A", email: "nope" }).error, "A valid email is required");
   assert.equal(validateClientInput({ name: "A", email: "a@b.co", abn: "123" }).error, "ABN must be 11 digits");
-  const { input } = validateClientInput({ name: " Ann ", email: "Ann@Firm.com.au", abn: "71 889 082 572", lexFirmId: "firm_1", address: { city: "Brisbane" } });
+  const { input } = validateClientInput({ name: " Ann ", email: "Ann@Firm.com.au", abn: "44 703 735 264", lexFirmId: "firm_1", address: { city: "Brisbane" } });
   assert.equal(input!.name, "Ann");
   assert.equal(input!.email, "ann@firm.com.au");
-  assert.equal(input!.abn, "71889082572");
+  assert.equal(input!.abn, "44703735264");
   assert.equal(input!.gst, "not_registered");
   assert.equal(input!.address!.country, "AU");
   assert.equal(input!.lexFirmId, "firm_1");

@@ -47,7 +47,7 @@ Until you do this, invoices still show for clients, but the "Manage billing" but
      - **Recurring only** — a plain subscription, no setup fee.
      - **One-time** — a single charge.
    - For recurring types you also pick the **billing interval** (monthly, yearly, etc.) and an optional **free trial**.
-   - **Prices include GST** — leave on for Australian pricing.
+   - **Prices include GST**: leave OFF. Saabai Pty Ltd is not registered for GST (GST not applicable).
    - **Active** — leave on so the product can be sold.
 4. **Shortcut:** the **Presence / Growth / Signature** buttons at the top prefill the website-tier prices for you. Click one, tweak if needed, save.
 5. Click **Create product**. It appears as a card, and behind the scenes it is created in Stripe automatically.

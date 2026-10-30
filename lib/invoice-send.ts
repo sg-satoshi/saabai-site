@@ -42,7 +42,7 @@ export async function buildInvoicePdf(invoice: Invoice, client: InvoiceClient): 
   y -= 16;
   page.drawText(MY_INFO.name, { x: left, y, size: 12, font: bold, color: rgb(0.1, 0.1, 0.1) });
   y -= 15;
-  page.drawText(`ABN: ${MY_INFO.abn}`, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
+  page.drawText(`ABN: ${MY_INFO.abn} · ACN: ${MY_INFO.acn}`, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
   y -= 15;
   page.drawText(MY_INFO.address, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
   y -= 15;
@@ -105,7 +105,7 @@ export async function buildInvoicePdf(invoice: Invoice, client: InvoiceClient): 
     y -= 18;
   }
   totalRow("Subtotal", money(invoice.subtotal), false);
-  totalRow("GST", money(invoice.gst), false);
+  totalRow("GST", "Not applicable", false);
   totalRow("Total", money(invoice.total), true);
 
   y -= 14;
@@ -126,7 +126,7 @@ export async function buildInvoicePdf(invoice: Invoice, client: InvoiceClient): 
     page.drawText(`Notes: ${invoice.notes}`, { x: left, y: 70, size: 9, font, color: rgb(0.45, 0.45, 0.45) });
   }
 
-  page.drawText(`Please pay within 14 days. Thank you.`, { x: left, y: 56, size: 9, font, color: rgb(0.45, 0.45, 0.45) });
+  page.drawText(`Saabai Pty Ltd is not registered for GST. GST not applicable. Please pay within 14 days. Thank you.`, { x: left, y: 56, size: 9, font, color: rgb(0.45, 0.45, 0.45) });
 
   return doc.save();
 }

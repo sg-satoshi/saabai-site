@@ -18,7 +18,7 @@ export default async function LexSignupPage({ searchParams }: { searchParams: Pr
         <h1>Start Lex</h1>
         {signedIn ? (
           <p className="lede">
-            Firm plan: {LEX_FIRM_PRICE_LABEL || "$299 a month (AUD, includes GST)"} for 3 lawyer seats. Billed monthly. Cancel anytime. When you cancel, Lex stays on until the end of the
+            Firm plan: {LEX_FIRM_PRICE_LABEL || "$299 a month (AUD, GST not applicable)"} for 3 lawyer seats. Billed monthly. Cancel anytime. When you cancel, Lex stays on until the end of the
             month you&apos;ve paid for, and we don&apos;t refund part months.
           </p>
         ) : (

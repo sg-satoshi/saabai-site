@@ -85,7 +85,7 @@ const fixtures: Fixture[] = [
       phone: "+61 400 000 000",
       business: "Saabai",
       website: "https://www.saabai.ai",
-      abn: "71 889 082 572",
+      abn: "44 703 735 264",
       billingAddress: "Brisbane QLD",
       stripeUrl: "https://dashboard.stripe.com/payments/preview",
       sessionId: "cs_test_preview",

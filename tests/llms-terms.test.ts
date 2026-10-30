@@ -11,7 +11,7 @@ const terms = readFileSync("app/terms/page.tsx", "utf8");
 const llms = readFileSync("public/llms.txt", "utf8");
 
 const PRICE =
-  "Prices are in Australian dollars. Saabai is not registered for GST, so GST is not applicable and invoices are not tax invoices.";
+  "Prices are in Australian dollars. Saabai Pty Ltd is not registered for GST, so GST is not applicable and invoices are not tax invoices.";
 const REFUNDS =
   "Our services come with guarantees that cannot be excluded under the Australian Consumer Law. Nothing in these terms limits those rights. If something is not right, email us and we will work with you to fix it.";
 const LIABILITY =

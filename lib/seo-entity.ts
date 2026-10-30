@@ -14,6 +14,7 @@ export const NAP = {
   name: "Saabai",
   legalName: "Saabai Pty Ltd",
   acn: "703 735 264",
+  abn: "44 703 735 264",
   url: SITE_URL,
   email: "hello@saabai.ai",
   addressLine: "Merrimac QLD 4226, Australia",
@@ -257,7 +258,11 @@ export const organizationSchema = {
       logo: NAP.logo,
       image: `${SITE_URL}/og-image.png`,
       email: NAP.email,
-      identifier: { "@type": "PropertyValue", propertyID: "ACN", value: "703735264" },
+      identifier: [
+        { "@type": "PropertyValue", propertyID: "ACN", value: "703735264" },
+        { "@type": "PropertyValue", propertyID: "ABN", value: "44703735264" },
+      ],
+      taxID: "44703735264",
       description:
         "Saabai builds, hosts and manages websites for small businesses, and delivers the Saabai Blueprint AI audit. Based in Merrimac on the Gold Coast, serving Brisbane, Queensland and Australia.",
       address: POSTAL_ADDRESS,
