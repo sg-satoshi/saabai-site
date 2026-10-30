@@ -257,7 +257,7 @@ a.btn{text-decoration:none}
 .ch-list{display:flex;flex-direction:column;gap:8px;min-width:0}
 .ch-list .btn{width:100%;justify-content:flex-start;text-align:left;height:auto;min-height:30px;white-space:normal}
 .ch-thread{min-width:0;border:1px solid var(--n-100);border-radius:var(--r-md);padding:16px;background:var(--n-25)}
-.ch-msg{margin:8px 0;white-space:pre-wrap;font-size:14px;color:var(--n-900)}
+.ch-msg{margin:8px 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;color:var(--n-900)}
 .lg-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
 .lg-item{display:flex;flex-direction:column;gap:4px;padding:16px 18px;text-decoration:none;color:var(--navy-900)}
 .lg-item span{color:var(--n-500);font-size:13px}
@@ -266,5 +266,6 @@ a.btn{text-decoration:none}
 .lg-fields dd{margin:0;min-width:0;overflow-wrap:anywhere;color:var(--n-900)}
 @container (min-width: 760px){
   .ch-split{grid-template-columns:minmax(240px,320px) minmax(0,1fr);align-items:start}
+  .ch-thread{max-height:calc(100vh - 220px);overflow-y:auto}
   .lg-fields{grid-template-columns:160px minmax(0,1fr) 160px minmax(0,1fr)}
 }
