@@ -308,7 +308,10 @@ const SAME_CYCLE_MS = 86400_000;
 export function advancePeriod(f: { periodStart?: string; periodEnd?: string }, p: Period): boolean {
   const cur = f.periodEnd ? Date.parse(f.periodEnd) : NaN;
   if (Number.isFinite(cur) && Date.parse(p.end) <= cur + SAME_CYCLE_MS) return false;
-  f.periodStart = p.start; f.periodEnd = p.end;
+  // r4: a new start within a day of the stored end is the same cycle boundary (e.g. checkout-time fallback anchor
+  // vs Stripe's start). Keep keying on the stored end so the doc counter for this cycle doesn't reset.
+  const nearEnd = Number.isFinite(cur) && Math.abs(Date.parse(p.start) - cur) <= SAME_CYCLE_MS;
+  f.periodStart = nearEnd ? new Date(cur).toISOString() : p.start; f.periodEnd = p.end;
   return true;
 }
 /** Period at checkout: the one stashed from a subscription event that beat the firm record. */
