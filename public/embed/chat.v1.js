@@ -1,11 +1,11 @@
-/*! Saabai chat widget v1 (1.1.0). One script for every site:
+/*! Saabai chat widget v1 (1.2.0). One script for every site:
  *  <script src="https://www.saabai.ai/embed/chat.v1.js" data-site="your-site-slug" async></script>
  *  Reads the site's settings (look, on/off, plan rules) from Saabai. No lead capture. No cookies.
  *  Compatible within v1: fixes ship here, breaking changes get a new file name (chat.v2.js).
  */
 (function () {
   "use strict";
-  var VERSION = "1.1.0";
+  var VERSION = "1.2.0";
   var script = document.currentScript;
   if (!script) { var all = document.querySelectorAll("script[data-site]"); script = all[all.length - 1]; }
   if (!script) return;
@@ -145,6 +145,7 @@
     w.appendChild(panel); w.appendChild(btn); root.appendChild(w);
     document.body.appendChild(host);
     els.host = host;
+    saabaiSheet(false);
     btn.addEventListener("click", function () { hideNudge(); toggle(!panel.classList.contains("open")); });
     endb.addEventListener("click", endChat);
     newb.addEventListener("click", newChat);
@@ -254,10 +255,28 @@
     els.newb.style.display = eg2.endChat && (talked || ended) ? "" : "none";
     els.st.className = "st" + (ended ? " off" : ""); els.st.textContent = ended ? "Away" : "Online now";
   }
+  function saabaiSheet(open) {
+    var src = base + "/chat-sheet.js?v=1";
+    function run() {
+      if (!window.SaabaiChatSheet || !els.panel) return;
+      if (!els.panel._saabaiSheet) els.panel._saabaiSheet = window.SaabaiChatSheet.attach(els.panel);
+      els.panel._saabaiSheet.setOpen(!!open);
+    }
+    if (window.SaabaiChatSheet) { run(); return; }
+    var existing = document.querySelector("script[data-saabai-sheet]");
+    if (existing) { existing.addEventListener("load", run); return; }
+    var s = document.createElement("script");
+    s.src = src;
+    s.async = true;
+    s.setAttribute("data-saabai-sheet", "1");
+    s.onload = run;
+    document.head.appendChild(s);
+  }
   function toggle(open) {
     els.panel.classList.toggle("open", open);
     els.btn.setAttribute("aria-expanded", open ? "true" : "false");
-    if (open) { render(); setTimeout(function () { if (!els.inp.disabled) els.inp.focus(); }, 30); }
+    saabaiSheet(open);
+    if (open) { render(); setTimeout(function () { if (!els.inp.disabled) { try { els.inp.focus({ preventScroll: true }); } catch (err) { els.inp.focus(); } } }, 30); }
   }
   function note(text) { state.msgs.push({ r: "note", c: text, n: 1 }); save(); }
 

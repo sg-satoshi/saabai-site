@@ -144,14 +144,34 @@
   const input = widget.querySelector('.ni-chat-input');
   const sendBtn = widget.querySelector('.ni-chat-send');
 
+  function saabaiSheet(panelEl, open) {
+    var src = '/chat-sheet.js?v=1';
+    function run() {
+      if (!window.SaabaiChatSheet) return;
+      if (!panelEl._saabaiSheet) panelEl._saabaiSheet = window.SaabaiChatSheet.attach(panelEl);
+      panelEl._saabaiSheet.setOpen(!!open);
+    }
+    if (window.SaabaiChatSheet) { run(); return; }
+    var existing = document.querySelector('script[data-saabai-sheet]');
+    if (existing) { existing.addEventListener('load', run); return; }
+    var s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    s.setAttribute('data-saabai-sheet', '1');
+    s.onload = run;
+    document.head.appendChild(s);
+  }
+
   function togglePanel() {
     isOpen = !isOpen;
     panel.classList.toggle('open', isOpen);
+    saabaiSheet(panel, isOpen);
     if (isOpen && messages.length === 0) {
       addMessage('bot', CONFIG.greeting);
     }
-    if (isOpen) setTimeout(() => input.focus(), 100);
+    if (isOpen) setTimeout(() => { try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); } }, 100);
   }
+  saabaiSheet(panel, false);
 
   button.addEventListener('click', togglePanel);
   closeBtn.addEventListener('click', togglePanel);

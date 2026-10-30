@@ -109,7 +109,7 @@ test("event route maps cta_click to goal_reached, widgets render buttons", () =>
   assert.match(w, /quickReplies/);
   const lmm = readFileSync("public/clients/lmm-site/assets/chat-widget.js", "utf8");
   assert.match(lmm, /showExtras/);
-  assert.match(readFileSync("public/clients/lmm-site/index.html", "utf8"), /chat-widget\.js\?v=12/);
+  assert.match(readFileSync("public/clients/lmm-site/index.html", "utf8"), /chat-widget\.js\?v=13/);
   const portal = readFileSync("app/api/portal/chatbot/route.ts", "utf8");
   assert.match(portal, /rejectIfImpersonatingReadOnly/);
   assert.ok(!/lead-capture|CHATBOT_LEAD_CAPTURE_ENABLED/.test(portal));

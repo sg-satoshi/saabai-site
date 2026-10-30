@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { noteVisitorMessage } from "@/lib/conversation-activity";
 import { useChatOpen } from "../../../components/useChatOpen";
+import { useMobileChatSheet } from "@/lib/use-mobile-chat-sheet";
 
 const STORAGE_KEY = "wholesale-homes-conversation";
 const STORAGE_TTL = 7 * 24 * 60 * 60 * 1000;
@@ -52,6 +53,8 @@ export function ChatWidget() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useMobileChatSheet(isOpen, panelRef);
 
   useEffect(() => {
     const stored = loadStored();
@@ -60,7 +63,8 @@ export function ChatWidget() {
 
   useEffect(() => {
     saveStored(messages);
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    const scroller = endRef.current?.parentElement;
+    if (scroller) scroller.scrollTop = scroller.scrollHeight;
   }, [messages]);
 
   // Auto-open chat after 7 seconds on first ever visit
@@ -118,7 +122,7 @@ export function ChatWidget() {
   return (
     <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 200, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 12 }}>
       {isOpen && (
-        <div style={{ width: 380, maxWidth: "calc(100vw - 48px)", borderRadius: 20, overflow: "hidden", display: "flex", flexDirection: "column", height: 520, maxHeight: "calc(100vh - 120px)", background: WHITE, boxShadow: "0 24px 80px rgba(26,43,60,0.25)" }}>
+        <div ref={panelRef} style={{ width: 380, maxWidth: "calc(100vw - 48px)", borderRadius: 20, overflow: "hidden", display: "flex", flexDirection: "column", height: 520, maxHeight: "calc(100vh - 120px)", background: WHITE, boxShadow: "0 24px 80px rgba(26,43,60,0.25)" }}>
           {/* Header */}
           <div style={{ background: NAVY, padding: "16px 20px", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
             <img src={AVATAR} alt={AGENT_NAME} style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />

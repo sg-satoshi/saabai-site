@@ -204,14 +204,35 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
       msgs.scrollTop=msgs.scrollHeight;
     }
 
+    function saabaiSheet(panelEl, open) {
+      var src = '/chat-sheet.js?v=1';
+      function run() {
+        if (!window.SaabaiChatSheet) return;
+        if (!panelEl._saabaiSheet) panelEl._saabaiSheet = window.SaabaiChatSheet.attach(panelEl);
+        panelEl._saabaiSheet.setOpen(!!open);
+      }
+      if (window.SaabaiChatSheet) { run(); return; }
+      var existing = document.querySelector('script[data-saabai-sheet]');
+      if (existing) { existing.addEventListener('load', run); return; }
+      var s = document.createElement('script');
+      s.src = src;
+      s.async = true;
+      s.setAttribute('data-saabai-sheet', '1');
+      s.onload = run;
+      document.head.appendChild(s);
+    }
+    saabaiSheet(panel, false);
+
     function toggleOpen(){
       isOpen=!isOpen;
       if(isOpen){
         panel.style.display='flex';
+        saabaiSheet(panel, true);
         btn.innerHTML='<span style="font-size:24px;line-height:1;color:#fff;pointer-events:none">&#215;</span>';
         renderMsgs();
-        setTimeout(function(){var i=document.getElementById('bo-inp');if(i)i.focus();},50);
+        setTimeout(function(){var i=document.getElementById('bo-inp');if(i){try{i.focus({preventScroll:true});}catch(e){i.focus();}}},50);
       } else {
+        saabaiSheet(panel, false);
         panel.style.display='none';
         btn.innerHTML='<img src="'+AVATAR+'" alt="" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none">';
       }

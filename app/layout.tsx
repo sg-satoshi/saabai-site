@@ -103,7 +103,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en-AU" suppressHydrationWarning>
-      <head><script dangerouslySetInnerHTML={{ __html: ANTI_FLICKER_SCRIPT }} /></head>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: ANTI_FLICKER_SCRIPT }} />
+        <script src="/chat-sheet.js?v=1" defer data-saabai-sheet="1" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

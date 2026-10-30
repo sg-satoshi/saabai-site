@@ -312,20 +312,40 @@
   }
 
   // ─── TOGGLE WIDGET ─────────────────────────────────
+  function saabaiSheet(panelEl, open) {
+    var src = '/chat-sheet.js?v=1';
+    function run() {
+      if (!window.SaabaiChatSheet) return;
+      if (!panelEl._saabaiSheet) panelEl._saabaiSheet = window.SaabaiChatSheet.attach(panelEl);
+      panelEl._saabaiSheet.setOpen(!!open);
+    }
+    if (window.SaabaiChatSheet) { run(); return; }
+    var existing = document.querySelector('script[data-saabai-sheet]');
+    if (existing) { existing.addEventListener('load', run); return; }
+    var s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    s.setAttribute('data-saabai-sheet', '1');
+    s.onload = run;
+    document.head.appendChild(s);
+  }
+
   function openWidget() {
     isOpen = true;
     windowEl.style.display = 'flex';
     fab.style.display = 'none';
+    saabaiSheet(windowEl, true);
     if (messages.length === 0) {
       messages.push({ role: 'bot', content: CONFIG.greeting });
       saveMessages();
     }
     renderMessages();
-    setTimeout(function() { inputEl.focus(); }, 300);
+    setTimeout(function() { try { inputEl.focus({ preventScroll: true }); } catch (e) { inputEl.focus(); } }, 300);
   }
 
   function closeWidget() {
     isOpen = false;
+    saabaiSheet(windowEl, false);
     windowEl.style.display = 'none';
     fab.style.display = 'block';
   }

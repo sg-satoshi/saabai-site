@@ -9,6 +9,7 @@ import { trackMarketingLead } from "../../lib/marketing/browser";
 import { NUDGE_DELAY_MS, NUDGE_SCROLL_RATIO, NUDGE_SESSION_KEY, nudgeFor } from "../../lib/mia-nudge";
 import { interruptBlocked, noteVisitorMessage, subscribeConversationActivity } from "@/lib/conversation-activity";
 import { useChatOpen } from "./useChatOpen";
+import { useMobileChatSheet } from "@/lib/use-mobile-chat-sheet";
 import { CTA_META, ctaHref, isCtaStep, newSessionId, type CtaStep } from "../../lib/mia-cta";
 import { MiaReplyText } from "../../lib/mia-reply-format";
 
@@ -178,6 +179,8 @@ export default function ChatWidget() {
   const [splitProgress, setSplitProgress] = useState<{ id: string; count: number; total: number } | null>(null);
   const [visitorProfile, setVisitorProfile] = useState<VisitorProfile | null>(null);
   const [chatMode, setChatMode] = useState<"text" | "voice" | null>(null);
+  const textPanelRef = useRef<HTMLDivElement>(null);
+  useMobileChatSheet(isOpen && chatMode === "text", textPanelRef);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
@@ -409,7 +412,8 @@ export default function ChatWidget() {
 
   // ── Auto-scroll ──────────────────────────────────────────────────────
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const scroller = messagesEndRef.current?.parentElement;
+    if (scroller) scroller.scrollTop = scroller.scrollHeight;
   }, [messages, isLoading, isEnded]);
 
   // ── Tool detection ───────────────────────────────────────────────────
@@ -844,7 +848,7 @@ export default function ChatWidget() {
 
       {/* ── Chat panel (text mode) ────────────────────────────────────── */}
       {isOpen && chatMode === "text" && (
-        <div className="w-[380px] max-w-[calc(100vw-24px)] h-[520px] rounded-2xl flex flex-col overflow-hidden" style={{ background: "#1c1a52", border: "1px solid rgba(98,197,209,0.25)", boxShadow: "0 8px 48px rgba(0,0,0,0.7), 0 0 40px rgba(98,197,209,0.2)" }}>
+        <div ref={textPanelRef} className="w-[380px] max-w-[calc(100vw-24px)] h-[520px] rounded-2xl flex flex-col overflow-hidden" style={{ background: "#1c1a52", border: "1px solid rgba(98,197,209,0.25)", boxShadow: "0 8px 48px rgba(0,0,0,0.7), 0 0 40px rgba(98,197,209,0.2)" }}>
 
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 shrink-0 relative" style={{ borderBottom: "1px solid rgba(98,197,209,0.15)", background: "#201e5c" }}>
