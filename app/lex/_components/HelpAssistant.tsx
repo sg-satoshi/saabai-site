@@ -13,6 +13,15 @@ type Offer = { type: "bug" | "idea" | "question"; summary: string };
 const navy = { background: "#1b2559", color: "#fff", border: 0, borderRadius: 8, cursor: "pointer", fontWeight: 600 } as const;
 const OFFER_LABEL = { bug: "problem", idea: "feature idea", question: "question" };
 
+/** Plain, helpful in-panel text for any failed reply (never a raw error code). */
+export function helpError(status: number, d: { reply?: string; error?: string; message?: string }): string {
+  if (d.reply) return d.reply;
+  if (status === 401) return "Your session has ended. Please sign in to Lex again, then ask me again.";
+  if (status === 429) return "That's a lot of questions in a short time. Please wait a minute and try again.";
+  if (d.error === "privacy_check_failed") return "I couldn't answer safely just now, so nothing was sent. Please try again in a moment, or use Report an issue.";
+  return "Sorry, Lex Assist hit a problem answering that. Please try again in a moment. If it keeps happening, use Report an issue and we'll look into it.";
+}
+
 export default function HelpAssistant() {
   const path = usePathname() ?? "";
   const [open, setOpen] = useState(false);
@@ -33,9 +42,9 @@ export default function HelpAssistant() {
     try {
       const r = await fetch("/api/lex-help", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: next, conversationId: cid, page: path }) });
       const d = await r.json().catch(() => ({}));
-      setMsgs([...next, { role: "assistant", content: d.reply || d.error || d.content || "Sorry, I couldn't answer that. Please try again." }]);
+      setMsgs([...next, { role: "assistant", content: r.ok && d.reply ? d.reply : helpError(r.status, d) }]);
       setOffer(d.offer && d.offerId ? { ...d.offer, id: d.offerId } : null);
-    } catch { setMsgs([...next, { role: "assistant", content: "Sorry, help is unavailable right now." }]); }
+    } catch { setMsgs([...next, { role: "assistant", content: "I couldn't reach Lex Assist. Check your connection and try again. You can also use Report an issue at any time." }]); }
     setBusy(false);
   }
 
