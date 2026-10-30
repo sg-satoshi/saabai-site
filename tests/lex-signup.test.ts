@@ -242,10 +242,33 @@ test("clause 10.7: cancelled firm data is deleted after 30 days, kept if the dom
   assert.ok(gone.dataDeleteAfter);
   const deleted: string[] = []; const threads: string[] = [];
   const del = { matters: async (k: string) => { deleted.push(k); return 1; }, threads: async (e: string) => { threads.push(e); } };
+  const logs: string[] = []; const alerts: string[] = [];
+  const live = { mode: "live" as const, log: (l: string) => logs.push(l), alert: async (m: string) => { alerts.push(m); } };
+  const { deletionMode } = await L();
+  assert.equal(deletionMode(undefined), "dry_run");
+  assert.equal(deletionMode("LIVE"), "live");
+  assert.equal(deletionMode("off"), "off");
+  assert.equal(deletionMode("yes"), "dry_run");
   const early = new Date(Date.now() + 29 * 86400_000);
-  assert.equal((await sweepDataRetention(del, key, async () => [], early)).deleted, 0);
+  assert.equal((await sweepDataRetention(del, key, async () => [], early, live)).deleted, 0);
   const late = new Date(Date.now() + 31 * 86400_000);
-  assert.equal((await sweepDataRetention(del, key, async () => ["someone@race.test"], late)).deleted >= 1, true);
+  // off and dry_run delete nothing and never mark
+  assert.equal((await sweepDataRetention(del, key, async () => [], late, { ...live, mode: "off" })).dryRun, 0);
+  const dry = await sweepDataRetention(del, key, async () => [], late, { ...live, mode: "dry_run" });
+  assert.ok(dry.dryRun >= 1 && dry.deleted === 0 && deleted.length === 0);
+  assert.equal((await getFirm(gone.firmId))?.dataDeletedAt, undefined);
+  // shared key: held, not marked, ops alerted once
+  const shared = await mk("shared", "o@shared.test");
+  const r1 = await sweepDataRetention(del, key, async () => ["x@shared.test"], late, live);
+  assert.ok(r1.held >= 1 && !deleted.includes("shared.test"));
+  const sf = (await getFirm(shared.firmId))!;
+  assert.equal(sf.dataDeletedAt, undefined);
+  assert.ok(sf.dataDeletionHeldAt);
+  assert.equal(alerts.filter((a) => a.includes(shared.firmId)).length, 1);
+  await sweepDataRetention(del, key, async () => ["x@shared.test"], late, live);
+  assert.equal(alerts.filter((a) => a.includes(shared.firmId)).length, 1, "alert once");
+  assert.equal((await sweepDataRetention(del, key, async () => ["someone@race.test"], late, live)).deleted >= 1, true);
+  for (const l of logs) assert.doesNotMatch(l, /@|\.test/, "log lines carry no emails or domains");
   assert.ok(deleted.includes("gone.test"));
   assert.ok(threads.includes("o@gone.test"));
   assert.ok((await getFirm(gone.firmId))?.dataDeletedAt);
@@ -255,7 +278,7 @@ test("clause 10.7: cancelled firm data is deleted after 30 days, kept if the dom
   await provisionLexCheckout("evt_back2", { id: "cs_back2", payment_status: "paid", customer: "cus_b2", subscription: "sub_back2", metadata: { product: "lex", plan: "firm", pendingId: p2.id } }, mailer, alert);
   assert.equal((await getFirm(back.firmId))?.dataDeleteAfter, undefined);
   deleted.length = 0;
-  await sweepDataRetention(del, key, async () => ["o@back.test"], late);
+  await sweepDataRetention(del, key, async () => ["o@back.test"], late, live);
   assert.ok(!deleted.includes("back.test"));
 });
 
@@ -282,4 +305,22 @@ test("proxy: /lex/signup is public, /lex stays login-only, /api/lex/signup is pu
   assert.notEqual((await go("POST", "/api/lex/team"))!.status, 200);
   const { formRuleFor } = await import("../lib/form-guard");
   assert.ok(formRuleFor("/api/lex/signup"));
+});
+
+test("deleteFirmMatters: glob characters in a firm key never touch other firms' keys", async () => {
+  const { createMatter, deleteFirmMatters, listMatters } = await import("../lib/lex-matters");
+  const { getRedis } = await import("../lib/redis");
+  const r = getRedis()!;
+  const evil = "*@gmail.com";
+  await createMatter("bob@gmail.com", "bob@gmail.com", { name: "Bob's" });
+  await createMatter("other.test", "a@other.test", { name: "Other" });
+  await createMatter(evil, evil, { name: "Evil" });
+  const y = new Date().getUTCFullYear();
+  assert.equal(await deleteFirmMatters(evil), 1);
+  assert.equal((await listMatters(evil)).length, 0);
+  assert.equal(await r.get(`lex:matters:seq:${evil}:${y}`), null);
+  assert.equal((await listMatters("bob@gmail.com")).length, 1);
+  assert.equal((await listMatters("other.test")).length, 1);
+  assert.ok(await r.get(`lex:matters:seq:bob@gmail.com:${y}`));
+  assert.ok(await r.get(`lex:matters:seq:other.test:${y}`));
 });

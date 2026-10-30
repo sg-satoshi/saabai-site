@@ -22,7 +22,7 @@ export const GRACE_DAYS = 7;
 /** Clause 10.7: a cancelled firm's Lex data is kept this long, then deleted (a resubscribe within it keeps the data). */
 export const DATA_RETENTION_DAYS = 30;
 /** Live Stripe billing portal configuration for Lex (cancel at period end, card update, invoices, Lex terms URL). Not a secret. */
-export const LEX_PORTAL_CONFIG_ID = process.env.STRIPE_LEX_PORTAL_CONFIG_ID || "bpc_1UW3vNRz0VJX9iSqluU41MrZ";
+export const LEX_PORTAL_CONFIG_ID = process.env.STRIPE_LEX_PORTAL_CONFIG_ID || "bpc_1UW3vNRz0VJX9iSqluU41MrZ"; // optional env override
 export const PENDING_TTL_SECONDS = 24 * 3600;
 const SEEN_TTL_SECONDS = 30 * 24 * 3600;
 
@@ -47,6 +47,8 @@ export type LexFirm = {
   dataDeleteAfter?: string;
   dataDeletedAt?: string;
   resubscribedAs?: string;
+  /** Set once when deletion is held because a firm key is shared (so ops are alerted once, not hourly). */
+  dataDeletionHeldAt?: string;
   termsVersion: string; termsAcceptedAt: string; createdAt: string; updatedAt: string;
 };
 
@@ -418,15 +420,29 @@ export async function revokeMember(firmId: string, rawEmail: string): Promise<{ 
 
 // ── Clause 10.7: delete a cancelled firm's Lex data after 30 days ─────────
 export type DataDeleter = { matters(firmKey: string): Promise<number>; threads(email: string): Promise<void> };
+export type DeletionMode = "off" | "dry_run" | "live";
+/** LEX_DATA_DELETION_MODE: off | dry_run | live. Unset or anything else means dry_run (log only, delete nothing). */
+export function deletionMode(raw = process.env.LEX_DATA_DELETION_MODE): DeletionMode {
+  const v = String(raw ?? "").trim().toLowerCase();
+  return v === "off" || v === "live" ? v : "dry_run";
+}
+export type RetentionOpts = {
+  mode?: DeletionMode;
+  log?: (line: string) => void;          // one line per firm: firmId, counts, outcome. Never names or emails.
+  alert?: (msg: string) => Promise<void>; // ops alert when a firm's data is held because its key is shared
+};
 
 /**
- * Cron: for cancelled firms past dataDeleteAfter, delete their matters (incl. saved reviews and drafts) and research chats.
- * Matters are keyed by firm domain, so a key is skipped if anyone with Lex today shares it (another active firm, or a
- * resubscribed owner); we never delete a live firm's data. Unsaved drafts live only in the user's browser.
+ * Cron: for cancelled firms past dataDeleteAfter, delete their matters (incl. reviews and drafts saved to them) and
+ * research chats. If ANY of the firm's keys is still used by someone with Lex, nothing is deleted, dataDeletedAt stays
+ * unset and ops are alerted once. dry_run (the default) only logs what would happen.
  */
-export async function sweepDataRetention(del: DataDeleter, firmKeyOf: (email: string) => string, lexUsers: () => Promise<string[]>, now = new Date()): Promise<{ deleted: number; kept: number }> {
+export async function sweepDataRetention(del: DataDeleter, firmKeyOf: (email: string) => string, lexUsers: () => Promise<string[]>, now = new Date(), opts: RetentionOpts = {}): Promise<{ deleted: number; held: number; dryRun: number; mode: DeletionMode }> {
+  const mode = opts.mode ?? deletionMode();
+  const log = opts.log ?? ((l: string) => console.log(l));
+  const out = { deleted: 0, held: 0, dryRun: 0, mode };
+  if (mode === "off") return out;
   const r = redis();
-  const out = { deleted: 0, kept: 0 };
   let cursor = "0"; let pages = 0; let live: Set<string> | null = null;
   do {
     const [next, keys] = (await r.scan(cursor, { match: "lex:firm:lf_*", count: 200 })) as [string, string[]];
@@ -439,13 +455,30 @@ export async function sweepDataRetention(del: DataDeleter, firmKeyOf: (email: st
       await withFirmLock(f0.firmId, async (f) => {
         if (f.status !== "lapsed" || !f.dataDeleteAfter || f.dataDeletedAt) return;
         const people = [f.adminEmail, ...(f.formerMembers ?? [])];
-        for (const key of new Set(people.map(firmKeyOf))) {
-          if (liveKeys.has(key)) out.kept++;
-          else await del.matters(key);
+        const firmKeys = [...new Set(people.map(firmKeyOf))];
+        const shared = firmKeys.filter((key) => liveKeys.has(key)).length;
+        if (shared > 0) {
+          out.held++;
+          log(`[lex retention] firm=${f.firmId} mode=${mode} keys=${firmKeys.length} shared=${shared} outcome=held`);
+          if (!f.dataDeletionHeldAt) {
+            f.dataDeletionHeldAt = now.toISOString();
+            await opts.alert?.(`Lex data deletion held for firm ${f.firmId}: ${shared} of ${firmKeys.length} firm keys are still used by a current Lex login. Nothing was deleted. Check by hand.`);
+          }
+          return;
         }
-        for (const e of people) if (!(await hasLexProduct(e))) await del.threads(e);
+        const chatPeople: string[] = [];
+        for (const e of people) if (!(await hasLexProduct(e))) chatPeople.push(e);
+        if (mode === "dry_run") {
+          out.dryRun++;
+          log(`[lex retention] firm=${f.firmId} mode=dry_run keys=${firmKeys.length} chats=${chatPeople.length} outcome=would_delete`);
+          return;
+        }
+        let matters = 0;
+        for (const key of firmKeys) matters += await del.matters(key);
+        for (const e of chatPeople) await del.threads(e);
         f.dataDeletedAt = now.toISOString();
         out.deleted++;
+        log(`[lex retention] firm=${f.firmId} mode=live keys=${firmKeys.length} matters=${matters} chats=${chatPeople.length} outcome=deleted`);
       });
     }
   } while (cursor !== "0" && ++pages < 100);

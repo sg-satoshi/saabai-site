@@ -5,7 +5,7 @@ import { listDirectoryUsers } from "../../../../lib/user-directory";
 import { getRedis } from "../../../../lib/redis";
 import { listPortalUsers } from "../../../../lib/portal-users";
 import { getLexClients } from "../../../../lib/lex-config";
-import { lexMailer } from "../../../../lib/lex-subscription-emails";
+import { lexAlert, lexMailer } from "../../../../lib/lex-subscription-emails";
 import { getStripe } from "../../../../lib/stripe";
 
 export const runtime = "nodejs";
@@ -30,6 +30,8 @@ export async function GET(req: Request) {
         ...getLexClients().map((c) => c.email.teamEmail),
         ...(process.env.LEX_PORTAL_ALLOWED_EMAILS ?? "").split(","),
       ].map((e) => String(e ?? "").trim().toLowerCase()).filter((e) => e.includes("@")),
+      new Date(),
+      { alert: lexAlert }, // mode from LEX_DATA_DELETION_MODE; unset means dry_run
     );
     return Response.json({ ok: true, result, data });
   } catch (err) {
