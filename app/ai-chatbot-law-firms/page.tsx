@@ -174,7 +174,7 @@ export default function AiChatbotLawFirmsPage() {
         </div>
       </section>
 
-      {/* Lachie voice demo. Live phone answering is coming soon. Same demo as /legal. */}
+      {/* Lachie voice demo. Browser demo only, not a phone line. Same demo as /legal. */}
       <section id="lachie" className="lx-demo-scope lx-lachie" style={{ paddingTop: 24 }}>
         <div className="wrap">
           <LachieLegalDemo ready={voiceDemoReady} />
