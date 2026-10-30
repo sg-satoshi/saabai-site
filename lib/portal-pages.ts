@@ -9,6 +9,7 @@ export const PORTAL_PAGE_IDS = [
   "invoices",
   "requests",
   "upgrades",
+  "chatbot",
   "account",
   "manage-agent",
 ] as const;

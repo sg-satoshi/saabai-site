@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 export const OPTIONS = (req: NextRequest) => optionsResponse(req);
 
 /**
- * Widget beacon for a handoff click (call or email). Counts the event and sends nothing.
+ * Widget beacon for a handoff, CTA or fallback button click. Counts the event and sends nothing.
  * A client chat is never notified. There is no admin send here either: if that is added,
  * it must use adminTelegramDestination and send nothing when that returns null.
  * This route does not post to a lead endpoint.
@@ -30,6 +30,10 @@ export async function POST(req: NextRequest) {
     return Response.json({ ok: false }, { status: 403, headers });
   }
 
-  await recordChatEvent(slug, "handoff");
+  // A CTA click counts as the goal reached. A fallback click counts as the fallback goal reached.
+  const event = body.event as "handoff" | "cta_click" | "fallback_click";
+  await recordChatEvent(slug, event);
+  if (event === "cta_click") await recordChatEvent(slug, "goal_reached");
+  if (event === "fallback_click") await recordChatEvent(slug, "fallback_reached");
   return Response.json({ ok: true }, { headers });
 }

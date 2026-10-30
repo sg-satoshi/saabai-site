@@ -3,7 +3,8 @@ import { generateText } from "ai";
 import { getDefaultModel } from "../chat-config";
 import { getSiteBySlug } from "../site-registry";
 import { SLUG_RE, allowedHosts, callerHost, cleanMessages, hostAllowed, logOriginMiss, mappedHostsFor, originMode, slugLimited } from "../chat-origin";
-import { offMessage, promptAdditions } from "./core";
+import { effectiveGoal, offMessage, promptAdditions } from "./core";
+import { goalPrompt, parseReply, resolveButtons } from "./goal";
 import { DISCLOSURE_ONCE_RULE, NOT_SURE_RULE } from "./disclosure";
 import { isNotSureReply } from "./events";
 import { buildSystemPrompt, domainsForBot, getPersona } from "./personas";
@@ -103,12 +104,17 @@ Keep responses under 120 words. End with a helpful next step when relevant.`;
     if (!system.toLowerCase().includes("not sure")) system = `${system}\n\n${NOT_SURE_RULE}`;
     // House rule for every Saabai chatbot: no em or en dashes.
     system = `${system}\n\n${NO_DASH_RULE}`;
+    // Goal-first settings go last and say they never override the rules above. Empty when no goal is set.
+    const goal = effectiveGoal(slug, config.goal);
+    const gp = goalPrompt(goal);
+    if (gp) system = `${system}\n\n${gp}`;
 
     const model = getDefaultModel();
     const result = await generateText({ model, system, messages: chatMessages, maxOutputTokens: 600 });
     const u = result.usage as { inputTokens?: number; outputTokens?: number } | undefined;
     await recordTokens(slug, u?.inputTokens ?? 0, u?.outputTokens ?? 0);
-    const text = noDashes(result.text);
+    const parsed = parseReply(noDashes(result.text), goal);
+    const text = parsed.content;
     logChatTurn({
       bot: slug,
       siteId: slug,
@@ -119,7 +125,11 @@ Keep responses under 120 words. End with a helpful next step when relevant.`;
       assistantText: text,
     });
     if (isNotSureReply(text)) await recordChatEvent(slug, "not_sure");
-    return Response.json({ content: noDashes(result.text) }, { headers: h });
+    if (!gp) return Response.json({ content: text }, { headers: h });
+    const buttons = resolveButtons(goal);
+    const button = parsed.button === "cta" ? buttons.cta : parsed.button === "fallback" ? buttons.fallback : null;
+    if (button) await recordChatEvent(slug, "cta_shown");
+    return Response.json({ content: text, quickReplies: parsed.quickReplies, cta: button ? { ...button, kind: parsed.button } : null }, { headers: h });
   } catch (e) {
     console.error("chat handler error:", e);
     return say("Failed to respond", 500, h);
