@@ -12,7 +12,7 @@ import type { PaymentRecord } from "../../api/admin/payments/history/route";
 
 // ── Theme ───────────────────────────────────────────────────────────────────
 
-import { SubmissionKey } from "../../../lib/billing/request-id";
+import { SubmissionKey, httpOutcome, stripeErrorOutcome, type SubmitOutcome } from "../../../lib/billing/request-id";
 
 const C = {
   // Mission Control tokens (see admin.css)
@@ -245,17 +245,17 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
 
   // Double-charge guard: one request at a time, and one Stripe idempotency id per submission.
   const inFlight = useRef(false);
-  // Same id only for an identical resubmit; renewed after any error, on success and when a field changes.
+  // Same id for an identical resubmit (kept after ambiguous failures); renewed on success, a definite 4xx/decline, or a field change.
   const subKey = useRef(new SubmissionKey());
-  const succeeded = useRef(false);
+  const outcome = useRef<SubmitOutcome>("ambiguous");
   async function handleSubmit() {
     if (inFlight.current) return;
     inFlight.current = true;
-    succeeded.current = false;
+    outcome.current = "ambiguous";
     try { await doSubmit(); } finally {
-      // Any outcome other than success (validation error, 4xx/5xx, declined card, exception) drops the id,
-      // so a corrected resubmit never reuses the key with different details.
-      if (!succeeded.current) subKey.current.renew();
+      // Ambiguous failures (exception, timeout, 5xx, Stripe connection error) keep the id so a retry
+      // cannot double-bill; success or a definite 4xx/decline renews it.
+      subKey.current.settle(outcome.current);
       inFlight.current = false;
     }
   }
@@ -306,6 +306,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
 
         const data = await res.json();
         if (!res.ok) {
+          outcome.current = httpOutcome(res.status);
           setError(data.error || "Failed to create payment");
           setLoading(false);
           return;
@@ -316,6 +317,8 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
         });
 
         if (confirmError) {
+
+          outcome.current = stripeErrorOutcome(confirmError);
           setError(confirmError.message || "Payment failed");
         } else if (paymentIntent.status === "succeeded") {
           setSuccess(`Payment succeeded — ${fmtDollar(paymentIntent.amount)}`);
@@ -344,6 +347,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
 
         const data = await res.json();
         if (!res.ok) {
+          outcome.current = httpOutcome(res.status);
           setError(data.error || "Failed to create subscription");
           setLoading(false);
           return;
@@ -355,6 +359,8 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
           });
 
           if (confirmError) {
+
+            outcome.current = stripeErrorOutcome(confirmError);
             setError(confirmError.message || "Subscription payment failed");
           } else if (paymentIntent.status === "succeeded") {
             const first = data.setupAmount ? `First payment ${fmtDollar(data.setupAmount)} taken. ` : "";
@@ -374,6 +380,8 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
           });
 
           if (confirmError) {
+
+            outcome.current = stripeErrorOutcome(confirmError);
             setError(confirmError.message || "Card could not be saved");
           } else if (setupIntent.status === "succeeded") {
             const starts = data.startDate ? ` starting ${data.startDate}` : "";
@@ -402,8 +410,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
   }
 
   function clearForm() {
-    succeeded.current = true;
-    subKey.current.renew();
+    outcome.current = "success";
     setAmount("");
     setDescription("");
     setCustomerName("");
@@ -655,13 +662,13 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
   // Double-charge guard: one request at a time, and one Stripe idempotency id per submission.
   const inFlight = useRef(false);
   const subKey = useRef(new SubmissionKey());
-  const succeeded = useRef(false);
+  const outcome = useRef<SubmitOutcome>("ambiguous");
   async function handleSubmit() {
     if (inFlight.current) return;
     inFlight.current = true;
-    succeeded.current = false;
+    outcome.current = "ambiguous";
     try { await doSubmit(); } finally {
-      if (!succeeded.current) subKey.current.renew();
+      subKey.current.settle(outcome.current);
       inFlight.current = false;
     }
   }
@@ -706,10 +713,10 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
 
       const data = await res.json();
       if (!res.ok) {
+        outcome.current = httpOutcome(res.status);
         setError(data.error || "Failed to create invoice");
       } else {
-        succeeded.current = true;
-        subKey.current.renew();
+        outcome.current = "success";
         setResult(data);
         setAmount("");
         setDescription("");

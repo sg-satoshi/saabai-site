@@ -1,11 +1,13 @@
 "use client";
 /** "Report an issue / Suggest a feature" on every signed-in Lex screen. Light mode, navy button. */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
 const navy: React.CSSProperties = { background: "#1b2559", color: "#fff", border: 0, borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" };
 const TYPES = [{ k: "bug", l: "Report a bug" }, { k: "idea", l: "Suggest an idea" }, { k: "question", l: "Ask a question" }] as const;
 const MAX_SIDE = 1600;
+/** Client-side request timeout for sending a report; on expiry the failure state with Try again shows. */
+export const FEEDBACK_TIMEOUT_MS = 15_000;
 
 /** Downsizes an image to a JPEG data URL so it fits the upload limit (1.5 MB). */
 async function shrink(file: File): Promise<string> {
@@ -21,6 +23,13 @@ async function shrink(file: File): Promise<string> {
   } finally { URL.revokeObjectURL(url); }
 }
 
+/** Clear, human error text for a failed report (the typed message is kept for a retry). */
+export function feedbackError(status: number, d: { error?: string }): string {
+  if (status === 401) return "Your session has ended. Please sign in to Lex again, then send your report. You can also email hello@saabai.ai.";
+  if (status === 400 || status === 429) return d.error || "Please check your report and try again.";
+  return "Sorry, your report didn't send. Please try again. If it keeps failing, email hello@saabai.ai.";
+}
+
 export default function FeedbackButton() {
   const path = usePathname() ?? "";
   const [open, setOpen] = useState(false);
@@ -29,6 +38,12 @@ export default function FeedbackButton() {
   const [shot, setShot] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
+  const doneRef = useRef<HTMLButtonElement>(null);
+  const sendRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => { if (sent) doneRef.current?.focus(); }, [sent]);
+  useEffect(() => { if (failed && !busy) sendRef.current?.focus(); }, [failed, busy]);
   if (path.startsWith("/lex/signup")) return null; // public signup pages: no login yet
 
   async function pick(f: File | undefined) {
@@ -39,19 +54,25 @@ export default function FeedbackButton() {
   }
 
   async function send() {
-    setBusy(true); setMsg(null);
+    setBusy(true); setMsg(null); setFailed(null);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), FEEDBACK_TIMEOUT_MS);
     try {
-      const r = await fetch("/api/lex-feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type, message, screenshot: shot, page: path + (typeof window !== "undefined" ? window.location.hash : "") }) });
+      const r = await fetch("/api/lex-feedback", { signal: ctrl.signal, method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type, message, screenshot: shot, page: path + (typeof window !== "undefined" ? window.location.hash : "") }) });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) { setMsg(d.error || "Could not send"); setBusy(false); return; }
-      setMessage(""); setShot(null); setMsg("Thanks, we've got it. The Saabai team reads every report.");
-    } catch { setMsg("Could not send"); }
+      if (!r.ok || !d.ok) { setFailed(feedbackError(r.status, d)); setBusy(false); return; }
+      setMessage(""); setShot(null); setSent(true);
+    } catch (e) {
+      setFailed(e instanceof DOMException && e.name === "AbortError"
+        ? "Sending took too long. Please try again. Your message is still here."
+        : "We couldn't reach Saabai. Check your connection and try again. Your message is still here.");
+    } finally { clearTimeout(timer); }
     setBusy(false);
   }
 
   return (
     <>
-      <button type="button" onClick={() => { setOpen(true); setMsg(null); }} aria-haspopup="dialog"
+      <button type="button" onClick={() => { setOpen(true); setMsg(null); setSent(false); setFailed(null); }} aria-haspopup="dialog"
         style={{ position: "fixed", right: 16, bottom: 96, zIndex: 60, ...navy, padding: "6px 12px", fontSize: 12, borderRadius: 999, boxShadow: "0 4px 14px rgba(27,37,89,.25)" }}>
         Report an issue / Suggest a feature
       </button>
@@ -59,6 +80,17 @@ export default function FeedbackButton() {
         <div role="dialog" aria-modal="true" aria-label="Report an issue or suggest a feature" onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}
           style={{ position: "fixed", inset: 0, zIndex: 70, background: "rgba(20,23,43,.35)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
           <div style={{ background: "#fff", color: "#14172b", borderRadius: 14, padding: 22, width: "100%", maxWidth: 480, fontSize: 14 }}>
+            {sent ? (
+              <div role="status" style={{ textAlign: "center", padding: "8px 0" }}>
+                <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true" style={{ display: "block", margin: "0 auto 12px" }}>
+                  <circle cx="28" cy="28" r="28" fill="#16a34a" />
+                  <path d="M16 29l8 8 16-17" fill="none" stroke="#fff" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <h2 style={{ fontSize: 19, fontWeight: 700, margin: "0 0 8px" }}>Thanks, your report is in</h2>
+                <p style={{ margin: "0 0 18px", color: "#3b4256" }}>Thank you for your feedback. It helps us make Lex better for every firm.</p>
+                <button ref={doneRef} type="button" style={navy} onClick={() => { setOpen(false); setSent(false); }}>Done</button>
+              </div>
+            ) : (<>
             <h2 style={{ fontSize: 17, margin: "0 0 10px" }}>Report an issue or suggest a feature</h2>
             <div role="radiogroup" style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
               {TYPES.map((t) => (
@@ -76,10 +108,12 @@ export default function FeedbackButton() {
             {shot ? <p style={{ fontSize: 12, color: "#555d6e", margin: "6px 0 0" }}>Screenshot attached. <button type="button" onClick={() => setShot(null)} style={{ background: "none", border: 0, color: "#1b2559", cursor: "pointer", textDecoration: "underline" }}>Remove</button></p> : null}
             <p style={{ fontSize: 12, color: "#7a8191", margin: "10px 0 0" }}>We also record this page, your firm, your login, your browser and the Lex version, to help us fix things.</p>
             {msg ? <p role="status" style={{ fontSize: 13, color: "#1b2559" }}>{msg}</p> : null}
+            {failed ? <div role="alert" style={{ marginTop: 10, padding: 10, borderRadius: 8, background: "#fef3f2", border: "1px solid #fecdca", color: "#b42318", fontSize: 13 }}>{failed}</div> : null}
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 14 }}>
               <button type="button" onClick={() => setOpen(false)} style={{ background: "#fff", color: "#1b2559", border: "1px solid #cfd4dd", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer" }}>Close</button>
-              <button type="button" style={navy} disabled={busy || message.trim().length < 3} onClick={send}>{busy ? "Sending…" : "Send"}</button>
+              <button ref={sendRef} type="button" style={navy} disabled={busy || message.trim().length < 3} onClick={send}>{busy ? "Sending…" : failed ? "Try again" : "Send"}</button>
             </div>
+            </>)}
           </div>
         </div>
       ) : null}

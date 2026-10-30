@@ -2,7 +2,7 @@
 import { notify, confirmDialog } from "../ui/Feedback";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { SubmissionKey } from "../../../lib/billing/request-id";
+import { SubmissionKey, httpOutcome, stripeErrorOutcome, type SubmitOutcome } from "../../../lib/billing/request-id";
 import AdminShell from "../AdminSidebar";
 import { CardElement, Elements, useStripe, useElements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
@@ -315,6 +315,7 @@ function SellPanel({ product, onClose, onSold }: { product: CatalogueProduct; on
     if (!email.trim()) { setError("Customer email is required"); return; }
     if (!stripe || !elements) { setError("Payment form is still loading"); return; }
     setBusy(true);
+    let outcome: SubmitOutcome = "ambiguous";
     try {
       const res = await fetch("/api/admin/sell/charge", {
         method: "POST",
@@ -322,24 +323,27 @@ function SellPanel({ product, onClose, onSold }: { product: CatalogueProduct; on
         body: JSON.stringify(keyed(chargeKey.current, { productId: product.id, customerName: name.trim(), customerEmail: email.trim(), code: code.trim() || undefined })),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Charge failed"); setBusy(false); return; }
+      if (!res.ok) { outcome = httpOutcome(res.status); setError(data.error || "Charge failed"); setBusy(false); return; }
       if (data.clientSecret) {
         const { error: confErr, paymentIntent } = await stripe.confirmCardPayment(data.clientSecret, {
           payment_method: { card: elements.getElement(CardElement)! },
         });
-        if (confErr) setError(confErr.message || "Payment failed");
+        if (confErr) { outcome = stripeErrorOutcome(confErr); setError(confErr.message || "Payment failed"); }
         else if (paymentIntent && (paymentIntent.status === "succeeded" || paymentIntent.status === "processing")) {
+          outcome = "success";
           setSuccess("Payment successful. Client account created and welcome email sent.");
           onSold();
         } else setError(`Payment status: ${paymentIntent?.status}`);
       } else {
+        outcome = "success";
         setSuccess("Subscription started (no upfront charge). Client account created.");
         onSold();
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
-      chargeKey.current.renew();
+      // Keep the id after ambiguous failures (Stripe may have charged); renew on success or a definite 4xx/decline.
+      chargeKey.current.settle(outcome);
       setBusy(false);
     }
   }
@@ -348,6 +352,7 @@ function SellPanel({ product, onClose, onSold }: { product: CatalogueProduct; on
     setError(null); setSuccess(null); setLinkUrl(null); setCopied(false);
     if (!email.trim()) { setError("Customer email is required"); return; }
     setBusy(true);
+    let outcome: SubmitOutcome = "ambiguous";
     try {
       const res = await fetch("/api/admin/sell/link", {
         method: "POST",
@@ -355,12 +360,12 @@ function SellPanel({ product, onClose, onSold }: { product: CatalogueProduct; on
         body: JSON.stringify(keyed(linkKey.current, { productId: product.id, customerName: name.trim(), customerEmail: email.trim(), code: code.trim() || undefined })),
       });
       const data = await res.json();
-      if (!res.ok) setError(data.error || "Could not create link");
-      else setLinkUrl(data.url);
+      if (!res.ok) { outcome = httpOutcome(res.status); setError(data.error || "Could not create link"); }
+      else { outcome = "success"; setLinkUrl(data.url); }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
-      linkKey.current.renew();
+      linkKey.current.settle(outcome);
       setBusy(false);
     }
   }
