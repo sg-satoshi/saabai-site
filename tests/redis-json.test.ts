@@ -15,7 +15,7 @@ test("objects pass through, strings parse, junk is null", () => {
 });
 
 test("Lex Redis reads use parseRedisJson, not a bare JSON.parse", () => {
-  for (const f of ["app/api/lex-threads/route.ts", "lib/lex-audit.ts", "app/api/lex-help/route.ts"]) {
+  for (const f of ["lib/lex-threads-store.ts", "lib/lex-audit.ts", "app/api/lex-help/route.ts"]) {
     const s = readFileSync(f, "utf8");
     assert.ok(s.includes("parseRedisJson"), f);
   }
