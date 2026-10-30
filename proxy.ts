@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ATTR_COOKIE, ATTR_MAX_AGE, mergeTouch, parseAttr, serialiseAttr, touchFrom } from "./lib/growth/attribution";
 import { Redis } from "@upstash/redis";
-import { verifySessionToken, COOKIE_NAME, resolveStaff } from "./lib/auth";
+import { COOKIE_NAME, resolveStaff } from "./lib/auth";
 import { ACL_HEADER, ADMIN_AUDIT_KEY, ADMIN_AUDIT_MAX, aclHeaderValue, gate } from "./lib/access";
-import { verifySession } from "./lib/portal-session";
+import { getRequestSession } from "./lib/request-session";
 import { CHAT_API, chatGuard } from "./lib/chat-guard";
 import { formGuard } from "./lib/form-guard";
 import { lmmBrandAsset } from "./lib/lmm-brand";
@@ -195,21 +195,7 @@ function matches(pathname: string, prefixes: string[]): boolean {
 }
 
 async function getSession(req: NextRequest): Promise<{ clientId: string } | null> {
-  // Primary: Saabai admin/client session (clientId can equal SAABAI_ADMIN_ID).
-  const token = req.cookies.get(COOKIE_NAME)?.value;
-  if (token) {
-    const session = await verifySessionToken(token);
-    if (session) return session;
-  }
-  // Portal session (law-firm clients via magic link). Never admin — the
-  // clientId is namespaced so it can't match SAABAI_ADMIN_ID. Portal/Lex
-  // routes still do their own per-user checks on top of this.
-  const portal = req.cookies.get("portal_session")?.value;
-  if (portal) {
-    const s = verifySession(portal);
-    if (s?.email) return { clientId: `portal:${s.email}` };
-  }
-  return null;
+  return getRequestSession(req);
 }
 
 async function apiAuth(req: NextRequest, pathname: string): Promise<NextResponse> {
@@ -520,8 +506,17 @@ async function pageRoute(req: NextRequest, pathname: string): Promise<NextRespon
   // The admin login page itself must stay reachable while signed out.
   if (pathname === "/saabai-admin/login" || pathname === "/saabai-admin/login/verify") return NextResponse.next();
   if (!matches(pathname, PROTECTED_PAGES)) return NextResponse.next();
-  // Public Lex signup pages (new firms have no login yet).
-  if (matches(pathname, ["/lex/signup"])) return NextResponse.next();
+  // /lex/signup (paid checkout page) is reachable only by:
+  //  - the Stripe return page (/lex/signup/done), which new firms reach before they have a login;
+  //  - the public 60-day free trial start page (/lex/signup/trial, PR 423), open to any firm, with or without ?code=;
+  //  - signed-in users (trial firms converting, lapsed firm admins restarting a plan).
+  // Everyone else gets a 307 to the public Lex page. The paid checkout API is gated separately in its route.
+  if (matches(pathname, ["/lex/signup"])) {
+    if (pathname === "/lex/signup/done" || pathname === "/lex/signup/done/") return NextResponse.next();
+    if (pathname === "/lex/signup/trial" || pathname === "/lex/signup/trial/") return NextResponse.next();
+    if (await getSession(req)) return NextResponse.next();
+    return NextResponse.redirect(new URL("/legal", req.url), 307);
+  }
 
   const session = await getSession(req);
   if (session) {
@@ -533,6 +528,10 @@ async function pageRoute(req: NextRequest, pathname: string): Promise<NextRespon
     }
     return NextResponse.next();
   }
+
+  // Signed-out visitors (and crawlers) to bare /lex get the public Lex page, not a login wall.
+  // Deep links (/lex?q=..., /lex/billing) still go to sign-in so firm users land back where they were.
+  if (pathname === "/lex" && !req.nextUrl.search) return NextResponse.redirect(new URL("/legal", req.url), 307);
 
   // Admin areas use the separate admin sign-in; everything else uses /login.
   const isAdminArea = matches(pathname, ["/saabai-admin", "/admin", "/mission-control", "/atlas-memory-control", "/edge", "/pulse"]);

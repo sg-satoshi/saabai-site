@@ -53,9 +53,39 @@ test("signup validation: required fields, terms, honeypot, ABN", async () => {
   assert.ok(!bot.ok && bot.bot);
 });
 
-test("signup route: 400 on bad input, 503 (feature off) when the price env is unset", async () => {
+const portalCookie = async (email: string) => `portal_session=${(await import("../lib/portal-session")).signSession(email)}`;
+
+test("signup route: signed-out POST gets 403 and never reaches Stripe, even with Stripe configured", async () => {
   const { POST } = await import("../app/api/lex/signup/route");
-  const mk = (b: unknown) => new NextRequest("http://localhost/api/lex/signup", { method: "POST", body: JSON.stringify(b), headers: { "content-type": "application/json" } });
+  const saved = { key: process.env.STRIPE_SECRET_KEY, price: process.env.STRIPE_LEX_FIRM_PRICE_ID, fetch: globalThis.fetch };
+  const stripeCalls: string[] = [];
+  process.env.STRIPE_SECRET_KEY = "sk_test_not_real";
+  process.env.STRIPE_LEX_FIRM_PRICE_ID = "price_test_not_real";
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input instanceof Request ? input.url : input);
+    if (url.includes("stripe.com")) { stripeCalls.push(url); return new Response("{}", { status: 500 }); }
+    return saved.fetch(input, init);
+  }) as typeof fetch;
+  try {
+    const mk = (headers: Record<string, string> = {}) => new NextRequest("http://localhost/api/lex/signup", { method: "POST", body: JSON.stringify(good), headers: { "content-type": "application/json", ...headers } });
+    const r = await POST(mk());
+    assert.equal(r.status, 403);
+    assert.match((await r.json()).error, /60-day free trial/);
+    assert.equal((await POST(mk({ cookie: "portal_session=e30.forged" }))).status, 403, "forged session");
+    const { signSession } = await import("../lib/portal-session");
+    assert.equal((await POST(mk({ cookie: `portal_session=${signSession("x@firm.test", -1000)}` }))).status, 403, "expired session");
+    assert.equal(stripeCalls.length, 0, "no Stripe call for signed-out callers");
+  } finally {
+    if (saved.key === undefined) delete process.env.STRIPE_SECRET_KEY; else process.env.STRIPE_SECRET_KEY = saved.key;
+    if (saved.price === undefined) delete process.env.STRIPE_LEX_FIRM_PRICE_ID; else process.env.STRIPE_LEX_FIRM_PRICE_ID = saved.price;
+    globalThis.fetch = saved.fetch;
+  }
+});
+
+test("signup route (signed in, e.g. lapsed admin or trial firm): 400 on bad input, 503 (feature off) when the price env is unset", async () => {
+  const { POST } = await import("../app/api/lex/signup/route");
+  const cookie = await portalCookie("jane@smithlaw.test");
+  const mk = (b: unknown) => new NextRequest("http://localhost/api/lex/signup", { method: "POST", body: JSON.stringify(b), headers: { "content-type": "application/json", cookie } });
   assert.equal((await POST(mk({ ...good, acceptTerms: false }))).status, 400);
   assert.equal((await POST(mk(good))).status, 503);
 });
@@ -298,13 +328,19 @@ test("webhooks: canonical route routes Lex strictly and has no old welcome copy;
   for (const bad of [/calendly/i, /Anthropic/, /\$1,500/]) assert.doesNotMatch(emails, bad);
 });
 
-test("proxy: /lex/signup is public, /lex stays login-only, /api/lex/signup is public and rate limited", async () => {
+test("proxy: signed-out /lex/signup goes to /legal unless done page or the public trial page, bare /lex goes to /legal when signed out, deep /lex links stay login-only, /api/lex/signup is public and rate limited", async () => {
   const { proxy } = await import("../proxy");
   const go = (m: string, p: string) => proxy(new NextRequest(`http://localhost${p}`, { method: m, headers: { host: "localhost" } }));
   const s = (await go("GET", "/lex/signup"))!;
-  assert.ok(!s.headers.get("location"), "signup not redirected");
+  assert.equal(s.status, 307, "signed-out paid signup page is closed; firms start with the free trial");
+  assert.match(s.headers.get("location") ?? "", /\/legal$/);
+  for (const p of ["/lex/signup/trial", "/lex/signup/trial/", "/lex/signup/trial?code=LEX-ABCDEFGHJK", "/lex/signup/trial?code=nope"]) assert.ok(!(await go("GET", p))!.headers.get("location"), `${p} is public`);
   assert.ok(!(await go("GET", "/lex/signup/done"))!.headers.get("location"));
-  assert.ok((await go("GET", "/lex"))!.headers.get("location")?.includes("/login"));
+  assert.ok(!(await go("GET", "/lex/signup/done/"))!.headers.get("location"), "trailing slash on the Stripe return page");
+  // Signed out: bare /lex shows the public Lex page; deep links still need sign-in.
+  assert.match((await go("GET", "/lex"))!.headers.get("location") ?? "", /\/legal$/);
+  assert.ok((await go("GET", "/lex?q=trust"))!.headers.get("location")?.includes("/login"));
+  assert.ok((await go("GET", "/lex/billing"))!.headers.get("location")?.includes("/login"));
   assert.notEqual((await go("POST", "/api/lex/team"))!.status, 200);
   const { formRuleFor } = await import("../lib/form-guard");
   assert.ok(formRuleFor("/api/lex/signup"));
