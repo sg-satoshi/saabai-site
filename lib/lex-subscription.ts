@@ -284,7 +284,7 @@ export async function provisionLexCheckout(eventId: string, s: CheckoutLike, mai
         f.convertedFromTrialAt = new Date().toISOString(); f.dataDeleteAfter = undefined; f.dataDeletionHeldAt = undefined;
         // Founding place taken on a paid conversion at the founding price (cap mode "paid_conversions").
         if (FOUNDING_CAP_COUNTS === "paid_conversions" && f.foundingMember && s.metadata?.founding === "1" && !f.foundingCountedAt) {
-          await r.incr(FOUNDING_COUNT_KEY); f.foundingCountedAt = f.convertedFromTrialAt;
+          await consumeFoundingPlace(f.firmId); f.foundingCountedAt = f.convertedFromTrialAt;
         }
       }
       f.status = "active"; f.lapseReason = undefined; f.graceUntil = undefined;
@@ -313,6 +313,43 @@ export const FOUNDING_LOST_ON_LAPSE = true;
 /** What the founding cap counts: "paid_conversions" (default) or "trial_starts". Shane to confirm. */
 export const FOUNDING_CAP_COUNTS: "paid_conversions" | "trial_starts" = "paid_conversions";
 export const FOUNDING_COUNT_KEY = "lex:trial:founding:count";
+/**
+ * Founding places in paid_conversions mode are RESERVED atomically when a founding checkout session is
+ * created (INCR against the cap, rolled back over the cap), held in a sorted set scored by expiry, and either
+ * consumed on payment or released on checkout.session.expired, a checkout error, or the hourly sweep.
+ * FOUNDING_COUNT_KEY = paid places + live reservations.
+ */
+export const FOUNDING_RES_KEY = "lex:trial:founding:res";
+export const FOUNDING_RES_TTL_MS = 25 * 3600_000; // Stripe Checkout sessions expire after 24h
+export async function reserveFoundingPlace(firmId: string, cap: number | null, now = Date.now()): Promise<boolean> {
+  const r = redis();
+  const added = Number(await r.zadd(FOUNDING_RES_KEY, { score: now + FOUNDING_RES_TTL_MS, member: firmId }));
+  if (!added) return true; // this firm already holds a place (score refreshed)
+  const n = Number(await r.incr(FOUNDING_COUNT_KEY));
+  if (cap !== null && n > cap) {
+    await r.incrby(FOUNDING_COUNT_KEY, -1);
+    await r.zrem(FOUNDING_RES_KEY, firmId);
+    return false;
+  }
+  return true;
+}
+export async function releaseFoundingPlace(firmId: string): Promise<boolean> {
+  const r = redis();
+  if (Number(await r.zrem(FOUNDING_RES_KEY, firmId)) !== 1) return false;
+  await r.incrby(FOUNDING_COUNT_KEY, -1);
+  return true;
+}
+/** On payment: the reservation becomes the paid place (counted once). A lapsed reservation is re-counted. */
+export async function consumeFoundingPlace(firmId: string): Promise<void> {
+  const r = redis();
+  if (Number(await r.zrem(FOUNDING_RES_KEY, firmId)) !== 1) await r.incr(FOUNDING_COUNT_KEY);
+}
+export async function sweepFoundingReservations(now = Date.now()): Promise<number> {
+  const due = (await redis().zrange(FOUNDING_RES_KEY, "-inf", now, { byScore: true })) as string[];
+  let n = 0;
+  for (const id of due) if (await releaseFoundingPlace(String(id))) n++;
+  return n;
+}
 
 /** Mutates f (caller holds the firm lock). */
 export async function lapseFirm(f: LexFirm, reason: LapseReason, mailer: Mailer, dataClockFrom = new Date()): Promise<void> {

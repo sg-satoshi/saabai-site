@@ -1,11 +1,13 @@
 /**
  * Per-IP rate limits for public endpoints that send email or cost money but are not chat
- * (contact forms, access requests, TTS). Runs in proxy.ts. Fails open if Redis is down.
+ * (contact forms, access requests, TTS). Runs in proxy.ts. Fails open if Redis is down,
+ * except rules marked failClosed (Lex signup and trial request/verify), which return 503.
  * Never applied to GET/HEAD/OPTIONS.
  */
 import { NextResponse, type NextRequest } from "next/server";
 
-type Rule = { prefix: string; limit: number; windowSec: number };
+/** failClosed: a Redis error blocks the request (503) instead of letting it through. */
+type Rule = { prefix: string; limit: number; windowSec: number; failClosed?: boolean };
 
 export const FORM_RULES: Rule[] = [
   { prefix: "/api/tts", limit: 60, windowSec: 10 * 60 },
@@ -19,8 +21,8 @@ export const FORM_RULES: Rule[] = [
   { prefix: "/api/testimonial", limit: 10, windowSec: 60 * 60 },
   { prefix: "/api/analyze-document", limit: 30, windowSec: 60 * 60 },
   { prefix: "/api/lex-leads", limit: 10, windowSec: 60 * 60 },
-  { prefix: "/api/lex/signup", limit: 10, windowSec: 60 * 60 },
-  { prefix: "/api/lex/trial", limit: 10, windowSec: 60 * 60 },
+  { prefix: "/api/lex/signup", limit: 10, windowSec: 60 * 60, failClosed: true },
+  { prefix: "/api/lex/trial", limit: 10, windowSec: 60 * 60, failClosed: true }, // request + /verify
 ];
 
 export function formRuleFor(pathname: string): Rule | null {
@@ -54,6 +56,10 @@ export async function formGuard(req: NextRequest, redis: Counter, now = Date.now
       );
     }
   } catch (e) {
+    if (rule.failClosed) {
+      console.error("form rate limit check failed (blocking):", e instanceof Error ? e.name : "error");
+      return NextResponse.json({ error: "Please try again in a minute." }, { status: 503, headers: { "Retry-After": "60", "Cache-Control": "no-store" } });
+    }
     console.error("form rate limit check failed (allowing):", e);
   }
   return null;

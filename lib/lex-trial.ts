@@ -11,7 +11,7 @@
  *   lex:trial:invites              set of invite codes (admin list)
  *   lex:trial:firms                set of trial firm ids (sweep and admin list)
  */
-import { randomBytes } from "crypto";
+import { createHash, randomBytes } from "crypto";
 import { getRedis } from "./redis";
 import {
   LEX_TERMS_VERSION, type LexFirm, type Mailer, type SignupInput,
@@ -166,7 +166,7 @@ export async function setFoundingConfig(raw: { enabled?: unknown; deadline?: unk
 async function claimFounding(now: Date): Promise<false | "counted" | "flagged"> {
   const c = await getFoundingConfig();
   if (!c.enabled || (c.deadline && now.getTime() > Date.parse(c.deadline))) return false;
-  if (FOUNDING_CAP_COUNTS === "paid_conversions") return c.cap === null || c.used < c.cap ? "flagged" : false;
+  if (FOUNDING_CAP_COUNTS === "paid_conversions") return c.cap === null || c.used < c.cap ? "flagged" : false; // place reserved at checkout
   const n = Number(await redis().incr(FOUNDING_COUNT_KEY));
   if (c.cap !== null && n > c.cap) { await redis().incrby(FOUNDING_COUNT_KEY, -1); return false; }
   return "counted";
@@ -197,17 +197,47 @@ export function lexCheckoutPrice(
   return { price: normal, founding: false };
 }
 
-/** Webmail and ISP domains: one trial per full email address; any other domain is treated as one firm. */
+/** Webmail and ISP domains: one trial per (normalised) mailbox; any other domain is treated as one firm. */
 export const PUBLIC_EMAIL_DOMAINS = new Set([
-  "gmail.com", "googlemail.com", "outlook.com", "outlook.com.au", "hotmail.com", "hotmail.com.au", "live.com", "live.com.au",
-  "msn.com", "yahoo.com", "yahoo.com.au", "ymail.com", "icloud.com", "me.com", "mac.com", "aol.com", "proton.me", "protonmail.com",
-  "pm.me", "gmx.com", "zoho.com", "fastmail.com", "bigpond.com", "bigpond.net.au", "optusnet.com.au", "tpg.com.au", "iinet.net.au", "internode.on.net",
+  "gmail.com", "googlemail.com", "outlook.com", "outlook.com.au", "outlook.co.uk", "outlook.co.nz", "hotmail.com", "hotmail.com.au", "hotmail.co.uk", "hotmail.co.nz",
+  "live.com", "live.com.au", "live.co.uk", "live.co.nz", "msn.com", "yahoo.com", "yahoo.com.au", "yahoo.co.uk", "yahoo.co.nz", "ymail.com", "rocketmail.com",
+  "icloud.com", "me.com", "mac.com", "aol.com", "proton.me", "protonmail.com", "protonmail.ch", "pm.me", "gmx.com", "gmx.net", "zoho.com", "fastmail.com", "fastmail.fm",
+  "hey.com", "tutanota.com", "tutanota.de", "tuta.io", "tuta.com", "mail.com", "btinternet.com", "xtra.co.nz",
+  "bigpond.com", "bigpond.net.au", "bigpond.com.au", "telstra.com", "telstra.com.au", "optusnet.com.au", "tpg.com.au", "iinet.net.au", "westnet.com.au",
+  "internode.on.net", "internode.net.au", "dodo.com.au", "aussiebb.com.au", "aussiebroadband.com.au", "iprimus.com.au", "exetel.com.au", "adam.com.au",
 ]);
-/** One trial per firm, forever: keyed by email domain, or by full email for public domains. */
-export function trialClaimKey(email: string): string {
+/** Second-level public suffixes we see in practice (registrable domain = one label more). */
+const MULTI_SUFFIX = new Set([
+  "com.au", "net.au", "org.au", "edu.au", "gov.au", "asn.au", "id.au", "csiro.au", "on.net",
+  "co.uk", "org.uk", "me.uk", "ltd.uk", "plc.uk", "ac.uk", "gov.uk", "co.nz", "net.nz", "org.nz", "govt.nz", "ac.nz", "school.nz",
+  "com.sg", "com.hk", "co.jp", "co.in", "com.cn", "co.za", "com.my", "com.ph",
+]);
+/** Registrable domain, public-suffix aware for the suffixes above: mail.firm.com.au -> firm.com.au. */
+export function registrableDomain(domain: string): string {
+  const parts = domain.toLowerCase().replace(/\.$/, "").split(".").filter(Boolean);
+  if (parts.length <= 2) return parts.join(".");
+  const last2 = parts.slice(-2).join(".");
+  return parts.slice(MULTI_SUFFIX.has(last2) ? -3 : -2).join(".");
+}
+/**
+ * One-trial identity: webmail -> mailbox with +tags removed (and dots removed for Gmail, googlemail -> gmail);
+ * any other domain -> its registrable domain (the firm).
+ */
+export function trialIdentity(email: string): string {
   const e = lc(email);
-  const domain = e.split("@")[1] ?? "";
-  return `lex:trial:claim:${PUBLIC_EMAIL_DOMAINS.has(domain) ? e : domain}`;
+  const at = e.lastIndexOf("@");
+  let local = e.slice(0, at), domain = e.slice(at + 1);
+  const reg = registrableDomain(domain);
+  if (!PUBLIC_EMAIL_DOMAINS.has(domain) && !PUBLIC_EMAIL_DOMAINS.has(reg)) return `d:${reg}`;
+  if (PUBLIC_EMAIL_DOMAINS.has(reg) && !PUBLIC_EMAIL_DOMAINS.has(domain)) domain = reg;
+  local = local.split("+")[0];
+  if (domain === "googlemail.com") domain = "gmail.com";
+  if (domain === "gmail.com") local = local.replace(/\./g, "");
+  return `m:${local}@${domain}`;
+}
+/** Claim key: sha256 of the normalised identity. Only a marker ("1") is stored, never the address or domain. */
+export function trialClaimKey(email: string): string {
+  return `lex:trial:claim:${createHash("sha256").update(`lex-trial:${trialIdentity(email)}`).digest("hex")}`;
 }
 export const TRIAL_ALREADY_USED = "A Lex free trial has already been used for this firm. To keep using Lex, subscribe or talk to us at hello@saabai.ai.";
 export const SELF_SERVE_SOURCE = "Self-serve";
@@ -237,7 +267,7 @@ export async function startTrial(v: SignupInput, rawCode: unknown, mailer: Maile
   const refundUse = async () => { if (usesKey) await r.incrby(usesKey, -1); };
   const firmId = `lf_t${randomBytes(10).toString("hex")}`;
   const claimKey = trialClaimKey(email);
-  if ((await r.set(claimKey, firmId, { nx: true })) !== "OK") { await refundUse(); return { ok: false, error: TRIAL_ALREADY_USED, field: "email" }; }
+  if ((await r.set(claimKey, "1", { nx: true })) !== "OK") { await refundUse(); return { ok: false, error: TRIAL_ALREADY_USED, field: "email" }; }
   const claimed = (await r.set(`lex:firm:byemail:${email}`, firmId, { nx: true })) === "OK";
   if (!claimed) { await refundUse(); await r.del(claimKey); return { ok: false, error: TRIAL_GENERIC_ERROR, field: "email" }; }
   let founding: false | "counted" | "flagged" = false;
@@ -266,6 +296,7 @@ export async function startTrial(v: SignupInput, rawCode: unknown, mailer: Maile
 
 /** Email verification before the trial activates. Pending requests live 24 hours; a token works once. */
 export const VERIFY_TTL_SECONDS = 24 * 3600;
+export const RESEND_COOLDOWN_SECONDS = 10 * 60;
 export type TrialVerifySender = (o: { email: string; name: string; url: string }) => Promise<void>;
 export async function requestTrial(v: SignupInput, rawCode: unknown, send: TrialVerifySender, site: string, now = new Date()): Promise<{ ok: true } | { ok: false; error: string; field?: string }> {
   if (typeof rawCode === "string" && rawCode.trim()) {
@@ -276,6 +307,9 @@ export async function requestTrial(v: SignupInput, rawCode: unknown, send: Trial
   const email = lc(v.email);
   if (await r.get(`lex:firm:byemail:${email}`)) return { ok: false, error: TRIAL_GENERIC_ERROR, field: "email" };
   if (await r.get(trialClaimKey(email))) return { ok: false, error: TRIAL_ALREADY_USED, field: "email" };
+  // Resend cooldown: one confirm email per identity every RESEND_COOLDOWN_SECONDS (same answer either way).
+  const cool = `lex:trial:resend:${trialClaimKey(email).slice("lex:trial:claim:".length)}`;
+  if ((await r.set(cool, "1", { nx: true, ex: RESEND_COOLDOWN_SECONDS })) !== "OK") return { ok: true };
   const token = randomBytes(24).toString("hex");
   await r.set(`lex:trial:verify:${token}`, JSON.stringify({ v, code: normaliseCode(rawCode) || null, at: now.toISOString() }), { ex: VERIFY_TTL_SECONDS });
   await send({ email, name: v.name, url: `${site}/lex/signup/trial/verify?token=${token}` });

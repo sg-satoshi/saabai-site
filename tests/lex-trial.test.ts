@@ -249,8 +249,8 @@ test("open self-serve: no code needed; email must be verified before the trial s
 
 test("one trial per firm: same domain blocked (even after deletion); webmail keyed by full email", async () => {
   const { startTrial, requestTrial, trialClaimKey, TRIAL_ALREADY_USED } = await T();
-  assert.equal(trialClaimKey("A@Gmail.com"), "lex:trial:claim:a@gmail.com");
-  assert.equal(trialClaimKey("x@acmelaw.com.au"), "lex:trial:claim:acmelaw.com.au");
+  assert.equal(trialClaimKey("A@Gmail.com"), trialClaimKey("a@gmail.com"));
+  assert.equal(trialClaimKey("x@acmelaw.com.au"), trialClaimKey("y@mail.acmelaw.com.au"));
   assert.ok((await startTrial(input("one@acmelaw.test"), "", mailer)).ok);
   const again = await startTrial(input("two@acmelaw.test"), "", mailer);
   assert.ok(!again.ok && again.error === TRIAL_ALREADY_USED);
@@ -277,4 +277,101 @@ test("paid founding conversion counts the cap once (FOUNDING_CAP_COUNTS default)
   const verifyPage = readFileSync("app/lex/signup/trial/verify/VerifyTrial.tsx", "utf8") + readFileSync("app/lex/signup/trial/verify/page.tsx", "utf8");
   assert.doesNotMatch(form + verifyPage, /\$\s?\d|\bAUD\b|per month|\d+ a month \(/, "no public Lex price on trial pages");
   assert.match(form, /Don&apos;t pay a cent until you&apos;ve tried it/);
+});
+
+test("QA r1 open trial: email normalisation (+tags, Gmail dots, googlemail, subdomains, .com.au)", async () => {
+  const { trialIdentity, registrableDomain, trialClaimKey } = await T();
+  assert.equal(trialIdentity("Jo+1@Gmail.com"), "m:jo@gmail.com");
+  assert.equal(trialIdentity("j.o@gmail.com"), "m:jo@gmail.com");
+  assert.equal(trialIdentity("J.O+x@googlemail.com"), "m:jo@gmail.com");
+  assert.equal(trialIdentity("jo+lex@outlook.com.au"), "m:jo@outlook.com.au");
+  assert.equal(trialIdentity("j.o@outlook.com"), "m:j.o@outlook.com", "dots only stripped for Gmail");
+  assert.equal(trialIdentity("a@mail.firm.com.au"), "d:firm.com.au");
+  assert.equal(trialIdentity("b+x@firm.com.au"), "d:firm.com.au");
+  assert.equal(trialIdentity("c@uk.firm.co.uk"), "d:firm.co.uk");
+  assert.equal(trialIdentity("d@eu.firm.com"), "d:firm.com");
+  assert.equal(registrableDomain("a.b.firm.org.nz"), "firm.org.nz");
+  for (const isp of ["westnet.com.au", "dodo.com.au", "aussiebb.com.au", "telstra.com", "iprimus.com.au", "hotmail.co.uk", "outlook.co.nz", "hey.com", "tutanota.com", "protonmail.ch", "internode.net.au"]) {
+    assert.match(trialIdentity(`x@${isp}`), /^m:/, isp);
+  }
+  assert.equal(trialClaimKey("jo+1@gmail.com"), trialClaimKey("j.o@googlemail.com"));
+});
+
+test("QA r1 open trial: claim keys are hashes holding only a marker; no address or domain stored", async () => {
+  const { startTrial, trialClaimKey } = await T();
+  const k = trialClaimKey("owner@hashfirm.test");
+  assert.match(k, /^lex:trial:claim:[a-f0-9]{64}$/);
+  assert.doesNotMatch(k, /hashfirm|owner/);
+  assert.ok((await startTrial(input("owner@hashfirm.test"), "", mailer)).ok);
+  assert.equal(await (await import("../lib/redis")).getRedis()!.get(k).then(String), "1");
+  assert.equal((await startTrial(input("other@sub.hashfirm.test"), "", mailer)).ok, false, "subdomain is the same firm");
+  assert.equal((await startTrial(input("jo@gmail.com"), "", mailer)).ok, true);
+  assert.equal((await startTrial(input("j.o+2@gmail.com"), "", mailer)).ok, false, "same Gmail inbox blocked");
+  const copy = readFileSync("lib/lex-trial-copy.ts", "utf8");
+  assert.match(copy, /one-way coded marker/);
+  assert.match(readFileSync("app/privacy/page.tsx", "utf8"), /LEX_TRIAL_MARKER_COPY/);
+  assert.match(readFileSync("app/lex/signup/trial/page.tsx", "utf8"), /LEX_TRIAL_MARKER_COPY/);
+});
+
+test("QA r1 open trial: resend cooldown sends one confirm email per identity per 10 minutes", async () => {
+  const { requestTrial, RESEND_COOLDOWN_SECONDS } = await T();
+  let sent = 0;
+  const send = async () => { sent++; };
+  assert.ok((await requestTrial(input("a@cool.test"), "", send, "https://x.test")).ok);
+  assert.ok((await requestTrial(input("b@cool.test"), "", send, "https://x.test")).ok, "same answer (no enumeration)");
+  assert.equal(sent, 1);
+  assert.equal(RESEND_COOLDOWN_SECONDS, 600);
+});
+
+test("QA r1 open trial: founding places reserved atomically at checkout; race can't overshoot; released on expiry", async () => {
+  const sub = await import("../lib/lex-subscription");
+  const r = (await import("../lib/redis")).getRedis()!;
+  await r.set(sub.FOUNDING_COUNT_KEY, "0");
+  const ids = Array.from({ length: 20 }, (_, i) => `lf_race${i}`);
+  const got = await Promise.all(ids.map((id) => sub.reserveFoundingPlace(id, 3)));
+  assert.equal(got.filter(Boolean).length, 3, "exactly the cap");
+  assert.equal(Number(await r.get(sub.FOUNDING_COUNT_KEY)), 3);
+  const winner = ids[got.indexOf(true)];
+  assert.equal(await sub.reserveFoundingPlace(winner, 3), true, "same firm retrying keeps its place");
+  assert.equal(Number(await r.get(sub.FOUNDING_COUNT_KEY)), 3);
+  await sub.consumeFoundingPlace(winner);
+  assert.equal(Number(await r.get(sub.FOUNDING_COUNT_KEY)), 3, "paid: counted once");
+  const others = ids.filter((id, i) => got[i] && id !== winner);
+  assert.equal(await sub.releaseFoundingPlace(others[0]), true);
+  assert.equal(await sub.releaseFoundingPlace(others[0]), false, "release is idempotent");
+  assert.equal(Number(await r.get(sub.FOUNDING_COUNT_KEY)), 2);
+  assert.equal(await sub.sweepFoundingReservations(Date.now() + sub.FOUNDING_RES_TTL_MS + 1000), 1, "expired reservation swept");
+  assert.equal(Number(await r.get(sub.FOUNDING_COUNT_KEY)), 1);
+  const route = readFileSync("app/api/lex/signup/route.ts", "utf8");
+  assert.match(route, /reserveFoundingPlace\(trialFirm\.firmId/);
+  assert.match(route, /await release\(\);/);
+  assert.match(readFileSync("app/api/stripe/webhook/route.ts", "utf8"), /checkout\.session\.expired[\s\S]*releaseFoundingPlace/);
+  assert.match(readFileSync("app/api/cron/lex-grace/route.ts", "utf8"), /sweepFoundingReservations/);
+});
+
+test("QA r1 open trial: rate limit fails closed for signup and trial; sender identity is one config value", async () => {
+  const { formGuard, FORM_RULES } = await import("../lib/form-guard");
+  const broken = { incr: async () => { throw new Error("down"); }, expire: async () => 0 };
+  const req = (p: string) => ({ method: "POST", nextUrl: { pathname: p }, headers: new Headers() }) as never;
+  for (const p of ["/api/lex/trial", "/api/lex/trial/verify", "/api/lex/signup"]) assert.equal((await formGuard(req(p), broken))?.status, 503, p);
+  assert.equal(await formGuard(req("/api/testimonial"), broken), null, "others still fail open");
+  assert.ok(FORM_RULES.find((r) => r.prefix === "/api/lex/trial")?.failClosed);
+  const { EMAIL_BRAND, renderBrandedEmail } = await import("../lib/email/branded-layout");
+  assert.ok(EMAIL_BRAND.senderIdentity);
+  const e = renderBrandedEmail({ subject: "s", title: "t", bodyHtml: "<p>x</p>", textBody: ["x"] } as never);
+  assert.ok(e.html.includes(EMAIL_BRAND.senderIdentity.replace("·", "&middot;")) || e.html.includes(EMAIL_BRAND.senderIdentity));
+  assert.doesNotMatch(readFileSync("lib/email/branded-layout.ts", "utf8"), /ABN \$\{EMAIL_BRAND\.abn\}/, "footer uses senderIdentity only");
+  assert.doesNotMatch(readFileSync("lib/lex-subscription-emails.ts", "utf8"), /\bABN\b|71 889/);
+});
+
+test("QA r1 open trial: no price anywhere on trial pages, confirm email or trial APIs (incl. bare 299/249)", async () => {
+  const src = ["app/lex/signup/trial/page.tsx", "app/lex/signup/trial/TrialForm.tsx", "app/lex/signup/trial/verify/page.tsx", "app/lex/signup/trial/verify/VerifyTrial.tsx", "app/api/lex/trial/route.ts", "app/api/lex/trial/verify/route.ts", "lib/lex-trial-copy.ts"].map((f) => readFileSync(f, "utf8")).join("\n");
+  const emails = readFileSync("lib/lex-subscription-emails.ts", "utf8");
+  const verifyEmail = emails.slice(emails.indexOf("export async function sendTrialVerifyEmail"), emails.indexOf("/** Internal alert to Saabai."));
+  assert.ok(verifyEmail.length > 100);
+  for (const [name, text] of [["pages+api", src], ["confirm email", verifyEmail]] as const) {
+    assert.doesNotMatch(text, /\$\s?\d|\b(299|249)\b|\bAUD\b|per month|unlimited/i, name);
+  }
+  const { TRIAL_ALREADY_USED, TRIAL_GENERIC_ERROR, VERIFY_INVALID, INVITE_INVALID } = await T();
+  for (const t of [TRIAL_ALREADY_USED, TRIAL_GENERIC_ERROR, VERIFY_INVALID, INVITE_INVALID]) assert.doesNotMatch(t, /\$|\b(299|249)\b/);
 });
