@@ -87,6 +87,7 @@ const lexSchema = {
     "@type": "Offer",
     name: "Lex 60-day free trial",
     price: 0,
+    eligibleDuration: { "@type": "QuantitativeValue", value: 60, unitCode: "DAY" },
     priceCurrency: "AUD",
     areaServed: { "@type": "Country", name: "Australia" },
     description: "60-day free trial, no card needed. 3 lawyer seats, legal research and 20 documents a month. Pricing is set after the trial. Enterprise plans for larger firms.",
@@ -364,7 +365,7 @@ export default function LegalPage() {
               <div className="lx-price">Custom</div>
               <p>For larger firms and legal networks.</p>
               <ul>
-                {["Unlimited research and documents", "Unlimited lawyer seats", "Custom clientId embedding", "White-label widget option", "Dedicated onboarding", "Priority support and SLA"].map((i) => (
+                {["Research and documents included", "Unlimited lawyer seats", "Custom clientId embedding", "White-label widget option", "Dedicated onboarding", "Priority support and SLA"].map((i) => (
                   <li key={i}><Check />{i}</li>
                 ))}
               </ul>

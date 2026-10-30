@@ -49,6 +49,7 @@ const schema = schemaGraph([
         "@type": "Offer",
         name: "Lex 60-day free trial",
         price: "0",
+        eligibleDuration: { "@type": "QuantitativeValue", value: 60, unitCode: "DAY" },
         priceCurrency: "AUD",
         url: `${SITE_URL}/legal`,
         description: "60-day free trial, no card needed. 3 lawyer seats, legal research and 20 documents a month. Pricing is set after the trial.",

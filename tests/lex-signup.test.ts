@@ -230,6 +230,8 @@ test("clause 10.7: cancelled firm data is deleted after 30 days, kept if the dom
   assert.equal(DATA_RETENTION_DAYS, 30);
   assert.doesNotMatch(LEX_TERMS_VERSION, /draft/);
   assert.match(LEX_TERMS[6].body, /30 days/);
+  assert.doesNotMatch(JSON.stringify(LEX_TERMS), /\$\d|GST not applicable/);
+  assert.match(LEX_TERMS[0].body, /shown before checkout and includes GST/);
   assert.match(LEX_TERMS[6].body, /hello@saabai\.ai/);
   const key = (e: string) => e.split("@")[1];
   const mk = async (tag: string, owner: string) => {
