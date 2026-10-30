@@ -3,6 +3,8 @@ import { deleteFirmMatters } from "../../../../lib/lex-matters";
 import { firmKeyForEmail } from "../../../../lib/lex-review-access";
 import { listDirectoryUsers } from "../../../../lib/user-directory";
 import { getRedis } from "../../../../lib/redis";
+import { listPortalUsers } from "../../../../lib/portal-users";
+import { getLexClients } from "../../../../lib/lex-config";
 import { lexMailer } from "../../../../lib/lex-subscription-emails";
 import { getStripe } from "../../../../lib/stripe";
 
@@ -20,7 +22,14 @@ export async function GET(req: Request) {
     const data = await sweepDataRetention(
       { matters: deleteFirmMatters, threads: async (e) => { await getRedis()?.del(`lex:threads:${e.toLowerCase()}`); } },
       firmKeyForEmail,
-      async () => (await listDirectoryUsers()).filter((u) => u.products?.includes("lex") && u.email).map((u) => u.email.toLowerCase()),
+      // Anyone who can still use Lex keeps their firm key's matters: directory Lex users, approved portal users,
+      // configured Lex client teams and LEX_PORTAL_ALLOWED_EMAILS.
+      async () => [
+        ...(await listDirectoryUsers()).filter((u) => u.products?.includes("lex") && u.email).map((u) => u.email),
+        ...(await listPortalUsers()).map((u) => u.email),
+        ...getLexClients().map((c) => c.email.teamEmail),
+        ...(process.env.LEX_PORTAL_ALLOWED_EMAILS ?? "").split(","),
+      ].map((e) => String(e ?? "").trim().toLowerCase()).filter((e) => e.includes("@")),
     );
     return Response.json({ ok: true, result, data });
   } catch (err) {
