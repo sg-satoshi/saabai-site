@@ -51,6 +51,7 @@ const schema = schemaGraph([
         price: String(LEX_FIRM_MONTHLY),
         priceCurrency: "AUD",
         url: `${SITE_URL}/legal`,
+        description: "3 lawyer seats, unlimited research and 20 documents a month. AUD. GST not applicable.",
       },
       ...LEADGEN.map((tier) => ({
         "@type": "Offer",
@@ -116,7 +117,7 @@ export default function PricingPage() {
 
           <h2 style={{ marginTop: 56 }}>Other published prices</h2>
           <div className="card" style={{ marginTop: 24, display: "grid", gap: 18 }}>
-            <p><a href="/legal" style={{ color: "var(--teal)" }}>Lex Firm</a> is ${LEX_FIRM_MONTHLY} a month.</p>
+            <p><a href="/legal" style={{ color: "var(--teal)" }}>Lex Firm</a> is ${LEX_FIRM_MONTHLY} a month (AUD) for 3 lawyer seats, unlimited research and 20 documents a month. Larger firms can ask about a custom Enterprise plan. <a href="/lex/signup" style={{ color: "var(--teal)" }}>Sign up</a> or book a free Lex demo.</p>
             <p><a href="/score" style={{ color: "var(--teal)" }}>AI Readiness Score</a> is free.</p>
             <p>
               The <a href="/ai-receptionist-gold-coast" style={{ color: "var(--teal)" }}>AI receptionist</a> on your website is the chatbot, and it is included in the website tiers, from {formatAud(WEBSITE_TIERS[0].buildFrom)} plus {formatAud(WEBSITE_TIERS[0].monthly)} a month care. Phone answering with Lachie is coming soon. It is not live.
