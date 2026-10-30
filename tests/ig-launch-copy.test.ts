@@ -62,7 +62,7 @@ test("the legal phone demo is labelled as Lachie, and Lex stays the legal assist
   assert.doesNotMatch(page, /Try Lex live|Meet Lachie Legal/);
   assert.match(demos, /second="Legend"/);
   assert.match(demos, /Lex is the legal assistant on this page/);
-  assert.match(demos, /Live phone answering is coming soon/);
+  assert.doesNotMatch(page + demos, /phone answering is coming soon/i);
   assert.doesNotMatch(demos, /second="Legal"|Lachie Legal/);
   assert.ok(!/[\u2012-\u2015]/.test(page + demos));
 });

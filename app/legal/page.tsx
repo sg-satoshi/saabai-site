@@ -186,7 +186,7 @@ export default function LegalPage() {
         </div>
       </section>
 
-      {/* Phone demo. Lex is the assistant on this page. Lachie is the voice demo. Live phone answering is coming soon. */}
+      {/* Phone demo. Lex is the assistant on this page. Lachie is the voice demo. Browser demo only, not a phone line. */}
       <section id="lachie" className="lx-sec lx-pt0 lx-lachie">
         <div className="lx-wrap">
           <LachieLegalDemo ready={voiceDemoReady} />

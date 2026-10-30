@@ -166,7 +166,8 @@ test("legal variant is chosen on the server and a client prompt is rejected", ()
   const demos = read("app/components/legal-demos/HarbourDemos.tsx");
   assert.match(page, /LachieLegalDemo/);
   assert.match(demos, /LachieLockup as="h2" second="Legend"/);
-  assert.match(demos, /A demo of Saabai's AI voice receptionist\. Live phone answering is coming soon\./);
+  assert.match(demos, /A browser demo of Saabai's AI voice receptionist\./);
+  assert.doesNotMatch(page + demos, /phone answering is coming soon/i);
   assert.match(demos, /Lex is the legal assistant on this page/);
   assert.doesNotMatch(demos, /second="Legal"|phone answering service|picks up when you can't|Lachie Legal/);
   assert.match(demos, /variant="legal"/);
