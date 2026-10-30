@@ -2,7 +2,7 @@
  * Lex Firm plan seats. GET: the caller's firm plan (seats, members, billing status).
  * POST {action:"invite"|"revoke", email}: firm admin (the signer) only. Caller comes from signed cookies.
  */
-import { resolveReviewActor } from "@/lib/lex-review-access";
+import { resolveSessionEmail } from "@/lib/lex-review-access";
 import { LEX_SEAT_CAP, firmByEmail, inviteMember, revokeMember, seatsUsed } from "@/lib/lex-subscription";
 import { lexMailer } from "@/lib/lex-subscription-emails";
 
@@ -10,15 +10,16 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 async function load(req: Request) {
-  const actor = await resolveReviewActor(req);
-  if (!actor || actor.kind !== "firm") return null;
-  const firm = await firmByEmail(actor.email);
-  return firm ? { firm, email: actor.email, isAdmin: firm.adminEmail === actor.email } : { firm: null, email: actor.email, isAdmin: false };
+  // Session email without requiring 'lex': a lapsed firm's owner must still see the plan and reach billing.
+  const email = await resolveSessionEmail(req);
+  if (!email) return null;
+  const firm = await firmByEmail(email);
+  return firm ? { firm, email, isAdmin: firm.adminEmail === email } : { firm: null, email, isAdmin: false };
 }
 
 function view(f: NonNullable<Awaited<ReturnType<typeof firmByEmail>>>, isAdmin: boolean) {
   return {
-    plan: "firm", firmName: f.firmName, isAdmin, status: f.status, graceUntil: f.graceUntil ?? null,
+    plan: "firm", firmName: f.firmName, isAdmin, status: f.status, lapseReason: f.lapseReason ?? null, graceUntil: f.graceUntil ?? null,
     cancelAtPeriodEnd: !!f.cancelAtPeriodEnd, periodEnd: f.periodEnd ?? null,
     seats: { used: seatsUsed(f), cap: LEX_SEAT_CAP },
     admin: f.adminEmail, members: isAdmin ? f.members : [],
@@ -45,15 +46,15 @@ export async function POST(req: Request) {
     const ctx = await load(req);
     if (!ctx?.firm || !ctx.isAdmin) return Response.json({ error: "Only the account owner can manage seats" }, { status: 403 });
     if (body.action === "invite") {
-      const r = await inviteMember(ctx.firm, email, lexMailer);
-      if (!r.ok) return Response.json({ error: r.error, cap: !!r.cap, ...view(ctx.firm, true) }, { status: r.cap ? 409 : 400 });
+      const r = await inviteMember(ctx.firm.firmId, email, lexMailer);
+      if (!r.ok) return Response.json({ error: r.error, cap: !!r.cap, ...view(r.firm ?? ctx.firm, true) }, { status: r.cap ? 409 : 400 });
+      return Response.json(view(r.firm, true));
     } else if (body.action === "revoke") {
-      const r = await revokeMember(ctx.firm, email);
+      const r = await revokeMember(ctx.firm.firmId, email);
       if (!r.ok) return Response.json({ error: r.error }, { status: 400 });
-    } else {
-      return Response.json({ error: "Unknown action" }, { status: 400 });
+      return Response.json(view(r.firm ?? ctx.firm, true));
     }
-    return Response.json(view(ctx.firm, true));
+    return Response.json({ error: "Unknown action" }, { status: 400 });
   } catch (err) {
     console.error("[lex team]", err instanceof Error ? err.name : err);
     return Response.json({ error: "Could not update seats" }, { status: 500 });

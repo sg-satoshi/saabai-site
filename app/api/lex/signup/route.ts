@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ATTR_COOKIE, attrMetadata, parseAttr } from "@/lib/growth/attribution";
 import { getStripe } from "@/lib/stripe";
+import { siteUrl } from "@/lib/billing/stripe-ops";
 import { savePendingSignup, validateSignup } from "@/lib/lex-subscription";
 
 export const runtime = "nodejs";
@@ -23,14 +24,15 @@ export async function POST(req: NextRequest) {
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request" }, { status: 400 }); }
   const v = validateSignup(body);
-  if (!v.ok) return NextResponse.json({ error: v.error }, { status: 400 });
+  if (!v.ok) return NextResponse.json({ error: v.error, field: v.field }, { status: 400 });
 
   const price = lexPriceId();
   if (!price || !process.env.STRIPE_SECRET_KEY) {
     return NextResponse.json({ error: "Online signup for Lex isn't open yet. Please book a demo and we'll set you up." }, { status: 503 });
   }
 
-  const origin = req.headers.get("origin") ?? "https://www.saabai.ai";
+  // Redirects come from our configured site URL, never the request's Origin header.
+  const origin = siteUrl();
   try {
     const pending = await savePendingSignup(v.value);
     const attr = parseAttr(req.cookies.get(ATTR_COOKIE)?.value);

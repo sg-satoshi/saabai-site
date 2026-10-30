@@ -35,6 +35,8 @@ export type LexFirm = {
   customerId?: string; subscriptionId?: string;
   status: FirmStatus; graceUntil?: string; cancelAtPeriodEnd?: boolean; periodEnd?: string;
   lapseReason?: "unpaid" | "cancelled";
+  /** Stripe event.created (seconds) of the latest successful payment; older payment_failed events are ignored. */
+  lastPaidAt?: number;
   termsVersion: string; termsAcceptedAt: string; createdAt: string; updatedAt: string;
 };
 
@@ -55,7 +57,7 @@ const clean = (v: unknown, max: number) => (typeof v === "string" ? v.trim().sli
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export type SignupInput = { name: string; email: string; firmName: string; phone?: string; abn?: string };
-export function validateSignup(body: Record<string, unknown>): { ok: true; value: SignupInput } | { ok: false; error: string; bot?: boolean } {
+export function validateSignup(body: Record<string, unknown>): { ok: true; value: SignupInput } | { ok: false; error: string; bot?: boolean; field?: string } {
   // Honeypot: a hidden "website" field real people never fill in.
   if (clean(body.website, 200)) return { ok: false, error: "Invalid request", bot: true };
   const name = clean(body.name, 120);
@@ -63,12 +65,12 @@ export function validateSignup(body: Record<string, unknown>): { ok: true; value
   const firmName = clean(body.firmName, 160);
   const phone = clean(body.phone, 40);
   const abnRaw = clean(body.abn, 20).replace(/\s+/g, "");
-  if (name.length < 2) return { ok: false, error: "Please add your full name" };
-  if (!EMAIL_RE.test(email)) return { ok: false, error: "Please use a valid work email" };
-  if (firmName.length < 2) return { ok: false, error: "Please add your firm name" };
-  if (phone && !/^[+()\d\s-]{6,40}$/.test(phone)) return { ok: false, error: "Please check the phone number" };
-  if (abnRaw && !/^\d{11}$/.test(abnRaw)) return { ok: false, error: "An ABN is 11 digits" };
-  if (body.acceptTerms !== true) return { ok: false, error: "Please agree to the Lex Terms and Privacy Policy" };
+  if (name.length < 2) return { ok: false, error: "Please add your full name", field: "name" };
+  if (!EMAIL_RE.test(email)) return { ok: false, error: "Please use a valid work email", field: "email" };
+  if (firmName.length < 2) return { ok: false, error: "Please add your firm name", field: "firmName" };
+  if (phone && !/^[+()\d\s-]{6,40}$/.test(phone)) return { ok: false, error: "Please check the phone number", field: "phone" };
+  if (abnRaw && !/^\d{11}$/.test(abnRaw)) return { ok: false, error: "An ABN is 11 digits", field: "abn" };
+  if (body.acceptTerms !== true) return { ok: false, error: "Please agree to the Lex Terms and Privacy Policy", field: "acceptTerms" };
   return { ok: true, value: { name, email, firmName, ...(phone ? { phone } : {}), ...(abnRaw ? { abn: abnRaw } : {}) } };
 }
 
@@ -87,6 +89,34 @@ export async function getPendingSignup(id: string): Promise<PendingSignup | null
 }
 
 // ── Firm records ─────────────────────────────────────────────────────────
+const LOCK_TTL_MS = 15_000;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Runs fn under a per-firm Redis lock (SET NX PX) with a fresh read of the firm record, then saves it.
+ * Every write to a firm record goes through here, so seat checks and webhook writes can't interleave.
+ */
+export async function withFirmLock<T>(firmId: string, fn: (f: LexFirm) => Promise<T>): Promise<T> {
+  const r = redis();
+  const key = `lex:firm:lock:${firmId}`;
+  const token = randomBytes(8).toString("hex");
+  let got = false;
+  for (let i = 0; i < 100 && !got; i++) {
+    got = (await r.set(key, token, { nx: true, px: LOCK_TTL_MS })) === "OK";
+    if (!got) await sleep(50 + Math.floor(Math.random() * 50));
+  }
+  if (!got) throw new Error("firm busy");
+  try {
+    const f = await getFirm(firmId);
+    if (!f) throw new Error("firm not found");
+    const out = await fn(f);
+    await saveFirm(f);
+    return out;
+  } finally {
+    if ((await r.get<string>(key)) === token) await r.del(key);
+  }
+}
+
 export async function getFirm(firmId: string): Promise<LexFirm | null> {
   return parse<LexFirm>(await redis().get(`lex:firm:${firmId}`));
 }
@@ -113,6 +143,7 @@ export async function unmarkSeen(id: string): Promise<void> { await redis().del(
 // ── Product grants ───────────────────────────────────────────────────────
 /** welcome() is only called for people who already had a login; new logins get the set-password email from ensureClientAccount. */
 export type Mailer = { welcome(opts: { name: string; email: string; firmName: string; invitedBy?: string }): Promise<void> };
+const SILENT: Mailer = { welcome: async () => {} };
 
 export function lexAccountCopy(firmName: string, invitedBy?: string): { subject: string; intro: string } {
   return invitedBy
@@ -120,18 +151,23 @@ export function lexAccountCopy(firmName: string, invitedBy?: string): { subject:
     : { subject: "Welcome to Lex", intro: `Your Lex Firm plan for ${firmName} is active. You can sign in now and invite up to ${LEX_SEAT_CAP - 1} colleagues from Firm Settings.` };
 }
 
-/** Ensure a login exists and has 'lex'. Returns true if this call added 'lex'. */
-export async function grantLex(email: string, name: string, firmName: string, mailer: Mailer, invitedBy?: string): Promise<boolean> {
+async function hasLexProduct(email: string): Promise<boolean> {
+  return !!(await getDirectoryUser(lc(email)))?.products?.includes("lex");
+}
+
+/** Ensure a login exists and has 'lex'. Welcome emails go once per firm and person (safe on webhook retries). */
+export async function grantLex(firmId: string, email: string, name: string, firmName: string, mailer: Mailer, invitedBy?: string): Promise<void> {
   const e = lc(email);
+  const r = redis();
+  const first = (await r.set(`lex:welcome:${firmId}:${e}`, "1", { nx: true, ex: SEEN_TTL_SECONDS * 12 })) === "OK";
   const { created } = await ensureClientAccount({ name, email: e, productName: "Lex", ...lexAccountCopy(firmName, invitedBy) });
   const u = await getDirectoryUser(e);
   if (!u) throw new Error("account not created");
-  if (!created) await mailer.welcome({ name, email: e, firmName, invitedBy });
-  if (u.products?.includes("lex")) return false;
+  if (!created && first) await mailer.welcome({ name, email: e, firmName, invitedBy });
+  if (u.products?.includes("lex")) return;
   u.products = [...(u.products ?? []), "lex"];
   if (!u.dashboardUrl || u.dashboardUrl === "/dashboard") u.dashboardUrl = "/lex";
   await saveDirectoryUser(u);
-  return true;
 }
 export async function revokeLex(email: string): Promise<void> {
   const u = await getDirectoryUser(lc(email));
@@ -142,22 +178,28 @@ export async function revokeLex(email: string): Promise<void> {
 
 function seatEmails(f: LexFirm): string[] { return [f.adminEmail, ...f.members]; }
 
+/**
+ * Grants or removes Lex for every seat. A grant is recorded in f.granted (and saved) BEFORE the product is
+ * added, so a crash mid-way can never leave Lex on someone this firm won't later remove.
+ */
 async function setAccess(f: LexFirm, on: boolean, mailer: Mailer): Promise<void> {
   for (const e of seatEmails(f)) {
-    if (on) { if (await grantLex(e, e === f.adminEmail ? f.adminName : e, f.firmName, mailer, e === f.adminEmail ? undefined : f.adminEmail)) f.granted = [...new Set([...f.granted, e])]; }
-    else if (f.granted.includes(e)) await revokeLex(e);
+    if (on) {
+      if (!f.granted.includes(e) && !(await hasLexProduct(e))) { f.granted = [...f.granted, e]; await saveFirm(f); }
+      await grantLex(f.firmId, e, e === f.adminEmail ? f.adminName : e, f.firmName, mailer, e === f.adminEmail ? undefined : f.adminEmail);
+    } else if (f.granted.includes(e)) await revokeLex(e);
   }
 }
 
 // ── Provisioning from a paid checkout ────────────────────────────────────
 export type CheckoutLike = {
-  id: string; payment_status?: string | null; customer?: unknown; subscription?: unknown;
+  id: string; created?: number; payment_status?: string | null; customer?: unknown; subscription?: unknown;
   customer_email?: string | null; customer_details?: { email?: string | null; name?: string | null } | null;
   metadata?: Record<string, string> | null;
 };
 const idOf = (v: unknown): string | undefined => (typeof v === "string" ? v : (v as { id?: string } | null)?.id);
 
-export async function provisionLexCheckout(eventId: string, s: CheckoutLike, mailer: Mailer, alert: (msg: string) => Promise<void>): Promise<string> {
+export async function provisionLexCheckout(eventId: string, s: CheckoutLike, mailer: Mailer, alert: (msg: string) => Promise<void>, eventCreated?: number): Promise<string> {
   if (s.metadata?.product !== "lex") return "not-lex";
   if (s.metadata?.plan !== "firm") {
     // Legacy /api/checkout (Starter/Growth with a setup fee) also tags product "lex". Never auto-provision it.
@@ -171,24 +213,29 @@ export async function provisionLexCheckout(eventId: string, s: CheckoutLike, mai
     const email = lc(pending?.email || s.customer_details?.email || s.customer_email || "");
     if (!EMAIL_RE.test(email)) { await alert(`Lex checkout ${s.id} paid but has no usable email. Provision by hand.`); return "no-email"; }
     const subId = idOf(s.subscription);
-    const existing = (subId && (await firmBySubscription(subId))) || null;
-    const now = new Date().toISOString();
-    const firm: LexFirm = existing ?? {
-      firmId: `lf_${randomBytes(10).toString("hex")}`,
-      firmName: pending?.firmName || s.metadata?.firmName || email.split("@")[1] || email,
-      adminEmail: email, adminName: pending?.name || s.customer_details?.name || email,
-      members: [], granted: [], status: "active",
-      termsVersion: pending?.termsVersion || s.metadata?.termsVersion || LEX_TERMS_VERSION,
-      termsAcceptedAt: pending?.termsAcceptedAt || now, createdAt: now, updatedAt: now,
-    };
-    firm.customerId = idOf(s.customer) ?? firm.customerId;
-    firm.subscriptionId = subId ?? firm.subscriptionId;
-    firm.status = "active";
-    await setAccess(firm, true, mailer);
-    await saveFirm(firm);
     const r = redis();
-    if (firm.subscriptionId) await r.set(`lex:firm:bysub:${firm.subscriptionId}`, firm.firmId);
-    await r.set(`lex:firm:byemail:${firm.adminEmail}`, firm.firmId);
+    // Stable firm id per subscription (or session), so a retry after a crash reuses the same firm.
+    const firmId = `lf_${(subId ?? s.id).replace(/[^A-Za-z0-9]/g, "").slice(-40)}`;
+    if (!(await getFirm(firmId))) {
+      const now = new Date().toISOString();
+      const fresh: LexFirm = {
+        firmId, firmName: pending?.firmName || s.metadata?.firmName || email.split("@")[1] || email,
+        adminEmail: email, adminName: pending?.name || s.customer_details?.name || email,
+        members: [], granted: [], status: "active",
+        termsVersion: pending?.termsVersion || s.metadata?.termsVersion || LEX_TERMS_VERSION,
+        termsAcceptedAt: pending?.termsAcceptedAt || now, createdAt: now, updatedAt: now,
+      };
+      await r.set(`lex:firm:${firmId}`, JSON.stringify(fresh), { nx: true });
+    }
+    if (subId) await r.set(`lex:firm:bysub:${subId}`, firmId);
+    await r.set(`lex:firm:byemail:${email}`, firmId);
+    await withFirmLock(firmId, async (f) => {
+      f.customerId = idOf(s.customer) ?? f.customerId;
+      f.subscriptionId = subId ?? f.subscriptionId;
+      f.status = "active"; f.lapseReason = undefined; f.graceUntil = undefined;
+      f.lastPaidAt = Math.max(f.lastPaidAt ?? 0, eventCreated ?? s.created ?? 0);
+      await setAccess(f, true, mailer);
+    });
     if (pending) await r.del(`lex:signup:pending:${pending.id}`);
     void eventId;
     return "provisioned";
@@ -203,101 +250,135 @@ type SubLike = { id: string; status?: string; cancel_at_period_end?: boolean; cu
 type InvoiceLike = { id: string; subscription?: unknown; parent?: { subscription_details?: { subscription?: unknown } | null } | null };
 export const invoiceSubId = (inv: InvoiceLike) => idOf(inv.subscription) ?? idOf(inv.parent?.subscription_details?.subscription);
 
+/** Mutates f (caller holds the firm lock). */
 export async function lapseFirm(f: LexFirm, reason: "unpaid" | "cancelled", mailer: Mailer): Promise<void> {
   await setAccess(f, false, mailer);
   f.status = "lapsed"; f.lapseReason = reason; f.graceUntil = undefined;
-  await saveFirm(f);
 }
-export async function restoreFirm(f: LexFirm, mailer: Mailer): Promise<void> {
+/** Mutates f (caller holds the firm lock). Restoring is silent: no repeat welcome emails. */
+export async function restoreFirm(f: LexFirm): Promise<void> {
   f.status = "active"; f.lapseReason = undefined; f.graceUntil = undefined;
-  void mailer; // restoring access is silent: no repeat welcome emails
-  await setAccess(f, true, { welcome: async () => {} });
-  await saveFirm(f);
+  await setAccess(f, true, SILENT);
 }
 
+type LexEvent = { id: string; type: string; created?: number; data: { object: unknown } };
+
 /** Handles Lex subscription lifecycle events. Returns a short result, or "ignored" for non-Lex objects. */
-export async function handleLexLifecycle(event: { id: string; type: string; data: { object: unknown } }, mailer: Mailer, now = new Date()): Promise<string> {
+export async function handleLexLifecycle(event: LexEvent, mailer: Mailer, now = new Date()): Promise<string> {
   const o = event.data.object as SubLike & InvoiceLike;
   const subId = event.type.startsWith("invoice.") ? invoiceSubId(o) : o.id;
   if (!subId) return "ignored";
-  const firm = await firmBySubscription(subId);
-  if (!firm) return "ignored";
+  const found = await firmBySubscription(subId);
+  if (!found) return "ignored";
   if (!(await markSeen(`event:${event.id}`))) return "duplicate";
+  const created = event.created ?? Math.floor(now.getTime() / 1000);
   try {
-    switch (event.type) {
-      case "invoice.payment_failed":
-        if (firm.status === "active") {
-          firm.status = "grace";
-          firm.graceUntil = new Date(now.getTime() + GRACE_DAYS * 86400_000).toISOString();
-          await saveFirm(firm);
-          return "grace-started";
+    return await withFirmLock(found.firmId, async (firm) => {
+      switch (event.type) {
+        case "invoice.payment_failed":
+          // A late or retried failure from before the last successful payment must not start a grace.
+          if ((firm.lastPaidAt ?? 0) >= created) return "stale";
+          if (firm.status === "active") {
+            firm.status = "grace";
+            firm.graceUntil = new Date(now.getTime() + GRACE_DAYS * 86400_000).toISOString();
+            return "grace-started";
+          }
+          return "noop";
+        case "invoice.paid":
+          firm.lastPaidAt = Math.max(firm.lastPaidAt ?? 0, created);
+          if (firm.status === "grace" || (firm.status === "lapsed" && firm.lapseReason === "unpaid")) { await restoreFirm(firm); return "restored"; }
+          return "noop";
+        case "customer.subscription.deleted":
+          await lapseFirm(firm, "cancelled", mailer);
+          return "lapsed";
+        case "customer.subscription.updated":
+        case "customer.subscription.created": {
+          firm.cancelAtPeriodEnd = !!o.cancel_at_period_end;
+          const pe = o.current_period_end ?? o.items?.data?.[0]?.current_period_end;
+          if (pe) firm.periodEnd = new Date(pe * 1000).toISOString();
+          if (o.status === "canceled") { await lapseFirm(firm, "cancelled", mailer); return "lapsed"; }
+          if (o.status === "active" && firm.status !== "active" && firm.lapseReason !== "cancelled") { await restoreFirm(firm); return "restored"; }
+          return "updated";
         }
-        return "noop";
-      case "invoice.paid":
-        if (firm.status === "grace" || (firm.status === "lapsed" && firm.lapseReason === "unpaid")) { await restoreFirm(firm, mailer); return "restored"; }
-        return "noop";
-      case "customer.subscription.deleted":
-        await lapseFirm(firm, "cancelled", mailer);
-        return "lapsed";
-      case "customer.subscription.updated":
-      case "customer.subscription.created": {
-        firm.cancelAtPeriodEnd = !!o.cancel_at_period_end;
-        const pe = o.current_period_end ?? o.items?.data?.[0]?.current_period_end;
-        if (pe) firm.periodEnd = new Date(pe * 1000).toISOString();
-        if (o.status === "canceled") { await lapseFirm(firm, "cancelled", mailer); return "lapsed"; }
-        if (o.status === "active" && firm.status !== "active" && firm.lapseReason !== "cancelled") { await restoreFirm(firm, mailer); return "restored"; }
-        await saveFirm(firm);
-        return "updated";
+        default:
+          return "ignored";
       }
-      default:
-        return "ignored";
-    }
+    });
   } catch (err) {
     await unmarkSeen(`event:${event.id}`);
     throw err;
   }
 }
 
-/** Cron: lapse firms whose 7-day grace has run out. */
-export async function sweepGrace(mailer: Mailer, now = new Date()): Promise<number> {
+/** Live Stripe subscription status, or null if it can't be read right now. */
+export type StatusLookup = (subscriptionId: string) => Promise<string | null>;
+const UNPAID_STATUSES = new Set(["past_due", "unpaid", "incomplete_expired", "canceled", "paused"]);
+
+/**
+ * Cron: for firms whose 7-day grace has run out, re-check the live Stripe subscription first.
+ * Still unpaid: lapse. Active again: restore. Unknown (Stripe unreachable): leave for the next run.
+ */
+export async function sweepGrace(mailer: Mailer, liveStatus: StatusLookup, now = new Date()): Promise<{ lapsed: number; restored: number; skipped: number }> {
   const r = redis();
-  let cursor = "0"; let n = 0; let pages = 0;
+  const out = { lapsed: 0, restored: 0, skipped: 0 };
+  let cursor = "0"; let pages = 0;
   do {
     const [next, keys] = (await r.scan(cursor, { match: "lex:firm:lf_*", count: 200 })) as [string, string[]];
     cursor = String(next);
     for (const k of keys) {
-      const f = parse<LexFirm>(await r.get(k));
-      if (f?.status === "grace" && f.graceUntil && new Date(f.graceUntil) <= now) { await lapseFirm(f, "unpaid", mailer); n++; }
+      const f0 = parse<LexFirm>(await r.get(k));
+      if (!(f0?.status === "grace" && f0.graceUntil && new Date(f0.graceUntil) <= now)) continue;
+      const status = f0.subscriptionId ? await liveStatus(f0.subscriptionId).catch(() => null) : null;
+      if (!status) { out.skipped++; continue; }
+      await withFirmLock(f0.firmId, async (f) => {
+        if (f.status !== "grace") return;
+        if (status === "active" || status === "trialing") { await restoreFirm(f); out.restored++; }
+        else if (UNPAID_STATUSES.has(status)) { await lapseFirm(f, "unpaid", mailer); out.lapsed++; }
+        else out.skipped++;
+      });
     }
   } while (cursor !== "0" && ++pages < 100);
-  return n;
+  return out;
 }
 
 // ── Staff seats ──────────────────────────────────────────────────────────
 export function seatsUsed(f: LexFirm): number { return 1 + f.members.length; }
+export const INVITE_GENERIC_ERROR = "We couldn't add that person. Check the email, or contact us if it keeps happening.";
 
-export async function inviteMember(f: LexFirm, rawEmail: string, mailer: Mailer): Promise<{ ok: true } | { ok: false; error: string; cap?: boolean }> {
+/** Atomic: the seat check and the add happen under the firm lock. Returns the updated firm. */
+export async function inviteMember(firmId: string, rawEmail: string, mailer: Mailer): Promise<{ ok: true; firm: LexFirm } | { ok: false; error: string; cap?: boolean; firm?: LexFirm }> {
   const email = lc(rawEmail);
   if (!EMAIL_RE.test(email) || email.length > 200) return { ok: false, error: "Please use a valid email" };
-  if (email === f.adminEmail || f.members.includes(email)) return { ok: false, error: "That person already has a seat" };
-  if (f.status !== "active") return { ok: false, error: "Invites are paused until billing is sorted" };
-  if (seatsUsed(f) >= LEX_SEAT_CAP) return { ok: false, error: `Your plan includes ${LEX_SEAT_CAP} seats`, cap: true };
   const other = await firmByEmail(email);
-  if (other && other.firmId !== f.firmId) return { ok: false, error: "That person is already on another firm's plan" };
-  f.members.push(email);
-  if (await grantLex(email, email, f.firmName, mailer, f.adminEmail)) f.granted = [...new Set([...f.granted, email])];
-  await saveFirm(f);
-  await redis().set(`lex:firm:byemail:${email}`, f.firmId);
-  return { ok: true };
+  if (other && other.firmId !== firmId) return { ok: false, error: INVITE_GENERIC_ERROR };
+  let res: { ok: boolean; error?: string; cap?: boolean } = { ok: true };
+  const firm = await withFirmLock(firmId, async (f) => {
+    if (email === f.adminEmail || f.members.includes(email)) { res = { ok: false, error: "That person already has a seat" }; return f; }
+    if (f.status !== "active") { res = { ok: false, error: "Invites are paused until billing is sorted" }; return f; }
+    if (seatsUsed(f) >= LEX_SEAT_CAP) { res = { ok: false, error: `Your plan includes ${LEX_SEAT_CAP} seats`, cap: true }; return f; }
+    // Claim the email for this firm atomically; another firm may have claimed it since the check above.
+    const claimed = (await redis().set(`lex:firm:byemail:${email}`, f.firmId, { nx: true })) === "OK"
+      || String(await redis().get(`lex:firm:byemail:${email}`)) === f.firmId;
+    if (!claimed) { res = { ok: false, error: INVITE_GENERIC_ERROR }; return f; }
+    f.members.push(email);
+    if (!f.granted.includes(email) && !(await hasLexProduct(email))) f.granted.push(email);
+    await saveFirm(f);
+    await grantLex(f.firmId, email, email, f.firmName, mailer, f.adminEmail);
+    return f;
+  });
+  return res.ok ? { ok: true, firm } : { ok: false, error: res.error!, cap: res.cap, firm };
 }
 
-export async function revokeMember(f: LexFirm, rawEmail: string): Promise<{ ok: boolean; error?: string }> {
+export async function revokeMember(firmId: string, rawEmail: string): Promise<{ ok: boolean; error?: string; firm?: LexFirm }> {
   const email = lc(rawEmail);
-  if (email === f.adminEmail) return { ok: false, error: "The account owner can't be removed" };
-  if (!f.members.includes(email)) return { ok: false, error: "Not a member" };
-  f.members = f.members.filter((m) => m !== email);
-  if (f.granted.includes(email)) { await revokeLex(email); f.granted = f.granted.filter((g) => g !== email); }
-  await saveFirm(f);
-  await redis().del(`lex:firm:byemail:${email}`);
-  return { ok: true };
+  let res: { ok: boolean; error?: string } = { ok: true };
+  const firm = await withFirmLock(firmId, async (f) => {
+    if (email === f.adminEmail) { res = { ok: false, error: "The account owner can't be removed" }; return f; }
+    if (!f.members.includes(email)) { res = { ok: false, error: "Not a member" }; return f; }
+    f.members = f.members.filter((m) => m !== email);
+    if (f.granted.includes(email)) { await revokeLex(email); f.granted = f.granted.filter((g) => g !== email); }
+    await redis().del(`lex:firm:byemail:${email}`);
+    return f;
+  });
+  return { ...res, firm };
 }

@@ -89,7 +89,7 @@ export async function POST(req: Request) {
   // Lex Firm plan: provision only on a verified, paid session, once per session.
   if (session.metadata?.product === "lex") {
     try {
-      const result = await provisionLexCheckout(event.id, session as never, lexMailer, lexAlert);
+      const result = await provisionLexCheckout(event.id, session as never, lexMailer, lexAlert, event.created);
       if (result === "provisioned") await reportCheckoutPurchase(session);
       return Response.json({ received: true, lex: result });
     } catch (err) {

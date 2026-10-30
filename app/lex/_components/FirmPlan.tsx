@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 type Plan = {
-  plan: "firm" | null; firmName?: string; isAdmin?: boolean; status?: "active" | "grace" | "lapsed";
+  plan: "firm" | null; firmName?: string; isAdmin?: boolean; status?: "active" | "grace" | "lapsed"; lapseReason?: "unpaid" | "cancelled" | null;
   graceUntil?: string | null; cancelAtPeriodEnd?: boolean; periodEnd?: string | null;
   seats?: { used: number; cap: number }; admin?: string; members?: string[]; error?: string; cap?: boolean;
 };
@@ -12,7 +12,7 @@ const navy: React.CSSProperties = { background: "#1b2559", color: "#fff", border
 const plain: React.CSSProperties = { background: "#fff", color: "#1b2559", border: "1px solid #cfd4dd", borderRadius: 8, padding: "4px 10px", fontSize: 12, cursor: "pointer" };
 const day = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric", timeZone: "Australia/Brisbane" }) : "");
 
-export default function FirmPlan() {
+export default function FirmPlan({ fallback = null }: { fallback?: React.ReactNode } = {}) {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
@@ -22,7 +22,8 @@ export default function FirmPlan() {
     fetch("/api/lex/team").then((r) => r.json()).then(setPlan).catch(() => setPlan({ plan: null }));
   }, []);
 
-  if (!plan?.plan) return null;
+  if (!plan) return null;
+  if (!plan.plan) return <>{fallback}</>;
   const used = plan.seats?.used ?? 1;
   const cap = plan.seats?.cap ?? 3;
   const full = used >= cap;
@@ -52,9 +53,16 @@ export default function FirmPlan() {
 
   return (
     <div className="field" style={{ borderTop: "1px solid #e3e6ec", paddingTop: 14, marginTop: 6 }}>
-      <label>Firm plan</label>
-      {plan.status === "grace" ? <p style={{ fontSize: 13, color: "#b42318", margin: "0 0 8px" }}>Your last payment didn&apos;t go through. Please update your card by {day(plan.graceUntil)} to keep Lex on.</p> : null}
-      {plan.cancelAtPeriodEnd ? <p style={{ fontSize: 13, color: "#555d6e", margin: "0 0 8px" }}>Cancelled. Lex stays on until {day(plan.periodEnd)}.</p> : null}
+      <h3 style={{ fontSize: 14, fontWeight: 600, color: "#1b2559", margin: "0 0 8px" }}>Firm plan</h3>
+      {plan.status === "lapsed" ? (
+        <p style={{ fontSize: 13, color: "#b42318", margin: "0 0 8px" }}>
+          {plan.lapseReason === "cancelled"
+            ? <>Your Firm plan has ended. {plan.isAdmin ? <a href="/lex/signup" style={{ color: "#1b2559" }}>Start a new plan</a> : <>Ask {plan.admin} to restart it.</>}</>
+            : <>Lex is paused because a payment didn&apos;t go through. {plan.isAdmin ? "Use Manage billing to pay the open invoice and Lex comes back on straight away." : <>Ask {plan.admin} to update billing.</>}</>}
+        </p>
+      ) : null}
+      {plan.status === "grace" ? <p style={{ fontSize: 13, color: "#b42318", margin: "0 0 8px" }}>Your last payment didn&apos;t go through. {plan.graceUntil ? <>Please update your card by {day(plan.graceUntil)} to keep Lex on.</> : <>Please update your card within 7 days to keep Lex on.</>}</p> : null}
+      {plan.cancelAtPeriodEnd ? <p style={{ fontSize: 13, color: "#555d6e", margin: "0 0 8px" }}>Cancelled. {plan.periodEnd ? <>Lex stays on until {day(plan.periodEnd)}.</> : <>Lex stays on until the end of your current billing period.</>}</p> : null}
       <p style={{ fontSize: 13, color: "#555d6e", margin: "0 0 8px" }}>Seats used: <strong>{used} of {cap}</strong></p>
       {plan.isAdmin ? (
         <>

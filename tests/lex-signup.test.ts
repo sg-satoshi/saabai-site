@@ -30,6 +30,7 @@ const sent: string[] = [];
 const mailer = { welcome: async (o: { email: string }) => { sent.push(o.email); } };
 const alerts: string[] = [];
 const alert = async (m: string) => { alerts.push(m); };
+const pastDue = async () => "past_due";
 const user = async (e: string) => (await import("../lib/user-directory")).getDirectoryUser(e);
 const hasLex = async (e: string) => !!(await user(e))?.products?.includes("lex");
 
@@ -89,20 +90,18 @@ test("webhook provisioning: paid firm session provisions once; unpaid, non-Lex a
 });
 
 test("seats: owner + 2 invites = 3; the 4th is refused with cap; revoke frees a seat", async () => {
-  const { getFirm, inviteMember, revokeMember, seatsUsed } = await L();
-  let f = (await getFirm(firmId))!;
-  assert.deepEqual((await inviteMember(f, "bob@smithlaw.test", mailer)).ok, true);
-  assert.deepEqual((await inviteMember(f, "existing@oldfirm.test", mailer)).ok, true);
-  assert.equal(seatsUsed(f), 3);
-  const r = await inviteMember(f, "carl@smithlaw.test", mailer);
+  const { inviteMember, revokeMember, seatsUsed, getFirm } = await L();
+  assert.deepEqual((await inviteMember(firmId, "bob@smithlaw.test", mailer)).ok, true);
+  assert.deepEqual((await inviteMember(firmId, "existing@oldfirm.test", mailer)).ok, true);
+  assert.equal(seatsUsed((await getFirm(firmId))!), 3);
+  const r = await inviteMember(firmId, "carl@smithlaw.test", mailer);
   assert.ok(!r.ok && r.cap);
   assert.equal(await hasLex("bob@smithlaw.test"), true);
   assert.ok(sent.includes("existing@oldfirm.test"), "existing login gets the access email");
-  f = (await getFirm(firmId))!;
-  assert.equal((await revokeMember(f, "bob@smithlaw.test")).ok, true);
+  assert.equal((await revokeMember(firmId, "bob@smithlaw.test")).ok, true);
   assert.equal(await hasLex("bob@smithlaw.test"), false);
-  assert.equal((await revokeMember(f, "jane@smithlaw.test")).ok, false);
-  assert.equal((await inviteMember(f, "bob@smithlaw.test", mailer)).ok, true);
+  assert.equal((await revokeMember(firmId, "jane@smithlaw.test")).ok, false);
+  assert.equal((await inviteMember(firmId, "bob@smithlaw.test", mailer)).ok, true);
 });
 
 test("lifecycle: failed payment starts 7-day grace, idempotent; sweep lapses after 7 days; payment restores", async () => {
@@ -112,9 +111,9 @@ test("lifecycle: failed payment starts 7-day grace, idempotent; sweep lapses aft
   assert.equal(await handleLexLifecycle(fail, mailer, t0), "grace-started");
   assert.equal(await handleLexLifecycle(fail, mailer, t0), "duplicate");
   assert.equal((await getFirm(firmId))?.status, "grace");
-  assert.equal(await sweepGrace(mailer, new Date(t0.getTime() + 6 * 86400_000)), 0);
+  assert.equal((await sweepGrace(mailer, pastDue, new Date(t0.getTime() + 6 * 86400_000))).lapsed, 0);
   assert.equal(await hasLex("jane@smithlaw.test"), true);
-  assert.equal(await sweepGrace(mailer, new Date(t0.getTime() + 7 * 86400_000 + 1)), 1);
+  assert.equal((await sweepGrace(mailer, pastDue, new Date(t0.getTime() + 7 * 86400_000 + 1))).lapsed, 1);
   assert.equal(await hasLex("jane@smithlaw.test"), false);
   assert.equal(await hasLex("bob@smithlaw.test"), false);
   assert.equal(await hasLex("existing@oldfirm.test"), true, "Lex we did not grant is never removed");
@@ -135,6 +134,77 @@ test("lifecycle: cancel at period end is recorded; subscription.deleted removes 
   assert.equal(await hasLex("jane@smithlaw.test"), false);
   assert.equal(await hasLex("bob@smithlaw.test"), false);
   assert.equal(await handleLexLifecycle({ id: "evt_z", type: "customer.subscription.deleted", data: { object: { id: "sub_other" } } }, mailer), "ignored");
+});
+
+test("round 2: parallel invites can't exceed 3 seats (per-firm lock)", async () => {
+  const { savePendingSignup, provisionLexCheckout, firmBySubscription, inviteMember, getFirm } = await L();
+  const p = await savePendingSignup({ name: "Race Owner", email: "owner@race.test", firmName: "Race Law" });
+  const s = { id: "cs_race", payment_status: "paid", customer: "cus_r", subscription: "sub_race", metadata: { product: "lex", plan: "firm", pendingId: p.id } };
+  assert.equal(await provisionLexCheckout("evt_r", s, mailer, alert), "provisioned");
+  const id = (await firmBySubscription("sub_race"))!.firmId;
+  const rs = await Promise.all(["a", "b", "c", "d", "e", "f"].map((x) => inviteMember(id, `${x}@race.test`, mailer)));
+  assert.equal(rs.filter((r) => r.ok).length, 2);
+  const f = (await getFirm(id))!;
+  assert.equal(f.members.length, 2);
+  let withLex = 0;
+  for (const x of ["a", "b", "c", "d", "e", "f"]) if (await hasLex(`${x}@race.test`)) withLex++;
+  assert.equal(withLex, 2);
+});
+
+test("round 2: inviting someone on another firm gets a generic error", async () => {
+  const { firmBySubscription, inviteMember, INVITE_GENERIC_ERROR } = await L();
+  const id = (await firmBySubscription("sub_race"))!.firmId;
+  const r = await inviteMember(id, "jane@smithlaw.test", mailer);
+  assert.ok(!r.ok);
+  assert.equal(r.error, INVITE_GENERIC_ERROR);
+  assert.doesNotMatch(r.error, /another firm/);
+});
+
+test("round 2: a payment_failed older than the last paid invoice is ignored", async () => {
+  const { handleLexLifecycle, firmBySubscription } = await L();
+  const sub = { subscription: "sub_race" };
+  assert.equal(await handleLexLifecycle({ id: "evt_rp", type: "invoice.paid", created: 2000, data: { object: { id: "in_rp", ...sub } } }, mailer), "noop");
+  assert.equal(await handleLexLifecycle({ id: "evt_rf_old", type: "invoice.payment_failed", created: 1999, data: { object: { id: "in_rf", ...sub } } }, mailer), "stale");
+  assert.equal((await firmBySubscription("sub_race"))?.status, "active");
+  assert.equal((await firmBySubscription("sub_race"))?.lastPaidAt, 2000);
+  assert.equal(await handleLexLifecycle({ id: "evt_rf_new", type: "invoice.payment_failed", created: 2001, data: { object: { id: "in_rf2", ...sub } } }, mailer, new Date("2026-11-01T00:00:00Z")), "grace-started");
+});
+
+test("round 2: sweep re-checks live Stripe status: active restores, unknown skips, past_due lapses", async () => {
+  const { sweepGrace, firmBySubscription } = await L();
+  const late = new Date("2026-11-20T00:00:00Z");
+  let r = await sweepGrace(mailer, async () => null, late);
+  assert.equal(r.lapsed, 0); assert.ok(r.skipped >= 1);
+  assert.equal((await firmBySubscription("sub_race"))?.status, "grace");
+  r = await sweepGrace(mailer, async () => "active", late);
+  assert.equal(r.restored, 1); assert.equal(r.lapsed, 0);
+  assert.equal((await firmBySubscription("sub_race"))?.status, "active");
+  assert.equal(await hasLex("owner@race.test"), true);
+});
+
+test("round 2: a webhook retry doesn't send the welcome email twice", async () => {
+  const { grantLex } = await L();
+  const before = sent.filter((e) => e === "existing@oldfirm.test").length;
+  await grantLex("lf_retrytest", "existing@oldfirm.test", "Old", "Retry Law", mailer);
+  await grantLex("lf_retrytest", "existing@oldfirm.test", "Old", "Retry Law", mailer);
+  assert.equal(sent.filter((e) => e === "existing@oldfirm.test").length, before + 1);
+});
+
+test("round 2: signup redirects use siteUrl(); billing and team routes don't require 'lex'; FirmPlan handles lapsed and missing dates", () => {
+  const signup = readFileSync("app/api/lex/signup/route.ts", "utf8");
+  assert.match(signup, /siteUrl\(\)/);
+  assert.doesNotMatch(signup, /headers\.get\("origin"\)/);
+  for (const f of ["app/api/lex/team/route.ts", "app/api/lex/billing-portal/route.ts"]) {
+    const src = readFileSync(f, "utf8");
+    assert.match(src, /resolveSessionEmail/);
+    assert.doesNotMatch(src, /resolveReviewActor/);
+  }
+  const ui = readFileSync("app/lex/_components/FirmPlan.tsx", "utf8");
+  assert.match(ui, /status === "lapsed"/);
+  assert.match(ui, /end of your current billing period/);
+  const form = readFileSync("app/lex/signup/SignupForm.tsx", "utf8");
+  assert.match(form, /aria-invalid/);
+  assert.match(form, /\.focus\(\)/);
 });
 
 test("webhooks: canonical route routes Lex strictly and has no old welcome copy; legacy route never provisions Lex", () => {
