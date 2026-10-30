@@ -150,7 +150,7 @@ const LEX_VIDEO_SCHEMA = {
   "@type": "VideoObject",
   name: LEX_VIDEO_TITLE,
   description: "Lex drafts a trust distribution resolution from an uploaded trust deed, and the lawyer checks and signs off. Drafting assistance only, not legal advice.",
-  thumbnailUrl: "https://www.saabai.ai/video/lex-explainer-poster.png",
+  thumbnailUrl: "https://www.saabai.ai/video/lex-explainer-poster-light.png",
   uploadDate: "2026-10-30",
   duration: "PT1M16S",
   embedUrl: `https://www.youtube-nocookie.com/embed/${LEX_VIDEO_ID}`,
@@ -208,7 +208,7 @@ export default function LegalPage() {
             <h2>See Lex in under 90 seconds.</h2>
           </div>
           <div className="lx-video">
-            <LiteYouTube id={LEX_VIDEO_ID} title={LEX_VIDEO_TITLE} poster="/video/lex-explainer-poster.png" />
+            <LiteYouTube id={LEX_VIDEO_ID} title={LEX_VIDEO_TITLE} poster="/video/lex-explainer-poster-light.png" />
             <p className="lx-lead lx-video-cap">Lex drafts a trust distribution resolution from your trust deed, and you check and sign off. Drafting assistance only, not legal advice.</p>
           </div>
         </div>
