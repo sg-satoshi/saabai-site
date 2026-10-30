@@ -501,22 +501,18 @@ function withAttribution(req: NextRequest, res: NextResponse): NextResponse {
   return res;
 }
 
-/** Shape of a Lex trial invite code (matches normaliseCode in lib/lex-trial.ts, PR 423): optional LEX- prefix, 10 chars. */
-const LEX_INVITE_CODE_RE = /^(LEX-?)?[A-HJ-NP-Z2-9]{10}$/i;
-
 async function pageRoute(req: NextRequest, pathname: string): Promise<NextResponse> {
   // The admin login page itself must stay reachable while signed out.
   if (pathname === "/saabai-admin/login" || pathname === "/saabai-admin/login/verify") return NextResponse.next();
   if (!matches(pathname, PROTECTED_PAGES)) return NextResponse.next();
-  // Lex is invite and demo only during the beta. /lex/signup is reachable only by:
+  // /lex/signup (paid checkout page) is reachable only by:
   //  - the Stripe return page (/lex/signup/done), which new firms reach before they have a login;
-  //  - the trial invite page (/lex/signup/trial) with a well-formed invite code in ?code= (PR 423;
-  //    the code itself is fully checked server-side by /api/lex/trial, this only gates the page);
+  //  - the public 60-day free trial start page (/lex/signup/trial, PR 423), open to any firm, with or without ?code=;
   //  - signed-in users (trial firms converting, lapsed firm admins restarting a plan).
-  // Everyone else gets a 307 to the public Lex page.
+  // Everyone else gets a 307 to the public Lex page. The paid checkout API is gated separately in its route.
   if (matches(pathname, ["/lex/signup"])) {
     if (pathname === "/lex/signup/done" || pathname === "/lex/signup/done/") return NextResponse.next();
-    if ((pathname === "/lex/signup/trial" || pathname === "/lex/signup/trial/") && LEX_INVITE_CODE_RE.test((req.nextUrl.searchParams.get("code") ?? "").replace(/\s+/g, ""))) return NextResponse.next();
+    if (pathname === "/lex/signup/trial" || pathname === "/lex/signup/trial/") return NextResponse.next();
     if (await getSession(req)) return NextResponse.next();
     return NextResponse.redirect(new URL("/legal", req.url), 307);
   }

@@ -32,7 +32,7 @@ export async function signupAllowed(req: NextRequest): Promise<boolean> {
 
 export async function POST(req: NextRequest) {
   if (!(await signupAllowed(req))) {
-    return NextResponse.json({ error: "Lex is invite only during the beta. Request a beta invite or book a demo." }, { status: 403 });
+    return NextResponse.json({ error: "Please start your 60-day free trial first, or sign in to Lex to subscribe." }, { status: 403 });
   }
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request" }, { status: 400 }); }

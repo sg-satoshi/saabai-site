@@ -69,7 +69,7 @@ test("signup route: signed-out POST gets 403 and never reaches Stripe, even with
     const mk = (headers: Record<string, string> = {}) => new NextRequest("http://localhost/api/lex/signup", { method: "POST", body: JSON.stringify(good), headers: { "content-type": "application/json", ...headers } });
     const r = await POST(mk());
     assert.equal(r.status, 403);
-    assert.match((await r.json()).error, /invite only/);
+    assert.match((await r.json()).error, /60-day free trial/);
     assert.equal((await POST(mk({ cookie: "portal_session=e30.forged" }))).status, 403, "forged session");
     const { signSession } = await import("../lib/portal-session");
     assert.equal((await POST(mk({ cookie: `portal_session=${signSession("x@firm.test", -1000)}` }))).status, 403, "expired session");
@@ -325,18 +325,15 @@ test("webhooks: canonical route routes Lex strictly and has no old welcome copy;
   for (const bad of [/calendly/i, /Anthropic/, /\$1,500/]) assert.doesNotMatch(emails, bad);
 });
 
-test("proxy: signed-out /lex/signup goes to /legal unless done page or trial invite code, bare /lex goes to /legal when signed out, deep /lex links stay login-only, /api/lex/signup is public and rate limited", async () => {
+test("proxy: signed-out /lex/signup goes to /legal unless done page or the public trial page, bare /lex goes to /legal when signed out, deep /lex links stay login-only, /api/lex/signup is public and rate limited", async () => {
   const { proxy } = await import("../proxy");
   const go = (m: string, p: string) => proxy(new NextRequest(`http://localhost${p}`, { method: m, headers: { host: "localhost" } }));
   const s = (await go("GET", "/lex/signup"))!;
-  assert.equal(s.status, 307, "signed-out self-serve signup is closed during the invite-only beta");
+  assert.equal(s.status, 307, "signed-out paid signup page is closed; firms start with the free trial");
   assert.match(s.headers.get("location") ?? "", /\/legal$/);
-  assert.equal((await go("GET", "/lex/signup/trial"))!.status, 307, "trial page without a code redirects");
-  assert.equal((await go("GET", "/lex/signup/trial?code=nope"))!.status, 307, "malformed code redirects");
-  assert.ok(!(await go("GET", "/lex/signup/trial?code=LEX-ABCDEFGHJK"))!.headers.get("location"), "invite link reaches the trial page");
+  for (const p of ["/lex/signup/trial", "/lex/signup/trial/", "/lex/signup/trial?code=LEX-ABCDEFGHJK", "/lex/signup/trial?code=nope"]) assert.ok(!(await go("GET", p))!.headers.get("location"), `${p} is public`);
   assert.ok(!(await go("GET", "/lex/signup/done"))!.headers.get("location"));
   assert.ok(!(await go("GET", "/lex/signup/done/"))!.headers.get("location"), "trailing slash on the Stripe return page");
-  assert.ok(!(await go("GET", "/lex/signup/trial?code=lex-abcd%20efghjk"))!.headers.get("location"), "pasted code with inner spaces");
   // Signed out: bare /lex shows the public Lex page; deep links still need sign-in.
   assert.match((await go("GET", "/lex"))!.headers.get("location") ?? "", /\/legal$/);
   assert.ok((await go("GET", "/lex?q=trust"))!.headers.get("location")?.includes("/login"));

@@ -155,11 +155,12 @@ export default function LegalPage() {
             <a href="/legal/lex-vs-ai-legal-tools" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Lex vs other AI legal tools 2026</a>
           </p>
           <div className="lx-ctas">
-            <a className="lx-btn lx-pri" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Book a free 30-min demo</a>
-            <a className="lx-btn lx-ghost" href="#demo">Try the website demo</a>
+            <a className="lx-btn lx-pri" href="/lex/signup/trial">Start your 60-day free trial</a>
+            <a className="lx-btn lx-ghost" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Book a free 30-min demo</a>
           </div>
           <p className="lx-lead" style={{ marginTop: 12, fontSize: 15 }}>
-            <a href="mailto:hello@saabai.ai?subject=Lex%20beta%20invite" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Request a beta invite</a>
+            Don&apos;t pay a cent until you&apos;ve tried it. No card needed.{" · "}
+            <a href="#demo" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Try the website demo</a>
             {" · "}
             Already a Lex firm? <a href="/login?redirect=/lex" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Sign in to Lex</a>
           </p>
