@@ -106,6 +106,7 @@ const PUBLIC_API = [
   "/api/audit/onboarding",
   // Payments (Stripe verifies its own webhook signatures)
   "/api/checkout",
+  "/api/lex/signup",         // Lex Firm plan signup -> Stripe Checkout (validated, honeypot, rate limited in form-guard)
   "/api/blueprint/checkout", // Saabai Blueprint one-off Stripe Checkout (public buyers)
   "/api/blueprint/score",    // AI Readiness Score results email (public quiz)
   "/api/site-scan",          // website scan step of /score: self-gates (404 unless flag on or admin), rate limited.
@@ -518,6 +519,8 @@ async function pageRoute(req: NextRequest, pathname: string): Promise<NextRespon
   // The admin login page itself must stay reachable while signed out.
   if (pathname === "/saabai-admin/login" || pathname === "/saabai-admin/login/verify") return NextResponse.next();
   if (!matches(pathname, PROTECTED_PAGES)) return NextResponse.next();
+  // Public Lex signup pages (new firms have no login yet).
+  if (matches(pathname, ["/lex/signup"])) return NextResponse.next();
 
   const session = await getSession(req);
   if (session) {

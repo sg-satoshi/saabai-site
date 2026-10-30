@@ -11,7 +11,7 @@ import { hashPassword, generateRandomPassword } from "./password";
 import { sendWelcomeEmail } from "./account-emails";
 
 /** Create the client login if it does not exist yet, and email their access. Idempotent. */
-export async function ensureClientAccount(opts: { name: string; email: string; productName: string }): Promise<{ created: boolean; user: DirectoryUser }> {
+export async function ensureClientAccount(opts: { name: string; email: string; productName: string; subject?: string; intro?: string }): Promise<{ created: boolean; user: DirectoryUser }> {
   const email = opts.email.toLowerCase();
   const existing = await getDirectoryUser(email);
   if (existing) return { created: false, user: existing };
@@ -31,8 +31,8 @@ export async function ensureClientAccount(opts: { name: string; email: string; p
   await sendWelcomeEmail({
     name: opts.name || "there",
     email,
-    subject: "Your Saabai account is ready",
-    intro: `Thanks for signing up for ${opts.productName}. Your client account is ready, so you can sign in any time to view your billing, invoices and requests.`,
+    subject: opts.subject ?? "Your Saabai account is ready",
+    intro: opts.intro ?? `Thanks for signing up for ${opts.productName}. Your client account is ready, so you can sign in any time to view your billing, invoices and requests.`,
   });
 
   return { created: true, user };

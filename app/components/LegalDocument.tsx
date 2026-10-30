@@ -3,7 +3,7 @@ import SbFooter from "./sb/SbFooter";
 import { NAP } from "@/lib/seo-entity";
 import "./sb/sb.css";
 
-export type LegalSection = { heading: string; body: string };
+export type LegalSection = { heading: string; body: string; id?: string };
 
 /**
  * Shared layout for saabai.ai legal pages. Clause blocks stay inside
@@ -33,7 +33,7 @@ export default function LegalDocument({
 
           <div className="card legal" style={{ marginTop: 32, display: "grid", gap: 28 }}>
             {sections.map((s) => (
-              <section key={s.heading} style={{ minWidth: 0, padding: 0 }}>
+              <section key={s.heading} id={s.id} style={{ minWidth: 0, padding: 0 }}>
                 <h3>{s.heading}</h3>
                 <p style={{ marginTop: 8, overflowWrap: "break-word" }}>{s.body}</p>
               </section>

@@ -201,3 +201,28 @@ export async function firmUsageToday(firm: string, now = new Date()): Promise<Fi
   ]);
   return { reviews, reviewCap, submits, compares, compareCap };
 }
+
+/**
+ * The signed-in person's email from the signed cookies, WITHOUT requiring the "lex" product.
+ * Used only by Firm plan billing and seat routes, so a lapsed owner (Lex removed) can still pay.
+ * Staff logins are excluded.
+ */
+export async function resolveSessionEmail(req: Request): Promise<string | null> {
+  const token = cookie(req, COOKIE_NAME);
+  if (token) {
+    const s = await verifySessionToken(token);
+    if (s?.clientId && !(await resolveStaff(s.clientId))) {
+      try {
+        const { listDirectoryUsers } = await import("./user-directory");
+        const u = (await listDirectoryUsers()).find((x) => x.id === s.clientId);
+        if (u?.email) return u.email.toLowerCase();
+      } catch { /* fall through */ }
+    }
+  }
+  const portal = cookie(req, "portal_session");
+  if (portal) {
+    const p = verifySession(portal);
+    if (p?.email) return p.email.toLowerCase();
+  }
+  return null;
+}

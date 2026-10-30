@@ -88,11 +88,12 @@ export async function createSetupCheckout(rec: SiteBillingRecord, customerId: st
   return session.url!;
 }
 
-export async function billingPortalUrl(customerId: string, returnUrl: string, updateCard = false): Promise<string> {
+export async function billingPortalUrl(customerId: string, returnUrl: string, updateCard = false, configuration?: string): Promise<string> {
   const stripe = getStripe();
   const s = await stripe.billingPortal.sessions.create({
     customer: customerId,
     return_url: returnUrl,
+    ...(configuration ? { configuration } : {}),
     ...(updateCard ? { flow_data: { type: "payment_method_update" as const } } : {}),
   });
   return s.url;

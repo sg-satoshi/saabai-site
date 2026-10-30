@@ -144,3 +144,25 @@ export async function removeItem(firm: string, id: string, ref: string): Promise
   await redis.hset(mattersKey(firm), { [id]: JSON.stringify(m) });
   return true;
 }
+
+/**
+ * Deletes every matter, its items and the matter number counters for a firm key. Used by the Firm plan 30-day deletion.
+ * Only exact keys built from the firm's own matters are touched (no SCAN patterns), so a firm key containing glob
+ * characters can never match another firm's keys.
+ */
+export async function deleteFirmMatters(firm: string): Promise<number> {
+  const redis = getRedis();
+  if (!redis) return 0;
+  const all = (await redis.hgetall<Record<string, unknown>>(mattersKey(firm))) ?? {};
+  const years = new Set<number>();
+  for (const [id, v] of Object.entries(all)) {
+    const y = id.match(/-(\d{4})-\d+$/)?.[1];
+    if (y) years.add(Number(y));
+    const m = parse<Matter>(v);
+    if (m?.createdAt) years.add(new Date(m.createdAt).getUTCFullYear());
+    await redis.del(itemsKey(firm, id));
+  }
+  await redis.del(mattersKey(firm));
+  for (const y of years) await redis.del(`lex:matters:seq:${firm}:${y}`);
+  return Object.keys(all).length;
+}
