@@ -205,7 +205,7 @@ export default function LegalPage() {
         <div className="lx-wrap">
           <div className="lx-head">
             <div className="lx-eyebrow">Watch Lex draft</div>
-            <h2>See Lex in 75 seconds.</h2>
+            <h2>See Lex in under 90 seconds.</h2>
           </div>
           <div className="lx-video">
             <LiteYouTube id={LEX_VIDEO_ID} title={LEX_VIDEO_TITLE} poster="/video/lex-explainer-poster.png" />
