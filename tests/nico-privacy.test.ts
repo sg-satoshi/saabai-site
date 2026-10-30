@@ -73,7 +73,7 @@ test("every Nico page links the privacy policy, and the chat discloses the AI", 
   for (const file of pages) {
     const html = readFileSync(`${dir}/${file}`, "utf8");
     assert.match(html, /nicomoretti\.au\/privacy-policy|href="\/privacy-policy"|privacy-policy\.html/, file);
-    assert.match(html, /chat-widget\.js\?5/, file);
+    assert.match(html, /chat-widget\.js\?7/, file);
     if (html.includes('type="submit"')) formPages.push(file);
   }
   assert.deepEqual(formPages.sort(), [

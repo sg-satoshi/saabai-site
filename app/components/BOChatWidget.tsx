@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import type { UIMessage } from "ai";
 import { noteVisitorMessage } from "@/lib/conversation-activity";
 import { useChatOpen } from "./useChatOpen";
+import { scrollChatToEnd, useMobileChatSheet } from "@/lib/use-mobile-chat-sheet";
 
 const SLUG = "bo-consultancy";
 const STORAGE_KEY = "bo-consultancy-conversation";
@@ -53,6 +54,8 @@ export default function BOChatWidget() {
   const [loading, setLoading] = useState(false);
   const [chatOff, setChatOff] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useMobileChatSheet(isOpen, panelRef);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,7 +88,7 @@ export default function BOChatWidget() {
 
   useEffect(() => {
     saveStored(messages);
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    scrollChatToEnd(endRef.current);
   }, [messages]);
 
   async function send() {
@@ -131,6 +134,7 @@ export default function BOChatWidget() {
       {/* Chat Panel */}
       {isOpen && (
         <div
+          ref={panelRef}
           style={{
             width: 380,
             maxWidth: "calc(100vw - 48px)",
