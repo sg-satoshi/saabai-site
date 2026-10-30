@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import SbFooter from "../components/sb/SbFooter";
 import JsonLd from "../components/JsonLd";
-import { schemaGraph, serviceSchema, SITE_URL, LEX_FIRM_MONTHLY } from "@/lib/seo-entity";
+import { schemaGraph, serviceSchema, SITE_URL } from "@/lib/seo-entity";
 import { breadcrumbNode } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
 import { formatAud, WEBSITE_TIERS } from "@/lib/website-tiers";
@@ -47,11 +47,12 @@ const schema = schemaGraph([
       })),
       {
         "@type": "Offer",
-        name: "Lex Firm",
-        price: String(LEX_FIRM_MONTHLY),
+        name: "Lex 60-day free trial",
+        price: "0",
+        eligibleDuration: { "@type": "QuantitativeValue", value: 60, unitCode: "DAY" },
         priceCurrency: "AUD",
         url: `${SITE_URL}/legal`,
-        description: "3 lawyer seats, unlimited research and 20 documents a month. AUD. GST not applicable.",
+        description: "60-day free trial, no card needed. 3 lawyer seats, legal research and 20 documents a month. Pricing is set after the trial.",
       },
       ...LEADGEN.map((tier) => ({
         "@type": "Offer",
@@ -117,7 +118,7 @@ export default function PricingPage() {
 
           <h2 style={{ marginTop: 56 }}>Other published prices</h2>
           <div className="card" style={{ marginTop: 24, display: "grid", gap: 18 }}>
-            <p><a href="/legal" style={{ color: "var(--teal)" }}>Lex Firm</a> is ${LEX_FIRM_MONTHLY} a month (AUD) for 3 lawyer seats, unlimited research and 20 documents a month. GST not applicable. Larger firms can ask about a custom Enterprise plan. <a href="/lex/signup" style={{ color: "var(--teal)" }}>Sign up</a> or <a href={CALENDLY} target="_blank" rel="noopener noreferrer" style={{ color: "var(--teal)" }}>book a free Lex demo<span style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0, 0, 0, 0)", whiteSpace: "nowrap", border: 0 }}> (opens in new tab)</span></a>.</p>
+            <p><a href="/legal" style={{ color: "var(--teal)" }}>Lex Firm</a> starts with a 60-day free trial, no card needed: 3 lawyer seats, legal research and 20 documents a month. Pricing is set after the trial; you choose whether to subscribe. Larger firms can ask about a custom Enterprise plan. <a href="mailto:hello@saabai.ai?subject=Lex%2060-day%20free%20trial" style={{ color: "var(--teal)" }}>Ask about the 60-day free trial</a> or <a href={CALENDLY} target="_blank" rel="noopener noreferrer" style={{ color: "var(--teal)" }}>book a free Lex demo<span style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0, 0, 0, 0)", whiteSpace: "nowrap", border: 0 }}> (opens in new tab)</span></a>.</p>
             <p><a href="/score" style={{ color: "var(--teal)" }}>AI Readiness Score</a> is free.</p>
             <p>
               The <a href="/ai-receptionist-gold-coast" style={{ color: "var(--teal)" }}>AI receptionist</a> on your website is the chatbot, and it is included in the website tiers, from {formatAud(WEBSITE_TIERS[0].buildFrom)} plus {formatAud(WEBSITE_TIERS[0].monthly)} a month care.
