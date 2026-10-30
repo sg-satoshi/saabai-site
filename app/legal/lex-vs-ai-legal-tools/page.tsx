@@ -48,7 +48,6 @@ const FAQS = [
 const SOURCES: { name: string; href: string; note: string }[] = [
   { name: "Lex on saabai.ai", href: "https://www.saabai.ai/legal", note: "Free trial, sources, privacy wording and the licensed case-law snapshot limits." },
   { name: "Harvey homepage", href: "https://www.harvey.ai/", note: "Product description. No price is listed on this page." },
-  { name: "Harvey pricing URL", href: "https://www.harvey.ai/pricing", note: "Returned 404 on the check date. Not used as a price." },
   { name: "Harvey security", href: "https://www.harvey.ai/security", note: "Hosting and data localisation wording." },
   { name: "Harvey security addendum", href: "https://www.harvey.ai/legal/security-addendum", note: "Hosting region is the region on the order form." },
   { name: "CoCounsel Legal, Australia", href: "https://www.thomsonreuters.com.au/en-au/products/cocounsel-legal.html", note: "What the product does, and the sources Thomson Reuters names." },
@@ -163,7 +162,7 @@ export default function LexComparePage() {
           <div className="lx-feats">
             <div className="lx-card">
               <h3>Price</h3>
-              <p>The homepage does not list a price. On {CHECKED}, harvey.ai/pricing returned a 404, so no Harvey price is shown here.</p>
+              <p>Harvey&apos;s homepage does not list a price, so no Harvey price is shown here.</p>
             </div>
             <div className="lx-card">
               <h3>Sources</h3>
