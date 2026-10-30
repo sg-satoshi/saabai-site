@@ -4,7 +4,8 @@ import { NAP } from "@/lib/seo-entity";
 import { publicPageMeta } from "@/lib/seo-pages";
 import BreadcrumbLd from "../components/BreadcrumbLd";
 import { lexBlobUploadsEnabled } from "@/lib/lex-upload";
-import { LEX_BLOB_PRIVACY_COPY } from "@/lib/lex-upload-copy";
+import { LEX_BLOB_PRIVACY_COPY, LEX_MATTERS_PRIVACY_COPY } from "@/lib/lex-upload-copy";
+
 
 export const metadata: Metadata = publicPageMeta.privacy;
 
@@ -30,19 +31,23 @@ const SECTIONS: { heading: string; body: string }[] = [
     body: `When you upload a trust deed or other file to Lex Draft Documents, we read it to fill in your draft and then discard it. ${lexBlobUploadsEnabled() ? LEX_BLOB_PRIVACY_COPY : "We do not store uploaded files on our servers."} Your draft progress is saved only in your web browser, on the device you are using, for 30 days after your last edit. It is not saved on our servers and does not follow you to another device or browser. You can clear it at any time with Start over or by clearing your browser data.`,
   },
   {
-    heading: "6. How we use it",
+    heading: "6. Lex matters, research chats and masking logs",
+    body: LEX_MATTERS_PRIVACY_COPY,
+  },
+  {
+    heading: "7. How we use it",
     body: "To deliver the services you buy, reply to enquiries, send transactional messages such as receipts and delivery updates, and, if you have agreed, send marketing emails or SMS. Every marketing message includes a way to unsubscribe, or reply STOP for SMS.",
   },
   {
-    heading: "7. Who we share it with",
+    heading: "8. Who we share it with",
     body: "Only the service providers that help us run Saabai, such as hosting, payments, analytics and advertising (Google Analytics, and Meta for Facebook and Instagram), email and SMS delivery, and only as needed to provide their service. We do not sell personal information. Our chatbots use AI providers to write replies: Anthropic, OpenAI, Google, xAI and DeepSeek. Some chats on saabai.ai are sent to DeepSeek, which processes them in China. Anthropic, OpenAI, Google and xAI may process messages outside Australia, including in the United States. The custom sales agent Rex uses Anthropic.",
   },
   {
-    heading: "8. Access, correction and complaints",
+    heading: "9. Access, correction and complaints",
     body: `You can ask to see or correct the information we hold about you, or raise a privacy concern, by emailing ${NAP.email} or writing to ${NAP.name}, ${NAP.addressLine}. If you are not satisfied with our response you can contact the Office of the Australian Information Commissioner (oaic.gov.au).`,
   },
   {
-    heading: "9. Overseas disclosure",
+    heading: "10. Overseas disclosure",
     body: "Voice demo audio is processed in real time by xAI, which may be located in the United States. We keep text transcripts only, not audio recordings, with the time and length of the chat for 30 days, and not your IP address. Chat transcripts are stored with Supabase in Tokyo, Japan. Chat messages may be sent to the AI providers named above. DeepSeek processes some chats in China. The others may process messages in the United States or elsewhere overseas. You can choose not to use the chat or the voice demo. We do not claim that chat data stays in Australia. Our host Vercel keeps standard server logs, including the request path, status code and IP address. Google and Meta may process the analytics and advertising information described above outside Australia, including in the United States.",
   },
 ];
