@@ -21,5 +21,5 @@ test("dashboard is firm-safe: no admin links, Contact Saabai goes to Requests, n
 test("/api/lex-me returns usage for firms and never for admins", () => {
   const route = read("app/api/lex-me/route.ts");
   assert.ok(route.includes("firmUsageToday(actor.firm)"));
-  assert.ok(/actor\.kind === "admin"\) return Response\.json\(\{ admin: true, signedIn: true, email: null, usage: null \}\)/.test(route));
+  assert.ok(/actor\.kind === "admin"\) return Response\.json\(\{ admin: true, signedIn: true, email: null, usage: null, docs: null \}\)/.test(route));
 });

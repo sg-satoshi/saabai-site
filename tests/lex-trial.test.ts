@@ -516,11 +516,15 @@ test("R2 watermark: firm + email, tiled, low opacity, click-through, trial firms
   assert.match(readFileSync("app/api/lex/team/route.ts", "utf8"), /me: me \?\? null/);
 });
 
-test("R2 trial terms clause is a draft only (not live)", () => {
-  const d = readFileSync("docs/drafts/lex-trial-terms-clause.md", "utf8");
-  assert.match(d, /DRAFT, NOT LIVE/);
-  for (const k of [/competitive analysis/, /reverse engineer/, /scrape/, /end a free trial at any time/]) assert.match(d, k);
-  assert.doesNotMatch(readFileSync("app/terms/page.tsx", "utf8"), /competitive analysis/);
+test("Lex Terms include the Free trial clause (Shane, 30 Oct 2:34 PM); draft removed; terms version bumped", async () => {
+  const { LEX_TERMS } = await import("../lib/lex-terms");
+  const { LEX_TERMS_VERSION } = await S();
+  const c = LEX_TERMS.find((t) => t.heading === "Free trial");
+  assert.ok(c, "Free trial section present");
+  for (const k of [/legal software or legal AI products/, /competitive analysis/, /scrape, crawl or extract/, /reverse engineer/, /suspend or end a free trial at any time/, /One free trial per firm/]) assert.match(c!.body, k);
+  assert.doesNotMatch(c!.body, /DRAFT|Status:/);
+  assert.equal(LEX_TERMS_VERSION, "lex-terms-2026-10-30c");
+  assert.equal((await import("node:fs")).existsSync("docs/drafts/lex-trial-terms-clause.md"), false);
 });
 
 // ── QA Part B rework ──
