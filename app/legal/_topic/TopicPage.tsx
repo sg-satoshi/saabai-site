@@ -65,8 +65,6 @@ export default function TopicPage({ t }: { t: Topic }) {
           <p className="lx-lead" style={{ marginTop: 12, fontSize: 15 }}>
             <a href="/legal" style={{ textDecoration: "underline" }}>Back to Lex</a>{" · "}Already a Lex firm? <a href="/login?redirect=/lex" style={{ textDecoration: "underline" }}>Sign in to Lex</a>
           </p>
-          <div>
-          </div>
         </div>
       </section>
       <Footer />
