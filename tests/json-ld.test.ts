@@ -26,7 +26,7 @@ import { publicPageMeta } from "../lib/seo-pages";
 import { BRISBANE, GOLD_COAST } from "../lib/location-data";
 import { websiteCareFaqAnswer } from "../lib/website-tiers";
 
-const PUBLISHED_PRICES = new Set(["0", "100", "200", "299", "300", "497", "1497", "2000", "3500"]);
+const PUBLISHED_PRICES = new Set(["0", "100", "200", "300", "497", "1497", "2000", "3500"]);
 
 function parseLd(data: unknown) {
   const raw = JSON.stringify(data).replace(/</g, "\\u003c");
@@ -107,7 +107,8 @@ test("service and FAQ JSON-LD parses, with no ratings, reviews or unpublished pr
   const lex = parseLd(lexServiceSchema);
   assert.equal(lex["@type"], "Service");
   assert.equal(lex.name, "Lex");
-  assert.equal((lex.offers as { price: string }).price, "299");
+  assert.equal((lex.offers as { price: string }).price, "0");
+  assert.doesNotMatch(JSON.stringify(lex), /299|nlimited/);
 
   const sites = parseLd(websitesServiceNode);
   assert.equal(sites.name, "Saabai website care plans");
@@ -142,7 +143,7 @@ test("schema prices are copied from the pages that publish them", () => {
   const blueprint = readFileSync("lib/blueprint.ts", "utf8");
   const blueprintPage = readFileSync("app/blueprint/page.tsx", "utf8");
   const careAnswer = websiteCareFaqAnswer();
-  assert.match(legal, /\$299/);
+  assert.doesNotMatch(legal, /\$299|price: 299/);
   assert.match(websites, /websiteCareFaqAnswer/);
   assert.match(websites, /WEBSITE_TIERS/);
   assert.match(readFileSync("lib/seo-entity.ts", "utf8"), /WEBSITE_TIERS/);
@@ -261,7 +262,7 @@ test("about page publishes AboutPage, Person and Organization JSON-LD", () => {
   assert.doesNotMatch(page, /<h[1-6][^>]*>[^<]*48 hours/i);
   assert.doesNotMatch(page, /(?<!with)in 48 hours/i);
   assert.doesNotMatch(page, /Blueprint is free|your Blueprint is free/i);
-  assert.doesNotMatch(page, /free trial|14-day trial/i);
+  assert.doesNotMatch(page, /(?<!60-day )free trial|14-day trial/i);
   assert.doesNotMatch(page, /24\/7 AI quoting|answers your calls|get Lachie on your number/i);
 });
 

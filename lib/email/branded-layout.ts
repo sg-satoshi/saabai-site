@@ -13,6 +13,11 @@ export const EMAIL_BRAND = {
   portalUrl: "https://www.saabai.ai/client-portal",
   supportEmail: "hello@saabai.ai",
   abn: "71 889 082 572",
+  /**
+   * Legal sender line in every email footer: ONE config value. Saabai Pty Ltd is becoming the entity
+   * (draft #405); update this line (name and ABN) when #405 lands, rather than editing templates.
+   */
+  senderIdentity: "Saabai · ABN 71 889 082 572",
   navy: "#0b092e",
   navyDeep: "#07061f",
   teal: "#62c5d1",
@@ -134,7 +139,7 @@ export function renderBrandedEmail(input: LayoutInput): BrandedEmail {
                 </tr>
                 <tr>
                   <td class="email-pad email-footer" style="padding:20px 32px 28px;border-top:1px solid ${EMAIL_BRAND.border};font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.55;color:${EMAIL_BRAND.muted};">
-                    <p style="margin:0;">Saabai · ABN ${EMAIL_BRAND.abn}</p>
+                    <p style="margin:0;">${escapeHtml(EMAIL_BRAND.senderIdentity)}</p>
                     <p style="margin:6px 0 0;">Questions? <a href="mailto:${EMAIL_BRAND.supportEmail}" style="color:${EMAIL_BRAND.tealDark};text-decoration:none;">${EMAIL_BRAND.supportEmail}</a> · <a href="${EMAIL_BRAND.siteUrl}" style="color:${EMAIL_BRAND.tealDark};text-decoration:none;">saabai.ai</a></p>
                   </td>
                 </tr>
@@ -161,7 +166,7 @@ export function renderBrandedEmail(input: LayoutInput): BrandedEmail {
     input.secondaryCta ? `${input.secondaryCta.label}: ${input.secondaryCta.href}` : "",
     input.footnote || "",
     "",
-    `Saabai · ABN ${EMAIL_BRAND.abn}`,
+    EMAIL_BRAND.senderIdentity,
     `Support: ${EMAIL_BRAND.supportEmail}`,
     EMAIL_BRAND.siteUrl,
   ]

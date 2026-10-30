@@ -36,6 +36,6 @@ test("/lex/signup: done page, public trial page, or signed in; else 307 to /lega
 test("/pricing: free trial CTA, demo second, no paid self-serve signup link", () => {
   const pricing = read("app/pricing/page.tsx");
   assert.doesNotMatch(pricing, /href="\/lex\/signup"|beta invite/);
-  assert.match(pricing, /href="\/lex\/signup\/trial"[^>]*>start your 60-day free trial</);
+  assert.match(pricing, /href="\/lex\/signup\/trial"[^>]*>start your 60-day free trial</i);
   assert.match(pricing, /book a free Lex demo/);
 });

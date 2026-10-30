@@ -10,7 +10,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { ATTR_COOKIE, attrMetadata, parseAttr } from "@/lib/growth/attribution";
 import { getStripe } from "@/lib/stripe";
 import { siteUrl } from "@/lib/billing/stripe-ops";
-import { savePendingSignup, validateSignup } from "@/lib/lex-subscription";
+import { FOUNDING_CAP_COUNTS, convertibleTrialFirm, releaseFoundingPlace, reserveFoundingPlace, savePendingSignup, validateSignup } from "@/lib/lex-subscription";
+import { foundingCheckoutOpen, getFoundingConfig, lexCheckoutPrice } from "@/lib/lex-trial";
 import { stripeErrorFields } from "@/lib/lex-signup-log";
 import { getRequestSession } from "@/lib/request-session";
 
@@ -39,7 +40,19 @@ export async function POST(req: NextRequest) {
   const v = validateSignup(body);
   if (!v.ok) return NextResponse.json({ error: v.error, field: v.field }, { status: 400 });
 
-  const price = lexPriceId();
+  // Founding trial firms convert at STRIPE_PRICE_LEX_FOUNDING when it is set; else the normal price.
+  const trialFirm = await convertibleTrialFirm(v.value.email).catch(() => null);
+  // trial_ended firms still link (convertibleTrialFirm) but pay the normal price; see lexCheckoutPrice.
+  const foundingOn = trialFirm?.foundingMember ? await foundingCheckoutOpen().catch(() => false) : false;
+  let { price, founding } = lexCheckoutPrice(trialFirm, foundingOn);
+  // Atomic cap: reserve a founding place for this firm now; over the cap -> normal price.
+  let reserved = false;
+  if (founding && trialFirm && FOUNDING_CAP_COUNTS === "paid_conversions" && process.env.STRIPE_SECRET_KEY) {
+    const cfg = await getFoundingConfig().catch(() => null);
+    reserved = cfg ? await reserveFoundingPlace(trialFirm.firmId, cfg.cap).catch(() => false) : false;
+    if (!reserved) ({ price, founding } = lexCheckoutPrice(trialFirm, false));
+  }
+  const release = async () => { if (reserved && trialFirm) await releaseFoundingPlace(trialFirm.firmId).catch(() => false); };
   if (!price || !process.env.STRIPE_SECRET_KEY) {
     return NextResponse.json({ error: "Online signup for Lex isn't open yet. Please book a demo and we'll set you up." }, { status: 503 });
   }
@@ -51,7 +64,7 @@ export async function POST(req: NextRequest) {
     const attr = parseAttr(req.cookies.get(ATTR_COOKIE)?.value);
     const metadata: Record<string, string> = {
       product: "lex", plan: "firm", pendingId: pending.id, termsVersion: pending.termsVersion,
-      firmName: v.value.firmName.slice(0, 100), ...attrMetadata(attr),
+      firmName: v.value.firmName.slice(0, 100), ...attrMetadata(attr), ...(founding && trialFirm ? { founding: "1", trialFirmId: trialFirm.firmId } : {}),
     };
     const session = await getStripe().checkout.sessions.create({
       mode: "subscription",
@@ -64,9 +77,10 @@ export async function POST(req: NextRequest) {
       success_url: `${origin}/lex/signup/done?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/lex/signup?cancelled=1`,
     });
-    if (!session.url) return NextResponse.json({ error: "Could not start checkout" }, { status: 502 });
+    if (!session.url) { await release(); return NextResponse.json({ error: "Could not start checkout" }, { status: 502 }); }
     return NextResponse.json({ url: session.url });
   } catch (err) {
+    await release();
     console.error("[lex signup] Error", stripeErrorFields(err));
     return NextResponse.json({ error: "Could not start checkout. Please try again." }, { status: 502 });
   }

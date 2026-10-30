@@ -66,7 +66,7 @@ export default function About() {
           <p>
             Shane operates it as a sole trader from {NAP.addressLine} (ABN {NAP.abn}).
             Website care starts from <strong>$100 a month</strong>, and builds start from <strong>$2,000</strong>.
-            The Blueprint starts from <strong>$497</strong>. Lex Firm is <strong>$299 a month</strong>.
+            The Blueprint starts from <strong>$497</strong>. Lex starts with a <strong>60-day free trial</strong>.
           </p>
           <p>Email {NAP.email}. We usually reply within 1 business day.</p>
         </InShort>
@@ -228,8 +228,8 @@ export default function About() {
             <h3 className="text-lg font-semibold tracking-tight">Lex, for law firms</h3>
             <p className="text-lg text-saabai-text-muted leading-relaxed">
               Lex is an AI legal assistant for research and drafting at Australian law firms.
-              Firm is $299 a month: unlimited legal research, 20 documents a month, 3 lawyer seats, a licensed case-law snapshot, QA verification on every draft, and thread memory.
-              Enterprise is custom. We confirm billing with you before a firm starts.
+              It starts with a 60-day free trial, no card needed: legal research included, 20 documents a month, 3 lawyer seats, a licensed case-law snapshot, QA verification on every draft, and thread memory.
+              Pricing is set after the trial; you choose whether to subscribe. Enterprise is custom.
               <a href="/legal" className={linkClass}>The Lex page</a> has the detail, and the workspace sits behind a login.
             </p>
             <p className="text-lg text-saabai-text-muted leading-relaxed">

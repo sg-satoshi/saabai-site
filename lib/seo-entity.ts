@@ -1,8 +1,8 @@
 import { formatAud, WEBSITE_TIERS } from "./website-tiers";
 
 export const SITE_URL = "https://www.saabai.ai";
-/** Firm plan price published on /legal. AUD per month. */
-export const LEX_FIRM_MONTHLY = 299;
+/** Lex has no published price yet (Shane, 30 Oct 2026). Public pages lead with the 60-day free trial. */
+export const LEX_TRIAL_LINE = "60-day free trial, no card needed. Pricing is set after the trial; you choose whether to subscribe.";
 export const ORG_ID = `${SITE_URL}/#organization`;
 export const FOUNDER_ID = `${SITE_URL}/#shane-goldberg`;
 
@@ -104,7 +104,7 @@ export const miaServiceSchema = withContext(
   }),
 );
 
-/** Lex at /legal. The Firm price is the one published on that page. */
+/** Lex at /legal. No paid price is published; the offer is the free trial. */
 export const lexServiceSchema = withContext(
   serviceSchema({
     id: `${SITE_URL}/legal#service`,
@@ -115,16 +115,11 @@ export const lexServiceSchema = withContext(
     url: `${SITE_URL}/legal`,
     offers: {
       "@type": "Offer",
-      name: "Firm",
-      price: String(LEX_FIRM_MONTHLY),
+      name: "Lex 60-day free trial",
+      price: "0",
+      eligibleDuration: { "@type": "QuantitativeValue", value: 60, unitCode: "DAY" },
       priceCurrency: "AUD",
-      description: "3 lawyer seats, unlimited research and 20 documents a month. AUD. GST not applicable.",
-      priceSpecification: {
-        "@type": "UnitPriceSpecification",
-        price: String(LEX_FIRM_MONTHLY),
-        priceCurrency: "AUD",
-        unitText: "MONTH",
-      },
+      description: "60-day free trial, no card needed. 3 lawyer seats and 20 documents a month. Pricing is set after the trial.",
     },
   }),
 );
@@ -206,11 +201,12 @@ export const lawFirmChatbotServiceNode = serviceSchema({
   areaServed: AREA_SERVED,
   offers: {
     "@type": "Offer",
-    name: "Lex Firm",
-    price: String(LEX_FIRM_MONTHLY),
+    name: "Lex 60-day free trial",
+    price: "0",
+    eligibleDuration: { "@type": "QuantitativeValue", value: 60, unitCode: "DAY" },
     priceCurrency: "AUD",
     url: `${SITE_URL}/legal`,
-    description: `The Lex Firm plan is $${LEX_FIRM_MONTHLY} a month. A custom website chatbot is quoted on a call.`,
+    description: "Lex starts with a 60-day free trial, no card needed. A custom website chatbot is quoted on a call.",
   },
 });
 
