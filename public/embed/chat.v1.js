@@ -51,6 +51,11 @@
     if (/^mailto:[^\s@]+@[^\s@]+/i.test(u) || /^tel:\+?[0-9]{6,20}$/i.test(u)) return u;
     try { var x = new URL(u); return x.protocol === "https:" ? x.href : ""; } catch (e) { return ""; }
   }
+  // "2026-11-30" -> "30 Nov 2026" (Australian order).
+  function auDate(d) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || ""); if (!m) return d || "";
+    return (+m[3]) + " " + ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m[2] - 1] + " " + m[1];
+  }
   function initials(n) { return (n || "?").split(/\s+/).slice(0, 2).map(function (w) { return (w[0] || "").toUpperCase(); }).join(""); }
 
   var CSS = [
@@ -189,7 +194,7 @@
     }
     var eg = c.engage || {};
     els.pv.textContent = eg.privacyNote || "";
-    if (eg.offer && eg.offer.text) { els.offer.textContent = eg.offer.text + " Offer ends " + eg.offer.endsOn + "."; els.offer.style.display = ""; } else els.offer.style.display = "none";
+    if (eg.offer && eg.offer.text) { els.offer.textContent = eg.offer.text + " Offer ends " + auDate(eg.offer.endsOn) + "."; els.offer.style.display = ""; } else els.offer.style.display = "none";
     if (eg.freeOffer && linkUrl(eg.freeOffer.url)) {
       var lm = el("a", "", eg.freeOffer.label); lm.href = linkUrl(eg.freeOffer.url); lm.target = "_blank"; lm.rel = "noopener"; lm.style.marginLeft = "10px";
       lm.addEventListener("click", function () { track("offer_click"); });
