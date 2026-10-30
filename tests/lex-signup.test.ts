@@ -295,11 +295,15 @@ test("webhooks: canonical route routes Lex strictly and has no old welcome copy;
   for (const bad of [/calendly/i, /Anthropic/, /\$1,500/]) assert.doesNotMatch(emails, bad);
 });
 
-test("proxy: /lex/signup is public, bare /lex goes to /legal when signed out, deep /lex links stay login-only, /api/lex/signup is public and rate limited", async () => {
+test("proxy: signed-out /lex/signup goes to /legal unless done page or trial invite code, bare /lex goes to /legal when signed out, deep /lex links stay login-only, /api/lex/signup is public and rate limited", async () => {
   const { proxy } = await import("../proxy");
   const go = (m: string, p: string) => proxy(new NextRequest(`http://localhost${p}`, { method: m, headers: { host: "localhost" } }));
   const s = (await go("GET", "/lex/signup"))!;
-  assert.ok(!s.headers.get("location"), "signup not redirected");
+  assert.equal(s.status, 307, "signed-out self-serve signup is closed during the invite-only beta");
+  assert.match(s.headers.get("location") ?? "", /\/legal$/);
+  assert.equal((await go("GET", "/lex/signup/trial"))!.status, 307, "trial page without a code redirects");
+  assert.equal((await go("GET", "/lex/signup/trial?code=nope"))!.status, 307, "malformed code redirects");
+  assert.ok(!(await go("GET", "/lex/signup/trial?code=LEX-ABCDEFGHJK"))!.headers.get("location"), "invite link reaches the trial page");
   assert.ok(!(await go("GET", "/lex/signup/done"))!.headers.get("location"));
   // Signed out: bare /lex shows the public Lex page; deep links still need sign-in.
   assert.match((await go("GET", "/lex"))!.headers.get("location") ?? "", /\/legal$/);
