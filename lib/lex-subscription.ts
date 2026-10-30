@@ -21,6 +21,8 @@ export const LEX_SEAT_CAP = 3; // /legal: "Firm plan is $299 a month ... for 3 l
 export const GRACE_DAYS = 7;
 /** Clause 10.7: a cancelled firm's Lex data is kept this long, then deleted (a resubscribe within it keeps the data). */
 export const DATA_RETENTION_DAYS = 30;
+/** Live Stripe billing portal configuration for Lex (cancel at period end, card update, invoices, Lex terms URL). Not a secret. */
+export const LEX_PORTAL_CONFIG_ID = process.env.STRIPE_LEX_PORTAL_CONFIG_ID || "bpc_1UW3vNRz0VJX9iSqluU41MrZ";
 export const PENDING_TTL_SECONDS = 24 * 3600;
 const SEEN_TTL_SECONDS = 30 * 24 * 3600;
 
