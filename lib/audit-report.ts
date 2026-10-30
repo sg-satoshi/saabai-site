@@ -4,6 +4,7 @@
  * client delivery. Tier shapes length via the assessment's opportunity count.
  */
 
+import { GST_REGISTERED } from "@/lib/entity";
 import {
   AlignmentType,
   BorderStyle,
@@ -292,7 +293,7 @@ export async function buildAuditReportDocx(
             : []),
           metaRow("Build complexity", o.complexity),
           ...(o.costBandAud
-            ? [metaRow("Indicative build investment", `${o.costBandAud} AUD (GST not applicable)`)]
+            ? [metaRow("Indicative build investment", `${o.costBandAud} ${GST_REGISTERED ? "AUD (including GST)" : "AUD (GST not applicable)"}`)]
             : []),
         ],
       })

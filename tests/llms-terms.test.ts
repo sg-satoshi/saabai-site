@@ -6,12 +6,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { CARE_PLAN_CANCELLATION } from "../lib/care-faqs";
+import { GST } from "../lib/entity";
 
 const terms = readFileSync("app/terms/page.tsx", "utf8");
 const llms = readFileSync("public/llms.txt", "utf8");
 
-const PRICE =
-  "Prices are in Australian dollars. Saabai is not registered for GST, so GST is not applicable and invoices are not tax invoices.";
+// Terms page renders GST.terms (lib/entity); llms.txt must carry its price sentence(s) for the current flag.
+const PRICE = GST.terms.replace(/ If this changes.*$/, "");
 const REFUNDS =
   "Our services come with guarantees that cannot be excluded under the Australian Consumer Law. Nothing in these terms limits those rights. If something is not right, email us and we will work with you to fix it.";
 const LIABILITY =
@@ -19,7 +20,7 @@ const LIABILITY =
 
 test("llms.txt copies the terms price, cancellation and refund sentences", () => {
   assert.match(terms, /CARE_PLAN_CANCELLATION/);
-  assert.ok(terms.includes(PRICE));
+  assert.match(terms, /\$\{GST\.terms\}/);
   assert.ok(terms.includes(REFUNDS));
   assert.ok(terms.includes(LIABILITY));
   for (const line of [PRICE, CARE_PLAN_CANCELLATION, REFUNDS, LIABILITY]) {

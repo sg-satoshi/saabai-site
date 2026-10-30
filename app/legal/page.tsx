@@ -1,3 +1,4 @@
+import { GST } from "@/lib/entity";
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
@@ -63,7 +64,7 @@ const LEX_FAQS = [
   { q: "What documents can Lex draft?", a: "Eleven document types: discretionary and unit trust deeds, trust distribution resolutions, BFAs for married and de facto couples, financial settlement consent orders, separation agreements, service agreements, shareholders agreements, employment contracts and commercial leases. You can also draft a custom document from your own instructions, and every draft gets a QA pass." },
   { q: "Does my client's information reach the AI model?", a: "Not in readable form. Names, business names, phone numbers, emails and ABNs or ACNs are swapped for placeholders before anything is sent, and the real details are put back only in the answer you see." },
   { q: "Can a firm switch the privacy masking off?", a: "No. Every Lex AI request goes through the same privacy checkpoint for every firm, including firms that use their own AI key, and if masking fails nothing is sent." },
-  { q: "How much does Lex cost?", a: "The Firm plan is $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited research and 20 documents a month. Larger firms can ask about a custom Enterprise plan." },
+  { q: "How much does Lex cost?", a: `The Firm plan is $299 a month (${GST.pricePhrase}) for 3 lawyer seats, unlimited research and 20 documents a month. Larger firms can ask about a custom Enterprise plan.` },
   { q: "How do I get started?", a: "Book a free 30-minute demo. We will show you Lex on your own practice area, and if it suits your firm we set up your logins." },
 ];
 
@@ -363,7 +364,7 @@ export default function LegalPage() {
             </div>
           </div>
           <div className="lx-fine">
-            <p>Prices in AUD. GST not applicable.</p>
+            <p>{GST.pricesLine}</p>
             <p>We confirm billing with you before a firm starts.</p>
           </div>
         </div>

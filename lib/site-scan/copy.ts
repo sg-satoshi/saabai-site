@@ -1,9 +1,10 @@
+import { GST } from "@/lib/entity";
 import type { OfferId } from "./types";
 
 export type FixCopy = { meaning: string; fix: string; time: string; mins: number; dev: boolean; offer: OfferId };
 
 export const OFFERS: Record<OfferId, { name: string; line: string; href: string }> = {
-  build: { name: "Saabai website build", line: "A fast, AI-ready and SEO-ready website with an AI enquiry chatbot and Google reviews carousel included. Every build starts with AI information gathering and a basic training session. Typically 2 to 3 weeks. Fixing your current site instead is quoted separately. Presence $2,000 + $100/mo, Growth $4,000 + $200/mo, Signature $6,500 + $300/mo (AUD, GST not applicable).", href: "/websites" },
+  build: { name: "Saabai website build", line: `A fast, AI-ready and SEO-ready website with an AI enquiry chatbot and Google reviews carousel included. Every build starts with AI information gathering and a basic training session. Typically 2 to 3 weeks. Fixing your current site instead is quoted separately. Presence $2,000 + $100/mo, Growth $4,000 + $200/mo, Signature $6,500 + $300/mo (${GST.pricePhrase}).`, href: "/websites" },
   chatbot: { name: "AI enquiry chatbot", line: "Answers questions and catches leads after hours. Included in every Saabai website tier (booking and qualifying on Growth and above).", href: "/websites" },
   reviews: { name: "Google reviews on your site", line: "A reviews carousel showing your real Google reviews. Included in every Saabai website plan.", href: "/websites" },
   blueprint: { name: "AI Blueprint", line: "A ranked plan for your whole business. Starter $497, Pro $1,497, Business $3,500. Fee credited if you build within 30 days.", href: "/blueprint" },

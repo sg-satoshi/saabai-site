@@ -1,4 +1,4 @@
-import { LEGAL_NAME, entityIds } from "@/lib/entity";
+import { LEGAL_NAME, entityIds, GST } from "@/lib/entity";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Nav from "../components/Nav";
@@ -58,7 +58,7 @@ export default function About() {
             Mia, the assistant on this website, so you can see how a Saabai chat feels before you buy anything.
           </p>
           <p>
-            Prices are in AUD. GST is not applicable.
+            {GST.pricesLine}
             Email {NAP.email}. We usually reply within 1 business day.
           </p>
         </div>
@@ -352,7 +352,7 @@ export default function About() {
           <a href="/score" className="btn-secondary max-sm:w-full">Or take the free AI score →</a>
         </div>
         <p className="relative text-saabai-text-dim text-xs mt-8 tracking-wide">
-          Prices in AUD. GST not applicable.
+          {GST.pricesLine}
         </p>
       </section>
       </main>

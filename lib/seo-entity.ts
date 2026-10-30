@@ -10,7 +10,7 @@ export const FOUNDER_ID = `${SITE_URL}/#shane-goldberg`;
  * Public NAP. There is no published phone number, so telephone is omitted
  * everywhere rather than guessed. Address is locality and region only.
  */
-import { LEGAL_NAME, TRADING_AS, ABN, ACN, abnDigits } from "@/lib/entity";
+import { LEGAL_NAME, TRADING_AS, ABN, ACN, abnDigits, GST } from "@/lib/entity";
 
 export const NAP = {
   name: TRADING_AS,
@@ -122,7 +122,7 @@ export const lexServiceSchema = withContext(
       name: "Firm",
       price: String(LEX_FIRM_MONTHLY),
       priceCurrency: "AUD",
-      description: "3 lawyer seats, unlimited research and 20 documents a month. AUD. GST not applicable.",
+      description: `3 lawyer seats, unlimited research and 20 documents a month. ${GST.offerSuffix}`,
       priceSpecification: {
         "@type": "UnitPriceSpecification",
         price: String(LEX_FIRM_MONTHLY),

@@ -58,3 +58,50 @@ test("old sole-trader wording and ABN are gone from rendered sources", () => {
     assert.doesNotMatch(s, /\b(ACN|ABN) \{(NAP|MY_INFO|EMAIL_BRAND)\./, `${f}: bare ACN/ABN label`);
   }
 });
+
+// ── GST flag, footer and issuer address ─────────────────────────────────────
+import { gstCopy, gstOf, GST_REGISTERED, issuerAddress, ENTITY_ADDRESS } from "../lib/entity";
+import { execFileSync } from "node:child_process";
+
+test("GST_REGISTERED defaults to false and keeps the live wording", () => {
+  assert.equal(GST_REGISTERED, false);
+  const g = gstCopy(false);
+  assert.equal(g.pricesLine, "Prices in AUD. GST not applicable.");
+  assert.equal(g.pricePhrase, "AUD, GST not applicable");
+  assert.equal(g.invoiceTitle, "INVOICE");
+  assert.match(g.terms, /not registered for GST/);
+  assert.equal(gstOf(299, false), 0);
+});
+
+test("GST_REGISTERED true uses the exact GST-inclusive copy", () => {
+  const g = gstCopy(true);
+  assert.equal(g.pricesLine, "Prices in AUD and include GST.");
+  assert.equal(`$299 a month (${g.pricePhrase})`, "$299 a month (AUD, including GST)");
+  assert.equal(g.terms, "All prices are in Australian dollars and include GST unless stated otherwise.");
+  assert.match(g.offerSuffix, /Includes GST/);
+  assert.equal(g.invoiceTitle, "TAX INVOICE");
+  assert.equal(gstOf(299, true), 27.18);
+  assert.equal(gstOf(1100, true), 100);
+});
+
+test("no hard-coded 'GST not applicable' left outside lib/entity", () => {
+  const out = execFileSync("bash", ["-c", "grep -rln 'GST not applicable\\|GST is not applicable' app lib --include=*.ts --include=*.tsx | grep -v -E '^(lib/entity.ts|lib/mia-offers.ts|lib/audit-report.ts|lib/website-tiers.ts|lib/blueprint.ts|lib/billing/emails.ts|app/saabai-admin/plans/PlansClient.tsx|app/client-portal/upgrades/UpgradesPanel.tsx|app/components/billing/SetupBillingModal.tsx)$' || true"]).toString().trim();
+  assert.equal(out, "", `unrouted GST wording in: ${out}`);
+});
+
+test("mobile/site footer copyright is just the legal name; full line stays on legal pages", () => {
+  const footer = readFileSync("app/components/sb/SbFooter.tsx", "utf8");
+  assert.match(footer, /© 2026 \{LEGAL_NAME\}/);
+  assert.doesNotMatch(footer, /entityLegalLine/);
+  for (const f of ["app/components/LegalDocument.tsx", "app/contact/page.tsx", "lib/invoice-send.ts"]) {
+    assert.match(readFileSync(f, "utf8"), /entityLegalLine|entityIds/, f);
+  }
+});
+
+test("issuer address placeholder never renders and check-entity catches it", () => {
+  assert.equal(issuerAddress("ADDRESS_PENDING"), "");
+  assert.equal(issuerAddress("1 Example St, Brisbane QLD 4000"), "1 Example St, Brisbane QLD 4000");
+  if (ENTITY_ADDRESS === "ADDRESS_PENDING") {
+    assert.throws(() => execFileSync("node", ["scripts/check-entity.mjs"], { stdio: "pipe" }));
+  }
+});

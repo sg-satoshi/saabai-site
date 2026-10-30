@@ -1,4 +1,4 @@
-import { ACN, ABN, entityLegalLine } from "@/lib/entity";
+import { ACN, ABN, entityLegalLine, GST } from "@/lib/entity";
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import SbFooter from "../components/sb/SbFooter";
@@ -17,7 +17,7 @@ const ROWS: [string, string][] = [
   ["Email", NAP.email],
   ["Address", NAP.addressLine],
   ["Service areas", "Gold Coast, Brisbane and Queensland, with clients Australia-wide online"],
-  ["GST", "Not applicable"],
+  ["GST", GST.contactRow],
 ];
 if (ACN) ROWS.splice(1, 0, ["ACN", ACN]);
 if (ABN) ROWS.splice(ACN ? 2 : 1, 0, ["ABN", ABN]);

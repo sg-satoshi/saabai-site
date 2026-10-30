@@ -1,4 +1,5 @@
 "use client";
+import { GST } from "@/lib/entity";
 import { confirmDialog } from "./ui/Feedback";
 import { BNE_TZ } from "../../lib/brisbane-time";
 import BusinessHealth from "./BusinessHealth";
@@ -821,7 +822,7 @@ export default function AdminClient({
       <div className="ph">
         <div>
           <h1>{greeting}, Shane</h1>
-          <div className="sub">{today} · All figures AUD, GST not applicable</div>
+          <div className="sub">{today} · All figures AUD, {GST.short}</div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <a className="btn" href="/saabai-admin/orders">View orders</a>

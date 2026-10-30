@@ -1,13 +1,13 @@
-import { entityLegalLine } from "@/lib/entity";
+import { entityLegalLine, GST } from "@/lib/entity";
 /**
  * Lex subscription terms copy. Approved by Shane 30 Oct 2026 (issue #388).
  * Bump LEX_TERMS_VERSION in lib/lex-subscription.ts whenever this copy changes.
  */
 export const LEX_TERMS_SUMMARY =
-  "Billed monthly. Cancel anytime. When you cancel, Lex stays on until the end of the month you've paid for, and we don't refund part months. Prices in AUD. GST not applicable.";
+  `Billed monthly. Cancel anytime. When you cancel, Lex stays on until the end of the month you've paid for, and we don't refund part months. ${GST.pricesLine}`;
 
 export const LEX_TERMS: { heading: string; body: string }[] = [
-  { heading: "Billing", body: "Lex is a monthly subscription. The Firm plan is $299 a month (AUD, GST not applicable) and includes 3 lawyer seats. We charge the card you give us at checkout on the day you sign up, then on the same day each month." },
+  { heading: "Billing", body: `Lex is a monthly subscription. The Firm plan is $299 a month (${GST.pricePhrase}) and includes 3 lawyer seats. We charge the card you give us at checkout on the day you sign up, then on the same day each month.` },
   { heading: "Price changes", body: "If we change the price, we'll email you at least 30 days before the new price applies. You can cancel before then." },
   { heading: "Cancelling", body: "You can cancel anytime using the Manage billing link in your Lex account, which opens your secure billing page. There's no lock-in and no cancellation fee." },
   { heading: "What happens when you cancel", body: "Your access continues until the end of the month you've already paid for. After that you won't be charged again." },
