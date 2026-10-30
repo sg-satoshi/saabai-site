@@ -6,7 +6,7 @@
  * compare usage for their own firm, for the firm dashboard. Admins are uncapped.
  */
 import { resolveReviewActor, firmUsageToday } from "../../../lib/lex-review-access";
-import { docUsage } from "../../../lib/lex-doc-allowance";
+import { docUsage, docPeriodForUser } from "../../../lib/lex-doc-allowance";
 import { getDirectoryUser } from "../../../lib/user-directory";
 
 export const runtime = "nodejs";
@@ -20,7 +20,7 @@ export async function GET(req: Request) {
     let usage = null;
     try { usage = await firmUsageToday(actor.firm); } catch { /* usage is optional on the dashboard */ }
     let docs = null;
-    try { docs = await docUsage(actor.firm); } catch { /* document allowance is optional on the page */ }
+    try { docs = await docUsage(await docPeriodForUser(actor.email, actor.firm, new Date(), () => {})); } catch { /* document allowance is optional on the page */ }
     let name: string | null = null;
     try { name = (await getDirectoryUser(actor.email))?.name?.trim() || null; } catch { /* name is optional */ }
     return Response.json({ admin: false, signedIn: true, email: actor.email, name, usage, docs });

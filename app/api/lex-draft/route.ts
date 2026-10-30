@@ -2,7 +2,7 @@ import { serverVerifyGate } from "../../../lib/lex-draft-form";
 import { matterPartiesFor } from "../../../lib/lex-privacy/matter-parties";
 import { lexErrorResponse } from "../../../lib/lex-errors";
 import { resolveReviewActor } from "../../../lib/lex-review-access";
-import { takeDocument, requestFingerprint } from "../../../lib/lex-doc-allowance";
+import { takeDocument, requestFingerprint, docPeriodForUser } from "../../../lib/lex-doc-allowance";
 /**
  * Lex Document Drafting API: /api/lex-draft
  *
@@ -217,7 +217,7 @@ export async function POST(req: Request) {
       const actor = await resolveReviewActor(req).catch(() => null);
       if (actor?.kind === "firm") {
         const fp = requestFingerprint([typeof draftRequestId === "string" ? draftRequestId.slice(0, 80) : null, documentType ?? null, parties ?? null, jurisdiction ?? null, specialInstructions ?? null, responseLength ?? null, matterId ?? null, messages ?? null]);
-        const take = await takeDocument(actor.firm, fp);
+        const take = await takeDocument(await docPeriodForUser(actor.email, actor.firm), fp);
         if (!take.ok) return Response.json({ error: "doc_limit", message: take.message, docUsage: take.usage }, { status: 429 });
         docRefund = take.refund;
       }

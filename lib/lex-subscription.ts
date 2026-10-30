@@ -38,6 +38,8 @@ export type LexFirm = {
   granted: string[];            // emails whose 'lex' product this module added
   customerId?: string; subscriptionId?: string;
   status: FirmStatus; graceUntil?: string; cancelAtPeriodEnd?: boolean; periodEnd?: string;
+  /** Stripe current_period_start (ISO). The Lex document allowance resets on this billing cycle. */
+  periodStart?: string;
   lapseReason?: "unpaid" | "cancelled";
   /** Stripe event.created (seconds) of the latest successful payment; older payment_failed events are ignored. */
   lastPaidAt?: number;
@@ -271,7 +273,7 @@ export async function provisionLexCheckout(eventId: string, s: CheckoutLike, mai
 }
 
 // ── Lifecycle ────────────────────────────────────────────────────────────
-type SubLike = { id: string; status?: string; cancel_at_period_end?: boolean; current_period_end?: number; items?: { data?: { current_period_end?: number }[] }; metadata?: Record<string, string> | null };
+type SubLike = { id: string; status?: string; cancel_at_period_end?: boolean; current_period_start?: number; current_period_end?: number; items?: { data?: { current_period_start?: number; current_period_end?: number }[] }; metadata?: Record<string, string> | null };
 type InvoiceLike = { id: string; subscription?: unknown; parent?: { subscription_details?: { subscription?: unknown } | null } | null };
 export const invoiceSubId = (inv: InvoiceLike) => idOf(inv.subscription) ?? idOf(inv.parent?.subscription_details?.subscription);
 
@@ -331,6 +333,8 @@ export async function handleLexLifecycle(event: LexEvent, mailer: Mailer, now = 
           firm.cancelAtPeriodEnd = !!o.cancel_at_period_end;
           const pe = o.current_period_end ?? o.items?.data?.[0]?.current_period_end;
           if (pe) firm.periodEnd = new Date(pe * 1000).toISOString();
+          const ps = o.current_period_start ?? o.items?.data?.[0]?.current_period_start;
+          if (ps) firm.periodStart = new Date(ps * 1000).toISOString();
           if (o.status === "canceled") { await lapseFirm(firm, "cancelled", mailer); return "lapsed"; }
           if (o.status === "active" && firm.status !== "active" && firm.lapseReason !== "cancelled") { await restoreFirm(firm); return "restored"; }
           return "updated";

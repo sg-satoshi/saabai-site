@@ -23,16 +23,16 @@ export function DocAllowance({ usage }: { usage: DocUsage | null }) {
   );
   return (
     <div className="lxw-doc" data-state={st}>
-      <p className="lxw-sub" aria-live="polite"><b>{usage.used} of {usage.cap}</b> documents used this month</p>
+      <p className="lxw-sub" aria-live="polite"><b>{usage.used} of {usage.cap}</b> documents used {usage.basis === "month" ? "this month" : usage.basis === "trial" ? "in this 30-day trial window" : "this billing period"}</p>
       {st === "warn" && (
         <div className="lxw-banner warn" role="status">
-          <p>Heads up: {usage.cap - usage.used} {usage.cap - usage.used === 1 ? "document" : "documents"} left this month. The count resets on {resetDateLabel(usage.resetsOn)}.</p>
+          <p>Heads up: {usage.cap - usage.used} {usage.cap - usage.used === 1 ? "document" : "documents"} left this period. The count resets on {resetDateLabel(usage.resetsOn)}.</p>
           {links}
         </div>
       )}
       {st === "full" && (
         <div className="lxw-banner warn" role="status">
-          <p><b>New drafts are paused until {resetDateLabel(usage.resetsOn)}.</b> Your firm has used all {usage.cap} documents this month. Research is still unlimited, and your existing drafts stay open to view and edit.</p>
+          <p><b>New drafts are paused until {resetDateLabel(usage.resetsOn)}.</b> Your firm has used all {usage.cap} documents this period. Research is still unlimited, and your existing drafts stay open to view and edit.</p>
           {links}
         </div>
       )}
