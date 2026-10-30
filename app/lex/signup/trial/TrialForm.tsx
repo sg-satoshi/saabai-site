@@ -1,5 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
+import { LEX_TRIAL_CONTACT_COPY, LEX_TRIAL_MARKER_COPY } from "@/lib/lex-trial-copy";
+import TrialDetails from "./TrialDetails";
 
 export default function TrialForm({ code }: { code: string }) {
   const [busy, setBusy] = useState(false);
@@ -56,19 +58,25 @@ export default function TrialForm({ code }: { code: string }) {
       <input id="email" name="email" {...bad("email")} type="email" autoComplete="email" required maxLength={200} />
       <label htmlFor="phone">Phone</label>
       <input id="phone" name="phone" {...bad("phone")} type="tel" autoComplete="tel" required maxLength={40} placeholder="07 3000 0000" />
-      <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+      <fieldset>
         <legend>Firm address</legend>
         <label htmlFor="street">Street address</label>
         <input id="street" name="street" {...bad("street")} type="text" autoComplete="street-address" required maxLength={160} />
         <label htmlFor="suburb">Suburb</label>
         <input id="suburb" name="suburb" {...bad("suburb")} type="text" autoComplete="address-level2" required maxLength={80} />
+        <div className="lxt-row">
+        <div>
         <label htmlFor="state">State</label>
         <select id="state" name="state" {...bad("state")} required defaultValue="">
           <option value="" disabled>Choose…</option>
           {["ACT", "NSW", "NT", "QLD", "SA", "TAS", "VIC", "WA"].map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
+        </div>
+        <div>
         <label htmlFor="postcode">Postcode</label>
         <input id="postcode" name="postcode" {...bad("postcode")} type="text" inputMode="numeric" autoComplete="postal-code" required maxLength={4} pattern="[0-9]{4}" />
+        </div>
+        </div>
       </fieldset>
       <label htmlFor="abn">ABN <small>(optional)</small></label>
       <input id="abn" name="abn" {...bad("abn")} type="text" inputMode="numeric" maxLength={20} />
@@ -80,9 +88,12 @@ export default function TrialForm({ code }: { code: string }) {
         <input type="checkbox" name="acceptTerms" required {...bad("acceptTerms")} />
         <span>I agree to the <a href="/terms#lex" target="_blank" rel="noopener">Lex Terms</a> and the <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span>
       </label>
+      <p className="note" style={{ textAlign: "left", marginTop: 6 }}>
+        <TrialDetails contactCopy={LEX_TRIAL_CONTACT_COPY} markerCopy={LEX_TRIAL_MARKER_COPY} label="Read the key points" />
+      </p>
       {error ? <p id="trial-error" className="err" role="alert">{error}</p> : null}
       <button className="btn" type="submit" disabled={busy}>{busy ? "Sending…" : "Start my free trial"}</button>
-      <p className="note">No card, and you won&apos;t be charged unless you choose to subscribe. One free trial per firm. Lex is a drafting and research tool, not legal advice.</p>
+      <p className="note">No card, and you won&apos;t be charged unless you choose to subscribe.</p>
     </form>
   );
 }
