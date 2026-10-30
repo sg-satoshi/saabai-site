@@ -16,6 +16,17 @@ function lexPriceId(): string | undefined {
   return v || undefined;
 }
 
+/** Stripe error cause only: type, code, param, message. No request body, customer data or secrets. */
+function stripeErrorFields(err: unknown): Record<string, string> {
+  if (!err || typeof err !== "object") return { name: typeof err };
+  const e = err as Record<string, unknown>;
+  const out: Record<string, string> = {};
+  for (const k of ["name", "type", "code", "param", "message"]) {
+    if (typeof e[k] === "string") out[k] = (e[k] as string).replace(/[^\s@]+@[^\s@]+/g, "[email]").slice(0, 300);
+  }
+  return out;
+}
+
 export async function GET() {
   return NextResponse.json({ enabled: Boolean(process.env.STRIPE_SECRET_KEY && lexPriceId()) });
 }
@@ -54,7 +65,7 @@ export async function POST(req: NextRequest) {
     if (!session.url) return NextResponse.json({ error: "Could not start checkout" }, { status: 502 });
     return NextResponse.json({ url: session.url });
   } catch (err) {
-    console.error("[lex signup]", err instanceof Error ? err.name : err);
+    console.error("[lex signup] Error", stripeErrorFields(err));
     return NextResponse.json({ error: "Could not start checkout. Please try again." }, { status: 502 });
   }
 }
