@@ -22,6 +22,9 @@ export default function LexFeedbackClient() {
     fetch(`/api/admin/lex-feedback?${qs}`).then((r) => r.json()).then((d) => { setItems(d.items ?? []); setByFirm(d.byFirm ?? []); }).catch(() => setErr("Could not load"));
   }, [qs]);
   useEffect(load, [load]);
+  // Deep link from the alert email: /saabai-admin/lex-feedback?id=fb_...
+  const [focus] = useState(() => (typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("id")));
+  useEffect(() => { if (focus && items.some((x) => x.id === focus)) document.getElementById(focus)?.scrollIntoView({ block: "center" }); }, [focus, items]);
 
   async function save(id: string, patch: Partial<Item>) {
     const r = await fetch("/api/admin/lex-feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, ...patch }) });
@@ -47,7 +50,7 @@ export default function LexFeedbackClient() {
         <div>
           {items.length === 0 ? <p style={{ color: "#6b7280" }}>Nothing here.</p> : null}
           {items.map((it) => (
-            <div key={it.id} style={card} id={it.id}>
+            <div key={it.id} style={it.id === focus ? { ...card, border: "2px solid #1b2559" } : card} id={it.id}>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", fontSize: 12, color: "#6b7280" }}>
                 <strong style={{ color: "#1b2559", textTransform: "uppercase" }}>{label(it.type)}</strong>
                 <span>{it.firm}</span><span>{it.user}</span><span>{when(it.createdAt)}</span><span>{it.page}</span><span>v {it.appVersion}</span>
