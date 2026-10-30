@@ -62,7 +62,7 @@ test("organization JSON-LD parses and carries the published entity facts", () =>
   assert.equal(org.url, "https://www.saabai.ai");
   assert.equal(org.logo, `${SITE_URL}/brand/saabai-logo.png`);
   assert.equal(org.email, NAP.email);
-  assert.equal(org.taxID, "ABN 71 889 082 572");
+  assert.equal(org.legalName, "Saabai Pty Ltd");
   assert.deepEqual(org.sameAs, [...SAME_AS]);
   assert.equal(org.telephone, undefined);
   assert.deepEqual(org.address, POSTAL_ADDRESS);
@@ -231,7 +231,8 @@ test("about page publishes AboutPage, Person and Organization JSON-LD", () => {
   assert.ok(org, "Organization node");
   assert.equal(org.name, NAP.name);
   assert.equal(org.email, NAP.email);
-  assert.equal(org.taxID, NAP.taxID);
+  assert.equal(org.legalName, "Saabai Pty Ltd");
+  assert.equal(org.taxID, undefined);
   assert.equal(org.telephone, undefined);
   assert.deepEqual(org.address, POSTAL_ADDRESS);
   assert.equal((org.address as Record<string, unknown>).streetAddress, undefined);
@@ -282,7 +283,8 @@ test("footer, contact, terms, privacy and about share one NAP and publish no pho
   }
   assert.equal(NAP.name, "Saabai");
   assert.equal(NAP.email, "hello@saabai.ai");
-  assert.equal(NAP.abn, "71 889 082 572");
+  assert.equal(NAP.legalName, "Saabai Pty Ltd");
+  assert.equal(NAP.acn, "703 735 264");
   assert.equal(NAP.addressLine, "Merrimac QLD 4226, Australia");
   assert.equal(POSTAL_ADDRESS.addressLocality, "Merrimac");
   assert.equal(POSTAL_ADDRESS.addressRegion, "QLD");
