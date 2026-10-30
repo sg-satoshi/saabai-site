@@ -16,7 +16,7 @@ test("/lex canonical is /legal and stays noindex; /legal leads with the free tri
   assert.match(layout, /canonical: pageUrl\("\/legal"\)/);
   assert.match(layout, /index: false/);
   const legal = read("app/legal/page.tsx");
-  assert.match(legal, /className="lx-btn lx-pri" href="\/lex\/signup\/trial">Start your 60-day free trial</);
+  assert.match(legal, /className="lx-btn lx-pri" href="\/lex\/signup\/trial">Start your 60-day FREE trial</);
   assert.match(legal, /className="lx-btn lx-ghost" href=\{DEMO_URL\}/);
   assert.doesNotMatch(legal, /href="\/lex\/signup"|Start the Firm plan|beta invite/);
   assert.match(legal, /href="\/login\?redirect=\/lex"/);
@@ -38,4 +38,9 @@ test("/pricing: free trial CTA, demo second, no paid self-serve signup link", ()
   assert.doesNotMatch(pricing, /href="\/lex\/signup"|beta invite/);
   assert.match(pricing, /href="\/lex\/signup\/trial"[^>]*>start your 60-day free trial</i);
   assert.match(pricing, /book a free Lex demo/);
+});
+
+test("header Book a call button keeps dark text over teal on Lex pages", () => {
+  const nav = readFileSync("app/components/Nav.tsx", "utf8");
+  assert.match(nav, /bg-saabai-teal !text-saabai-bg/);
 });

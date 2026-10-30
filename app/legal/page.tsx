@@ -181,7 +181,7 @@ export default function LegalPage() {
             <a href="/legal/lex-vs-ai-legal-tools" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Lex vs other AI legal tools 2026</a>
           </p>
           <div className="lx-ctas">
-            <a className="lx-btn lx-pri" href="/lex/signup/trial">Start your 60-day free trial</a>
+            <a className="lx-btn lx-pri" href="/lex/signup/trial">Start your 60-day FREE trial</a>
             <a className="lx-btn lx-ghost" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Book a free 30-min demo</a>
           </div>
           <p className="lx-lead" style={{ marginTop: 12, fontSize: 15 }}>
