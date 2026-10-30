@@ -8,9 +8,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "../../../../../lib/stripe";
 import { getProduct, INTERVAL_MAP } from "../../../../../lib/product-catalogue";
-import { moneyAdmin } from "../../../../../lib/billing/money-auth";
+import { moneyAdmin, moneyDeny } from "../../../../../lib/billing/money-auth";
 import { logMoneyAction } from "../../../../../lib/billing/audit-log";
-import { cleanRequestId, idemKey, stepKey } from "../../../../../lib/billing/idempotency";
+import { idemKey, priceSignature, requireRequestId, stepKey } from "../../../../../lib/billing/idempotency";
 import { markUsed } from "../../../../../lib/coupons/once";
 import { resolveCoupon, bakedAmounts, couponOff, createOrFindCustomer } from "../../../../../lib/sell";
 import { ensureClientAccount } from "../../../../../lib/client-account";
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   // Money route: full admins only (restricted staff are refused).
   const actor = await moneyAdmin();
   if (!actor) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return moneyDeny();
   }
 
   const body = await req.json().catch(() => ({}));
@@ -32,7 +32,11 @@ export async function POST(req: NextRequest) {
 
   const product = await getProduct(String(body?.productId || ""));
   if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
-  const base = idemKey("sell-charge", cleanRequestId(body?.requestId), { actor, productId: product.id, customerEmail, code: body?.code });
+  const rid = requireRequestId(body);
+  if ("error" in rid) return NextResponse.json({ error: rid.error }, { status: rid.status });
+  const { requestId } = rid;
+  // Key covers the submission plus the price actually charged, so a price edit never reuses a key.
+  const base = idemKey("sell-charge", requestId, { actor, productId: product.id, customerEmail, code: body?.code, priceVersion: priceSignature(product) });
 
   try {
     const stripe = getStripe();

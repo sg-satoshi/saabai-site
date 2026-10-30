@@ -21,18 +21,33 @@ function stableJson(v: unknown): string {
 }
 
 /**
- * Key for one Stripe create call. With a requestId the key is stable for that submission.
- * Without one it falls back to a hash of the payload in a 10 minute bucket, which still
- * blocks an accidental double submit of identical details.
+ * Key for one Stripe create call, stable for one browser submission (requestId).
+ * There is no derived fallback: money creates must send a requestId (routes return 400 without one),
+ * so a real second sale with the same details always gets a fresh key and is never replayed.
+ * The payload hash is folded in so a reused requestId with different details gets a new key
+ * instead of a Stripe idempotency error.
  */
-export function idemKey(op: string, requestId: string | null, payload: unknown, now = Date.now()): string {
-  const base = requestId ?? `p${Math.floor(now / 600_000)}:${createHash("sha256").update(stableJson(payload)).digest("hex").slice(0, 24)}`;
-  return `saabai:${op}:${base}`.slice(0, 255);
+export function idemKey(op: string, requestId: string, payload: unknown): string {
+  const h = createHash("sha256").update(stableJson(payload)).digest("hex").slice(0, 12);
+  return `saabai:${op}:${requestId}:${h}`.slice(0, 255);
+}
+
+export const MISSING_REQUEST_ID = "Missing or invalid requestId. Reload the page and try again.";
+
+/** Money creates must carry a per-submission requestId. Returns it, or a 400 body to send back. */
+export function requireRequestId(body: unknown): { requestId: string } | { error: string; status: 400 } {
+  const requestId = cleanRequestId((body as { requestId?: unknown } | null)?.requestId);
+  return requestId ? { requestId } : { error: MISSING_REQUEST_ID, status: 400 };
 }
 
 /** Step key for a multi-call action (customer, invoice, invoice item ...), all sharing one base. */
 export function stepKey(base: string, step: string): string {
   return `${base}:${step}`.slice(0, 255);
+}
+
+/** Price fingerprint of a catalogue product, so an edited price never shares a key with the old one. */
+export function priceSignature(p: { updatedAt?: string; oneTimeAmount?: number; recurringAmount?: number; setupFee?: number; interval?: string; discounts?: unknown; discount?: unknown }): string {
+  return createHash("sha256").update(stableJson({ u: p.updatedAt, o: p.oneTimeAmount, r: p.recurringAmount, s: p.setupFee, i: p.interval, d: p.discounts, l: p.discount })).digest("hex").slice(0, 12);
 }
 
 export { stableJson };

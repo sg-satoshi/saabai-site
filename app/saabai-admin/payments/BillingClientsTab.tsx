@@ -154,7 +154,7 @@ function Section({ title, empty, children }: { title: string; empty: boolean; ch
     <>
       <h4 style={{ margin: "14px 0 6px", fontSize: 13, color: "#13152a" }}>{title}</h4>
       {empty ? <p style={{ fontSize: 13, color: "#5f6580", margin: 0 }}>None yet.</p> : (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}><thead><tr><th style={th}>Date</th><th style={th}>Item</th><th style={th}>Amount</th><th style={th}>Status</th></tr></thead><tbody>{children}</tbody></table>
+        <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: "100%", minWidth: 520, borderCollapse: "collapse" }}><thead><tr><th style={th}>Date</th><th style={th}>Item</th><th style={th}>Amount</th><th style={th}>Status</th></tr></thead><tbody>{children}</tbody></table></div>
       )}
     </>
   );
@@ -199,11 +199,11 @@ export function BillingClientsTab() {
       <div style={box}>
         {err && <p style={{ color: "#dc2626", fontSize: 13 }}>{err}</p>}
         {loading && !clients.length ? <p style={{ fontSize: 13, color: "#5f6580" }}>Loading...</p> : !shown.length ? <p style={{ fontSize: 13, color: "#5f6580" }}>No clients yet.</p> : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: "100%", minWidth: 520, borderCollapse: "collapse" }}>
             <thead><tr><th style={th}>Client</th><th style={th}>Email</th><th style={th}>GST</th><th style={th}>Stripe</th></tr></thead>
             <tbody>
               {shown.map((c) => (
-                <tr key={c.id} onClick={() => { setSelected(c.id); setEditing(null); }} style={{ cursor: "pointer", background: selected === c.id ? "#f4f5f9" : undefined }}>
+                <tr key={c.id} tabIndex={0} role="button" aria-label={`Open ${c.firm || c.name}`} aria-pressed={selected === c.id} onClick={() => { setSelected(c.id); setEditing(null); }} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelected(c.id); setEditing(null); } }} style={{ cursor: "pointer", background: selected === c.id ? "#f4f5f9" : undefined }}>
                   <td style={td}><strong>{c.firm || c.name}</strong>{c.firm ? <div style={{ fontSize: 12, color: "#5f6580" }}>{c.name}</div> : null}</td>
                   <td style={td}>{c.email}</td>
                   <td style={td}>{gstText(c.gst)}</td>
@@ -211,7 +211,7 @@ export function BillingClientsTab() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         )}
       </div>
       {selected && <ClientDetail key={`${selected}:${rev}`} id={selected} onEdit={(c) => setEditing(c)} />}
@@ -232,7 +232,7 @@ export function MoneyAuditTab() {
       <h3 style={{ margin: "0 0 10px", fontSize: 15, color: "#13152a" }}>Money audit log</h3>
       {err && <p style={{ color: "#dc2626", fontSize: 13 }}>{err}</p>}
       {!rows ? <p style={{ fontSize: 13, color: "#5f6580" }}>Loading...</p> : !rows.length ? <p style={{ fontSize: 13, color: "#5f6580" }}>No money actions recorded yet.</p> : (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: "100%", minWidth: 520, borderCollapse: "collapse" }}>
           <thead><tr><th style={th}>Time (Brisbane)</th><th style={th}>Who</th><th style={th}>Action</th><th style={th}>Amount</th><th style={th}>Client</th><th style={th}>Stripe ids</th><th style={th}>Result</th></tr></thead>
           <tbody>
             {rows.map((r, i) => (
@@ -247,7 +247,7 @@ export function MoneyAuditTab() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       )}
     </div>
   );

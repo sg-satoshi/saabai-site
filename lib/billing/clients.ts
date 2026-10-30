@@ -106,11 +106,22 @@ type CustomerLite = Pick<Stripe.Customer, "id" | "email" | "metadata"> & { delet
  * Pick an existing Stripe customer for an email (fallback path only, when no stored id).
  * Prefers one already tagged with this client id, then the oldest live match. Never picks a deleted one.
  */
+/**
+ * True when a Stripe customer's metadata shows it belongs to another flow (a Lex firm, or a
+ * site-billing site record). The email fallback must never adopt and overwrite those.
+ */
+export function belongsToOtherFlow(md: Record<string, string> | null | undefined): boolean {
+  if (!md) return false;
+  const src = String(md.source || "").toLowerCase();
+  if (src === "saabai-billing" || src.startsWith("lex")) return true;
+  return ["siteId", "firmId", "lexFirmId", "lex_firm_id", "trialFirmId", "firm_id"].some((k) => !!md[k]);
+}
+
 export function pickExistingCustomer(clientId: string, list: CustomerLite[]): string | null {
   const live = list.filter((c) => !c.deleted);
-  const tagged = live.find((c) => c.metadata?.saabai_client_id === clientId);
+  const tagged = clientId ? live.find((c) => c.metadata?.saabai_client_id === clientId) : undefined;
   if (tagged) return tagged.id;
-  const untagged = live.filter((c) => !c.metadata?.saabai_client_id);
+  const untagged = live.filter((c) => !c.metadata?.saabai_client_id && !belongsToOtherFlow(c.metadata));
   return untagged.length ? untagged[untagged.length - 1].id : null; // list is newest first
 }
 

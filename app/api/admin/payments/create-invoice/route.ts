@@ -5,9 +5,9 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "../../../../../lib/stripe";
-import { moneyAdmin } from "../../../../../lib/billing/money-auth";
+import { moneyAdmin, moneyDeny } from "../../../../../lib/billing/money-auth";
 import { logMoneyAction } from "../../../../../lib/billing/audit-log";
-import { cleanRequestId, idemKey, stepKey } from "../../../../../lib/billing/idempotency";
+import { idemKey, requireRequestId, stepKey } from "../../../../../lib/billing/idempotency";
 import { resolveMoneyCustomer } from "../../../../../lib/billing/money-customer";
 import { markUsed } from "../../../../../lib/coupons/once";
 import { resolveCouponForManual } from "../../../../../lib/sell";
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   // Money route: full admins only (restricted staff are refused).
   const actor = await moneyAdmin();
   if (!actor) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return moneyDeny();
   }
 
   const stripe = getStripe();
@@ -27,7 +27,10 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { amount, description, customerName, customerEmail, message, promotionCode, daysUntilDue, dueDate, clientId } = body;
-    const base = idemKey("create-invoice", cleanRequestId(body.requestId), { actor, amount, description, customerEmail, message, promotionCode, daysUntilDue, dueDate, clientId });
+    const rid = requireRequestId(body);
+    if ("error" in rid) return NextResponse.json({ error: rid.error }, { status: rid.status });
+    const { requestId } = rid;
+    const base = idemKey("create-invoice", requestId, { actor, amount, description, customerEmail, message, promotionCode, daysUntilDue, dueDate, clientId });
 
     // Validate
     if (!amount || typeof amount !== "number" || amount < 50) {
