@@ -61,7 +61,8 @@ function Column({
   );
 }
 
-export default function SbFooter() {
+/** `lex` drops the Saabai pricing note on Lex pages (Lex pages never say GST not applicable). */
+export default function SbFooter({ lex = false }: { lex?: boolean } = {}) {
   return (
     <footer className={`sb-footer ${inter.className}`} aria-label="Site footer">
       <div className="wrap">
@@ -95,7 +96,7 @@ export default function SbFooter() {
         <div className="legal">
           <span>
             © 2026 {NAP.name}. ABN {NAP.abn}. {NAP.addressLine}.{" "}
-            <a href={`mailto:${NAP.email}`}>{NAP.email}</a>. Prices in AUD. GST not applicable.
+            <a href={`mailto:${NAP.email}`}>{NAP.email}</a>.{lex ? null : " Prices in AUD. GST not applicable."}
           </span>
         </div>
       </div>
