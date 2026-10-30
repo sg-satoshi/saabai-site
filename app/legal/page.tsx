@@ -7,6 +7,7 @@ import { lexServiceSchema } from "@/lib/seo-entity";
 import { publicPageMeta } from "@/lib/seo-pages";
 import { LachieLegalDemo, LexWebsiteDemo } from "../components/legal-demos/HarbourDemos";
 import { OALC_SOURCE_PANEL } from "@/lib/oalc-disclosure";
+import LiteYouTube from "../components/LiteYouTube";
 import "./legal.css";
 
 export const metadata: Metadata = publicPageMeta.legal;
@@ -142,12 +143,27 @@ function AnswerIllustration() {
   );
 }
 
+const LEX_VIDEO_ID = "CRmE1wp6aWs";
+const LEX_VIDEO_TITLE = "Lex: AI drafting for Australian law firms";
+const LEX_VIDEO_SCHEMA = {
+  "@context": "https://schema.org",
+  "@type": "VideoObject",
+  name: LEX_VIDEO_TITLE,
+  description: "Lex drafts a trust distribution resolution from an uploaded trust deed, and the lawyer checks and signs off. Drafting assistance only, not legal advice.",
+  thumbnailUrl: "https://www.saabai.ai/video/lex-explainer-poster.png",
+  uploadDate: "2026-10-30",
+  duration: "PT1M16S",
+  embedUrl: `https://www.youtube-nocookie.com/embed/${LEX_VIDEO_ID}`,
+  contentUrl: `https://www.youtube.com/watch?v=${LEX_VIDEO_ID}`,
+};
+
 export default function LegalPage() {
   return (
     <div className="lx">
       <JsonLd data={lexServiceSchema} />
       <JsonLd data={lexSchema} />
       <JsonLd data={faqSchema(LEX_FAQS)} />
+      <JsonLd data={LEX_VIDEO_SCHEMA} />
       <JsonLd data={breadcrumbSchema([{ name: "Lex", path: "/legal" }])} />
       <JsonLd data={{ "@context": "https://schema.org", "@type": "WebPage", url: "https://www.saabai.ai/legal", name: "Lex AI Legal Assistant | Saabai, Gold Coast", dateModified: "2026-10-26" }} />
       <Nav activePage="/legal" />
@@ -184,7 +200,21 @@ export default function LegalPage() {
         </div>
       </section>
 
-      <section className="lx-sec" id="workspace">
+      {/* Lex explainer video */}
+      <section className="lx-sec" id="video">
+        <div className="lx-wrap">
+          <div className="lx-head">
+            <div className="lx-eyebrow">Watch Lex draft</div>
+            <h2>See Lex in 75 seconds.</h2>
+          </div>
+          <div className="lx-video">
+            <LiteYouTube id={LEX_VIDEO_ID} title={LEX_VIDEO_TITLE} poster="/video/lex-explainer-poster.png" />
+            <p className="lx-lead lx-video-cap">Lex drafts a trust distribution resolution from your trust deed, and you check and sign off. Drafting assistance only, not legal advice.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="lx-sec lx-pt0" id="workspace">
         <div className="lx-wrap">
           <div className="lx-head">
             <div className="lx-eyebrow">Two products</div>
