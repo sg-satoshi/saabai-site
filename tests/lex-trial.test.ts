@@ -598,3 +598,16 @@ test("B3 claim markers are HMAC with an existing server secret, fail closed with
   try { assert.ok(await revokeTrial(a.firm.firmId, "admin7", mailer)); } finally { console.log = orig; }
   assert.ok(lines.some((l) => l.includes(`[lex trial] revoked firm=${a.firm.firmId} by=admin7`)), lines.join("|"));
 });
+
+test("trial page: pop-up carries disclosures, visible not-legal-advice line and trigger label", () => {
+  const form = readFileSync("app/lex/signup/trial/TrialForm.tsx", "utf8");
+  const details = readFileSync("app/lex/signup/trial/TrialDetails.tsx", "utf8");
+  assert.match(form, /label="Your details, privacy and trial terms"/);
+  assert.match(form, /<p className="note">Lex is a drafting and research tool, not legal advice\.<\/p>/);
+  assert.match(form, /contactCopy=\{LEX_TRIAL_CONTACT_COPY\}/);
+  assert.match(form, /markerCopy=\{LEX_TRIAL_MARKER_COPY\}/);
+  assert.match(details, /\{contactCopy\}/);
+  assert.match(details, /\{markerCopy\}/);
+  assert.match(details, /not legal advice/);
+  assert.match(details, /href="\/privacy"/);
+});
