@@ -123,3 +123,39 @@ test("UI states: heads-up at 16, paused at 20; message names the date", () => {
   assert.match(docLimitMessage(20, "2026-11-12T04:00:00.000Z"), /until 12 November 2026/);
   void ({} as DocPeriod);
 });
+
+test("r2: month arithmetic clamps to month end (31 Mar - 1 month = 28/29 Feb, never 3 Mar)", async () => {
+  const { addMonthsClamped } = await import("../lib/lex-doc-allowance");
+  const iso = (s: string, n: number) => new Date(addMonthsClamped(Date.parse(s), n)).toISOString();
+  assert.equal(iso("2026-03-31T04:00:00.000Z", -1), "2026-02-28T04:00:00.000Z");
+  assert.equal(iso("2028-03-31T04:00:00.000Z", -1), "2028-02-29T04:00:00.000Z");
+  assert.equal(iso("2026-01-31T00:00:00.000Z", 1), "2026-02-28T00:00:00.000Z");
+  assert.equal(iso("2026-05-31T00:00:00.000Z", -1), "2026-04-30T00:00:00.000Z");
+  assert.equal(iso("2026-12-15T00:00:00.000Z", 1), "2027-01-15T00:00:00.000Z");
+  const p = resolveDocPeriod({ firmId: "lf_m", periodEnd: "2026-03-31T04:00:00.000Z" }, "m.com", new Date("2026-03-10T00:00:00Z"), quiet);
+  assert.equal(p.start, "2026-02-28T04:00:00.000Z");
+});
+
+test("r2: stored period ended but subscription live: rolls forward by whole intervals, never to the calendar month", () => {
+  const live = { ...PAID, subscriptionId: "sub_1", status: "active" };
+  const logs: string[] = [];
+  const a = resolveDocPeriod(live, "firm.com.au", new Date("2026-11-13T00:00:00Z"), (m) => logs.push(m));
+  assert.equal(a.basis, "billing");
+  assert.equal(a.start, "2026-11-12T04:00:00.000Z"); assert.equal(a.end, "2026-12-12T04:00:00.000Z");
+  // Same scope the renewal webhook will store, so a late webhook doesn't hand out a fresh counter.
+  const after = resolveDocPeriod({ ...live, periodStart: "2026-11-12T04:00:00.000Z", periodEnd: "2026-12-12T04:00:00.000Z" }, "firm.com.au", new Date("2026-11-14T00:00:00Z"), quiet);
+  assert.equal(after.scope, a.scope);
+  assert.ok(logs.some((l) => l.includes("rolled forward")));
+  // Several intervals late, anchored on the original day.
+  const b = resolveDocPeriod(live, "firm.com.au", new Date("2027-02-20T00:00:00Z"), quiet);
+  assert.equal(b.start, "2027-02-12T04:00:00.000Z"); assert.equal(b.end, "2027-03-12T04:00:00.000Z");
+  // Month-end anchor keeps the 31st where it exists.
+  const c = resolveDocPeriod({ firmId: "lf_e", subscriptionId: "sub_e", periodStart: "2026-01-31T00:00:00.000Z", periodEnd: "2026-02-28T00:00:00.000Z" }, "e.com", new Date("2026-03-30T00:00:00Z"), quiet);
+  assert.equal(c.start, "2026-02-28T00:00:00.000Z"); assert.equal(c.end, "2026-03-31T00:00:00.000Z");
+  // Exactly at the boundary: start inclusive.
+  const d = resolveDocPeriod(live, "firm.com.au", new Date("2026-11-12T04:00:00.000Z"), quiet);
+  assert.equal(d.start, "2026-11-12T04:00:00.000Z");
+  // Lapsed or no subscription: no roll-forward.
+  assert.equal(resolveDocPeriod({ ...live, status: "lapsed" }, "firm.com.au", new Date("2026-11-13T00:00:00Z"), quiet).basis, "month");
+  assert.equal(resolveDocPeriod(PAID, "firm.com.au", new Date("2026-11-13T00:00:00Z"), quiet).basis, "month");
+});

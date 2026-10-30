@@ -11,6 +11,7 @@
  * The 'lex' product on a directory user is only removed when this module added it
  * (firm.granted), so a user who had Lex before a subscription never loses it here.
  */
+import { addMonthsClamped } from "./lex-doc-allowance";
 import { randomBytes } from "crypto";
 import { getRedis } from "./redis";
 import { getDirectoryUser, saveDirectoryUser } from "./user-directory";
@@ -256,7 +257,18 @@ export async function provisionLexCheckout(eventId: string, s: CheckoutLike, mai
       }
       else if (cur !== firmId) await alert(`Lex checkout ${s.id}: ${email} is already linked to firm ${cur}. The new firm ${firmId} was provisioned but the login stays linked to the old firm. Check by hand.`);
     }
+    const known = await knownPeriod(s, subId);
     await withFirmLock(firmId, async (f) => {
+      // Billing cycle for the document allowance, from the first draft (no extra Stripe call).
+      if (!f.periodEnd || (known && Date.parse(known.end) > Date.parse(f.periodEnd))) {
+        if (known) { f.periodStart = known.start; f.periodEnd = known.end; }
+        else {
+          // Checkout completion is the subscription start, so its time anchors the first cycle until a webhook corrects it.
+          const anchor = (eventCreated ?? s.created ?? Math.floor(Date.now() / 1000)) * 1000;
+          f.periodStart = new Date(anchor).toISOString();
+          f.periodEnd = new Date(addMonthsClamped(anchor, 1)).toISOString();
+        }
+      }
       f.customerId = idOf(s.customer) ?? f.customerId;
       f.subscriptionId = subId ?? f.subscriptionId;
       f.status = "active"; f.lapseReason = undefined; f.graceUntil = undefined;
@@ -274,7 +286,25 @@ export async function provisionLexCheckout(eventId: string, s: CheckoutLike, mai
 
 // ── Lifecycle ────────────────────────────────────────────────────────────
 type SubLike = { id: string; status?: string; cancel_at_period_end?: boolean; current_period_start?: number; current_period_end?: number; items?: { data?: { current_period_start?: number; current_period_end?: number }[] }; metadata?: Record<string, string> | null };
-type InvoiceLike = { id: string; subscription?: unknown; parent?: { subscription_details?: { subscription?: unknown } | null } | null };
+type InvoiceLike = { id: string; subscription?: unknown; parent?: { subscription_details?: { subscription?: unknown } | null } | null; lines?: { data?: { period?: { start?: number; end?: number } | null }[] } | null };
+type Period = { start: string; end: string };
+const PERIOD_STASH_TTL = 7 * 86400;
+const periodStashKey = (subId: string) => `lex:sub:period:${subId}`;
+const toPeriod = (ps?: number, pe?: number): Period | null =>
+  ps && pe && pe > ps ? { start: new Date(ps * 1000).toISOString(), end: new Date(pe * 1000).toISOString() } : null;
+const subPeriod = (o: SubLike) => toPeriod(o.current_period_start ?? o.items?.data?.[0]?.current_period_start, o.current_period_end ?? o.items?.data?.[0]?.current_period_end);
+/** The latest line period on a paid invoice (the cycle it pays for). */
+const invoicePeriod = (inv: InvoiceLike): Period | null => {
+  let best: Period | null = null;
+  for (const l of inv.lines?.data ?? []) { const p = toPeriod(l.period?.start, l.period?.end); if (p && (!best || p.end > best.end)) best = p; }
+  return best;
+};
+/** Period at checkout: an expanded subscription on the session, else one stashed from a subscription event that beat the firm record. */
+async function knownPeriod(s: CheckoutLike, subId?: string): Promise<Period | null> {
+  if (s.subscription && typeof s.subscription === "object") { const p = subPeriod(s.subscription as SubLike); if (p) return p; }
+  if (!subId) return null;
+  return parse<Period>(await redis().get(periodStashKey(subId)));
+}
 export const invoiceSubId = (inv: InvoiceLike) => idOf(inv.subscription) ?? idOf(inv.parent?.subscription_details?.subscription);
 
 /** Mutates f (caller holds the firm lock). */
@@ -306,7 +336,14 @@ export async function handleLexLifecycle(event: LexEvent, mailer: Mailer, now = 
   const subId = event.type.startsWith("invoice.") ? invoiceSubId(o) : o.id;
   if (!subId) return "ignored";
   const found = await firmBySubscription(subId);
-  if (!found) return "ignored";
+  if (!found) {
+    // subscription.created usually lands before checkout.session.completed makes the firm: keep its period for provisioning.
+    if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated") {
+      const p = subPeriod(o);
+      if (p) await redis().set(periodStashKey(subId), JSON.stringify(p), { ex: PERIOD_STASH_TTL });
+    }
+    return "ignored";
+  }
   if (!(await markSeen(`event:${event.id}`))) return "duplicate";
   const created = event.created ?? Math.floor(now.getTime() / 1000);
   try {
@@ -323,6 +360,11 @@ export async function handleLexLifecycle(event: LexEvent, mailer: Mailer, now = 
           return "noop";
         case "invoice.paid":
           firm.lastPaidAt = Math.max(firm.lastPaidAt ?? 0, created);
+          {
+            // A renewal invoice carries the new cycle, so a late subscription.updated can't leave the allowance stale.
+            const p = invoicePeriod(o);
+            if (p && (!firm.periodEnd || Date.parse(p.end) > Date.parse(firm.periodEnd))) { firm.periodStart = p.start; firm.periodEnd = p.end; }
+          }
           if (firm.status === "grace" || (firm.status === "lapsed" && firm.lapseReason === "unpaid")) { await restoreFirm(firm); return "restored"; }
           return "noop";
         case "customer.subscription.deleted":
@@ -331,10 +373,8 @@ export async function handleLexLifecycle(event: LexEvent, mailer: Mailer, now = 
         case "customer.subscription.updated":
         case "customer.subscription.created": {
           firm.cancelAtPeriodEnd = !!o.cancel_at_period_end;
-          const pe = o.current_period_end ?? o.items?.data?.[0]?.current_period_end;
-          if (pe) firm.periodEnd = new Date(pe * 1000).toISOString();
-          const ps = o.current_period_start ?? o.items?.data?.[0]?.current_period_start;
-          if (ps) firm.periodStart = new Date(ps * 1000).toISOString();
+          const p = subPeriod(o);
+          if (p) { firm.periodStart = p.start; firm.periodEnd = p.end; }
           if (o.status === "canceled") { await lapseFirm(firm, "cancelled", mailer); return "lapsed"; }
           if (o.status === "active" && firm.status !== "active" && firm.lapseReason !== "cancelled") { await restoreFirm(firm); return "restored"; }
           return "updated";

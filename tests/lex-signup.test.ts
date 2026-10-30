@@ -324,3 +324,46 @@ test("deleteFirmMatters: glob characters in a firm key never touch other firms' 
   assert.ok(await r.get(`lex:matters:seq:bob@gmail.com:${y}`));
   assert.ok(await r.get(`lex:matters:seq:other.test:${y}`));
 });
+
+test("r2 (#411): new firm right after checkout counts on its billing cycle, not the calendar month", async () => {
+  const { savePendingSignup, provisionLexCheckout, firmBySubscription, handleLexLifecycle } = await L();
+  const { resolveDocPeriod } = await import("../lib/lex-doc-allowance");
+  const quiet = () => {};
+  // subscription.created lands before checkout completes: no firm yet, so its period is stashed.
+  const ps = Date.parse("2026-10-20T05:00:00Z") / 1000, pe = Date.parse("2026-11-20T05:00:00Z") / 1000;
+  assert.equal(await handleLexLifecycle({ id: "evt_sc_new", type: "customer.subscription.created", data: { object: { id: "sub_new", status: "active", items: { data: [{ current_period_start: ps, current_period_end: pe }] } } } }, mailer), "ignored");
+  const p = await savePendingSignup({ name: "Nina New", email: "nina@newfirm.test", firmName: "New Firm" });
+  assert.equal(await provisionLexCheckout("evt_new", { id: "cs_new", payment_status: "paid", customer: "cus_new", subscription: "sub_new", created: ps, metadata: { product: "lex", plan: "firm", pendingId: p.id } }, mailer, alert), "provisioned");
+  const f = (await firmBySubscription("sub_new"))!;
+  assert.equal(f.periodStart, "2026-10-20T05:00:00.000Z"); assert.equal(f.periodEnd, "2026-11-20T05:00:00.000Z");
+  const d = resolveDocPeriod(f, "newfirm.test", new Date("2026-10-21T00:00:00Z"), quiet);
+  assert.equal(d.basis, "billing"); assert.equal(d.scope, `firm:${f.firmId}:2026-10-20T05:00:00.000Z`);
+  // No stashed event and no expanded subscription: checkout time anchors one month (clamped).
+  const p2 = await savePendingSignup({ name: "Olly Other", email: "olly@otherfirm.test", firmName: "Other Firm" });
+  const created = Date.parse("2026-01-31T02:00:00Z") / 1000;
+  await provisionLexCheckout("evt_new2", { id: "cs_new2", payment_status: "paid", customer: "cus_new2", subscription: "sub_new2", created, metadata: { product: "lex", plan: "firm", pendingId: p2.id } }, mailer, alert, created);
+  const g = (await firmBySubscription("sub_new2"))!;
+  assert.equal(g.periodStart, "2026-01-31T02:00:00.000Z"); assert.equal(g.periodEnd, "2026-02-28T02:00:00.000Z");
+  // Expanded subscription object on the session wins.
+  const p3 = await savePendingSignup({ name: "Exp Firm", email: "exp@expfirm.test", firmName: "Exp Firm" });
+  await provisionLexCheckout("evt_new3", { id: "cs_new3", payment_status: "paid", customer: "cus_new3", subscription: { id: "sub_new3", current_period_start: ps, current_period_end: pe }, metadata: { product: "lex", plan: "firm", pendingId: p3.id } }, mailer, alert);
+  assert.equal((await firmBySubscription("sub_new3"))!.periodEnd, "2026-11-20T05:00:00.000Z");
+});
+
+test("r2 (#411): late renewal webhook: roll-forward scope until it lands, then the same scope; invoice.paid stores the new cycle", async () => {
+  const { firmBySubscription, handleLexLifecycle } = await L();
+  const { resolveDocPeriod } = await import("../lib/lex-doc-allowance");
+  const quiet = () => {};
+  const f0 = (await firmBySubscription("sub_new"))!;
+  const late = new Date("2026-11-21T00:00:00Z"); // period ended 20 Nov, no renewal webhook yet
+  const before = resolveDocPeriod(f0, "newfirm.test", late, quiet);
+  assert.equal(before.basis, "billing"); assert.equal(before.start, "2026-11-20T05:00:00.000Z");
+  const s2 = Date.parse("2026-11-20T05:00:00Z") / 1000, e2 = Date.parse("2026-12-20T05:00:00Z") / 1000;
+  assert.equal(await handleLexLifecycle({ id: "evt_inv_ren", type: "invoice.paid", created: s2 + 60, data: { object: { id: "in_ren", parent: { subscription_details: { subscription: "sub_new" } }, lines: { data: [{ period: { start: s2, end: e2 } }] } } } }, mailer), "noop");
+  const f1 = (await firmBySubscription("sub_new"))!;
+  assert.equal(f1.periodEnd, "2026-12-20T05:00:00.000Z");
+  assert.equal(resolveDocPeriod(f1, "newfirm.test", late, quiet).scope, before.scope);
+  // An older invoice replayed later doesn't move the period back.
+  await handleLexLifecycle({ id: "evt_inv_old", type: "invoice.paid", created: s2 - 86400 * 30, data: { object: { id: "in_old", parent: { subscription_details: { subscription: "sub_new" } }, lines: { data: [{ period: { start: s2 - 86400 * 31, end: s2 } }] } } } }, mailer);
+  assert.equal((await firmBySubscription("sub_new"))!.periodEnd, "2026-12-20T05:00:00.000Z");
+});

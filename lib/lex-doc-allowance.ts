@@ -4,7 +4,11 @@
  * Period (resolveDocPeriod):
  *   1. Trial firm (trialStartedAt, still before trialEndsAt or with no paid period yet): 30-day windows from trial start.
  *   2. Paying firm: the Stripe billing cycle, periodStart..periodEnd on the firm record (kept from subscription webhooks).
- *      A firm with only periodEnd (recorded before periodStart was stored) uses periodEnd minus one month as the start.
+ *      A firm with only periodEnd (recorded before periodStart was stored) uses periodEnd minus one calendar month
+ *      (clamped to month end) as the start. The period is stored at provisioning and on every renewal (invoice.paid,
+ *      subscription.created/updated), so a new firm counts on its billing cycle from its first draft.
+ *      If the stored period has ended but the subscription is still live (renewal webhook late), the window rolls
+ *      forward by whole billing intervals from the stored anchor, so the scope matches the one the webhook will store.
  *   3. No firm record or no usable period: Brisbane calendar month for the email domain (logged).
  *
  *   lex:docs:used:{scope}           counter, scope = firm:{firmId}:{periodStart} | dom:{domain}:{YYYY-MM}
@@ -31,7 +35,24 @@ type Log = (m: string) => void;
 const warn: Log = (m) => console.warn(m);
 
 /** The parts of a Lex firm record the allowance reads. trialStartedAt/trialEndsAt come from the trial work (PR #423). */
-export type FirmForDocs = { firmId: string; periodStart?: string; periodEnd?: string; trialStartedAt?: string; trialEndsAt?: string };
+export type FirmForDocs = { firmId: string; periodStart?: string; periodEnd?: string; trialStartedAt?: string; trialEndsAt?: string; status?: string; subscriptionId?: string };
+
+/** Adds whole calendar months in UTC, clamping to the last day of the target month (31 Mar - 1 month = 28/29 Feb). */
+export function addMonthsClamped(ms: number, months: number): number {
+  const d = new Date(ms);
+  const total = d.getUTCFullYear() * 12 + d.getUTCMonth() + months;
+  const y = Math.floor(total / 12), m = total - y * 12;
+  const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  return Date.UTC(y, m, Math.min(d.getUTCDate(), last), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds(), d.getUTCMilliseconds());
+}
+
+/** Whole months from a to b (at least 1). A Stripe monthly cycle anchored on the 31st still counts as 1. */
+function intervalMonths(a: number, b: number): number {
+  const da = new Date(a), db = new Date(b);
+  let n = (db.getUTCFullYear() - da.getUTCFullYear()) * 12 + db.getUTCMonth() - da.getUTCMonth();
+  if (n > 1 && addMonthsClamped(a, n) > b + DAY) n -= 1;
+  return Math.max(1, n);
+}
 
 export type DocPeriod = { scope: string; capKeys: string[]; start: string; end: string; basis: DocUsage["basis"] };
 
@@ -64,11 +85,23 @@ export function resolveDocPeriod(firm: FirmForDocs | null, domain: string, now =
       const start = new Date(s).toISOString();
       return { scope: `firm:${firm.firmId}:${start}`, capKeys: [firm.firmId, domain], start, end: new Date(e).toISOString(), basis: "trial" };
     }
-    if (pe !== null && pe > t) {
+    if (pe !== null) {
       let ps = valid(firm.periodStart);
-      if (ps === null || ps >= pe || ps > t) { const d = new Date(pe); d.setUTCMonth(d.getUTCMonth() - 1); ps = d.getTime(); }
-      const start = new Date(ps).toISOString();
-      return { scope: `firm:${firm.firmId}:${start}`, capKeys: [firm.firmId, domain], start, end: new Date(pe).toISOString(), basis: "billing" };
+      if (ps === null || ps >= pe || (pe > t && ps > t)) ps = addMonthsClamped(pe, -1);
+      const out = (s: number, e: number): DocPeriod => {
+        const start = new Date(s).toISOString();
+        return { scope: `firm:${firm.firmId}:${start}`, capKeys: [firm.firmId, domain], start, end: new Date(e).toISOString(), basis: "billing" };
+      };
+      if (pe > t) return out(ps, pe);
+      const live = !!firm.subscriptionId && (firm.status === undefined || firm.status === "active" || firm.status === "grace");
+      if (live) {
+        // Renewal webhook not in yet: roll forward from the anchor (ps) by whole intervals, never fall back.
+        const n = intervalMonths(ps, pe);
+        let k = 1;
+        while (addMonthsClamped(ps, (k + 1) * n) <= t && k < 1200) k++;
+        log(`[lex-docs] billing period ended, rolled forward ${k} interval(s): firm ${firm.firmId}`);
+        return out(addMonthsClamped(ps, k * n), addMonthsClamped(ps, (k + 1) * n));
+      }
     }
     log(`[lex-docs] fallback to calendar month: firm ${firm.firmId} has no current billing period`);
   } else {
