@@ -158,6 +158,11 @@ export default function LegalPage() {
             <a className="lx-btn lx-pri" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Book a free 30-min demo</a>
             <a className="lx-btn lx-ghost" href="#demo">Try the website demo</a>
           </div>
+          <p className="lx-lead" style={{ marginTop: 12, fontSize: 15 }}>
+            <a href="/lex/signup" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Start the Firm plan</a>
+            {" · "}
+            Already a Lex firm? <a href="/login?redirect=/lex" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Sign in to Lex</a>
+          </p>
           <div className="lx-proof">
             <span>Every answer cites its sources</span>
             <span>Built for Australian law</span>

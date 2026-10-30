@@ -533,6 +533,10 @@ async function pageRoute(req: NextRequest, pathname: string): Promise<NextRespon
     return NextResponse.next();
   }
 
+  // Signed-out visitors (and crawlers) to bare /lex get the public Lex page, not a login wall.
+  // Deep links (/lex?q=..., /lex/billing) still go to sign-in so firm users land back where they were.
+  if (pathname === "/lex" && !req.nextUrl.search) return NextResponse.redirect(new URL("/legal", req.url), 307);
+
   // Admin areas use the separate admin sign-in; everything else uses /login.
   const isAdminArea = matches(pathname, ["/saabai-admin", "/admin", "/mission-control", "/atlas-memory-control", "/edge", "/pulse"]);
   const login = new URL(isAdminArea ? "/saabai-admin/login" : "/login", req.url);

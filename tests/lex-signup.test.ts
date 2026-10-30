@@ -295,13 +295,16 @@ test("webhooks: canonical route routes Lex strictly and has no old welcome copy;
   for (const bad of [/calendly/i, /Anthropic/, /\$1,500/]) assert.doesNotMatch(emails, bad);
 });
 
-test("proxy: /lex/signup is public, /lex stays login-only, /api/lex/signup is public and rate limited", async () => {
+test("proxy: /lex/signup is public, bare /lex goes to /legal when signed out, deep /lex links stay login-only, /api/lex/signup is public and rate limited", async () => {
   const { proxy } = await import("../proxy");
   const go = (m: string, p: string) => proxy(new NextRequest(`http://localhost${p}`, { method: m, headers: { host: "localhost" } }));
   const s = (await go("GET", "/lex/signup"))!;
   assert.ok(!s.headers.get("location"), "signup not redirected");
   assert.ok(!(await go("GET", "/lex/signup/done"))!.headers.get("location"));
-  assert.ok((await go("GET", "/lex"))!.headers.get("location")?.includes("/login"));
+  // Signed out: bare /lex shows the public Lex page; deep links still need sign-in.
+  assert.match((await go("GET", "/lex"))!.headers.get("location") ?? "", /\/legal$/);
+  assert.ok((await go("GET", "/lex?q=trust"))!.headers.get("location")?.includes("/login"));
+  assert.ok((await go("GET", "/lex/billing"))!.headers.get("location")?.includes("/login"));
   assert.notEqual((await go("POST", "/api/lex/team"))!.status, 200);
   const { formRuleFor } = await import("../lib/form-guard");
   assert.ok(formRuleFor("/api/lex/signup"));
