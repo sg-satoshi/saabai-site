@@ -5,7 +5,7 @@ import { breadcrumbSchema, faqSchema } from "@/lib/seo-meta";
 import "../legal.css";
 
 export const DEMO_URL = "https://calendly.com/shanegoldberg/30min";
-export const INVITE_URL = "mailto:hello@saabai.ai?subject=Lex%20beta%20invite";
+export const INVITE_URL = "mailto:hello@saabai.ai?subject=Lex%2060-day%20free%20trial";
 export const ASSISTANCE_ONLY = "Lex provides drafting and research assistance only, not legal advice. A lawyer must review all output before it is relied on.";
 
 export type Topic = {
@@ -32,7 +32,7 @@ export default function TopicPage({ t }: { t: Topic }) {
           <p className="lx-lead" style={{ marginTop: 12, fontSize: 15 }}>{ASSISTANCE_ONLY}</p>
           <div className="lx-ctas">
             <a className="lx-btn lx-pri" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Book a free Lex demo</a>
-            <a className="lx-btn lx-ghost" href={INVITE_URL}>Request a beta invite</a>
+            <a className="lx-btn lx-ghost" href={INVITE_URL}>Ask about the 60-day free trial</a>
           </div>
         </div>
       </section>
@@ -60,7 +60,7 @@ export default function TopicPage({ t }: { t: Topic }) {
           <h2>See Lex on your own matters.</h2>
           <div className="lx-ctas">
             <a className="lx-btn lx-pri" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Book a free Lex demo</a>
-            <a className="lx-btn lx-ghost" href={INVITE_URL}>Request a beta invite</a>
+            <a className="lx-btn lx-ghost" href={INVITE_URL}>Ask about the 60-day free trial</a>
           </div>
           <p className="lx-lead" style={{ marginTop: 12, fontSize: 15 }}>
             <a href="/legal" style={{ textDecoration: "underline" }}>Back to Lex</a>{" · "}Already a Lex firm? <a href="/login?redirect=/lex" style={{ textDecoration: "underline" }}>Sign in to Lex</a>
