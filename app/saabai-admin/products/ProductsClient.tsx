@@ -1,7 +1,8 @@
 "use client";
 import { notify, confirmDialog } from "../ui/Feedback";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { SubmissionKey } from "../../../lib/billing/request-id";
 import AdminShell from "../AdminSidebar";
 import { CardElement, Elements, useStripe, useElements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
@@ -267,6 +268,10 @@ function lineSuffix(line: QuoteLine, interval: Interval | null): string {
   return "/" + (interval ? INTERVAL_LABEL[interval] : "month");
 }
 
+function keyed<T extends object>(k: SubmissionKey, payload: T): T & { requestId: string } {
+  return { ...payload, requestId: k.key(payload) };
+}
+
 function SellPanel({ product, onClose, onSold }: { product: CatalogueProduct; onClose: () => void; onSold: () => void }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -280,6 +285,10 @@ function SellPanel({ product, onClose, onSold }: { product: CatalogueProduct; on
   const [success, setSuccess] = useState<string | null>(null);
   const [linkUrl, setLinkUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  // One Stripe idempotency id per sale submission (required by the sell routes). Same id only for an
+  // identical retry; renewed after every outcome, so a genuine second sale is never replayed.
+  const chargeKey = useRef(new SubmissionKey());
+  const linkKey = useRef(new SubmissionKey());
 
   const fetchQuote = useCallback(async (withCode: string) => {
     try {
@@ -310,7 +319,7 @@ function SellPanel({ product, onClose, onSold }: { product: CatalogueProduct; on
       const res = await fetch("/api/admin/sell/charge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: product.id, customerName: name.trim(), customerEmail: email.trim(), code: code.trim() || undefined }),
+        body: JSON.stringify(keyed(chargeKey.current, { productId: product.id, customerName: name.trim(), customerEmail: email.trim(), code: code.trim() || undefined })),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Charge failed"); setBusy(false); return; }
@@ -330,6 +339,7 @@ function SellPanel({ product, onClose, onSold }: { product: CatalogueProduct; on
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
+      chargeKey.current.renew();
       setBusy(false);
     }
   }
@@ -342,7 +352,7 @@ function SellPanel({ product, onClose, onSold }: { product: CatalogueProduct; on
       const res = await fetch("/api/admin/sell/link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: product.id, customerName: name.trim(), customerEmail: email.trim(), code: code.trim() || undefined }),
+        body: JSON.stringify(keyed(linkKey.current, { productId: product.id, customerName: name.trim(), customerEmail: email.trim(), code: code.trim() || undefined })),
       });
       const data = await res.json();
       if (!res.ok) setError(data.error || "Could not create link");
@@ -350,6 +360,7 @@ function SellPanel({ product, onClose, onSold }: { product: CatalogueProduct; on
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
+      linkKey.current.renew();
       setBusy(false);
     }
   }

@@ -11,10 +11,7 @@ import type { PaymentRecord } from "../../api/admin/payments/history/route";
 
 // ── Theme ───────────────────────────────────────────────────────────────────
 
-/** One id per form submission; Stripe uses it to drop duplicate creates. */
-function newRequestId(): string {
-  return (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}${Math.random().toString(36).slice(2)}`).replace(/[^A-Za-z0-9_-]/g, "");
-}
+import { SubmissionKey } from "../../../lib/billing/request-id";
 
 const C = {
   // Mission Control tokens (see admin.css)
@@ -247,11 +244,23 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
 
   // Double-charge guard: one request at a time, and one Stripe idempotency id per submission.
   const inFlight = useRef(false);
-  const requestId = useRef(newRequestId());
+  // Same id only for an identical resubmit; renewed after any error, on success and when a field changes.
+  const subKey = useRef(new SubmissionKey());
+  const succeeded = useRef(false);
   async function handleSubmit() {
     if (inFlight.current) return;
     inFlight.current = true;
-    try { await doSubmit(); } finally { inFlight.current = false; }
+    succeeded.current = false;
+    try { await doSubmit(); } finally {
+      // Any outcome other than success (validation error, 4xx/5xx, declined card, exception) drops the id,
+      // so a corrected resubmit never reuses the key with different details.
+      if (!succeeded.current) subKey.current.renew();
+      inFlight.current = false;
+    }
+  }
+  /** Body for a money create: the id is tied to these exact details (a changed field gets a new id). */
+  function withKey<T extends object>(payload: T): T & { requestId: string } {
+    return { ...payload, requestId: subKey.current.key(payload) };
   }
 
   async function doSubmit() {
@@ -285,14 +294,13 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
         const res = await fetch("/api/admin/payments/create-intent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+          body: JSON.stringify(withKey({
             amount: amtCents,
             description: description.trim(),
             customerName: customerName.trim() || undefined,
             customerEmail: customerEmail.trim() || undefined,
             promotionCode: coupon.trim() || undefined,
-            requestId: requestId.current,
-          }),
+          })),
         });
 
         const data = await res.json();
@@ -320,7 +328,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
         const res = await fetch("/api/admin/payments/create-subscription", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+          body: JSON.stringify(withKey({
             amount: amtCents,
             description: description.trim(),
             customerName: customerName.trim() || undefined,
@@ -330,8 +338,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
             promotionCode: coupon.trim() || undefined,
             setupFee: setupFee.trim() ? Math.round(parseFloat(setupFee) * 100) : undefined,
             startDate: subStartDate || undefined,
-            requestId: requestId.current,
-          }),
+          })),
         });
 
         const data = await res.json();
@@ -394,7 +401,8 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
   }
 
   function clearForm() {
-    requestId.current = newRequestId();
+    succeeded.current = true;
+    subKey.current.renew();
     setAmount("");
     setDescription("");
     setCustomerName("");
@@ -645,11 +653,19 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
 
   // Double-charge guard: one request at a time, and one Stripe idempotency id per submission.
   const inFlight = useRef(false);
-  const requestId = useRef(newRequestId());
+  const subKey = useRef(new SubmissionKey());
+  const succeeded = useRef(false);
   async function handleSubmit() {
     if (inFlight.current) return;
     inFlight.current = true;
-    try { await doSubmit(); } finally { inFlight.current = false; }
+    succeeded.current = false;
+    try { await doSubmit(); } finally {
+      if (!succeeded.current) subKey.current.renew();
+      inFlight.current = false;
+    }
+  }
+  function withInvoiceKey<T extends object>(payload: T): T & { requestId: string } {
+    return { ...payload, requestId: subKey.current.key(payload) };
   }
 
   async function doSubmit() {
@@ -675,7 +691,7 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
       const res = await fetch("/api/admin/payments/create-invoice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: JSON.stringify(withInvoiceKey({
           amount: amtCents,
           description: description.trim(),
           customerName: customerName.trim() || undefined,
@@ -684,15 +700,15 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
           promotionCode: coupon.trim() || undefined,
           daysUntilDue: parseInt(termsDays, 10),
           dueDate: exactDate || undefined,
-          requestId: requestId.current,
-        }),
+        })),
       });
 
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Failed to create invoice");
       } else {
-        requestId.current = newRequestId();
+        succeeded.current = true;
+        subKey.current.renew();
         setResult(data);
         setAmount("");
         setDescription("");

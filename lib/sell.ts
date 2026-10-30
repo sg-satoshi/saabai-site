@@ -12,6 +12,7 @@ import type Stripe from "stripe";
 import type { CatalogueProduct } from "./product-catalogue";
 import { ONCE_MESSAGE, promoIsOnce, promoNotStartedMessage } from "./coupons/core";
 import { hasUsed } from "./coupons/once";
+import { pickExistingCustomer } from "./billing/clients";
 import { feeDisplay, normalizeDiscounts } from "./product-pricing";
 
 export interface ResolvedCoupon {
@@ -176,8 +177,10 @@ export function buildQuote(product: CatalogueProduct, coupon?: ResolvedCoupon | 
 
 /** Find an existing Stripe customer by email, or create one. */
 export async function createOrFindCustomer(stripe: Stripe, name: string | undefined, email: string, idempotencyKey?: string): Promise<string> {
-  const existing = await stripe.customers.list({ email, limit: 1 });
-  if (existing.data.length > 0) return existing.data[0].id;
+  const existing = await stripe.customers.list({ email, limit: 20 });
+  // Only adopt an untagged live customer that no other flow (Lex firm, site billing, billing client) owns.
+  const pick = pickExistingCustomer("", existing.data as never);
+  if (pick) return pick;
   const customer = await stripe.customers.create({
     name: name || undefined,
     email,

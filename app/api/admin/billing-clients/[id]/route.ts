@@ -5,7 +5,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "../../../../../lib/stripe";
-import { moneyAdmin } from "../../../../../lib/billing/money-auth";
+import { moneyAdmin, moneyDeny } from "../../../../../lib/billing/money-auth";
 import { logMoneyAction } from "../../../../../lib/billing/audit-log";
 import { getBillingClient, listBillingClients, saveBillingClient, syncStripeCustomer, validateClientInput } from "../../../../../lib/billing/clients";
 
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, ctx: Ctx) {
-  if (!(await moneyAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!(await moneyAdmin())) return moneyDeny();
   const client = await getBillingClient((await ctx.params).id);
   if (!client) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (!client.stripeCustomerId) return NextResponse.json({ client, stripe: null });
@@ -45,7 +45,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
 
 export async function PUT(req: NextRequest, ctx: Ctx) {
   const actor = await moneyAdmin();
-  if (!actor) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!actor) return moneyDeny();
   const existing = await getBillingClient((await ctx.params).id);
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const { input, error } = validateClientInput(await req.json().catch(() => null));

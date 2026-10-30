@@ -5,7 +5,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "../../../../lib/stripe";
-import { moneyAdmin } from "../../../../lib/billing/money-auth";
+import { moneyAdmin, moneyDeny } from "../../../../lib/billing/money-auth";
 import { logMoneyAction } from "../../../../lib/billing/audit-log";
 import { listBillingClients, newClient, saveBillingClient, searchClients, syncStripeCustomer, validateClientInput } from "../../../../lib/billing/clients";
 
@@ -13,14 +13,14 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  if (!(await moneyAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!(await moneyAdmin())) return moneyDeny();
   const q = req.nextUrl.searchParams.get("q") || "";
   return NextResponse.json({ clients: searchClients(await listBillingClients(), q) });
 }
 
 export async function POST(req: NextRequest) {
   const actor = await moneyAdmin();
-  if (!actor) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!actor) return moneyDeny();
   const { input, error } = validateClientInput(await req.json().catch(() => null));
   if (!input) return NextResponse.json({ error }, { status: 400 });
   const dup = (await listBillingClients()).find((c) => c.email === input.email);
