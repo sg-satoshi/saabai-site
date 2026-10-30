@@ -43,7 +43,7 @@ export async function POST(req: Request) {
   const cfg = await getConfig(d.slug);
   const r = clientSave(d.slug, cfg.goal, body.goal);
   if (!r.ok) return Response.json({ error: "Some fields need fixing. Nothing was saved.", fields: r.errors }, { status: 400 });
-  const e = body.engage === undefined ? null : clientSaveEngage(body.engage);
+  const e = body.engage === undefined ? null : clientSaveEngage(cfg.engage, body.engage);
   if (e && !e.ok) return Response.json({ error: "Some fields need fixing. Nothing was saved.", fields: e.errors }, { status: 400 });
   await saveConfig({ ...cfg, goal: r.value, ...(e && e.ok ? { engage: e.value } : {}), updatedBy: `client:${who.email}` });
   await addChangeLogEntry({ siteId: d.slug, siteName: d.siteName, summary: `Chatbot goal updated by the client (${r.value.primary})`, source: "manual", authorName: who.email }).catch(() => {});
