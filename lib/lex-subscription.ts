@@ -15,6 +15,7 @@ import { randomBytes } from "crypto";
 import { getRedis } from "./redis";
 import { getDirectoryUser, saveDirectoryUser } from "./user-directory";
 import { ensureClientAccount } from "./client-account";
+import { deleteFirmFeedback } from "./lex-feedback";
 
 export const LEX_TERMS_VERSION = "lex-terms-2026-10-30";
 export const LEX_SEAT_CAP = 3; // /legal: "Firm plan is $299 a month ... for 3 lawyer seats"
@@ -470,15 +471,17 @@ export async function sweepDataRetention(del: DataDeleter, firmKeyOf: (email: st
         for (const e of people) if (!(await hasLexProduct(e))) chatPeople.push(e);
         if (mode === "dry_run") {
           out.dryRun++;
-          log(`[lex retention] firm=${f.firmId} mode=dry_run keys=${firmKeys.length} chats=${chatPeople.length} outcome=would_delete`);
+          const fb = await deleteFirmFeedback(firmKeys, people, true);
+          log(`[lex retention] firm=${f.firmId} mode=dry_run keys=${firmKeys.length} chats=${chatPeople.length} feedback=${fb} outcome=would_delete`);
           return;
         }
         let matters = 0;
         for (const key of firmKeys) matters += await del.matters(key);
         for (const e of chatPeople) await del.threads(e);
+        const feedback = await deleteFirmFeedback(firmKeys, people, false);
         f.dataDeletedAt = now.toISOString();
         out.deleted++;
-        log(`[lex retention] firm=${f.firmId} mode=live keys=${firmKeys.length} matters=${matters} chats=${chatPeople.length} outcome=deleted`);
+        log(`[lex retention] firm=${f.firmId} mode=live keys=${firmKeys.length} matters=${matters} chats=${chatPeople.length} feedback=${feedback} outcome=deleted`);
       });
     }
   } while (cursor !== "0" && ++pages < 100);

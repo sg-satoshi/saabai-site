@@ -89,10 +89,65 @@ test("wiring: button on every Lex screen, server-side context, lexAlert reused, 
   assert.match(btn, /don&apos;t include client names/);
   const route = readFileSync("app/api/lex-feedback/route.ts", "utf8");
   assert.match(route, /resolveReviewActor\(req\)/);
-  assert.match(route, /lexAlert\(/);
+  assert.match(route, /alertFeedback\(item, lexAlert\)/);
   assert.doesNotMatch(route, /sendBrandedEmail|resend/i);
   const admin = readFileSync("app/api/admin/lex-feedback/route.ts", "utf8");
   assert.match(admin, /isAdminSession/);
   assert.match(readFileSync("app/api/lex-flag/route.ts", "utf8"), /source: "flag"/);
   assert.match(readFileSync("app/saabai-admin/AdminSidebar.tsx", "utf8"), /\/saabai-admin\/lex-feedback/);
+});
+
+test("retention: items get a 12-month TTL, screenshots 90 days; trimmed items are deleted", async () => {
+  const { saveFeedback, FEEDBACK_RETENTION_DAYS } = await F();
+  const { getRedis } = await import("../lib/redis");
+  const r = getRedis()!;
+  const it = await saveFeedback({ type: "bug", message: "ttl check", page: "/lex", screenshot: PNG }, ctx);
+  const t = Number(await r.ttl(`lex:feedback:${it.id}`));
+  assert.ok(t > (FEEDBACK_RETENTION_DAYS - 1) * 86400 && t <= FEEDBACK_RETENTION_DAYS * 86400, `item ttl ${t}`);
+  assert.ok(Number(await r.ttl(`lex:feedback:shot:${it.id}`)) <= 90 * 86400);
+  const src = readFileSync("lib/lex-feedback.ts", "utf8");
+  assert.match(src, /lrange\("lex:feedback:ids", MAX_ITEMS, -1\)[\s\S]*r\.del\(`lex:feedback:\$\{old\}`/);
+});
+
+test("page is restricted to a path, and the alert shows only that", async () => {
+  const { cleanPage, validateFeedback, feedbackAlertLine } = await F();
+  assert.equal(cleanPage("/lex/matters?client=Jane%20Smith#x"), "/lex/matters");
+  assert.equal(cleanPage("Jane Smith v Bloggs"), "/lex");
+  const v = validateFeedback({ type: "bug", message: "hello there", page: "https://x.test/lex?q=secret" });
+  assert.ok(v.ok && v.value.page === "/lex");
+  assert.doesNotMatch(feedbackAlertLine({ id: "fb_x", type: "bug", firm: "f", page: "/lex?name=Jane" } as never), /Jane/);
+});
+
+test("10.7 sweep: firm's feedback (incl. flag copies) counted in dry_run, deleted in live", async () => {
+  const { saveFeedback, deleteFirmFeedback, getFeedback, listFeedback } = await F();
+  const a = await saveFeedback({ type: "bug", message: "gone firm bug", page: "/lex", screenshot: null }, { ...ctx, firm: "gone.test", user: "x@gone.test" });
+  const b = await saveFeedback({ type: "answer_flag", message: "flag note", page: "/lex", screenshot: null }, { ...ctx, firm: "gone.test", user: "y@gone.test", source: "flag" });
+  const keep = await saveFeedback({ type: "idea", message: "kept", page: "/lex", screenshot: null }, { ...ctx, firm: "stays.test" });
+  assert.equal(await deleteFirmFeedback(["gone.test"], [], true), 2);
+  assert.ok(await getFeedback(a.id), "dry_run deletes nothing");
+  assert.equal(await deleteFirmFeedback(["gone.test"], [], false), 2);
+  assert.equal(await getFeedback(a.id), null);
+  assert.equal(await getFeedback(b.id), null);
+  assert.ok(await getFeedback(keep.id));
+  assert.ok(!(await listFeedback()).some((x) => x.firm === "gone.test"));
+  const sub = readFileSync("lib/lex-subscription.ts", "utf8");
+  assert.match(sub, /deleteFirmFeedback\(firmKeys, people, true\)/);
+  assert.match(sub, /deleteFirmFeedback\(firmKeys, people, false\)/);
+});
+
+test("alerts: first 5 an hour sent, the rest queued and sent as one digest", async () => {
+  const { saveFeedback, alertFeedback, flushFeedbackDigest } = await F();
+  const sent: string[] = [];
+  const send = async (l: string) => { sent.push(l); };
+  const hour = new Date("2026-11-02T03:10:00Z");
+  const out: string[] = [];
+  for (let i = 0; i < 7; i++) out.push(await alertFeedback(await saveFeedback({ type: "bug", message: `bug ${i} here`, page: "/lex", screenshot: null }, ctx), send, hour));
+  assert.deepEqual(out, ["sent", "sent", "sent", "sent", "sent", "queued", "queued"]);
+  assert.equal(sent.length, 5);
+  assert.equal(await flushFeedbackDigest(send), 2);
+  assert.match(sent[5], /^2 more Lex feedback items/);
+  assert.doesNotMatch(sent[5], /bug 5 here/);
+  assert.equal(await flushFeedbackDigest(send), 0);
+  assert.match(readFileSync("app/api/cron/lex-grace/route.ts", "utf8"), /flushFeedbackDigest\(lexAlert\)/);
+  assert.match(readFileSync("app/saabai-admin/lex-feedback/LexFeedbackClient.tsx", "utf8"), /get\("id"\)/);
 });

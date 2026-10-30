@@ -5,7 +5,7 @@
  * the alert carries type, firm and page, never the message or screenshot). No email to the user.
  */
 import { resolveReviewActor } from "@/lib/lex-review-access";
-import { appVersion, feedbackAlertLine, saveFeedback, validateFeedback } from "@/lib/lex-feedback";
+import { alertFeedback, appVersion, saveFeedback, validateFeedback } from "@/lib/lex-feedback";
 import { lexAlert } from "@/lib/lex-subscription-emails";
 import { getRedis } from "@/lib/redis";
 
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
       firm: actor.kind === "firm" ? actor.firm : "saabai-staff", user,
       browser: req.headers.get("user-agent") ?? "", appVersion: appVersion(),
     });
-    await lexAlert(feedbackAlertLine(item), { prefix: "Lex feedback", title: "New Lex feedback" });
+    await alertFeedback(item, lexAlert);
     return Response.json({ ok: true, id: item.id, screenshotSkipped: v.value.screenshotRejected });
   } catch (err) {
     console.error("[lex-feedback]", err instanceof Error ? err.name : "error");
