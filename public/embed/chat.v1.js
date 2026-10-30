@@ -90,6 +90,18 @@
     ".qr button:hover{background:var(--primary);color:#fff}.qr button:focus-visible,.cta:focus-visible{outline:3px solid #62c5d1;outline-offset:2px}",
     ".cta{align-self:flex-start;display:inline-block;background:var(--primary);color:#fff;border-radius:10px;padding:9px 14px;font-weight:600;font-size:14px;text-decoration:none;border:2px solid var(--accent)}",
     ".cta.fb{background:#fff;color:var(--primary);border-color:var(--primary)}",
+    ".hb{background:none;border:1px solid rgba(255,255,255,.5);color:#fff;font:600 11px system-ui,sans-serif;border-radius:999px;padding:4px 9px;cursor:pointer;margin-left:4px}",
+    ".hb:focus-visible,.nd button:focus-visible,.fu button:focus-visible{outline:3px solid #62c5d1;outline-offset:2px}",
+    ".pv{font-size:11px;color:rgba(0,0,0,.5);text-align:center;padding:0 12px 4px;flex:none}",
+    ".offer{margin:0 12px 6px;padding:6px 10px;border-radius:8px;background:#eef6ff;color:#1c3a5c;font-size:12.5px;flex:none}",
+    ".nd{position:absolute;bottom:72px;width:260px;max-width:calc(100vw - 40px);background:#fff;color:#1c2430;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:12px 34px 12px 12px;font-size:13.5px;cursor:pointer}",
+    ".right .nd{right:0}.left .nd{left:0}",
+    ".nd button{position:absolute;top:4px;right:4px;border:0;background:none;font-size:18px;line-height:1;cursor:pointer;color:#555;padding:4px 8px}",
+    ".fu{align-self:stretch;background:#fff;border-radius:12px;padding:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);font-size:13px}",
+    ".fu input[type=email],.fu input[type=text]{width:100%;height:36px;margin:4px 0;padding:0 10px;border:1.5px solid rgba(0,0,0,.14);border-radius:8px;font:inherit}",
+    ".fu label{display:flex;gap:6px;align-items:flex-start;font-size:12px;margin:4px 0}",
+    ".fu button{border:0;background:var(--primary);color:#fff;border-radius:8px;padding:7px 12px;font:inherit;font-weight:600;cursor:pointer;margin-right:6px}",
+    ".fu button.ln{background:none;color:var(--primary);text-decoration:underline;padding:7px 0}",
     ".sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}",
     "@media (max-width:480px){.w{bottom:12px}.w.right{right:12px}.w.left{left:12px}.panel{position:fixed;left:8px;right:8px;bottom:84px;width:auto;max-width:none;height:min(560px,calc(100vh - 100px))}}"
   ].join("");
@@ -108,7 +120,11 @@
     var av = el("div", "av"); els.av = av;
     var info = el("div"); els.nm = el("div", "nm"); els.st = el("div", "st", "Online now"); info.appendChild(els.nm); info.appendChild(els.st);
     var close = el("button", "close", "\u00d7"); close.type = "button"; close.setAttribute("aria-label", "Close chat"); els.close = close;
-    head.appendChild(av); head.appendChild(info); head.appendChild(close);
+    var newb = el("button", "hb", "New chat"); newb.type = "button"; newb.style.display = "none"; els.newb = newb;
+    var endb = el("button", "hb", "End chat"); endb.type = "button"; endb.style.display = "none"; els.endb = endb;
+    head.appendChild(av); head.appendChild(info);
+    var hbx = el("div"); hbx.style.marginLeft = "auto"; hbx.style.display = "flex"; hbx.appendChild(newb); hbx.appendChild(endb);
+    head.appendChild(hbx); head.appendChild(close); close.style.marginLeft = "4px";
     var msgs = el("div", "msgs"); msgs.setAttribute("aria-live", "polite"); msgs.setAttribute("role", "log"); els.msgs = msgs;
     var bar = el("form", "bar"); els.bar = bar;
     var inp = el("input", "inp"); inp.type = "text"; inp.autocomplete = "off"; inp.maxLength = 1000; inp.setAttribute("aria-label", "Your message"); els.inp = inp;
@@ -118,11 +134,15 @@
     var pw = el("div", "pw"); els.pw = pw;
     var a = el("a", "", "Saabai AI"); a.href = "https://www.saabai.ai"; a.target = "_blank"; a.rel = "noopener"; pw.appendChild(document.createTextNode("Powered by ")); pw.appendChild(a);
     var go = el("div", "go"); els.go = go;
-    panel.appendChild(head); panel.appendChild(msgs); panel.appendChild(go); panel.appendChild(bar); panel.appendChild(pw);
+    var offer = el("div", "offer"); offer.style.display = "none"; els.offer = offer;
+    var pv = el("div", "pv"); els.pv = pv;
+    panel.appendChild(head); panel.appendChild(offer); panel.appendChild(msgs); panel.appendChild(go); panel.appendChild(bar); panel.appendChild(pv); panel.appendChild(pw);
     w.appendChild(panel); w.appendChild(btn); root.appendChild(w);
     document.body.appendChild(host);
     els.host = host;
-    btn.addEventListener("click", function () { toggle(!panel.classList.contains("open")); });
+    btn.addEventListener("click", function () { hideNudge(); toggle(!panel.classList.contains("open")); });
+    endb.addEventListener("click", endChat);
+    newb.addEventListener("click", newChat);
     close.addEventListener("click", function () { toggle(false); btn.focus(); });
     panel.addEventListener("keydown", function (e) { if (e.key === "Escape") { toggle(false); btn.focus(); } });
     inp.addEventListener("input", function () { send.disabled = busy || ended || !inp.value.trim(); });
@@ -167,6 +187,17 @@
         els.go.appendChild(link);
       }
     }
+    var eg = c.engage || {};
+    els.pv.textContent = eg.privacyNote || "";
+    if (eg.offer && eg.offer.text) { els.offer.textContent = eg.offer.text + " Offer ends " + eg.offer.endsOn + "."; els.offer.style.display = ""; } else els.offer.style.display = "none";
+    if (eg.freeOffer && linkUrl(eg.freeOffer.url)) {
+      var lm = el("a", "", eg.freeOffer.label); lm.href = linkUrl(eg.freeOffer.url); lm.target = "_blank"; lm.rel = "noopener"; lm.style.marginLeft = "10px";
+      lm.addEventListener("click", function () { track("offer_click"); });
+      els.go.appendChild(lm);
+    }
+    var greet = c.greeting;
+    if (returning && eg.returnGreeting) greet = eg.returnGreeting;
+    c = Object.assign({}, c, { greeting: greet });
     var q0 = c.goal && c.goal.quickReplies ? c.goal.quickReplies.slice(0, 4) : [];
     if (!state.msgs.length && c.greeting) state.msgs = [{ r: "bot", c: c.greeting, g: 1, q: q0 }];
     else if (state.msgs[0] && state.msgs[0].g) { state.msgs[0].c = c.greeting; state.msgs[0].q = q0; }
@@ -188,6 +219,14 @@
           els.msgs.appendChild(a);
         }
       }
+      if (m.rv) {
+        var rh = linkUrl(m.rv);
+        if (rh) {
+          var ra = el("a", "cta fb", "Leave a review"); ra.href = rh; ra.target = "_blank"; ra.rel = "noopener";
+          ra.addEventListener("click", function () { track("review_click"); try { localStorage.setItem(KEY + ":rv", "1"); } catch (e) {} });
+          els.msgs.appendChild(ra);
+        }
+      }
       // Quick replies only under the latest bot message, and only while nothing is pending.
       if (i === last && m.r === "bot" && m.q && m.q.length && !busy && !ended) {
         var row = el("div", "qr"); row.setAttribute("role", "group"); row.setAttribute("aria-label", "Suggested replies");
@@ -199,10 +238,15 @@
         els.msgs.appendChild(row);
       }
     });
+    if (ended && endForm) els.msgs.appendChild(endForm);
     if (busy) { var d = el("div", "dots"); d.setAttribute("aria-label", "Typing"); d.innerHTML = "<i></i><i></i><i></i>"; els.msgs.appendChild(d); }
     els.msgs.scrollTop = els.msgs.scrollHeight;
     els.send.disabled = busy || ended || !els.inp.value.trim();
     els.inp.disabled = ended;
+    var eg2 = (cfg && cfg.engage) || {};
+    var talked = state.msgs.some(function (m) { return m.r === "user"; });
+    els.endb.style.display = eg2.endChat && talked && !ended ? "" : "none";
+    els.newb.style.display = eg2.endChat && (talked || ended) ? "" : "none";
     els.st.className = "st" + (ended ? " off" : ""); els.st.textContent = ended ? "Away" : "Online now";
   }
   function toggle(open) {
@@ -240,6 +284,8 @@
           var bm = { r: "bot", c: j.content };
           if (j.quickReplies && j.quickReplies.length) bm.q = j.quickReplies.slice(0, 3);
           if (j.cta && j.cta.label && j.cta.url) bm.b = { label: j.cta.label, url: j.cta.url, kind: j.cta.kind === "fallback" ? "fallback" : "cta" };
+          var asked = false; try { asked = !!localStorage.getItem(KEY + ":rv"); } catch (e) {}
+          if (j.review && j.review.url && !asked) { bm.rv = j.review.url; try { localStorage.setItem(KEY + ":rv", "1"); } catch (e) {} }
           state.msgs.push(bm);
         }
         save(); render();
@@ -247,7 +293,108 @@
       .catch(function () { busy = false; note("I couldn't connect just now. Please check your connection and try again, or contact the team directly."); render(); });
   }
 
-  function start(c) { if (!els.host) build(); load(); apply(c); }
+  var endForm = null, returning = false, nudgeEl = null;
+  function endChat() {
+    ended = true; track("chat_ended");
+    var eg = (cfg && cfg.engage) || {};
+    endForm = null;
+    if (eg.emailCopy) endForm = followForm();
+    note("Chat ended. Thanks for chatting.");
+    render();
+  }
+  function newChat() {
+    track("new_chat");
+    ended = false; endForm = null; busy = false;
+    state = { sid: rid(), t: Date.now(), msgs: [] };
+    try { sessionStorage.removeItem(KEY); } catch (e) {}
+    apply(cfg);
+  }
+  // Follow-up capture: consent is required (Spam Act). Field events never include values.
+  function followForm() {
+    var f = el("form", "fu"); track("form_opened");
+    f.appendChild(el("div", "", "Want a copy of this chat, or a follow-up from the team?"));
+    var nm = el("input"); nm.type = "text"; nm.placeholder = "Your name (optional)"; nm.maxLength = 100; nm.setAttribute("aria-label", "Your name");
+    var em = el("input"); em.type = "email"; em.placeholder = "Your email"; em.maxLength = 200; em.required = true; em.setAttribute("aria-label", "Your email");
+    var lab = el("label"); var cb = el("input"); cb.type = "checkbox"; lab.appendChild(cb); lab.appendChild(document.createTextNode("Yes, email me a copy of this chat and a follow-up. I can unsubscribe any time."));
+    var msg = el("div"); msg.setAttribute("role", "status");
+    var sb = el("button", "", "Send me a copy"); sb.type = "submit";
+    var no = el("button", "ln", "No thanks"); no.type = "button";
+    var once = {};
+    function filled(k, v) { if (v && !once[k]) { once[k] = 1; track("field_" + k); } }
+    nm.addEventListener("change", function () { filled("name", nm.value.trim()); });
+    em.addEventListener("change", function () { filled("email", em.value.trim()); });
+    no.addEventListener("click", function () { endForm = null; render(); });
+    f.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!cb.checked) { msg.textContent = "Please tick the box so we can email you."; return; }
+      if (preview) { msg.textContent = "Preview only. Nothing was sent."; return; }
+      sb.disabled = true;
+      var transcript = state.msgs.filter(function (m) { return m.r === "user" || m.r === "bot"; }).map(function (m) { return (m.r === "user" ? "You: " : "Bot: ") + m.c; }).join("\n").slice(0, 1000);
+      fetch(base + "/api/chat-platform/followup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: site, sessionId: state.sid, name: nm.value, email: em.value, consent: true, message: transcript }) })
+        .then(function (r) { msg.textContent = r.ok ? "Thanks, we'll be in touch." : "Sorry, that didn't go through. Please contact the team directly."; })
+        .catch(function () { msg.textContent = "Sorry, that didn't go through."; sb.disabled = false; });
+    });
+    f.appendChild(nm); f.appendChild(em); f.appendChild(lab); f.appendChild(sb); f.appendChild(no); f.appendChild(msg);
+    return f;
+  }
+
+  // Nudges: page-aware opener, idle, scroll depth and exit intent (desktop). Once per page view,
+  // at most nudgeCap per visitor per 7 days, never when the chat is open, always dismissible.
+  function nudgeAllowed(cap) {
+    try {
+      var raw = JSON.parse(localStorage.getItem(KEY + ":nd") || "[]");
+      var week = Date.now() - 7 * 86400000;
+      var recent = raw.filter(function (t) { return t > week; });
+      return recent.length < cap ? recent : null;
+    } catch (e) { return null; }
+  }
+  function hideNudge() { if (nudgeEl) { nudgeEl.remove(); nudgeEl = null; } }
+  function showNudge(text) {
+    var eg = (cfg && cfg.engage) || {};
+    if (nudgeEl || !text || els.panel.classList.contains("open")) return;
+    var recent = nudgeAllowed(eg.nudgeCap || 3); if (!recent) return;
+    try { recent.push(Date.now()); localStorage.setItem(KEY + ":nd", JSON.stringify(recent)); } catch (e) { return; }
+    nudgeEl = el("div", "nd", text); nudgeEl.setAttribute("role", "status");
+    var x = el("button", "", "\u00d7"); x.type = "button"; x.setAttribute("aria-label", "Dismiss");
+    x.addEventListener("click", function (e) { e.stopPropagation(); hideNudge(); });
+    nudgeEl.appendChild(x);
+    nudgeEl.addEventListener("click", function () { track("nudge_click"); hideNudge(); toggle(true); });
+    els.w.appendChild(nudgeEl); track("nudge_shown");
+  }
+  function openerFor(path, list) {
+    var best = null;
+    (list || []).forEach(function (o) {
+      var m = o.match.length > 1 ? o.match.replace(/\/+$/, "") : o.match;
+      if (path === m || path.indexOf(m === "/" ? "/" : m + "/") === 0) { if (!best || m.length > best.match.length) best = o; }
+    });
+    return best ? best.text : null;
+  }
+  function armNudges(c) {
+    var eg = c.engage || {};
+    if (preview) return;
+    var text = openerFor(location.pathname, eg.openers) || (eg.idleSeconds || eg.scrollPercent || eg.exitIntent ? "Have a question? I can help." : null);
+    if (!text) return;
+    var fired = false;
+    function fire() { if (fired) return; fired = true; showNudge(text); cleanup(); }
+    var t1 = null, onScroll = null, onLeave = null;
+    if (openerFor(location.pathname, eg.openers) && !eg.idleSeconds && !eg.scrollPercent) t1 = setTimeout(fire, 8000);
+    if (eg.idleSeconds) t1 = setTimeout(fire, eg.idleSeconds * 1000);
+    if (eg.scrollPercent) {
+      onScroll = function () { var h = document.documentElement.scrollHeight - innerHeight; if (h > 0 && scrollY / h * 100 >= eg.scrollPercent) fire(); };
+      addEventListener("scroll", onScroll, { passive: true });
+    }
+    if (eg.exitIntent && matchMedia && matchMedia("(pointer:fine)").matches) {
+      onLeave = function (e) { if (e.clientY <= 0) fire(); };
+      document.addEventListener("mouseleave", onLeave);
+    }
+    function cleanup() { if (t1) clearTimeout(t1); if (onScroll) removeEventListener("scroll", onScroll); if (onLeave) document.removeEventListener("mouseleave", onLeave); }
+  }
+
+  function start(c) {
+    if (!els.host) build();
+    try { returning = !!localStorage.getItem(KEY + ":seen"); localStorage.setItem(KEY + ":seen", "1"); } catch (e) {}
+    load(); apply(c); armNudges(c);
+  }
 
   function boot() {
     if (preview) {

@@ -1,4 +1,6 @@
 import { toPublicGoal, type GoalConfig, type PublicGoal } from "./goal";
+import { effectiveEngage, toPublicEngage, type EngageConfig, type PublicEngage } from "./engage";
+import { leadCaptureEnabled } from "./lead-capture";
 import { handoffTarget, type HandoffLink } from "./disclosure";
 import { getPersona, greetingForSlug } from "./personas";
 /** Pure rules for the central chatbot platform. No I/O, easy to test. */
@@ -55,6 +57,8 @@ export interface ChatbotConfig {
   knowledge?: Knowledge;
   /** Goal-first settings. Missing means the persona default, or no goal. */
   goal?: GoalConfig;
+  /** Conversion playbook toggles. Missing means the tasteful defaults. */
+  engage?: Partial<EngageConfig>;
   updatedAt?: string;
   updatedBy?: string;
 }
@@ -243,9 +247,11 @@ export interface PublicWidgetConfig {
   handoff: HandoffLink | null;
   /** Quick replies and buttons. Null when the bot has no goal. */
   goal: PublicGoal | null;
+  /** Widget features and nudges. */
+  engage: PublicEngage;
 }
 
-export function toPublicConfig(opts: { slug?: string; active: boolean; config: Pick<ChatbotConfig, "plan" | "skin" | "goal">; site: { name: string; business?: { name?: string; phone?: string; email?: string }; chatbot?: { name?: string; greeting?: string; avatarUrl?: string } } }): PublicWidgetConfig {
+export function toPublicConfig(opts: { slug?: string; active: boolean; config: Pick<ChatbotConfig, "plan" | "skin" | "goal" | "engage">; site: { name: string; business?: { name?: string; phone?: string; email?: string }; chatbot?: { name?: string; greeting?: string; avatarUrl?: string } } }): PublicWidgetConfig {
   const sk = resolveSkin(opts.config, { botName: opts.site.chatbot?.name, greeting: opts.site.chatbot?.greeting, avatarUrl: opts.site.chatbot?.avatarUrl });
   const businessName = opts.site.business?.name || opts.site.name;
   const bot = sk.botName || businessName;
@@ -265,6 +271,7 @@ export function toPublicConfig(opts: { slug?: string; active: boolean; config: P
     offMessage: offMessage(opts.site.business),
     handoff: handoffTarget(opts.site.business),
     goal: toPublicGoal(effectiveGoal(opts.slug, opts.config.goal)),
+    engage: toPublicEngage(effectiveEngage(opts.config.engage), { leadCapture: leadCaptureEnabled() }),
   };
 }
 
