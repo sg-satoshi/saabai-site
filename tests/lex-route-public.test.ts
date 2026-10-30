@@ -26,8 +26,8 @@ test("/lex/signup is invite and demo only: done page, trial with a code, or sign
   const start = proxy.indexOf('if (matches(pathname, ["/lex/signup"])) {');
   assert.ok(start > 0);
   const block = proxy.slice(start, proxy.indexOf("\n  }\n", start));
-  assert.match(block, /pathname === "\/lex\/signup\/done"\) return NextResponse\.next\(\)/);
-  assert.match(block, /pathname === "\/lex\/signup\/trial" && LEX_INVITE_CODE_RE\.test/);
+  assert.match(block, /pathname === "\/lex\/signup\/done" \|\| pathname === "\/lex\/signup\/done\/"\) return NextResponse\.next\(\)/);
+  assert.match(block, /pathname === "\/lex\/signup\/trial\/"\) && LEX_INVITE_CODE_RE\.test/);
   assert.match(block, /if \(await getSession\(req\)\) return NextResponse\.next\(\)/);
   assert.match(block, /NextResponse\.redirect\(new URL\("\/legal", req\.url\), 307\)/);
   const m = proxy.match(/const LEX_INVITE_CODE_RE = (\/.+\/i);/);

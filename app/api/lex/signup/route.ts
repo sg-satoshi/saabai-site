@@ -1,6 +1,9 @@
 /**
  * POST /api/lex/signup: validate, save a pending signup (24h), start a Stripe subscription Checkout.
  * Off (503) until STRIPE_LEX_FIRM_PRICE_ID and STRIPE_SECRET_KEY are set. Rate limited in proxy (lib/form-guard).
+ * Invite-only beta: callers must have a verified session (same check as proxy.ts). Signed-in users cover
+ * lapsed firm admins restarting a plan and trial firms using "Subscribe" (#423). Anyone else gets 403
+ * before the body is read or Stripe is touched.
  * Provisioning happens only in the verified Stripe webhook (app/api/stripe/webhook).
  */
 import { NextRequest, NextResponse } from "next/server";
@@ -9,6 +12,7 @@ import { getStripe } from "@/lib/stripe";
 import { siteUrl } from "@/lib/billing/stripe-ops";
 import { savePendingSignup, validateSignup } from "@/lib/lex-subscription";
 import { stripeErrorFields } from "@/lib/lex-signup-log";
+import { getRequestSession } from "@/lib/request-session";
 
 export const runtime = "nodejs";
 
@@ -21,7 +25,15 @@ export async function GET() {
   return NextResponse.json({ enabled: Boolean(process.env.STRIPE_SECRET_KEY && lexPriceId()) });
 }
 
+/** Who may start a paid Lex checkout during the invite-only beta. Exported for tests. */
+export async function signupAllowed(req: NextRequest): Promise<boolean> {
+  return (await getRequestSession(req)) !== null;
+}
+
 export async function POST(req: NextRequest) {
+  if (!(await signupAllowed(req))) {
+    return NextResponse.json({ error: "Lex is invite only during the beta. Request a beta invite or book a demo." }, { status: 403 });
+  }
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request" }, { status: 400 }); }
   const v = validateSignup(body);
