@@ -84,7 +84,8 @@ export function summariseActivity(
     if (!Number.isFinite(ms) || ms < monthStart || ms >= monthEnd) continue;
     let convs = byBot.get(bot);
     if (!convs) { convs = new Map(); byBot.set(bot, convs); }
-    const id = turn.conversationId || "chat";
+    // A blank id is not one shared chat. Each such turn is counted on its own.
+    const id = turn.conversationId.trim() || `\0${convs.size}`;
     const list = convs.get(id) ?? [];
     list.push(turn.content);
     convs.set(id, list);

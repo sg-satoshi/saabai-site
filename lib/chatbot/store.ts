@@ -15,25 +15,73 @@ const convKey = (slug: string, month: string) => `saabai:chatbot:convs:${slug}:$
 
 const killed = () => process.env.CHATBOTS_KILL === "1";
 
-export async function getConfig(slug: string): Promise<ChatbotConfig> {
+/** Thrown when a write must not guess. A missing or failed Redis read is not "unlocked". */
+export class ChatbotConfigUnavailable extends Error {
+  constructor() {
+    super("Couldn't read the chatbot settings");
+    this.name = "ChatbotConfigUnavailable";
+  }
+}
+
+function configFrom(slug: string, v: unknown): ChatbotConfig {
+  const base: ChatbotConfig = { schema: 1, slug, plan: "presence", skin: {} };
+  const o = (typeof v === "string" ? JSON.parse(v) : v) as Partial<ChatbotConfig> | null;
+  if (!o || typeof o !== "object") return base;
+  const botLock = readBotLock((o as { botLock?: unknown }).botLock);
+  return { ...base, plan: isPlan(o.plan) ? o.plan : "presence", skin: (o.skin as ChatbotConfig["skin"]) ?? {}, ...(o.tone ? { tone: o.tone } : {}), ...(o.knowledge ? { knowledge: o.knowledge } : {}), ...(o.goal && typeof o.goal === "object" ? { goal: o.goal } : {}), ...(o.engage && typeof o.engage === "object" ? { engage: o.engage } : {}), ...(botLock ? { botLock } : {}), updatedAt: o.updatedAt, updatedBy: o.updatedBy };
+}
+
+/**
+ * Read a bot's config. Reads fail open (a widget still loads).
+ * `strict` is for writes: if the lock cannot be read, throw instead of looking unlocked.
+ */
+export async function getConfig(slug: string, opts?: { strict?: boolean }): Promise<ChatbotConfig> {
   const base: ChatbotConfig = { schema: 1, slug, plan: "presence", skin: {} };
   try {
     const r = getRedis();
-    if (!r) return base;
-    const v = await r.get<unknown>(cfgKey(slug));
-    const o = (typeof v === "string" ? JSON.parse(v) : v) as Partial<ChatbotConfig> | null;
-    if (!o || typeof o !== "object") return base;
-    const botLock = readBotLock((o as { botLock?: unknown }).botLock);
-    return { ...base, plan: isPlan(o.plan) ? o.plan : "presence", skin: (o.skin as ChatbotConfig["skin"]) ?? {}, ...(o.tone ? { tone: o.tone } : {}), ...(o.knowledge ? { knowledge: o.knowledge } : {}), ...(o.goal && typeof o.goal === "object" ? { goal: o.goal } : {}), ...(o.engage && typeof o.engage === "object" ? { engage: o.engage } : {}), ...(botLock ? { botLock } : {}), updatedAt: o.updatedAt, updatedBy: o.updatedBy };
-  } catch {
+    if (!r) {
+      if (opts?.strict) throw new ChatbotConfigUnavailable();
+      return base;
+    }
+    return configFrom(slug, await r.get<unknown>(cfgKey(slug)));
+  } catch (e) {
+    if (e instanceof ChatbotConfigUnavailable) throw e;
+    if (opts?.strict) throw new ChatbotConfigUnavailable();
     return base;
   }
 }
 
-export async function saveConfig(c: ChatbotConfig): Promise<void> {
+/** Client write: refuse when Redis cannot say whether the bot is locked. */
+export async function loadConfigForClientWrite(slug: string): Promise<{ ok: true; config: ChatbotConfig } | { ok: false; status: 503; error: string }> {
+  try {
+    return { ok: true, config: await getConfig(slug, { strict: true }) };
+  } catch {
+    return { ok: false, status: 503, error: "Couldn't check whether this chatbot is locked. Nothing was saved." };
+  }
+}
+
+/**
+ * Save a bot. Every write except an explicit lock change keeps the lock already stored.
+ * A caller holding an older copy cannot clear botLock. If that stored lock cannot be read, nothing is written.
+ */
+export async function saveConfig(c: ChatbotConfig, opts?: { setLock?: boolean }): Promise<void> {
   const r = getRedis();
   if (!r) throw new Error("Redis is not configured");
-  await r.set(cfgKey(c.slug), JSON.stringify({ ...c, schema: 1, updatedAt: new Date().toISOString() }));
+  const next: ChatbotConfig = { ...c, schema: 1 };
+  if (!opts?.setLock) {
+    let raw: unknown;
+    try { raw = await r.get<unknown>(cfgKey(c.slug)); } catch { throw new ChatbotConfigUnavailable(); }
+    let stored: ReturnType<typeof readBotLock>;
+    try {
+      const o = (typeof raw === "string" ? JSON.parse(raw) : raw) as { botLock?: unknown } | null;
+      stored = o && typeof o === "object" ? readBotLock(o.botLock) : undefined;
+    } catch {
+      throw new ChatbotConfigUnavailable();
+    }
+    if (stored) next.botLock = stored;
+    else delete next.botLock;
+  }
+  await r.set(cfgKey(c.slug), JSON.stringify({ ...next, schema: 1, updatedAt: new Date().toISOString() }));
 }
 
 /** Explicit admin flag: true, false, or null when never set. */

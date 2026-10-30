@@ -9,7 +9,7 @@ import { rejectIfLoginAs } from "../../../../lib/login-as";
 import { resolvePortalBilling } from "../../../../lib/billing/portal-auth";
 import { listSites } from "../../../../lib/site-registry";
 import { canRemovePoweredBy, toPublicConfig, validateContent, validateSkin } from "../../../../lib/chatbot/core";
-import { getConfig, isEnabled, saveConfig } from "../../../../lib/chatbot/store";
+import { getConfig, isEnabled, loadConfigForClientWrite, saveConfig } from "../../../../lib/chatbot/store";
 import { clientSave, clientSaveEngage, decidePortalBot, portalView, portalWriteGuard } from "../../../../lib/chatbot/portal";
 import { addChangeLogEntry } from "../../../../lib/change-log";
 
@@ -54,7 +54,9 @@ export async function POST(req: Request) {
   if (!body) return Response.json({ error: "Bad request" }, { status: 400 });
   const d = decidePortalBot({ site: site ? { slug: site.slug, name: site.name } : null, requestedSlug: body.slug });
   if (!d.ok) return Response.json({ error: d.error }, { status: d.status });
-  const cfg = await getConfig(d.slug);
+  const loaded = await loadConfigForClientWrite(d.slug);
+  if (!loaded.ok) return Response.json({ error: loaded.error }, { status: loaded.status });
+  const cfg = loaded.config;
   const guard = portalWriteGuard(cfg.botLock);
   if (!guard.ok) return Response.json({ error: guard.error }, { status: guard.status });
 

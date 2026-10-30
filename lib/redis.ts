@@ -13,6 +13,11 @@ export function getRedis(): Redis | null {
   return redis;
 }
 
+/** Tests only. The next getRedis() builds a client from the env at that moment. */
+export function resetRedisForTests(): void {
+  redis = null;
+}
+
 // =========================
 // TYPES
 // =========================

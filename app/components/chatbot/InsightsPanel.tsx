@@ -20,7 +20,7 @@ const portalCard: React.CSSProperties = {
 };
 
 /** Funnel counts and rates plus transcripts. `endpoint` is already scoped by the caller's auth. */
-export default function InsightsPanel({ endpoint, variant = "portal", historyHref }: { endpoint: string; variant?: "portal" | "admin" | "summary"; historyHref?: string }) {
+export default function InsightsPanel({ endpoint, variant = "portal", historyHref, transcriptsOn }: { endpoint: string; variant?: "portal" | "admin" | "summary"; historyHref?: string; transcriptsOn?: boolean }) {
   const [data, setData] = useState<Data | null>(null);
   const [err, setErr] = useState("");
   const [open, setOpen] = useState<string | null>(null);
@@ -38,7 +38,7 @@ export default function InsightsPanel({ endpoint, variant = "portal", historyHre
     : open;
   if (err) return admin ? <div className="ch-card ch-card-bd" role="alert">{err}</div> : <div style={portalCard} role="alert">{err}</div>;
   if (!data) return admin ? <div className="ch-card ch-card-bd">Loading insights...</div> : <div style={portalCard}>Loading insights...</div>;
-  if (variant === "summary") return <SummaryInsights data={data} historyHref={historyHref} />;
+  if (variant === "summary") return <SummaryInsights data={data} historyHref={historyHref} transcriptsOn={transcriptsOn} />;
   if (!admin) return <PortalInsights data={data} open={open} setOpen={setOpen} />;
   const current = data.transcripts.find((t) => t.id === selected) ?? null;
   return (
@@ -92,8 +92,9 @@ export default function InsightsPanel({ endpoint, variant = "portal", historyHre
   );
 }
 
-function SummaryInsights({ data, historyHref }: { data: Data; historyHref?: string }) {
+function SummaryInsights({ data, historyHref, transcriptsOn }: { data: Data; historyHref?: string; transcriptsOn?: boolean }) {
   const recent = data.transcripts.slice(0, 5);
+  const transcripts = transcriptsOn ?? data.transcriptsEnabled;
   return (
     <div data-testid="insights-summary">
       <table className="ch-funnel">
@@ -108,7 +109,7 @@ function SummaryInsights({ data, historyHref }: { data: Data; historyHref?: stri
         </tbody>
       </table>
       <h3 className="ch-h" style={{ marginTop: 18 }}>Recent chats</h3>
-      <p className="ch-note">Last {data.retentionDays} days. Transcripts are on for this chatbot.</p>
+      <p className="ch-note">Last {data.retentionDays} days. {transcripts ? "Transcripts are on for this chatbot." : "Transcripts are turned off for this chatbot."}</p>
       {recent.length === 0 ? <p className="ch-note">No chats yet.</p> : recent.map((t) => {
         const user = t.messages.find((m) => m.role === "user");
         const answered = t.messages.some((m) => m.role === "assistant");

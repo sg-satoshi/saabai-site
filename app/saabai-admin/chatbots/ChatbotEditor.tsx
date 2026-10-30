@@ -591,7 +591,7 @@ export default function ChatbotEditor({ row, onSaved, mode = "admin", readOnly =
               <section className="au-card">
                 <div className="au-card-hd"><div><h2 className="au-card-h">Conversion funnel</h2><p className="au-card-desc">Counts only. Nothing people type into form fields is stored here.</p></div></div>
                 <div className="au-card-bd">
-                  <InsightsPanel variant="summary" endpoint={`/api/admin/chatbots/insights?slug=${encodeURIComponent(row.slug)}`} historyHref={chatbotHistoryPath(row.slug)} />
+                  <InsightsPanel variant="summary" transcriptsOn={draft.engage.transcripts} endpoint={`/api/admin/chatbots/insights?slug=${encodeURIComponent(row.slug)}`} historyHref={chatbotHistoryPath(row.slug)} />
                 </div>
               </section>
               <section className="au-card">

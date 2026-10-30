@@ -2,7 +2,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import http from "node:http";
+import type { AddressInfo } from "node:net";
+import { createMockUpstash } from "../scripts/dev/mock-upstash.mjs";
 import { countLeads, formatLastChat, isEngagedChat, isGreetingOnly, summariseActivity, brisbaneMonthRange } from "../lib/chatbot/leads";
+import { activityIdsForRow, sumAliasActivity } from "../lib/chatbot/activity";
 import { clientWriteBlocked, portalWriteGuard, readBotLock } from "../lib/chatbot/bot-lock";
 import {
   arrangeGroups, filterRows, multiSiteClients, pageBots, parseListQuery, serialiseListQuery, sortRows,
@@ -58,6 +62,34 @@ test("engaged counts are this month only, and last chat is the latest message", 
   assert.equal(stats.get("other")?.leads, 0);
   assert.equal(stats.get("quiet")?.leads, 0);
   assert.equal(stats.get("quiet")?.lastChatAt, "2026-08-01T00:00:00.000Z");
+  const blanks = summariseActivity(
+    [
+      { bot: "b", conversationId: "", content: "Blocked drain", at: "2026-10-05T00:00:00.000Z" },
+      { bot: "b", conversationId: "  ", content: "Can you come today?", at: "2026-10-05T01:00:00.000Z" },
+    ],
+    [],
+    range.start,
+    range.end,
+  );
+  assert.equal(blanks.get("b")?.leads, 2, "blank conversation ids are not merged into one chat");
+});
+
+test("legacy short log ids count for leads and last chat", () => {
+  const onlyShort = new Map([["lmm", { leads: 4, lastChatAt: "2026-10-09T00:00:00.000Z" }]]);
+  const ids = activityIdsForRow("lmm-site", ["lmm-site"], []);
+  assert.deepEqual(ids, ["lmm-site", "lmm"]);
+  assert.equal(sumAliasActivity(ids, onlyShort).leads, 4);
+  assert.equal(sumAliasActivity(ids, onlyShort).lastChatAt, "2026-10-09T00:00:00.000Z");
+  for (const [slug, short] of [["bo-consultancy", "bo"], ["nico-moretti", "nico"], ["tributum-law", "tributum"]] as const) {
+    const map = new Map([[short, { leads: 1, lastChatAt: "2026-10-11T00:00:00.000Z" }]]);
+    const rowIds = activityIdsForRow(slug, [slug], [{ slug }]);
+    assert.ok(rowIds.includes(short), short);
+    assert.equal(new Set(rowIds).size, rowIds.length, "duplicate slugs are not counted twice");
+    assert.equal(sumAliasActivity(rowIds, map).leads, 1);
+  }
+  const route = read("app/api/admin/chatbots/route.ts");
+  assert.match(route, /activityIdsForRow\(s\.slug, slugs, folded\)/);
+  assert.match(route, /sumAliasActivity\(/);
 });
 
 test("last chat labels use Brisbane time", () => {
@@ -131,11 +163,14 @@ test("whole-bot lock blocks every client write and is ignored when unset", () =>
   const guardAt = portal.indexOf("portalWriteGuard");
   const saveAt = portal.indexOf("clientSave(");
   assert.ok(guardAt > 0 && saveAt > guardAt, "the lock is checked before any client save");
+  assert.match(portal, /loadConfigForClientWrite/);
+  assert.ok(portal.indexOf("loadConfigForClientWrite") < portal.indexOf("saveConfig("));
   assert.match(portal, /clientSaveEngage\(cfg\.engage, body\.engage\)/);
   assert.match(portal, /rejectIfImpersonatingReadOnly/);
   assert.doesNotMatch(portal, /lead-capture|CHATBOT_LEAD_CAPTURE_ENABLED/);
   const admin = read("app/api/admin/chatbots/route.ts");
   assert.match(admin, /case "set_lock"/);
+  assert.match(admin, /setLock: true/);
   assert.match(admin, /leads: bespoke \? null : leads/);
   assert.match(admin, /adminActor\(\)/);
 });
@@ -167,5 +202,52 @@ test("the editor copy drops per-setting lock wording and the lock popover sits i
     "app/api/admin/chatbots/route.ts",
   ]) {
     assert.doesNotMatch(read(file), /\/api\/(?:leads|lead|signup|subscribe|draft)\b/, file);
+  }
+  assert.match(read("app/components/chatbot/InsightsPanel.tsx"), /transcriptsOn \?\? data\.transcriptsEnabled/);
+  assert.match(read("app/saabai-admin/chatbots/ChatbotEditor.tsx"), /transcriptsOn=\{draft\.engage\.transcripts\}/);
+});
+
+test("a settings save keeps the stored lock, and a failed lock read rejects the client write", async () => {
+  const mock = createMockUpstash();
+  const prevUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const prevToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+  await new Promise<void>((resolve) => mock.server.listen(0, "127.0.0.1", () => resolve()));
+  const { port } = mock.server.address() as AddressInfo;
+  process.env.UPSTASH_REDIS_REST_URL = `http://127.0.0.1:${port}`;
+  process.env.UPSTASH_REDIS_REST_TOKEN = "test";
+  const { resetRedisForTests } = await import("../lib/redis");
+  resetRedisForTests();
+  try {
+    const { getConfig, saveConfig, loadConfigForClientWrite } = await import("../lib/chatbot/store");
+    const lock = { locked: true, by: "Shane", at: "2026-10-01T00:00:00.000Z" };
+    await saveConfig({ schema: 1, slug: "locked-bot", plan: "presence", skin: {}, botLock: lock }, { setLock: true });
+    await saveConfig({ schema: 1, slug: "locked-bot", plan: "growth", skin: { botName: "Bea" }, botLock: { locked: false } });
+    const kept = await getConfig("locked-bot");
+    assert.equal(kept.plan, "growth");
+    assert.equal(kept.skin.botName, "Bea");
+    assert.equal(kept.botLock?.locked, true);
+    assert.equal(kept.botLock?.by, "Shane");
+
+    await saveConfig({ schema: 1, slug: "locked-bot", plan: "growth", skin: {}, botLock: { locked: false, by: "Sam", at: "2026-10-02T00:00:00.000Z" } }, { setLock: true });
+    assert.equal((await getConfig("locked-bot")).botLock?.locked, false);
+
+    const bad = http.createServer((_req, res) => { res.statusCode = 500; res.end('{"error":"down"}'); });
+    await new Promise<void>((resolve) => bad.listen(0, "127.0.0.1", () => resolve()));
+    const badPort = (bad.address() as AddressInfo).port;
+    process.env.UPSTASH_REDIS_REST_URL = `http://127.0.0.1:${badPort}`;
+    resetRedisForTests();
+    const denied = await loadConfigForClientWrite("locked-bot");
+    assert.equal(denied.ok, false);
+    if (!denied.ok) assert.equal(denied.status, 503);
+    const open = await getConfig("locked-bot");
+    assert.equal(open.botLock, undefined, "a normal read still fails open");
+    await new Promise<void>((resolve) => bad.close(() => resolve()));
+  } finally {
+    if (prevUrl === undefined) delete process.env.UPSTASH_REDIS_REST_URL;
+    else process.env.UPSTASH_REDIS_REST_URL = prevUrl;
+    if (prevToken === undefined) delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    else process.env.UPSTASH_REDIS_REST_TOKEN = prevToken;
+    resetRedisForTests();
+    await new Promise<void>((resolve) => mock.server.close(() => resolve()));
   }
 });

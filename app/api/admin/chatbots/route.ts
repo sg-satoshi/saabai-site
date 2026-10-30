@@ -7,7 +7,7 @@ import { effectiveEngage, validateEngage } from "@/lib/chatbot/engage";
 import { addChangeLogEntry } from "@/lib/change-log";
 import { listChatbotCanonical } from "@/lib/chatbot/admin-list";
 import { sumUsage } from "@/lib/chatbot/canonical-rows";
-import { loadChatActivity } from "@/lib/chatbot/activity";
+import { activityIdsForRow, loadChatActivity, sumAliasActivity } from "@/lib/chatbot/activity";
 import { clientIdentity } from "@/lib/chatbot/list-view";
 import { leadCaptureEnabled } from "@/lib/chatbot/lead-capture";
 
@@ -30,14 +30,9 @@ export async function GET() {
       ]);
       const usage = sumUsage(parts);
       const client = clientIdentity(s);
-      let leads = 0;
-      let lastChatAt: string | null = null;
-      for (const slug of slugs) {
-        const stat = activity.get(slug);
-        if (!stat) continue;
-        leads += stat.leads;
-        if (stat.lastChatAt && (!lastChatAt || Date.parse(stat.lastChatAt) > Date.parse(lastChatAt))) lastChatAt = stat.lastChatAt;
-      }
+      const summed = sumAliasActivity(activityIdsForRow(s.slug, slugs, folded), activity);
+      const leads = summed.leads;
+      const lastChatAt = summed.lastChatAt;
       return {
         id: s.id,
         slug: s.slug,
@@ -93,7 +88,7 @@ export async function POST(req: Request) {
       }
       case "set_plan": {
         if (!isPlan(b.plan)) return Response.json({ error: "Unknown plan" }, { status: 400 });
-        const cur = await getConfig(site.slug);
+        const cur = await getConfig(site.slug, { strict: true });
         if (cur.plan === b.plan) return Response.json({ ok: true, plan: cur.plan, changed: false });
         const skin = { ...cur.skin };
         if (!canRemovePoweredBy(b.plan as Plan)) delete skin.showPoweredBy; // Presence always shows the line
@@ -104,7 +99,7 @@ export async function POST(req: Request) {
       case "save_skin": {
         const v = validateSkin(b.skin);
         if (!v.ok) return Response.json({ error: "Some fields need fixing.", fields: v.errors }, { status: 400 });
-        const cur = await getConfig(site.slug);
+        const cur = await getConfig(site.slug, { strict: true });
         if (v.value.showPoweredBy === false && !canRemovePoweredBy(cur.plan)) {
           return Response.json({ error: "The Powered by Saabai line can only be removed on Growth and Signature.", fields: { showPoweredBy: "Growth or Signature only." } }, { status: 400 });
         }
@@ -115,7 +110,7 @@ export async function POST(req: Request) {
       case "save_content": {
         const v = validateContent(b.content);
         if (!v.ok) return Response.json({ error: "Some fields need fixing.", fields: v.errors }, { status: 400 });
-        const cur = await getConfig(site.slug);
+        const cur = await getConfig(site.slug, { strict: true });
         await saveConfig({ ...cur, ...(v.value.tone ? { tone: v.value.tone } : {}), ...(v.value.knowledge ? { knowledge: v.value.knowledge } : {}), updatedBy: actor });
         await addChangeLogEntry({ siteId: site.slug, siteName: site.name, summary: `Chatbot knowledge and tone updated (${Object.keys(v.value).join(", ") || "no changes"})`, source: "manual", authorName: actor }).catch(() => {});
         return Response.json({ ok: true });
@@ -125,7 +120,7 @@ export async function POST(req: Request) {
         const sk = validateSkin(b.skin);
         const ct = validateContent(b.content);
         if (!sk.ok || !ct.ok) return Response.json({ error: "Some fields need fixing. Nothing was saved.", fields: { ...(sk.ok ? {} : sk.errors), ...(ct.ok ? {} : ct.errors) } }, { status: 400 });
-        const cur = await getConfig(site.slug);
+        const cur = await getConfig(site.slug, { strict: true });
         if (sk.value.showPoweredBy === false && !canRemovePoweredBy(cur.plan)) {
           return Response.json({ error: "The Powered by Saabai line can only be removed on Growth and Signature.", fields: { showPoweredBy: "Growth or Signature only." } }, { status: 400 });
         }
@@ -138,7 +133,7 @@ export async function POST(req: Request) {
         // Admin can set every field and the lock list. Locked fields cannot be changed from the client portal.
         const g = validateGoal(b.goal);
         if (!g.ok) return Response.json({ error: "Some goal fields need fixing. Nothing was saved.", fields: g.errors }, { status: 400 });
-        const cur = await getConfig(site.slug);
+        const cur = await getConfig(site.slug, { strict: true });
         await saveConfig({ ...cur, goal: g.value, updatedBy: actor });
         const locks = g.value.locked?.length ? `, locked: ${g.value.locked.join(", ")}` : "";
         await addChangeLogEntry({ siteId: site.slug, siteName: site.name, summary: `Chatbot goal updated (${g.value.primary}${locks})`, source: "manual", authorName: actor }).catch(() => {});
@@ -147,16 +142,16 @@ export async function POST(req: Request) {
       case "save_engage": {
         const e = validateEngage(b.engage);
         if (!e.ok) return Response.json({ error: "Some playbook fields need fixing. Nothing was saved.", fields: e.errors }, { status: 400 });
-        const cur = await getConfig(site.slug);
+        const cur = await getConfig(site.slug, { strict: true });
         await saveConfig({ ...cur, engage: e.value, updatedBy: actor });
         await addChangeLogEntry({ siteId: site.slug, siteName: site.name, summary: "Chatbot conversion playbook updated", source: "manual", authorName: actor }).catch(() => {});
         return Response.json({ ok: true, engage: e.value });
       }
       case "set_lock": {
         if (typeof b.locked !== "boolean") return Response.json({ error: "locked must be true or false" }, { status: 400 });
-        const cur = await getConfig(site.slug);
+        const cur = await getConfig(site.slug, { strict: true });
         const botLock = { locked: b.locked, by: actor, at: new Date().toISOString() };
-        await saveConfig({ ...cur, botLock, updatedBy: actor });
+        await saveConfig({ ...cur, botLock, updatedBy: actor }, { setLock: true });
         await addChangeLogEntry({ siteId: site.slug, siteName: site.name, summary: b.locked ? "Chatbot locked for the client" : "Chatbot unlocked for the client", source: "manual", authorName: actor }).catch(() => {});
         return Response.json({ ok: true, botLock });
       }
