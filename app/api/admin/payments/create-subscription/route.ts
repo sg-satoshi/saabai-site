@@ -6,7 +6,10 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "../../../../../lib/stripe";
-import { isAdminRequest } from "../../../../../lib/product-stripe";
+import { moneyAdmin } from "../../../../../lib/billing/money-auth";
+import { logMoneyAction } from "../../../../../lib/billing/audit-log";
+import { cleanRequestId, idemKey, stepKey } from "../../../../../lib/billing/idempotency";
+import { resolveMoneyCustomer } from "../../../../../lib/billing/money-customer";
 import { markUsed } from "../../../../../lib/coupons/once";
 import { resolveCouponForManual } from "../../../../../lib/sell";
 import { classifySubscription } from "../../../../../lib/subscription-classify";
@@ -26,8 +29,9 @@ const INTERVAL_MAP: Record<string, { interval: "day" | "week" | "month" | "year"
 const MAX_DAYS = 365; // Stripe max interval_count for day
 
 export async function POST(req: NextRequest) {
-  // Auth — any admin session (env admin or directory-role admin), matching the page guard.
-  if (!(await isAdminRequest())) {
+  // Money route: full admins only (restricted staff are refused).
+  const actor = await moneyAdmin();
+  if (!actor) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -35,7 +39,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { amount, description, customerName, customerEmail, interval, customDays, promotionCode, setupFee, startDate, productType: productTypeIn } = body || {};
+    const { amount, description, customerName, customerEmail, interval, customDays, promotionCode, setupFee, startDate, productType: productTypeIn, clientId } = body || {};
+    const base = idemKey("create-subscription", cleanRequestId(body?.requestId), { actor, amount, description, customerEmail, interval, customDays, promotionCode, setupFee, startDate, clientId });
 
     // Validate
     if (!amount || typeof amount !== "number" || amount < 50) {
@@ -86,19 +91,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Find or create customer
-    const existing = await stripe.customers.list({ email: customerEmail, limit: 1 });
-    let customerId: string;
-    if (existing.data.length > 0) {
-      customerId = existing.data[0].id;
-    } else {
-      const customer = await stripe.customers.create({
-        name: customerName || undefined,
-        email: customerEmail,
-        metadata: { source: "saabai-admin-subscription" },
-      });
-      customerId = customer.id;
-    }
+    // Linked billing client first, then email (no duplicate customers).
+    const { customerId, client } = await resolveMoneyCustomer(stripe, { clientId, email: customerEmail, name: customerName, source: "saabai-admin-subscription", idemBase: base });
+    if (!customerId) return NextResponse.json({ error: "Customer could not be resolved" }, { status: 400 });
 
     // Create or reuse a product for this subscription
     // Use a stable product for all admin subscriptions so we don't bloat the product catalog
@@ -115,7 +110,7 @@ export async function POST(req: NextRequest) {
         name: "Saabai Admin Subscription",
         description: "Recurring payments created from the Saabai admin panel",
         metadata: { source: "saabai-admin-subscription" },
-      });
+      }, { idempotencyKey: "saabai:admin-subscription-product:v1" });
       productId = product.id;
     }
 
@@ -131,9 +126,9 @@ export async function POST(req: NextRequest) {
       metadata: {
         description,
         customer_name: customerName || "",
-        customer_email: customerEmail,
+        customer_email: customerEmail || "",
       },
-    });
+    }, { idempotencyKey: stepKey(base, "price") });
 
     // Validate an optional coupon and apply it natively to the subscription.
     let appliedCode: string | null = null;
@@ -163,6 +158,7 @@ export async function POST(req: NextRequest) {
         description,
         interval,
         coupon_code: appliedCode || "",
+        saabai_client_id: client?.id || "",
         productType:
           typeof productTypeIn === "string" && productTypeIn.trim()
             ? String(productTypeIn).trim()
@@ -185,7 +181,8 @@ export async function POST(req: NextRequest) {
       subParams.proration_behavior = "none";
     }
 
-    const subscription = await stripe.subscriptions.create(subParams);
+    const subscription = await stripe.subscriptions.create(subParams, { idempotencyKey: stepKey(base, "sub") });
+    await logMoneyAction({ actor, action: "subscription.create", amountCents: price.unit_amount ?? undefined, currency: "aud", clientId: client?.id, clientEmail: customerEmail, stripeIds: { subscription: subscription.id, customer: customerId, price: price.id }, priceId: price.id, ok: true, note: `${description} (${interval})` });
 
     const latestInvoice = subscription.latest_invoice as unknown as Record<string, unknown>;
     let clientSecret: string | null = null;
@@ -220,6 +217,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[payments/create-subscription]", msg);
+    await logMoneyAction({ actor, action: "subscription.create", ok: false, note: msg });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

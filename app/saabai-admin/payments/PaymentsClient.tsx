@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { BillingClientsTab, MoneyAuditTab } from "./BillingClientsTab";
 import AdminShell from "../AdminSidebar";
 import { CardElement, useStripe, useElements, Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
@@ -9,6 +10,11 @@ import CouponPicker from "./CouponPicker";
 import type { PaymentRecord } from "../../api/admin/payments/history/route";
 
 // ── Theme ───────────────────────────────────────────────────────────────────
+
+/** One id per form submission; Stripe uses it to drop duplicate creates. */
+function newRequestId(): string {
+  return (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}${Math.random().toString(36).slice(2)}`).replace(/[^A-Za-z0-9_-]/g, "");
+}
 
 const C = {
   // Mission Control tokens (see admin.css)
@@ -239,7 +245,16 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
     }
   }
 
+  // Double-charge guard: one request at a time, and one Stripe idempotency id per submission.
+  const inFlight = useRef(false);
+  const requestId = useRef(newRequestId());
   async function handleSubmit() {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    try { await doSubmit(); } finally { inFlight.current = false; }
+  }
+
+  async function doSubmit() {
     setError(null);
     setSuccess(null);
 
@@ -276,6 +291,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
             customerName: customerName.trim() || undefined,
             customerEmail: customerEmail.trim() || undefined,
             promotionCode: coupon.trim() || undefined,
+            requestId: requestId.current,
           }),
         });
 
@@ -314,6 +330,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
             promotionCode: coupon.trim() || undefined,
             setupFee: setupFee.trim() ? Math.round(parseFloat(setupFee) * 100) : undefined,
             startDate: subStartDate || undefined,
+            requestId: requestId.current,
           }),
         });
 
@@ -377,6 +394,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
   }
 
   function clearForm() {
+    requestId.current = newRequestId();
     setAmount("");
     setDescription("");
     setCustomerName("");
@@ -625,7 +643,16 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
     }
   }
 
+  // Double-charge guard: one request at a time, and one Stripe idempotency id per submission.
+  const inFlight = useRef(false);
+  const requestId = useRef(newRequestId());
   async function handleSubmit() {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    try { await doSubmit(); } finally { inFlight.current = false; }
+  }
+
+  async function doSubmit() {
     setError(null);
     setResult(null);
 
@@ -657,6 +684,7 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
           promotionCode: coupon.trim() || undefined,
           daysUntilDue: parseInt(termsDays, 10),
           dueDate: exactDate || undefined,
+          requestId: requestId.current,
         }),
       });
 
@@ -664,6 +692,7 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
       if (!res.ok) {
         setError(data.error || "Failed to create invoice");
       } else {
+        requestId.current = newRequestId();
         setResult(data);
         setAmount("");
         setDescription("");
@@ -952,7 +981,7 @@ export default function PaymentsClient({ publishableKey }: { publishableKey: str
   }
 
   const stripePromise = loadStripe(publishableKey);
-  const [tab, setTab] = useState<"payments" | "invoices">("payments");
+  const [tab, setTab] = useState<"payments" | "clients" | "invoices" | "audit">("payments");
 
   return (
     <AdminShell activePath="/saabai-admin/payments">
@@ -968,7 +997,9 @@ export default function PaymentsClient({ publishableKey }: { publishableKey: str
         <div className="seg pay-tabs" role="tablist" style={{ marginBottom: 20 }}>
           {([
             { id: "payments" as const, label: "Payments" },
+            { id: "clients" as const, label: "Clients" },
             { id: "invoices" as const, label: "Invoices" },
+            { id: "audit" as const, label: "Audit log" },
           ]).map(t => (
             <button
               key={t.id}
@@ -1001,6 +1032,10 @@ export default function PaymentsClient({ publishableKey }: { publishableKey: str
               <PaymentHistory />
             </div>
           </>
+        ) : tab === "clients" ? (
+          <BillingClientsTab />
+        ) : tab === "audit" ? (
+          <MoneyAuditTab />
         ) : (
           <InvoiceTracker />
         )}

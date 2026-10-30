@@ -5,7 +5,10 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "../../../../../lib/stripe";
-import { isAdminRequest } from "../../../../../lib/product-stripe";
+import { moneyAdmin } from "../../../../../lib/billing/money-auth";
+import { logMoneyAction } from "../../../../../lib/billing/audit-log";
+import { cleanRequestId, idemKey, stepKey } from "../../../../../lib/billing/idempotency";
+import { resolveMoneyCustomer } from "../../../../../lib/billing/money-customer";
 import { markUsed } from "../../../../../lib/coupons/once";
 import { resolveCouponForManual } from "../../../../../lib/sell";
 
@@ -13,15 +16,18 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  // Auth — any admin session (env admin or directory-role admin), matching the page guard.
-  if (!(await isAdminRequest())) {
+  // Money route: full admins only (restricted staff are refused).
+  const actor = await moneyAdmin();
+  if (!actor) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const stripe = getStripe();
 
   try {
-    const { amount, description, customerName, customerEmail, message, promotionCode, daysUntilDue, dueDate } = await req.json();
+    const body = await req.json();
+    const { amount, description, customerName, customerEmail, message, promotionCode, daysUntilDue, dueDate, clientId } = body;
+    const base = idemKey("create-invoice", cleanRequestId(body.requestId), { actor, amount, description, customerEmail, message, promotionCode, daysUntilDue, dueDate, clientId });
 
     // Validate
     if (!amount || typeof amount !== "number" || amount < 50) {
@@ -48,19 +54,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Find or create customer
-    const existing = await stripe.customers.list({ email: customerEmail, limit: 1 });
-    let customerId: string;
-    if (existing.data.length > 0) {
-      customerId = existing.data[0].id;
-    } else {
-      const customer = await stripe.customers.create({
-        name: customerName || undefined,
-        email: customerEmail,
-        metadata: { source: "saabai-admin-payments" },
-      });
-      customerId = customer.id;
-    }
+    // Linked billing client first, then email (no duplicate customers).
+    const { customerId, client } = await resolveMoneyCustomer(stripe, { clientId, email: customerEmail, name: customerName, source: "saabai-admin-payments", idemBase: base });
+    if (!customerId) return NextResponse.json({ error: "Customer could not be resolved" }, { status: 400 });
 
     // Due date: an exact date (overrides) or payment terms in days. Stripe wants
     // exactly one of due_date / days_until_due with collection_method send_invoice.
@@ -88,9 +84,10 @@ export async function POST(req: NextRequest) {
         source: "saabai-admin-payments",
         description,
         coupon_code: appliedCode || "",
+        saabai_client_id: client?.id || "",
       },
       auto_advance: false, // we'll finalize + send manually
-    });
+    }, { idempotencyKey: stepKey(base, "invoice") });
 
     // Attach the line item to THIS invoice explicitly. Relying on Stripe to sweep
     // up pending invoice items is unreliable and left the invoice totalling $0.
@@ -101,10 +98,11 @@ export async function POST(req: NextRequest) {
       currency: "aud",
       description,
       metadata: { source: "saabai-admin-payments" },
-    });
+    }, { idempotencyKey: stepKey(base, "item") });
 
-    const finalized = await stripe.invoices.finalizeInvoice(invoice.id);
-    const sent = await stripe.invoices.sendInvoice(finalized.id);
+    const finalized = invoice.status === "draft" ? await stripe.invoices.finalizeInvoice(invoice.id, {}, { idempotencyKey: stepKey(base, "finalize") }) : invoice;
+    const sent = await stripe.invoices.sendInvoice(finalized.id, {}, { idempotencyKey: stepKey(base, "send") });
+    await logMoneyAction({ actor, action: "invoice.send", amountCents: sent.amount_due, currency: "aud", clientId: client?.id, clientEmail: customerEmail, stripeIds: { invoice: sent.id, customer: customerId }, ok: true, note: description });
 
     if (onceUse) await markUsed(onceUse, customerEmail, "admin:create-invoice:" + Date.now());
     return NextResponse.json({
@@ -117,6 +115,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[payments/create-invoice]", msg);
+    await logMoneyAction({ actor, action: "invoice.send", ok: false, note: msg });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

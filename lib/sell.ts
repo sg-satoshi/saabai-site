@@ -175,13 +175,13 @@ export function buildQuote(product: CatalogueProduct, coupon?: ResolvedCoupon | 
 }
 
 /** Find an existing Stripe customer by email, or create one. */
-export async function createOrFindCustomer(stripe: Stripe, name: string | undefined, email: string): Promise<string> {
+export async function createOrFindCustomer(stripe: Stripe, name: string | undefined, email: string, idempotencyKey?: string): Promise<string> {
   const existing = await stripe.customers.list({ email, limit: 1 });
   if (existing.data.length > 0) return existing.data[0].id;
   const customer = await stripe.customers.create({
     name: name || undefined,
     email,
     metadata: { source: "saabai-sell" },
-  });
+  }, idempotencyKey ? { idempotencyKey } : undefined);
   return customer.id;
 }

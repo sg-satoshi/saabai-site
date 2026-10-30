@@ -8,7 +8,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "../../../../../lib/stripe";
 import { getProduct, INTERVAL_MAP } from "../../../../../lib/product-catalogue";
-import { isAdminRequest } from "../../../../../lib/product-stripe";
+import { moneyAdmin } from "../../../../../lib/billing/money-auth";
+import { logMoneyAction } from "../../../../../lib/billing/audit-log";
+import { cleanRequestId, idemKey, stepKey } from "../../../../../lib/billing/idempotency";
 import { resolveCoupon, bakedAmounts } from "../../../../../lib/sell";
 
 export const runtime = "nodejs";
@@ -17,7 +19,9 @@ export const dynamic = "force-dynamic";
 const SITE = "https://www.saabai.ai";
 
 export async function POST(req: NextRequest) {
-  if (!(await isAdminRequest())) {
+  // Money route: full admins only (restricted staff are refused).
+  const actor = await moneyAdmin();
+  if (!actor) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -28,6 +32,7 @@ export async function POST(req: NextRequest) {
 
   const product = await getProduct(String(body?.productId || ""));
   if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
+  const base = idemKey("sell-link", cleanRequestId(body?.requestId), { actor, productId: product.id, customerEmail, code: body?.code });
 
   try {
     const stripe = getStripe();
@@ -85,11 +90,13 @@ export async function POST(req: NextRequest) {
       params.subscription_data = { trial_period_days: product.trialDays };
     }
 
-    const session = await stripe.checkout.sessions.create(params);
+    const session = await stripe.checkout.sessions.create(params, { idempotencyKey: stepKey(base, "checkout") });
+    await logMoneyAction({ actor, action: "sell.link", clientEmail: customerEmail, stripeIds: { checkout_session: session.id }, productId: product.id, ok: true, note: product.name });
     return NextResponse.json({ url: session.url });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[admin/sell/link]", msg);
+    await logMoneyAction({ actor, action: "sell.link", clientEmail: customerEmail, ok: false, note: msg });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
