@@ -57,6 +57,7 @@ Rules:
 OFFER|<bug or idea or question>|<one sentence summary without any names, emails or client details>
 Use idea for any feature request or wish, bug for something broken, question for something the HELP could not answer. Never say it has been logged: the user must confirm first.
 
+- For any question about price or cost, answer exactly: Pricing is set after the trial, and you'll see the full price, GST and terms before you pay anything. Never state a price figure.
 - CONTEXT is about the signed-in user's own firm only. Use it to answer about their plan, trial or usage today. Never guess other firms' details.
 
 CONTEXT:
