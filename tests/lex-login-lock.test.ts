@@ -42,8 +42,11 @@ async function call(who: Who, method: string, path: string) {
 }
 const passes = (r: Response) => r.status === 200 && !r.headers.get("location");
 
-test("logged out: /lex and subroutes redirect to /login with a return path", async () => {
-  for (const [path, back] of [["/lex", "/lex"], ["/lex/anything", "/lex/anything"], ["/lex?q=adverse%20possession", "/lex?q=adverse%20possession"]]) {
+test("logged out: bare /lex goes to /legal (#410); subroutes and queries redirect to /login with a return path", async () => {
+  const bare = await call(null, "GET", "/lex");
+  assert.equal(bare.status, 307);
+  assert.equal(new URL(bare.headers.get("location")!).pathname, "/legal");
+  for (const [path, back] of [["/lex/anything", "/lex/anything"], ["/lex?q=adverse%20possession", "/lex?q=adverse%20possession"]]) {
     const r = await call(null, "GET", path);
     assert.ok([302, 307, 308].includes(r.status), `${path} -> ${r.status}`);
     const loc = new URL(r.headers.get("location")!);
@@ -78,8 +81,11 @@ test("signed in: Saabai Lex user, portal (law-firm) user and admin reach /lex an
 
 test("a forged or expired session does not unlock /lex", async () => {
   const { proxy } = await import("../proxy");
+  // Bare /lex signed out now goes to /legal (#410); a forged cookie must not change that, and deep links still need sign-in.
   const r = await proxy(new NextRequest("http://localhost/lex", { headers: { host: "localhost", cookie: "portal_session=e30.forged" } }));
-  assert.equal(new URL(r!.headers.get("location")!).pathname, "/login");
+  assert.equal(new URL(r!.headers.get("location")!).pathname, "/legal");
+  const rq = await proxy(new NextRequest("http://localhost/lex?q=x", { headers: { host: "localhost", cookie: "portal_session=e30.forged" } }));
+  assert.equal(new URL(rq!.headers.get("location")!).pathname, "/login");
   const { signSession } = await import("../lib/portal-session");
   const r2 = await proxy(new NextRequest("http://localhost/api/lex-compare", { method: "POST", headers: { host: "localhost", cookie: `portal_session=${signSession("x@firm.test", -1000)}` } }));
   assert.equal(r2!.status, 401);
