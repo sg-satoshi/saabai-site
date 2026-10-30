@@ -16,9 +16,10 @@ import { randomBytes } from "crypto";
 import { getRedis } from "./redis";
 import { getDirectoryUser, saveDirectoryUser } from "./user-directory";
 import { ensureClientAccount } from "./client-account";
+import { deleteFirmFeedback } from "./lex-feedback";
 
-export const LEX_TERMS_VERSION = "lex-terms-2026-10-30";
-export const LEX_SEAT_CAP = 3; // /legal: "Firm plan is $299 a month ... for 3 lawyer seats"
+export const LEX_TERMS_VERSION = "lex-terms-2026-10-30b";
+export const LEX_SEAT_CAP = 3; // Firm plan: 3 lawyer seats
 export const GRACE_DAYS = 7;
 /** Clause 10.7: a cancelled firm's Lex data is kept this long, then deleted (a resubscribe within it keeps the data). */
 export const DATA_RETENTION_DAYS = 30;
@@ -32,7 +33,11 @@ export type PendingSignup = {
   termsVersion: string; termsAcceptedAt: string; createdAt: string;
 };
 
-export type FirmStatus = "active" | "grace" | "lapsed";
+/** "trial": invite-only 60-day free trial (lib/lex-trial.ts), no card or Stripe. */
+export type FirmStatus = "active" | "grace" | "lapsed" | "trial";
+export type LapseReason = "unpaid" | "cancelled" | "trial_ended";
+/** Lapses that end the plan and start the clause 10.7 30-day data clock. */
+export const isEndedLapse = (r?: LapseReason) => r === "cancelled" || r === "trial_ended";
 export type LexFirm = {
   firmId: string; firmName: string; adminEmail: string; adminName: string;
   members: string[];            // invited staff emails (not including admin)
@@ -41,7 +46,21 @@ export type LexFirm = {
   status: FirmStatus; graceUntil?: string; cancelAtPeriodEnd?: boolean; periodEnd?: string;
   /** Stripe current_period_start (ISO). The Lex document allowance resets on this billing cycle. */
   periodStart?: string;
-  lapseReason?: "unpaid" | "cancelled";
+  lapseReason?: LapseReason;
+  /** Invite-only free trial (lib/lex-trial.ts). */
+  trialStartedAt?: string; trialEndsAt?: string; inviteCode?: string; inviteSource?: string;
+  /** Set when a trial firm subscribed through /lex/signup (same firm record, linked by owner email). */
+  convertedFromTrialAt?: string;
+  /** Firm contact details collected at trial signup (privacy policy section 6). */
+  phone?: string; address?: FirmAddress;
+  /** Set when Saabai ended a trial early from the admin trial list. */
+  trialRevokedAt?: string; trialRevokedBy?: string;
+  /** Set when the retention sweep cleared personal contact details (scrubFirmPii). */
+  piiScrubbedAt?: string;
+  /** founding_member: joined a trial while the founding offer was open; may convert at STRIPE_PRICE_LEX_FOUNDING. */
+  foundingMember?: boolean;
+  foundingLostAt?: string;
+  foundingCountedAt?: string;
   /** Stripe event.created (seconds) of the latest successful payment; older payment_failed events are ignored. */
   lastPaidAt?: number;
   /** Staff released when the plan was cancelled (kept for the record only). */
@@ -71,7 +90,8 @@ const lc = (s: string) => s.trim().toLowerCase();
 const clean = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export type SignupInput = { name: string; email: string; firmName: string; phone?: string; abn?: string };
+export type FirmAddress = { street: string; suburb: string; state: string; postcode: string };
+export type SignupInput = { name: string; email: string; firmName: string; phone?: string; abn?: string; address?: FirmAddress };
 export function validateSignup(body: Record<string, unknown>): { ok: true; value: SignupInput } | { ok: false; error: string; bot?: boolean; field?: string } {
   // Honeypot: a hidden "website" field real people never fill in.
   if (clean(body.website, 200)) return { ok: false, error: "Invalid request", bot: true };
@@ -150,6 +170,14 @@ export async function firmByEmail(email: string): Promise<LexFirm | null> {
   return id ? getFirm(String(id)) : null;
 }
 
+/** The trial firm this owner email can convert by subscribing: on trial, or trial ended with data not yet deleted. */
+export async function convertibleTrialFirm(email: string): Promise<LexFirm | null> {
+  const f = await firmByEmail(email);
+  if (!f || f.adminEmail !== lc(email) || f.subscriptionId) return null;
+  if (f.status === "trial" || (f.status === "lapsed" && f.lapseReason === "trial_ended" && !f.dataDeletedAt)) return f;
+  return null;
+}
+
 /** First time an id is seen returns true; repeats return false. */
 export async function markSeen(id: string): Promise<boolean> {
   const r = await redis().set(`lex:stripe:seen:${id}`, "1", { nx: true, ex: SEEN_TTL_SECONDS });
@@ -199,7 +227,7 @@ function seatEmails(f: LexFirm): string[] { return [f.adminEmail, ...f.members];
  * Grants or removes Lex for every seat. A grant is recorded in f.granted (and saved) BEFORE the product is
  * added, so a crash mid-way can never leave Lex on someone this firm won't later remove.
  */
-async function setAccess(f: LexFirm, on: boolean, mailer: Mailer): Promise<void> {
+export async function setAccess(f: LexFirm, on: boolean, mailer: Mailer): Promise<void> {
   for (const e of seatEmails(f)) {
     if (on) {
       if (!f.granted.includes(e) && !(await hasLexProduct(e))) { f.granted = [...f.granted, e]; await saveFirm(f); }
@@ -232,7 +260,9 @@ export async function provisionLexCheckout(eventId: string, s: CheckoutLike, mai
     const subId = idOf(s.subscription);
     const r = redis();
     // Stable firm id per subscription (or session), so a retry after a crash reuses the same firm.
-    const firmId = `lf_${(subId ?? s.id).replace(/[^A-Za-z0-9]/g, "").slice(-40)}`;
+    // A trial firm (live or ended, data not yet deleted) owned by this email converts in place, keeping its seats and data.
+    const trialFirm = await convertibleTrialFirm(email);
+    const firmId = trialFirm?.firmId ?? `lf_${(subId ?? s.id).replace(/[^A-Za-z0-9]/g, "").slice(-40)}`;
     if (!(await getFirm(firmId))) {
       const now = new Date().toISOString();
       const fresh: LexFirm = {
@@ -250,7 +280,7 @@ export async function provisionLexCheckout(eventId: string, s: CheckoutLike, mai
     if (!claimed) {
       const cur = String(await r.get(`lex:firm:byemail:${email}`));
       const curFirm = cur !== firmId ? await getFirm(cur) : null;
-      if (curFirm && curFirm.status === "lapsed" && curFirm.lapseReason === "cancelled") {
+      if (curFirm && curFirm.status === "lapsed" && isEndedLapse(curFirm.lapseReason)) {
         await r.set(`lex:firm:byemail:${email}`, firmId);
         // Resubscribed within the 30 days: keep the old firm's data (matters are keyed by firm domain, so they come straight back).
         if (!curFirm.dataDeletedAt) await withFirmLock(curFirm.firmId, async (old) => { old.dataDeleteAfter = undefined; old.resubscribedAs = firmId; });
@@ -271,6 +301,13 @@ export async function provisionLexCheckout(eventId: string, s: CheckoutLike, mai
       }
       f.customerId = idOf(s.customer) ?? f.customerId;
       f.subscriptionId = subId ?? f.subscriptionId;
+      if (f.status === "trial" || f.lapseReason === "trial_ended") {
+        f.convertedFromTrialAt = new Date().toISOString(); f.dataDeleteAfter = undefined; f.dataDeletionHeldAt = undefined;
+        // Founding place taken on a paid conversion at the founding price (cap mode "paid_conversions").
+        if (FOUNDING_CAP_COUNTS === "paid_conversions" && f.foundingMember && s.metadata?.founding === "1" && !f.foundingCountedAt) {
+          await consumeFoundingPlace(f.firmId); f.foundingCountedAt = f.convertedFromTrialAt;
+        }
+      }
       f.status = "active"; f.lapseReason = undefined; f.graceUntil = undefined;
       f.lastPaidAt = Math.max(f.lastPaidAt ?? 0, eventCreated ?? s.created ?? 0);
       await setAccess(f, true, mailer);
@@ -321,11 +358,59 @@ async function knownPeriod(subId?: string): Promise<Period | null> {
 }
 export const invoiceSubId = (inv: InvoiceLike) => idOf(inv.subscription) ?? idOf(inv.parent?.subscription_details?.subscription);
 
+/**
+ * Founding status is lost on ANY lapse of a paid founding subscription (unpaid under 10.6, or cancelled).
+ * Single switch in case Shane rules otherwise.
+ */
+export const FOUNDING_LOST_ON_LAPSE = true;
+/** What the founding cap counts: "paid_conversions" (default) or "trial_starts". Shane to confirm. */
+export const FOUNDING_CAP_COUNTS: "paid_conversions" | "trial_starts" = "paid_conversions";
+export const FOUNDING_COUNT_KEY = "lex:trial:founding:count";
+/**
+ * Founding places in paid_conversions mode are RESERVED atomically when a founding checkout session is
+ * created (INCR against the cap, rolled back over the cap), held in a sorted set scored by expiry, and either
+ * consumed on payment or released on checkout.session.expired, a checkout error, or the hourly sweep.
+ * FOUNDING_COUNT_KEY = paid places + live reservations.
+ */
+export const FOUNDING_RES_KEY = "lex:trial:founding:res";
+export const FOUNDING_RES_TTL_MS = 25 * 3600_000; // Stripe Checkout sessions expire after 24h
+export async function reserveFoundingPlace(firmId: string, cap: number | null, now = Date.now()): Promise<boolean> {
+  const r = redis();
+  const added = Number(await r.zadd(FOUNDING_RES_KEY, { score: now + FOUNDING_RES_TTL_MS, member: firmId }));
+  if (!added) return true; // this firm already holds a place (score refreshed)
+  const n = Number(await r.incr(FOUNDING_COUNT_KEY));
+  if (cap !== null && n > cap) {
+    await r.incrby(FOUNDING_COUNT_KEY, -1);
+    await r.zrem(FOUNDING_RES_KEY, firmId);
+    return false;
+  }
+  return true;
+}
+export async function releaseFoundingPlace(firmId: string): Promise<boolean> {
+  const r = redis();
+  if (Number(await r.zrem(FOUNDING_RES_KEY, firmId)) !== 1) return false;
+  await r.incrby(FOUNDING_COUNT_KEY, -1);
+  return true;
+}
+/** On payment: the reservation becomes the paid place (counted once). A lapsed reservation is re-counted. */
+export async function consumeFoundingPlace(firmId: string): Promise<void> {
+  const r = redis();
+  if (Number(await r.zrem(FOUNDING_RES_KEY, firmId)) !== 1) await r.incr(FOUNDING_COUNT_KEY);
+}
+export async function sweepFoundingReservations(now = Date.now()): Promise<number> {
+  const due = (await redis().zrange(FOUNDING_RES_KEY, "-inf", now, { byScore: true })) as string[];
+  let n = 0;
+  for (const id of due) if (await releaseFoundingPlace(String(id))) n++;
+  return n;
+}
+
 /** Mutates f (caller holds the firm lock). */
-export async function lapseFirm(f: LexFirm, reason: "unpaid" | "cancelled", mailer: Mailer): Promise<void> {
+export async function lapseFirm(f: LexFirm, reason: LapseReason, mailer: Mailer, dataClockFrom = new Date()): Promise<void> {
   await setAccess(f, false, mailer);
+  const wasPaid = f.status !== "trial" && !!f.subscriptionId;
   f.status = "lapsed"; f.lapseReason = reason; f.graceUntil = undefined;
-  if (reason === "cancelled") {
+  if (FOUNDING_LOST_ON_LAPSE && wasPaid && f.foundingMember) { f.foundingMember = false; f.foundingLostAt = new Date().toISOString(); }
+  if (isEndedLapse(reason)) {
     // A cancelled plan never comes back (a new signup makes a new firm), so free former staff to join another firm.
     // The owner keeps their link so they can still see the plan and reach billing.
     const r = redis();
@@ -333,7 +418,8 @@ export async function lapseFirm(f: LexFirm, reason: "unpaid" | "cancelled", mail
     f.formerMembers = [...new Set([...(f.formerMembers ?? []), ...f.members])];
     f.members = [];
     f.granted = f.granted.filter((g) => g === f.adminEmail);
-    if (!f.dataDeleteAfter) f.dataDeleteAfter = new Date(Date.now() + DATA_RETENTION_DAYS * 86400_000).toISOString();
+    // Clause 10.7: 30 days from the end (for a trial, from the trial end date, not the sweep time).
+    if (!f.dataDeleteAfter) f.dataDeleteAfter = new Date(dataClockFrom.getTime() + DATA_RETENTION_DAYS * 86400_000).toISOString();
   }
 }
 /** Mutates f (caller holds the firm lock). Restoring is silent: no repeat welcome emails. */
@@ -390,7 +476,7 @@ export async function handleLexLifecycle(event: LexEvent, mailer: Mailer, now = 
           const p = subPeriod(o);
           if (p) advancePeriod(firm, p); // forward-only, like invoice.paid
           if (o.status === "canceled") { await lapseFirm(firm, "cancelled", mailer); return "lapsed"; }
-          if (o.status === "active" && firm.status !== "active" && firm.lapseReason !== "cancelled") { await restoreFirm(firm); return "restored"; }
+          if (o.status === "active" && firm.status !== "active" && !isEndedLapse(firm.lapseReason)) { await restoreFirm(firm); return "restored"; }
           return "updated";
         }
         default:
@@ -447,7 +533,7 @@ export async function inviteMember(firmId: string, rawEmail: string, mailer: Mai
   let res: { ok: boolean; error?: string; cap?: boolean } = { ok: true };
   const firm = await withFirmLock(firmId, async (f) => {
     if (email === f.adminEmail || f.members.includes(email)) { res = { ok: false, error: "That person already has a seat" }; return f; }
-    if (f.status !== "active") { res = { ok: false, error: "Invites are paused until billing is sorted" }; return f; }
+    if (f.status !== "active" && f.status !== "trial") { res = { ok: false, error: "Invites are paused until billing is sorted" }; return f; }
     if (seatsUsed(f) >= LEX_SEAT_CAP) { res = { ok: false, error: `Your plan includes ${LEX_SEAT_CAP} seats`, cap: true }; return f; }
     // Claim the email for this firm atomically; another firm may have claimed it since the check above.
     const claimed = (await redis().set(`lex:firm:byemail:${email}`, f.firmId, { nx: true })) === "OK"
@@ -507,7 +593,7 @@ export async function sweepDataRetention(del: DataDeleter, firmKeyOf: (email: st
     cursor = String(next);
     for (const k of keys) {
       const f0 = parse<LexFirm>(await r.get(k));
-      if (!(f0?.status === "lapsed" && f0.lapseReason === "cancelled" && f0.dataDeleteAfter && !f0.dataDeletedAt && new Date(f0.dataDeleteAfter) <= now)) continue;
+      if (!(f0?.status === "lapsed" && isEndedLapse(f0.lapseReason) && f0.dataDeleteAfter && !f0.dataDeletedAt && new Date(f0.dataDeleteAfter) <= now)) continue;
       live ??= new Set((await lexUsers()).map(firmKeyOf));
       const liveKeys = live;
       await withFirmLock(f0.firmId, async (f) => {
@@ -528,19 +614,45 @@ export async function sweepDataRetention(del: DataDeleter, firmKeyOf: (email: st
         for (const e of people) if (!(await hasLexProduct(e))) chatPeople.push(e);
         if (mode === "dry_run") {
           out.dryRun++;
-          log(`[lex retention] firm=${f.firmId} mode=dry_run keys=${firmKeys.length} chats=${chatPeople.length} outcome=would_delete`);
+          const fb = await deleteFirmFeedback(firmKeys, people, true);
+          log(`[lex retention] firm=${f.firmId} mode=dry_run keys=${firmKeys.length} chats=${chatPeople.length} feedback=${fb} outcome=would_delete`);
           return;
         }
         let matters = 0;
         for (const key of firmKeys) matters += await del.matters(key);
         for (const e of chatPeople) await del.threads(e);
+        const feedback = await deleteFirmFeedback(firmKeys, people, false);
         f.dataDeletedAt = now.toISOString();
+        // An ended trial's owner email link is released once its data is gone. A new trial is still refused by the
+        // hashed one-trial-per-firm claim marker. Paid firms keep the owner link for resubscribe.
+        if (f.lapseReason === "trial_ended") await r.eval(RELEASE_IF_OWNER, [`lex:firm:byemail:${f.adminEmail}`], [f.firmId]);
+        scrubFirmPii(f);
         out.deleted++;
-        log(`[lex retention] firm=${f.firmId} mode=live keys=${firmKeys.length} matters=${matters} chats=${chatPeople.length} outcome=deleted`);
+        log(`[lex retention] firm=${f.firmId} mode=live keys=${firmKeys.length} matters=${matters} chats=${chatPeople.length} feedback=${feedback} outcome=deleted`);
       });
     }
   } while (cursor !== "0" && ++pages < 100);
   return out;
+}
+
+/**
+ * After data deletion: clear personal contact details from the firm record, keeping only non-PII markers
+ * (ids, status, dates, plan flags). Owner name, phone and address always go, and so do former staff emails.
+ * The owner email is replaced for ended trials; paid firms keep it so the owner can resubscribe
+ * (their record is a billing record linked to Stripe).
+ */
+export const SCRUBBED = "[deleted]";
+export function scrubFirmPii(f: LexFirm): void {
+  f.adminName = SCRUBBED;
+  delete f.phone; delete f.address;
+  f.formerMembers = [];
+  f.members = [];
+  if (f.lapseReason === "trial_ended") {
+    f.granted = [];
+    f.adminEmail = `deleted@${f.firmId}.invalid`;
+    f.firmName = "Deleted firm"; // the firm's domain survives only as the HMAC claim marker
+  }
+  f.piiScrubbedAt = new Date().toISOString();
 }
 
 /**

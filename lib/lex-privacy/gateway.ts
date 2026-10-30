@@ -41,7 +41,8 @@ export type LexRoute =
   | "lex-review"
   | "lex-compare"
   | "lex-doc-extract"
-  | "lex-settings-test";
+  | "lex-settings-test"
+  | "lex-help";
 
 /** Where the model comes from. Routes describe it; only the gateway builds it. */
 export type LexModelSource =

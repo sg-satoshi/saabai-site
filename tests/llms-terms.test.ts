@@ -37,11 +37,12 @@ test("llms.txt keeps published prices and does not revive held claims", () => {
   assert.match(llms, /Presence from \$2,000/);
   assert.match(llms, /Growth from \$4,000/);
   assert.match(llms, /Signature from \$6,500/);
-  assert.match(llms, /Firm plan is \$299 a month/);
+  assert.match(llms, /Lex starts with a 60-day free trial/);
+  assert.doesNotMatch(llms, /\$299/);
   assert.match(llms, /within 1 business day/);
   assert.match(llms, /PlasticOnline\.com\.au/);
   assert.match(llms, /plasticonline\.com\.au/);
-  assert.doesNotMatch(llms, /Tributum|home-based|Holland Plastics|free trial|14-day trial|Blueprint is free/i);
+  assert.doesNotMatch(llms, /Tributum|home-based|Holland Plastics|(?<!60-day )free trial|14-day trial|Blueprint is free/i);
   assert.doesNotMatch(llms, /If work on a service has not begun/);
   assert.doesNotMatch(llms, /change-of-mind refunds/);
 });

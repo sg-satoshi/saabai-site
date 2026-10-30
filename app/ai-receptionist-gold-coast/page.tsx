@@ -138,7 +138,7 @@ export default function AiReceptionistGoldCoastPage() {
         <div className="wrap" style={{ maxWidth: 860 }}>
           <div className="card">
             <div className="voice-launch">
-              <LachiePortrait alt="Lachie, Saabai's AI voice receptionist" />
+              <LachiePortrait alt="Lachie, Saabai's AI voice demo" />
               <LachieLockup as="h2" second="Legend" descriptor="Saabai's AI receptionist." />
             </div>
             <div style={{ display: "grid", gap: 12, marginTop: 20, fontSize: 17, textAlign: "center" }}>
