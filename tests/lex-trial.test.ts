@@ -492,6 +492,7 @@ test("R2 privacy policy and trial page disclose the contact details and watermar
   assert.match(LEX_TRIAL_CONTACT_COPY, /phone number/);
   assert.match(LEX_TRIAL_CONTACT_COPY, /street address/);
   assert.match(LEX_TRIAL_CONTACT_COPY, /watermark/);
+  assert.match(LEX_TRIAL_CONTACT_COPY, /alert with your name, firm name and email domain, and that alert stays in our mailbox/);
   assert.match(readFileSync("app/privacy/page.tsx", "utf8"), /LEX_TRIAL_CONTACT_COPY/);
   assert.match(readFileSync("app/lex/signup/trial/page.tsx", "utf8"), /LEX_TRIAL_CONTACT_COPY/);
 });
@@ -542,6 +543,8 @@ test("B1 deletion sweep scrubs owner name, email, phone, address and staff email
   assert.equal(f.address, undefined);
   assert.deepEqual(f.members, []); assert.deepEqual(f.formerMembers, []); assert.deepEqual(f.granted, []);
   assert.match(f.adminEmail, /^deleted@lf_[a-z0-9]+\.invalid$/);
+  assert.equal(f.firmName, "Deleted firm");
+  assert.ok(!raw0(f).includes("scrubfirm"), "domain survives only as the HMAC claim marker");
   const raw = String(await r.get(`lex:firm:${f.firmId}`));
   for (const pii of ["pii@scrubfirm.test", "Jane Citizen", "0733335555", "Secret Lane", "Paddington"]) assert.ok(!raw.includes(pii), pii);
   assert.equal(f.status, "lapsed"); assert.equal(f.lapseReason, "trial_ended"); assert.ok(f.createdAt && f.trialEndsAt, "non-PII markers kept");
@@ -549,6 +552,8 @@ test("B1 deletion sweep scrubs owner name, email, phone, address and staff email
   const src = readFileSync("lib/lex-subscription.ts", "utf8");
   assert.doesNotMatch(src, /a new trial still needs a new admin invite code/, "stale comment fixed");
 });
+async function startTrialNoSecret(email: string) { const { startTrial } = await T(); return startTrial(input(email), "", mailer); }
+function raw0(f: object) { return JSON.stringify(f); }
 async function startTrial2(email: string) { const { startTrial } = await T(); return startTrial(input(email), "", mailer); }
 
 test("B2 new-trial alert carries only name, firm, domain and the admin list link", async () => {
@@ -561,7 +566,7 @@ test("B2 new-trial alert carries only name, firm, domain and the admin list link
   assert.doesNotMatch(body, /phone|address|adminEmail\}/);
 });
 
-test("B3 claim markers are HMAC with an existing server secret (sha256 fallback); revoke logs a line", async () => {
+test("B3 claim markers are HMAC with an existing server secret, fail closed without one; revoke logs a line", async () => {
   const { trialClaimKey, revokeTrial, requestTrial, activateTrial } = await T();
   const { createHash, createHmac } = await import("node:crypto");
   const prev = process.env.LEX_PRIVACY_TOKEN_SECRET;
@@ -569,7 +574,13 @@ test("B3 claim markers are HMAC with an existing server secret (sha256 fallback)
     delete process.env.LEX_PRIVACY_TOKEN_SECRET;
     const ps = process.env.PORTAL_SESSION_SECRET, ss = process.env.SAABAI_SESSION_SECRET;
     delete process.env.PORTAL_SESSION_SECRET; delete process.env.SAABAI_SESSION_SECRET;
-    assert.equal(trialClaimKey("a@hm.test"), `lex:trial:claim:${createHash("sha256").update("lex-trial:d:hm.test").digest("hex")}`);
+    const errs: string[] = []; const oe = console.error; console.error = (...x: unknown[]) => { errs.push(x.join(" ")); };
+    try {
+      assert.throws(() => trialClaimKey("a@hm.test"), (e: Error) => e.name === "LexTrialSecretMissing", "fails closed, no sha256 fallback");
+      await assert.rejects(startTrialNoSecret("a@hm.test"), (e: Error) => e.name === "LexTrialSecretMissing", "trial refused");
+    } finally { console.error = oe; }
+    assert.ok(errs.some((l) => l.includes("claim marker secret missing")), "clear server error log");
+    void createHash;
     process.env.LEX_PRIVACY_TOKEN_SECRET = "s3cret-for-test";
     assert.equal(trialClaimKey("a@hm.test"), `lex:trial:claim:${createHmac("sha256", "s3cret-for-test").update("lex-trial:d:hm.test").digest("hex")}`);
     if (ps) process.env.PORTAL_SESSION_SECRET = ps; if (ss) process.env.SAABAI_SESSION_SECRET = ss;

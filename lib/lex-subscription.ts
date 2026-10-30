@@ -592,6 +592,7 @@ export function scrubFirmPii(f: LexFirm): void {
   if (f.lapseReason === "trial_ended") {
     f.granted = [];
     f.adminEmail = `deleted@${f.firmId}.invalid`;
+    f.firmName = "Deleted firm"; // the firm's domain survives only as the HMAC claim marker
   }
   f.piiScrubbedAt = new Date().toISOString();
 }

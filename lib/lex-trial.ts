@@ -11,7 +11,7 @@
  *   lex:trial:invites              set of invite codes (admin list)
  *   lex:trial:firms                set of trial firm ids (sweep and admin list)
  */
-import { createHash, createHmac, randomBytes } from "crypto";
+import { createHmac, randomBytes } from "crypto";
 import { getRedis } from "./redis";
 import {
   LEX_TERMS_VERSION, type LexFirm, type Mailer, type SignupInput,
@@ -237,7 +237,7 @@ export function trialIdentity(email: string): string {
 }
 /**
  * Claim key: HMAC-SHA256 of the normalised identity, keyed with an existing server secret (same chain as the
- * Lex privacy masking key; no new env var). Without a secret (local/tests) it falls back to plain sha256.
+ * Lex privacy masking key; no new env var). Fails closed: with no secret set, trials are refused (error logged).
  * Only a marker ("1") is stored, never the address or domain. Rotating the secret orphans existing markers.
  */
 function claimSecret(): string | null {
@@ -246,8 +246,11 @@ function claimSecret(): string | null {
 export function trialClaimKey(email: string): string {
   const id = `lex-trial:${trialIdentity(email)}`;
   const secret = claimSecret();
-  const h = secret ? createHmac("sha256", secret).update(id).digest("hex") : createHash("sha256").update(id).digest("hex");
-  return `lex:trial:claim:${h}`;
+  if (!secret) {
+    console.error("[lex trial] claim marker secret missing: set LEX_PRIVACY_TOKEN_SECRET (or PORTAL_SESSION_SECRET / SAABAI_SESSION_SECRET). Trials refused.");
+    const e = new Error("Lex trial claim secret is not configured"); e.name = "LexTrialSecretMissing"; throw e;
+  }
+  return `lex:trial:claim:${createHmac("sha256", secret).update(id).digest("hex")}`;
 }
 export const TRIAL_ALREADY_USED = "A Lex free trial has already been used for this firm. To keep using Lex, subscribe or talk to us at hello@saabai.ai.";
 export const SELF_SERVE_SOURCE = "Self-serve";
