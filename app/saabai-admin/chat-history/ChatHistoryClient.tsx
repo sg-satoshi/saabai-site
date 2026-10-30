@@ -38,22 +38,23 @@ export default function ChatHistoryClient({ bot }: { bot: string }) {
   const slug = SLUG.test(requested) ? requested.toLowerCase() : fromRow;
   const aliases = slug ? historyBotIds(slug).filter((id) => id !== slug) : [];
 
+  const listedMiss = loaded && !failed && !!requested && !row;
+
   return (
-    <div data-testid="chat-history" style={{ maxWidth: 900 }}>
+    <div data-testid="chat-history" className="ch-page">
       <PageHeader
         title="Chat history"
         meta={row ? `${row.name} (${row.slug}). Transcripts are kept for 90 days, then deleted.` : "Funnel counts and transcripts for one chatbot. Transcripts are kept for 90 days, then deleted."}
         back={{ href: row ? chatbotPagePath(row.slug) : "/saabai-admin/chatbots", label: row ? row.name : "All chatbots" }}
       />
       {loaded && !failed && rows.length > 0 && (
-        <label style={{ display: "block", margin: "0 0 20px", fontSize: 13, color: "#475569" }}>
+        <label className="ch-pick">
           Chatbot{" "}
           <select
             aria-label="Chatbot"
             data-testid="history-bot-select"
             value={rows.some((r) => r.slug === (row?.slug || requested)) ? (row?.slug || requested) : ""}
             onChange={(e) => { if (e.target.value) router.push(chatbotHistoryPath(e.target.value)); }}
-            style={{ marginLeft: 8, font: "400 13px var(--font-admin-sans), system-ui, sans-serif", border: "1px solid #c6cad6", borderRadius: 8, background: "#fff", color: "#0b092e", padding: "6px 8px" }}
           >
             <option value="">Choose a chatbot</option>
             {rows.map((r) => <option key={r.slug} value={r.slug}>{r.name}</option>)}
@@ -62,22 +63,22 @@ export default function ChatHistoryClient({ bot }: { bot: string }) {
       )}
       {!requested && (
         <div data-testid="history-empty-filter">
-          <p style={{ color: "#475569", marginBottom: 12 }}>Open a chatbot and choose Chat history, or pick one here.</p>
+          <p className="ch-alias">Open a chatbot and choose Chat history, or pick one here.</p>
           {failed && <p role="alert">Could not load chatbots.</p>}
           {!loaded && <p>Loading</p>}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <div className="ch-bots">
             {rows.map((r) => (
               <a key={r.slug} className="btn sm" href={chatbotHistoryPath(r.slug)} data-testid={`history-bot-${r.slug}`}>{r.name}</a>
             ))}
           </div>
         </div>
       )}
-      {requested && !slug && loaded && !row && <p role="alert" data-testid="history-missing">No chatbot matches that address.</p>}
+      {listedMiss && <p role="alert" data-testid="history-missing">No chatbot matches that address.</p>}
       {requested && !slug && !loaded && <p>Loading</p>}
-      {slug && (
+      {slug && !listedMiss && (
         <>
-          {aliases.length > 0 && <p style={{ color: "#64748b", fontSize: 13, margin: "0 0 16px" }} data-testid="history-aliases">Also includes chats stored under {aliases.join(", ")}.</p>}
-          <InsightsPanel variant="admin" endpoint={`/api/admin/chatbots/insights?slug=${encodeURIComponent(slug)}`} />
+          {aliases.length > 0 && <p className="ch-alias" data-testid="history-aliases">Also includes chats stored under {aliases.join(", ")}.</p>}
+          <InsightsPanel key={slug} variant="admin" endpoint={`/api/admin/chatbots/insights?slug=${encodeURIComponent(slug)}`} />
         </>
       )}
     </div>

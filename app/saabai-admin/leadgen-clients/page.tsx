@@ -27,7 +27,7 @@ export default async function LeadGenClientsPage({ searchParams }: { searchParam
 
   return (
     <AdminShell activePath="/saabai-admin/customers" title="LeadGen clients">
-      <div data-testid="leadgen-clients" style={{ maxWidth: 900 }}>
+      <div data-testid="leadgen-clients" className="ch-page">
         <PageHeader
           title={one ? one.businessName : "LeadGen clients"}
           meta={one ? one.slug : "Read only. Open a client from Customers, or pick one here."}
@@ -36,9 +36,9 @@ export default async function LeadGenClientsPage({ searchParams }: { searchParam
         {failed && <p role="alert">Could not load LeadGen clients.</p>}
         {!failed && raw && !one && <p role="alert" data-testid="leadgen-missing">No LeadGen client matches that address.</p>}
         {one && (
-          <section className="au-card" data-testid="leadgen-client">
-            <div className="au-card-bd">
-              <dl className="au-body" style={{ display: "grid", gridTemplateColumns: "160px 1fr", gap: "8px 16px" }}>
+          <section className="ch-card" data-testid="leadgen-client">
+            <div className="ch-card-bd">
+              <dl className="lg-fields">
                 <dt>Business</dt><dd>{one.businessName}</dd>
                 <dt>Slug</dt><dd>{one.slug}</dd>
                 <dt>Email</dt><dd>{one.email || "No email on file"}</dd>
@@ -52,11 +52,12 @@ export default async function LeadGenClientsPage({ searchParams }: { searchParam
           </section>
         )}
         {!one && !failed && (
-          <div style={{ display: "grid", gap: 8 }}>
+          <div className="lg-grid">
             {clients.length === 0 && <p data-testid="leadgen-empty">No LeadGen clients yet.</p>}
             {clients.map((c) => (
-              <Link key={c.id} className="btn sm" href={`/saabai-admin/leadgen-clients?id=${encodeURIComponent(c.id)}`} data-testid={`leadgen-${c.id}`} style={{ justifyContent: "flex-start" }}>
-                {c.businessName} ({c.slug})
+              <Link key={c.id} className="ch-card lg-item" href={`/saabai-admin/leadgen-clients?id=${encodeURIComponent(c.id)}`} data-testid={`leadgen-${c.id}`}>
+                <strong>{c.businessName}</strong>
+                <span>{c.slug}</span>
               </Link>
             ))}
           </div>

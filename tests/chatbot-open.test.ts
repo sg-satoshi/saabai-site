@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
-import { chatbotEditorPath, chatbotHistoryPath, chatbotPagePath, chatbotPlanPath, historyBotIds, rowForSlug } from "../lib/chatbot/paths";
+import { chatbotEditorPath, chatbotHistoryPath, chatbotPagePath, chatbotPlanPath, historyBotIds, rowForSlug, slugBelongsToBots } from "../lib/chatbot/paths";
 
 const ROOT = new URL("..", import.meta.url).pathname;
 const read = (p: string) => readFileSync(ROOT + p, "utf8");
@@ -20,6 +20,11 @@ test("chatbot links use the canonical slug", () => {
   assert.deepEqual(historyBotIds("bo-consultancy"), ["bo-consultancy", "bo"]);
   assert.deepEqual(historyBotIds("cycle-repair"), ["cycle-repair"]);
   assert.deepEqual(historyBotIds("heaven-thai-massage"), ["heaven-thai-massage"]);
+  const groups = [{ site: { slug: "lmm-site" }, slugs: ["lmm-site"], folded: [{ slug: "lifestyle-money" }] }];
+  assert.equal(slugBelongsToBots("lmm-site", groups), true);
+  assert.equal(slugBelongsToBots("lifestyle-money", groups), true);
+  assert.equal(slugBelongsToBots("not-a-bot", groups), false);
+  assert.equal(slugBelongsToBots("lmm", groups), false);
 });
 
 test("a folded slug resolves to the canonical row", () => {
@@ -59,6 +64,10 @@ test("the list and detail page open the canonical bot, and chat history is the s
   assert.match(historyClient, /\/api\/admin\/chatbots\/insights\?slug=/);
   assert.doesNotMatch(history + historyClient, /method:\s*["']POST["']/);
   assert.doesNotMatch(history + historyClient, /\/api\/(?:chat|lead|signup|subscribe|draft)\b/);
+  assert.doesNotMatch(historyClient, /maxWidth/);
+  assert.doesNotMatch(read("app/saabai-admin/leadgen-clients/page.tsx"), /maxWidth/);
+  assert.match(read("app/saabai-admin/admin.css"), /\.ch-split\{/);
+  assert.doesNotMatch(read("app/components/chatbot/InsightsPanel.tsx"), /#[0-9a-fA-F]{3,8}/);
   for (const src of [list, detail, detailClient, paths]) {
     assert.ok(!src.includes("/saabai-admin/chatbots/history"), "old chat history page is still linked");
     assert.ok(!src.includes("\u2014"), "em dash in chatbot open UI");

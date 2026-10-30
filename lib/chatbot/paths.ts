@@ -47,6 +47,16 @@ export function historyBotIds(slug: string, extraSlugs: string[] = []): string[]
   return ids;
 }
 
+type HistoryGroup = { site: { slug: string }; slugs: string[]; folded?: { slug: string }[] };
+
+/** True when `slug` is a canonical site slug, a copy folded into that row, or another slug on the same row. */
+export function slugBelongsToBots(slug: string, groups: HistoryGroup[]): boolean {
+  const want = slug.trim().toLowerCase();
+  if (!want) return false;
+  return groups.some((g) => [g.site.slug, ...g.slugs, ...(g.folded ?? []).map((f) => f.slug)]
+    .some((n) => n.trim().toLowerCase() === want));
+}
+
 export function rowForSlug<T extends { slug: string; folded?: { slug: string }[] }>(rows: T[], slug: string): T | null {
   let want = slug;
   try { want = decodeURIComponent(slug); } catch { /* keep the raw slug */ }

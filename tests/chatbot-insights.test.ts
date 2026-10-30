@@ -56,6 +56,9 @@ test("routes: portal slug from session only, admin needs readActor, transcripts 
   assert.match(admin, /readActor\(\)/);
   assert.match(admin, /historyBotIds/);
   assert.match(admin, /retentionDays: 90/);
+  assert.match(admin, /private, no-store/);
+  assert.match(admin, /Unknown bot/);
+  assert.match(admin, /slugBelongsToBots/);
   assert.doesNotMatch(admin, /\bPOST\b/);
   const lib = readFileSync("lib/chatbot/insights.ts", "utf8");
   assert.match(lib, /\.eq\("bot_slug", slug\)/); assert.match(lib, /\.gte\("created_at", cutoff\)/);
