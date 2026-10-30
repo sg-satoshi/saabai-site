@@ -1,0 +1,12 @@
+name: entity-guard
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  entity-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Block ACN/ABN placeholders
+        run: node scripts/check-entity.mjs --force

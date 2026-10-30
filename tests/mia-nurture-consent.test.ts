@@ -3,11 +3,12 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 process.env.SAABAI_SESSION_SECRET ||= "test-secret";
 import { miaFooterHtml, unsubHeaders, verifyUnsub } from "../lib/growth/consent";
+import { ENTITY_ABN } from "../lib/entity";
 
 test("Mia footer says why, who, and has a working unsubscribe link", () => {
   const html = miaFooterHtml("Jo@Example.com");
   assert.match(html, /chatted with Mia/);
-  assert.match(html, /ABN 71 889 082 572/);
+  assert.ok(html.includes(`ABN ${ENTITY_ABN}`));
   const m = html.match(/href="https:\/\/saabai\.ai\/unsubscribe\?e=([^&]+)&t=([^"]+)"/);
   assert.ok(m, "unsubscribe link");
   assert.ok(verifyUnsub(decodeURIComponent(m![1]), m![2]));

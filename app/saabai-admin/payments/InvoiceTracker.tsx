@@ -4,6 +4,7 @@ import { notify, confirmDialog } from "../ui/Feedback";
 import { useState, useEffect, useCallback } from "react";
 import type { Invoice, InvoiceLineItem, InvoiceClient } from "../../../lib/invoice-store";
 import { lineTotal, numFieldText, numFromText, textFromNum } from "../../../lib/invoice-number-input";
+import { ENTITY_ABN, ENTITY_LINE } from "@/lib/entity";
 
 // ── Theme (matches PaymentsClient) ──────────────────────────────────────────
 
@@ -54,8 +55,8 @@ const LINE_TEMPLATES = [
 ];
 
 const MY_INFO = {
-  name: "Shane Goldberg",
-  abn: "71 889 082 572",
+  name: ENTITY_LINE,
+  abn: ENTITY_ABN,
   address: "4302/31 Bourton Road, Merrimac QLD 4226",
   phone: "0415 622 733",
   email: "hello@saabai.ai",

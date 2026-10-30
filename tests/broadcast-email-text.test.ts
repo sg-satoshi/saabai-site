@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { broadcastEmail, broadcastHtmlToText, stripLegacyFooter, tipsFooterText } from "../lib/broadcast";
 import { buildBroadcastTestEmail } from "../lib/broadcast-test";
 import { SAMPLE_VALUES } from "../lib/personalise";
+import { ENTITY_ABN, ENTITY_LINE } from "../lib/entity";
 
 const UNSUB = (e: string) => `https://saabai.ai/unsubscribe?e=${encodeURIComponent(e)}&t=tok`;
 const deps = {
@@ -24,7 +25,7 @@ const LEGACY_ROW = `
     <p style="margin:0;font-size:12px;color:#9ca3af;">You're receiving this as a Saabai subscriber · <a href="https://saabai.ai" style="color:#00bfa5;text-decoration:none;">saabai.ai</a></p>
   </td></tr>`;
 const OLD_LINE = /receiving this as a Saabai subscriber/i;
-const NEW_FOOTER = "You're getting this because you asked for occasional Saabai tips by email on saabai.ai. Sent by Saabai, ABN 71 889 082 572, Merrimac QLD 4226, Australia (saabai.ai, hello@saabai.ai).";
+const NEW_FOOTER = `You're getting this because you asked for occasional Saabai tips by email on saabai.ai. Sent by ${ENTITY_LINE}, ABN ${ENTITY_ABN}, Merrimac QLD 4226, Australia (saabai.ai, hello@saabai.ai).`;
 
 test("the admin editor template no longer adds the old footer line", () => {
   const dash = readFileSync("app/saabai-admin/subscribers/SubscriberDashboard.tsx", "utf8");

@@ -6,6 +6,7 @@ import { publicPageMeta } from "@/lib/seo-pages";
 import BreadcrumbLd from "../components/BreadcrumbLd";
 import JsonLd from "../components/JsonLd";
 import "../components/sb/sb.css";
+import { ENTITY_LINE } from "@/lib/entity";
 
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 
@@ -14,6 +15,7 @@ export const metadata: Metadata = publicPageMeta.contact;
 const ROWS: [string, string][] = [
   ["Email", NAP.email],
   ["Address", NAP.addressLine],
+  ["Legal entity", ENTITY_LINE],
   ["ABN", NAP.abn],
   ["Service areas", "Gold Coast, Brisbane and Queensland, with clients Australia-wide online"],
   ["GST", "Not applicable"],

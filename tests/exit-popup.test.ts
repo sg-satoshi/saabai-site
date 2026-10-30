@@ -33,6 +33,7 @@ import {
 import { handleScoreLink, scoreLinkEmailHtml, scoreLinkEmailText, SCORE_LINK_URL, type ScoreLinkDeps } from "../lib/score-link";
 import { canReceiveMarketing, type Subscriber } from "../lib/subscribers";
 import { broadcastEmail, broadcastRecipients, tipsFooterHtml } from "../lib/broadcast";
+import { ENTITY_ABN } from "../lib/entity";
 
 const read = (f: string) => readFileSync(f, "utf8");
 const DAY = 86_400_000;
@@ -243,7 +244,7 @@ test("score link email copy follows the house rules", () => {
   const text = scoreLinkEmailText("https://saabai.ai/unsubscribe?e=a&t=b");
   for (const s of [html, text]) {
     assert.ok(s.includes(SCORE_LINK_URL));
-    assert.ok(s.includes("ABN 71 889 082 572"));
+    assert.ok(s.includes(`ABN ${ENTITY_ABN}`));
     assert.ok(!/[\u2013\u2014]/.test(s), "no dashes");
     assert.ok(!/free Blueprint|20OFFBP|% off|24\/7|15 minutes/i.test(s));
   }
@@ -298,14 +299,14 @@ test("broadcast emails carry sender ID, unsubscribe footer and one-click headers
   assert.equal(m.from, "Shane at Saabai <hello@saabai.ai>");
   assert.deepEqual(m.to, ["a@example.com"]);
   assert.ok(m.html.includes("Hi &lt;b&gt;Al&lt;/b&gt;"), "name escaped");
-  assert.ok(m.html.includes("ABN 71 889 082 572") && m.html.includes("Merrimac QLD 4226"), "sender ID");
+  assert.ok(m.html.includes(`ABN ${ENTITY_ABN}`) && m.html.includes("Merrimac QLD 4226"), "sender ID");
   assert.ok(m.html.includes('href="https://saabai.ai/unsubscribe?e=a%40example.com&amp;t=tok"'), "unsubscribe link");
   assert.ok(m.html.indexOf("Unsubscribe") < m.html.indexOf("</body>"), "footer inside body");
   assert.equal(m.headers["List-Unsubscribe"], "<https://saabai.ai/unsubscribe?e=a%40example.com&t=tok>");
   assert.equal(m.headers["List-Unsubscribe-Post"], "List-Unsubscribe=One-Click");
   // Fragment without a body tag still gets the footer; header injection in the name is stripped.
   const f = broadcastEmail(sub("b@example.com"), { subject: "T", html: "<p>Hi {{firstName}}</p>", fromName: "Evil <x@y.z>\r\nBcc: z" }, deps);
-  assert.ok(f.html.startsWith("<p>Hi there</p>") && f.html.includes("ABN 71 889 082 572"));
+  assert.ok(f.html.startsWith("<p>Hi there</p>") && f.html.includes(`ABN ${ENTITY_ABN}`));
   assert.ok(!/[<>\r\n]/.test(f.from.replace(" <hello@saabai.ai>", "")));
   assert.ok(!/[\u2013\u2014]/.test(tipsFooterHtml("u")), "no dashes");
 });

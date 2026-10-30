@@ -25,6 +25,7 @@ import { faqSchema } from "../lib/seo-meta";
 import { publicPageMeta } from "../lib/seo-pages";
 import { BRISBANE, GOLD_COAST } from "../lib/location-data";
 import { websiteCareFaqAnswer } from "../lib/website-tiers";
+import { ENTITY_ABN } from "../lib/entity";
 
 const PUBLISHED_PRICES = new Set(["0", "100", "200", "299", "300", "497", "1497", "2000", "3500"]);
 
@@ -62,7 +63,7 @@ test("organization JSON-LD parses and carries the published entity facts", () =>
   assert.equal(org.url, "https://www.saabai.ai");
   assert.equal(org.logo, `${SITE_URL}/brand/saabai-logo.png`);
   assert.equal(org.email, NAP.email);
-  assert.equal(org.taxID, "ABN 71 889 082 572");
+  assert.equal(org.taxID, `ABN ${ENTITY_ABN}`);
   assert.deepEqual(org.sameAs, [...SAME_AS]);
   assert.equal(org.telephone, undefined);
   assert.deepEqual(org.address, POSTAL_ADDRESS);
@@ -281,7 +282,7 @@ test("footer, contact, terms, privacy and about share one NAP and publish no pho
   }
   assert.equal(NAP.name, "Saabai");
   assert.equal(NAP.email, "hello@saabai.ai");
-  assert.equal(NAP.abn, "71 889 082 572");
+  assert.equal(NAP.abn, ENTITY_ABN);
   assert.equal(NAP.addressLine, "Merrimac QLD 4226, Australia");
   assert.equal(POSTAL_ADDRESS.addressLocality, "Merrimac");
   assert.equal(POSTAL_ADDRESS.addressRegion, "QLD");

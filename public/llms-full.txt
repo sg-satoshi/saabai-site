@@ -1,6 +1,6 @@
 # Saabai
 
-> Saabai (ABN 71 889 082 572) is a Gold Coast, Queensland business (Merrimac QLD 4226, Australia) founded by Shane Goldberg. All prices are in AUD. Saabai is not GST registered (GST not applicable).
+> Saabai is the trading name of Saabai Pty Ltd (ACN ACN_PENDING, ABN ABN_PENDING), a Gold Coast, Queensland business (Merrimac QLD 4226, Australia) founded by Shane Goldberg. All prices are in AUD. Saabai is not GST registered (GST not applicable).
 
 ## Products
 
@@ -31,7 +31,8 @@
 
 ## Business details
 - Business name: Saabai
-- ABN: 71 889 082 572
+- Legal entity: Saabai Pty Ltd (ACN ACN_PENDING) trading as Saabai
+- ABN: ABN_PENDING
 - Head office: Merrimac QLD 4226, Australia
 - GST: not applicable
 - Founder: Shane Goldberg

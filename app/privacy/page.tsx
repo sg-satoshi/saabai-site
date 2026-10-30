@@ -5,6 +5,7 @@ import { publicPageMeta } from "@/lib/seo-pages";
 import BreadcrumbLd from "../components/BreadcrumbLd";
 import { lexBlobUploadsEnabled } from "@/lib/lex-upload";
 import { LEX_BLOB_PRIVACY_COPY, LEX_MATTERS_PRIVACY_COPY } from "@/lib/lex-upload-copy";
+import { ENTITY_LINE } from "@/lib/entity";
 
 
 export const metadata: Metadata = publicPageMeta.privacy;
@@ -12,7 +13,7 @@ export const metadata: Metadata = publicPageMeta.privacy;
 const SECTIONS: { heading: string; body: string }[] = [
   {
     heading: "1. About this policy",
-    body: `${NAP.name} (ABN ${NAP.abn}, ${NAP.addressLine}) ("we", "us") is a sole trader business operated by Shane Goldberg. This policy explains what we collect when you use saabai.ai or buy our services, and what we do with it.`,
+    body: `This policy is issued by ${ENTITY_LINE} (ABN ${NAP.abn}, ${NAP.addressLine}) ("we", "us"). This policy explains what we collect when you use saabai.ai or buy our services, and what we do with it.`,
   },
   {
     heading: "2. What we collect",

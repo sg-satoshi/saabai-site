@@ -1,4 +1,5 @@
 import { formatAud, WEBSITE_TIERS } from "./website-tiers";
+import { ENTITY_ABN, ENTITY_ABN_DIGITS, ENTITY_NAME } from "./entity";
 
 export const SITE_URL = "https://www.saabai.ai";
 /** Firm plan price published on /legal. AUD per month. */
@@ -12,11 +13,11 @@ export const FOUNDER_ID = `${SITE_URL}/#shane-goldberg`;
  */
 export const NAP = {
   name: "Saabai",
-  legalName: "Saabai",
+  legalName: ENTITY_NAME,
   url: SITE_URL,
   email: "hello@saabai.ai",
-  abn: "71 889 082 572",
-  taxID: "ABN 71 889 082 572",
+  abn: ENTITY_ABN,
+  taxID: `ABN ${ENTITY_ABN}`,
   addressLine: "Merrimac QLD 4226, Australia",
   logo: `${SITE_URL}/brand/saabai-logo.png`,
 } as const;
@@ -263,7 +264,7 @@ export const organizationSchema = {
       image: `${SITE_URL}/og-image.png`,
       email: NAP.email,
       taxID: NAP.taxID,
-      identifier: { "@type": "PropertyValue", propertyID: "ABN", value: "71889082572" },
+      identifier: { "@type": "PropertyValue", propertyID: "ABN", value: ENTITY_ABN_DIGITS },
       description:
         "Saabai builds, hosts and manages websites for small businesses, and delivers the Saabai Blueprint AI audit. Based in Merrimac on the Gold Coast, serving Brisbane, Queensland and Australia.",
       address: POSTAL_ADDRESS,
@@ -341,7 +342,7 @@ export const aboutPageSchema = schemaGraph([
     ...founderSchema,
     image: `${SITE_URL}/shane-goldberg.jpg`,
     description:
-      "Shane Goldberg is the founder of Saabai, a sole trader business based in Merrimac on the Gold Coast, Queensland.",
+      `Shane Goldberg is the founder and director of Saabai (${ENTITY_NAME}), based in Merrimac on the Gold Coast, Queensland.`,
   },
   organizationSchema["@graph"][0],
 ]);

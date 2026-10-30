@@ -132,7 +132,7 @@ test("email layout has no second footer and the preview is the server's builder"
   assert.equal(p.subject, "Hi Ann");
   assert.match(p.html, /Hello Ann in your area/);
   assert.equal((p.html.match(/Unsubscribe/gi) || []).length >= 1, true, "server footer present");
-  assert.equal((p.html.match(/ABN/g) || []).length, 1, "exactly one footer");
+  assert.equal((p.html.match(/, ABN /g) || []).length, 1, "exactly one footer");
   const t = previewForTest("News", "Hi {{firstName|there}}");
   assert.equal(t.to[0], "hello@saabai.ai");
   assert.match(t.subject, /^\[TEST\] /);

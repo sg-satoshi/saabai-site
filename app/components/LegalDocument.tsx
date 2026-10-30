@@ -2,6 +2,7 @@ import Nav from "./Nav";
 import SbFooter from "./sb/SbFooter";
 import { NAP } from "@/lib/seo-entity";
 import "./sb/sb.css";
+import { ENTITY_LINE } from "@/lib/entity";
 
 export type LegalSection = { heading: string; body: string; id?: string };
 
@@ -41,7 +42,7 @@ export default function LegalDocument({
           </div>
 
           <p className="dim" style={{ marginTop: 28, fontSize: 14 }}>
-            {NAP.name}, ABN {NAP.abn}, {NAP.addressLine}. {NAP.email}
+            {ENTITY_LINE}, ABN {NAP.abn}, {NAP.addressLine}. {NAP.email}
             {links.length > 0 ? (
               <>
                 .{" "}

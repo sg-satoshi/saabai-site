@@ -1,6 +1,7 @@
 import localFont from "next/font/local";
 import { NAP } from "@/lib/seo-entity";
 import "./sb-footer.css";
+import { ENTITY_LINE } from "@/lib/entity";
 
 const inter = localFont({ src: "../../fonts/inter-latin-wght-normal.woff2", weight: "100 900" });
 
@@ -94,7 +95,7 @@ export default function SbFooter() {
         </div>
         <div className="legal">
           <span>
-            © 2026 {NAP.name}. ABN {NAP.abn}. {NAP.addressLine}.{" "}
+            © 2026 {ENTITY_LINE}. ABN {NAP.abn}. {NAP.addressLine}.{" "}
             <a href={`mailto:${NAP.email}`}>{NAP.email}</a>. Prices in AUD. GST not applicable.
           </span>
         </div>

@@ -5,6 +5,7 @@
 import { getRedis } from "./redis";
 import { lineTotal } from "./invoice-number-input";
 import type { Redis } from "@upstash/redis";
+import { ENTITY_ABN, ENTITY_LINE } from "./entity";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -44,8 +45,8 @@ export interface InvoiceClient {
 // ── Constants ───────────────────────────────────────────────────────────────
 
 export const MY_INFO = {
-  name: "Shane Goldberg",
-  abn: "71 889 082 572",
+  name: ENTITY_LINE,
+  abn: ENTITY_ABN,
   address: "4302/31 Bourton Road, Merrimac QLD 4226",
   phone: "0415 622 733",
   email: "hello@saabai.ai",
