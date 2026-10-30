@@ -21,9 +21,8 @@ export default function LexTrialsClient() {
   const [days, setDays] = useState(14);
   const [fd, setFd] = useState<{ enabled: boolean; deadline: string; cap: string } | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
-  const load = useCallback(() => { fetch("/api/admin/lex-trials").then((r) => r.json()).then(setData).catch(() => setMsg("Could not load")); }, []);
+  const load = useCallback(() => { fetch("/api/admin/lex-trials").then((r) => r.json()).then((d) => { setData(d); const f = d?.founding as Founding | undefined; if (f) setFd((cur) => cur ?? { enabled: f.enabled, deadline: f.deadline ? new Date(f.deadline).toLocaleDateString("en-CA", { timeZone: "Australia/Brisbane" }) : "", cap: f.cap === null ? "" : String(f.cap) }); }).catch(() => setMsg("Could not load")); }, []);
   useEffect(load, [load]);
-  useEffect(() => { const f = data?.founding; if (f && !fd) setFd({ enabled: f.enabled, deadline: f.deadline ? new Date(f.deadline).toLocaleDateString("en-CA", { timeZone: "Australia/Brisbane" }) : "", cap: f.cap === null ? "" : String(f.cap) }); }, [data, fd]);
   const origin = typeof window === "undefined" ? "" : window.location.origin;
 
   async function post(body: object) {

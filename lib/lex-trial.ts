@@ -168,14 +168,21 @@ async function claimFounding(now: Date): Promise<boolean> {
 }
 
 /**
- * Checkout price for a /lex/signup. A founding trial firm (still convertible: on trial, or lapsed
- * trial_ended inside the data window) gets STRIPE_PRICE_LEX_FOUNDING when set; everyone else, or when unset,
- * gets the normal STRIPE_LEX_FIRM_PRICE_ID ($299).
+ * Checkout price for a /lex/signup. The founding price (STRIPE_PRICE_LEX_FOUNDING) applies only when ALL hold:
+ * the admin founding switch is ON, the env var is set, the firm is flagged foundingMember, and it is converting
+ * from an ACTIVE trial before trialEndsAt. Otherwise (including trial_ended firms) the normal
+ * STRIPE_LEX_FIRM_PRICE_ID ($299) applies.
  */
-export function lexCheckoutPrice(trialFirm: Pick<LexFirm, "foundingMember"> | null, env: Record<string, string | undefined> = process.env): { price: string | undefined; founding: boolean } {
+export function lexCheckoutPrice(
+  trialFirm: Pick<LexFirm, "foundingMember" | "status" | "trialEndsAt"> | null,
+  foundingSwitchOn: boolean,
+  env: Record<string, string | undefined> = process.env,
+  now = new Date(),
+): { price: string | undefined; founding: boolean } {
   const normal = env.STRIPE_LEX_FIRM_PRICE_ID?.trim() || undefined;
   const founding = env.STRIPE_PRICE_LEX_FOUNDING?.trim() || undefined;
-  if (founding && trialFirm?.foundingMember) return { price: founding, founding: true };
+  const activeTrial = trialFirm?.status === "trial" && !!trialFirm.trialEndsAt && now.getTime() < Date.parse(trialFirm.trialEndsAt);
+  if (foundingSwitchOn && founding && trialFirm?.foundingMember && activeTrial) return { price: founding, founding: true };
   return { price: normal, founding: false };
 }
 

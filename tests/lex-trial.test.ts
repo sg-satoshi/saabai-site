@@ -164,17 +164,37 @@ test("founding offer: off by default; on before the deadline and under the cap f
   await assert.rejects(setFoundingConfig({ enabled: true, cap: -1 }, "admin"));
 });
 
-test("checkout price: founding price only when the env var is set AND the converting trial firm is founding; else $299 price", async () => {
+test("checkout price: founding only with switch ON + env var + flag + active trial before its end; else $299", async () => {
   const { lexCheckoutPrice } = await T();
   const env = { STRIPE_LEX_FIRM_PRICE_ID: "price_normal", STRIPE_PRICE_LEX_FOUNDING: "price_founding" };
-  assert.deepEqual(lexCheckoutPrice({ foundingMember: true }, env), { price: "price_founding", founding: true });
-  assert.deepEqual(lexCheckoutPrice({ foundingMember: false }, env), { price: "price_normal", founding: false });
-  assert.deepEqual(lexCheckoutPrice(null, env), { price: "price_normal", founding: false });
-  assert.deepEqual(lexCheckoutPrice({ foundingMember: true }, { STRIPE_LEX_FIRM_PRICE_ID: "price_normal" }), { price: "price_normal", founding: false });
-  assert.deepEqual(lexCheckoutPrice({ foundingMember: true }, { ...env, STRIPE_PRICE_LEX_FOUNDING: "  " }), { price: "price_normal", founding: false });
+  const now = new Date("2026-11-10T00:00:00Z");
+  const trial = { foundingMember: true, status: "trial" as const, trialEndsAt: "2026-12-01T00:00:00Z" };
+  const F = { price: "price_founding", founding: true }, N = { price: "price_normal", founding: false };
+  assert.deepEqual(lexCheckoutPrice(trial, true, env, now), F);
+  assert.deepEqual(lexCheckoutPrice(trial, false, env, now), N, "admin switch OFF");
+  assert.deepEqual(lexCheckoutPrice({ ...trial, foundingMember: false }, true, env, now), N, "not flagged");
+  assert.deepEqual(lexCheckoutPrice(null, true, env, now), N);
+  assert.deepEqual(lexCheckoutPrice(trial, true, { STRIPE_LEX_FIRM_PRICE_ID: "price_normal" }, now), N, "env unset");
+  assert.deepEqual(lexCheckoutPrice(trial, true, { ...env, STRIPE_PRICE_LEX_FOUNDING: "  " }, now), N);
+  assert.deepEqual(lexCheckoutPrice({ ...trial, status: "lapsed" as const }, true, env, now), N, "trial_ended firm pays normal");
+  assert.deepEqual(lexCheckoutPrice(trial, true, env, new Date("2026-12-01T00:00:01Z")), N, "after trialEndsAt");
   const route = readFileSync("app/api/lex/signup/route.ts", "utf8");
-  assert.match(route, /lexCheckoutPrice\(trialFirm\)/);
-  assert.match(route, /convertibleTrialFirm\(v\.value\.email\)/);
+  assert.match(route, /getFoundingConfig\(\)/);
+  assert.match(route, /lexCheckoutPrice\(trialFirm, foundingOn\)/);
+});
+
+test("founding status is lost on any lapse of a paid founding subscription (unpaid 10.6 or cancelled); trial lapse untouched", async () => {
+  const { lapseFirm, FOUNDING_LOST_ON_LAPSE } = await S();
+  assert.equal(FOUNDING_LOST_ON_LAPSE, true);
+  for (const reason of ["unpaid", "cancelled"] as const) {
+    const f = { firmId: `lf_found_${reason}`, firmName: "F", adminEmail: `o-${reason}@found.test`, members: [], granted: [], status: "active", subscriptionId: "sub_x", foundingMember: true, createdAt: "", updatedAt: "" } as never as Parameters<typeof lapseFirm>[0];
+    await lapseFirm(f, reason, mailer);
+    assert.equal(f.foundingMember, false, reason);
+    assert.ok(f.foundingLostAt);
+  }
+  const t = { firmId: "lf_found_trial", firmName: "F", adminEmail: "t@found.test", members: [], granted: [], status: "trial", foundingMember: true, createdAt: "", updatedAt: "" } as never as Parameters<typeof lapseFirm>[0];
+  await lapseFirm(t, "trial_ended", mailer);
+  assert.equal(t.foundingMember, true, "trial lapse keeps the flag (price rule then gives $299 anyway)");
 });
 
 test("10.7 live deletion of an ended trial releases the owner email; a re-trial still needs a new code", async () => {

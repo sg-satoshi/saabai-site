@@ -49,6 +49,7 @@ export type LexFirm = {
   convertedFromTrialAt?: string;
   /** founding_member: joined a trial while the founding offer was open; may convert at STRIPE_PRICE_LEX_FOUNDING. */
   foundingMember?: boolean;
+  foundingLostAt?: string;
   /** Stripe event.created (seconds) of the latest successful payment; older payment_failed events are ignored. */
   lastPaidAt?: number;
   /** Staff released when the plan was cancelled (kept for the record only). */
@@ -296,10 +297,18 @@ type SubLike = { id: string; status?: string; cancel_at_period_end?: boolean; cu
 type InvoiceLike = { id: string; subscription?: unknown; parent?: { subscription_details?: { subscription?: unknown } | null } | null };
 export const invoiceSubId = (inv: InvoiceLike) => idOf(inv.subscription) ?? idOf(inv.parent?.subscription_details?.subscription);
 
+/**
+ * Founding status is lost on ANY lapse of a paid founding subscription (unpaid under 10.6, or cancelled).
+ * Single switch in case Shane rules otherwise.
+ */
+export const FOUNDING_LOST_ON_LAPSE = true;
+
 /** Mutates f (caller holds the firm lock). */
 export async function lapseFirm(f: LexFirm, reason: LapseReason, mailer: Mailer, dataClockFrom = new Date()): Promise<void> {
   await setAccess(f, false, mailer);
+  const wasPaid = f.status !== "trial" && !!f.subscriptionId;
   f.status = "lapsed"; f.lapseReason = reason; f.graceUntil = undefined;
+  if (FOUNDING_LOST_ON_LAPSE && wasPaid && f.foundingMember) { f.foundingMember = false; f.foundingLostAt = new Date().toISOString(); }
   if (isEndedLapse(reason)) {
     // A cancelled plan never comes back (a new signup makes a new firm), so free former staff to join another firm.
     // The owner keeps their link so they can still see the plan and reach billing.
