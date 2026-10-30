@@ -16,7 +16,7 @@ export default async function LexTrialPage({ searchParams }: { searchParams: Pro
       <main className="lxt-main">
         <div className="lxt-wrap">
           <span className="lxt-badge">Lex by Saabai</span>
-          <h1>Try Lex free for <span className="lxt-grad">60 days.</span></h1>
+          <h1>Try Lex FREE for <span className="lxt-grad">60 days.</span></h1>
           <p className="lxt-lead">Don&apos;t pay a cent until you&apos;ve tried it. No card needed.</p>
           <div className="lxt-card">
             <TrialForm code={typeof sp.code === "string" ? sp.code.slice(0, 40) : ""} />
