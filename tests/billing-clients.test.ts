@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { belongsToOtherFlow, gstLabel, newClient, pickExistingCustomer, searchClients, toStripeCustomerParams, validateClientInput, syncStripeCustomer } from "../lib/billing/clients";
 import { buildAuditEntry } from "../lib/billing/audit-log";
 import { cleanRequestId, idemKey, priceSignature, requireRequestId, stepKey } from "../lib/billing/idempotency";
-import { SubmissionKey } from "../lib/billing/request-id";
+import { SubmissionKey, httpOutcome, stripeErrorOutcome } from "../lib/billing/request-id";
 import { resolveMoneyCustomer } from "../lib/billing/money-customer";
 
 test("client input: required fields, ABN, GST default not registered", () => {
@@ -110,30 +110,51 @@ test("money creates without a requestId are rejected (no derived replay key)", (
   }
 });
 
-test("sell UI sends a per-submission requestId and renews it after every outcome", () => {
+test("money UIs send a per-submission requestId and only renew it on success or a definite failure", () => {
   const src = readFileSync("app/saabai-admin/products/ProductsClient.tsx", "utf8");
   assert.match(src, /keyed\(chargeKey\.current,/);
   assert.match(src, /keyed\(linkKey\.current,/);
-  assert.match(src, /chargeKey\.current\.renew\(\)/);
-  assert.match(src, /linkKey\.current\.renew\(\)/);
+  assert.match(src, /chargeKey\.current\.settle\(outcome\)/);
+  assert.match(src, /linkKey\.current\.settle\(outcome\)/);
+  assert.ok(!/(chargeKey|linkKey)\.current\.renew\(\)/.test(src), "sell forms never renew unconditionally");
+  assert.match(src, /stripeErrorOutcome\(confErr\)/, "sell charge classifies card confirmation errors");
   const pay = readFileSync("app/saabai-admin/payments/PaymentsClient.tsx", "utf8");
   assert.ok(!pay.includes("requestId: requestId.current"), "payments forms key by payload");
-  assert.equal((pay.match(/if \(!succeeded\.current\) subKey\.current\.renew\(\)/g) || []).length, 2, "charge and invoice forms renew after any error");
+  assert.ok(!pay.includes("subKey.current.renew()"), "payments forms never renew unconditionally");
+  assert.equal((pay.match(/subKey\.current\.settle\(outcome\.current\)/g) || []).length, 2, "charge and invoice forms settle by outcome");
+  assert.equal((pay.match(/stripeErrorOutcome\(confirmError\)/g) || []).length, 3, "every card confirm is classified");
+  assert.equal((pay.match(/httpOutcome\(res\.status\)/g) || []).length, 3, "charge, subscription and invoice classify HTTP status");
 });
 
-test("submission key: identical retry reuses, a retry after an error or a changed field gets a new key", () => {
+test("submission key: ambiguous failures keep the key, definite failures, success and field changes renew it", () => {
   let n = 0;
   const k = new SubmissionKey(() => `rid${++n}aaaaa`);
   const body = { amount: 1000, email: "a@x.au" };
   const first = k.key(body);
   assert.equal(k.key({ ...body }), first, "double click of the same submission collapses");
-  k.renew(); // the attempt failed (4xx, declined card, network error)
-  const afterError = k.key(body);
-  assert.notEqual(afterError, first, "retry after an error uses a new key");
+  // Ambiguous: network error / thrown fetch, timeout or abort, 5xx, Stripe connection error.
+  for (const o of ["ambiguous", httpOutcome(500), httpOutcome(502), httpOutcome(503), httpOutcome(504), httpOutcome(408), httpOutcome(429), httpOutcome(409),
+    stripeErrorOutcome({ type: "api_connection_error" }), stripeErrorOutcome({ type: "api_error" }), stripeErrorOutcome({})] as const) {
+    assert.equal(o, "ambiguous");
+    k.settle(o);
+    assert.equal(k.key(body), first, "retry after an ambiguous failure reuses the key (Stripe dedupes)");
+  }
+  // Definite 4xx renews.
+  assert.equal(httpOutcome(400), "definite");
+  assert.equal(httpOutcome(402), "definite");
+  k.settle(httpOutcome(400));
+  const afterDefinite = k.key(body);
+  assert.notEqual(afterDefinite, first, "retry after a definite 4xx uses a new key");
+  // Definite card decline renews.
+  assert.equal(stripeErrorOutcome({ type: "card_error" }), "definite");
+  k.settle(stripeErrorOutcome({ type: "card_error" }));
+  const afterDecline = k.key(body);
+  assert.notEqual(afterDecline, afterDefinite, "retry after a card decline uses a new key");
   const edited = k.key({ ...body, amount: 1200 });
-  assert.notEqual(edited, afterError, "changed field gets a new key");
-  k.renew(); // success: a genuine second sale of the same thing is a new key
-  assert.notEqual(k.key({ ...body, amount: 1200 }), edited);
+  assert.notEqual(edited, afterDecline, "changed field gets a new key");
+  assert.equal(httpOutcome(200), "success");
+  k.settle("success");
+  assert.notEqual(k.key({ ...body, amount: 1200 }), edited, "genuine second sale gets a new key");
 });
 
 test("audit entry redacts card-like numbers and keeps stripe ids", () => {
