@@ -117,7 +117,7 @@ export default function PricingPage() {
 
           <h2 style={{ marginTop: 56 }}>Other published prices</h2>
           <div className="card" style={{ marginTop: 24, display: "grid", gap: 18 }}>
-            <p><a href="/legal" style={{ color: "var(--teal)" }}>Lex Firm</a> is ${LEX_FIRM_MONTHLY} a month (AUD) for 3 lawyer seats, unlimited research and 20 documents a month. Larger firms can ask about a custom Enterprise plan. <a href="/lex/signup" style={{ color: "var(--teal)" }}>Sign up</a> or book a free Lex demo.</p>
+            <p><a href="/legal" style={{ color: "var(--teal)" }}>Lex Firm</a> is ${LEX_FIRM_MONTHLY} a month (AUD) for 3 lawyer seats, unlimited research and 20 documents a month. GST not applicable. Larger firms can ask about a custom Enterprise plan. <a href="/lex/signup" style={{ color: "var(--teal)" }}>Sign up</a> or <a href={CALENDLY} target="_blank" rel="noopener noreferrer" style={{ color: "var(--teal)" }}>book a free Lex demo</a>.</p>
             <p><a href="/score" style={{ color: "var(--teal)" }}>AI Readiness Score</a> is free.</p>
             <p>
               The <a href="/ai-receptionist-gold-coast" style={{ color: "var(--teal)" }}>AI receptionist</a> on your website is the chatbot, and it is included in the website tiers, from {formatAud(WEBSITE_TIERS[0].buildFrom)} plus {formatAud(WEBSITE_TIERS[0].monthly)} a month care. Phone answering with Lachie is coming soon. It is not live.
