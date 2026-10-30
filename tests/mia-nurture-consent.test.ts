@@ -7,7 +7,7 @@ import { miaFooterHtml, unsubHeaders, verifyUnsub } from "../lib/growth/consent"
 test("Mia footer says why, who, and has a working unsubscribe link", () => {
   const html = miaFooterHtml("Jo@Example.com");
   assert.match(html, /chatted with Mia/);
-  assert.match(html, /ABN 71 889 082 572/);
+  assert.match(html, /Saabai Pty Ltd, trading as Saabai/);
   const m = html.match(/href="https:\/\/saabai\.ai\/unsubscribe\?e=([^&]+)&t=([^"]+)"/);
   assert.ok(m, "unsubscribe link");
   assert.ok(verifyUnsub(decodeURIComponent(m![1]), m![2]));

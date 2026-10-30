@@ -1,3 +1,4 @@
+import { entityLegalLine } from "@/lib/entity";
 import type { Metadata } from "next";
 import LegalDocument from "../components/LegalDocument";
 import { NAP } from "@/lib/seo-entity";
@@ -12,7 +13,7 @@ export const metadata: Metadata = publicPageMeta.privacy;
 const SECTIONS: { heading: string; body: string }[] = [
   {
     heading: "1. About this policy",
-    body: `${NAP.name} (ABN ${NAP.abn}, ${NAP.addressLine}) ("we", "us") is a sole trader business operated by Shane Goldberg. This policy explains what we collect when you use saabai.ai or buy our services, and what we do with it.`,
+    body: `This policy is issued by ${entityLegalLine()} (${NAP.addressLine}) ("we", "us"). It explains what we collect when you use saabai.ai or buy our services, and what we do with it.`,
   },
   {
     heading: "2. What we collect",

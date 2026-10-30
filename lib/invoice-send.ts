@@ -6,6 +6,7 @@
  * (owner requirement) — never bare "SG-NNN.pdf". This is a real financial
  * side-effect, so the MCP tool that calls it is approval-gated upstream.
  */
+import { entityIds } from "@/lib/entity";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { Resend } from "resend";
 import { MY_INFO, PAY_INFO, type Invoice, type InvoiceClient } from "./invoice-store";
@@ -42,7 +43,7 @@ export async function buildInvoicePdf(invoice: Invoice, client: InvoiceClient): 
   y -= 16;
   page.drawText(MY_INFO.name, { x: left, y, size: 12, font: bold, color: rgb(0.1, 0.1, 0.1) });
   y -= 15;
-  page.drawText(`ABN: ${MY_INFO.abn}`, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
+  if (entityIds()) page.drawText(entityIds(), { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
   y -= 15;
   page.drawText(MY_INFO.address, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
   y -= 15;
@@ -119,7 +120,7 @@ export async function buildInvoicePdf(invoice: Invoice, client: InvoiceClient): 
   y -= 15;
   page.drawText(`BSB: ${PAY_INFO.bsb} · Account: ${PAY_INFO.accountNumber}`, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
   y -= 15;
-  page.drawText(`ABN: ${MY_INFO.abn}`, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
+  if (entityIds()) page.drawText(entityIds(), { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
 
   if (invoice.notes) {
     // Move to a lower area to avoid overlap; keep it simple.

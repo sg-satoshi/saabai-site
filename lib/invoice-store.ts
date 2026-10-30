@@ -2,6 +2,7 @@
  * Invoice storage — Redis-backed invoice and client management.
  * Mirrors the mylife.saabai.ai invoicing tool but synced server-side.
  */
+import { LEGAL_NAME, ABN } from "@/lib/entity";
 import { getRedis } from "./redis";
 import { lineTotal } from "./invoice-number-input";
 import type { Redis } from "@upstash/redis";
@@ -44,8 +45,8 @@ export interface InvoiceClient {
 // ── Constants ───────────────────────────────────────────────────────────────
 
 export const MY_INFO = {
-  name: "Shane Goldberg",
-  abn: "71 889 082 572",
+  name: LEGAL_NAME,
+  abn: ABN,
   address: "4302/31 Bourton Road, Merrimac QLD 4226",
   phone: "0415 622 733",
   email: "hello@saabai.ai",

@@ -1,4 +1,5 @@
 "use client";
+import { LEGAL_NAME, ABN, entityIds } from "@/lib/entity";
 import { notify, confirmDialog } from "../ui/Feedback";
 
 import { useState, useEffect, useCallback } from "react";
@@ -54,8 +55,8 @@ const LINE_TEMPLATES = [
 ];
 
 const MY_INFO = {
-  name: "Shane Goldberg",
-  abn: "71 889 082 572",
+  name: LEGAL_NAME,
+  abn: ABN,
   address: "4302/31 Bourton Road, Merrimac QLD 4226",
   phone: "0415 622 733",
   email: "hello@saabai.ai",
@@ -732,7 +733,7 @@ export default function InvoiceTracker() {
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <p style={{ margin: 0, fontWeight: 600 }}>{MY_INFO.name}</p>
-                  <p style={{ margin: "2px 0", fontSize: 12, color: "#666" }}>ABN: {MY_INFO.abn}</p>
+                  {entityIds() ? <p style={{ margin: "2px 0", fontSize: 12, color: "#666" }}>{entityIds()}</p> : null}
                   <p style={{ margin: 0, fontSize: 12, color: "#666" }}>{MY_INFO.address}</p>
                   <p style={{ margin: "2px 0 0", fontSize: 12, color: "#666" }}>{MY_INFO.phone}</p>
                   <p style={{ margin: 0, fontSize: 12, color: "#666" }}>{MY_INFO.email}</p>

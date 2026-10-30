@@ -1,3 +1,4 @@
+import { entityLegalLine } from "@/lib/entity";
 import localFont from "next/font/local";
 import { NAP } from "@/lib/seo-entity";
 import "./sb-footer.css";
@@ -94,7 +95,7 @@ export default function SbFooter() {
         </div>
         <div className="legal">
           <span>
-            © 2026 {NAP.name}. ABN {NAP.abn}. {NAP.addressLine}.{" "}
+            © 2026 {entityLegalLine()}. {NAP.addressLine}.{" "}
             <a href={`mailto:${NAP.email}`}>{NAP.email}</a>. Prices in AUD. GST not applicable.
           </span>
         </div>
