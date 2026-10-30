@@ -37,6 +37,8 @@ export type LexFirm = {
   lapseReason?: "unpaid" | "cancelled";
   /** Stripe event.created (seconds) of the latest successful payment; older payment_failed events are ignored. */
   lastPaidAt?: number;
+  /** Staff released when the plan was cancelled (kept for the record only). */
+  formerMembers?: string[];
   termsVersion: string; termsAcceptedAt: string; createdAt: string; updatedAt: string;
 };
 
@@ -90,6 +92,7 @@ export async function getPendingSignup(id: string): Promise<PendingSignup | null
 
 // ── Firm records ─────────────────────────────────────────────────────────
 const LOCK_TTL_MS = 15_000;
+const RELEASE_IF_OWNER = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
@@ -113,7 +116,8 @@ export async function withFirmLock<T>(firmId: string, fn: (f: LexFirm) => Promis
     await saveFirm(f);
     return out;
   } finally {
-    if ((await r.get<string>(key)) === token) await r.del(key);
+    // Atomic compare-and-delete: never release a lock another caller took after ours expired.
+    await r.eval(RELEASE_IF_OWNER, [key], [token]);
   }
 }
 
@@ -228,7 +232,14 @@ export async function provisionLexCheckout(eventId: string, s: CheckoutLike, mai
       await r.set(`lex:firm:${firmId}`, JSON.stringify(fresh), { nx: true });
     }
     if (subId) await r.set(`lex:firm:bysub:${subId}`, firmId);
-    await r.set(`lex:firm:byemail:${email}`, firmId);
+    // Never silently move an owner off another firm: claim with NX, alert if it already points elsewhere.
+    const claimed = (await r.set(`lex:firm:byemail:${email}`, firmId, { nx: true })) === "OK";
+    if (!claimed) {
+      const cur = String(await r.get(`lex:firm:byemail:${email}`));
+      const curFirm = cur !== firmId ? await getFirm(cur) : null;
+      if (curFirm && curFirm.status === "lapsed" && curFirm.lapseReason === "cancelled") await r.set(`lex:firm:byemail:${email}`, firmId);
+      else if (cur !== firmId) await alert(`Lex checkout ${s.id}: ${email} is already linked to firm ${cur}. The new firm ${firmId} was provisioned but the login stays linked to the old firm. Check by hand.`);
+    }
     await withFirmLock(firmId, async (f) => {
       f.customerId = idOf(s.customer) ?? f.customerId;
       f.subscriptionId = subId ?? f.subscriptionId;
@@ -254,6 +265,15 @@ export const invoiceSubId = (inv: InvoiceLike) => idOf(inv.subscription) ?? idOf
 export async function lapseFirm(f: LexFirm, reason: "unpaid" | "cancelled", mailer: Mailer): Promise<void> {
   await setAccess(f, false, mailer);
   f.status = "lapsed"; f.lapseReason = reason; f.graceUntil = undefined;
+  if (reason === "cancelled") {
+    // A cancelled plan never comes back (a new signup makes a new firm), so free former staff to join another firm.
+    // The owner keeps their link so they can still see the plan and reach billing.
+    const r = redis();
+    for (const m of f.members) await r.eval(RELEASE_IF_OWNER, [`lex:firm:byemail:${m}`], [f.firmId]);
+    f.formerMembers = [...new Set([...(f.formerMembers ?? []), ...f.members])];
+    f.members = [];
+    f.granted = f.granted.filter((g) => g === f.adminEmail);
+  }
 }
 /** Mutates f (caller holds the firm lock). Restoring is silent: no repeat welcome emails. */
 export async function restoreFirm(f: LexFirm): Promise<void> {

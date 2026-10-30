@@ -133,6 +133,10 @@ test("lifecycle: cancel at period end is recorded; subscription.deleted removes 
   assert.equal(await handleLexLifecycle(del, mailer), "lapsed");
   assert.equal(await hasLex("jane@smithlaw.test"), false);
   assert.equal(await hasLex("bob@smithlaw.test"), false);
+  const rds = (await import("../lib/redis")).getRedis()!;
+  assert.equal(await rds.get("lex:firm:byemail:bob@smithlaw.test"), null, "former staff are released on cancel");
+  assert.equal(String(await rds.get("lex:firm:byemail:jane@smithlaw.test")), firmId, "owner keeps the link");
+  assert.equal((await getFirm(firmId))?.members.length, 0);
   assert.equal(await handleLexLifecycle({ id: "evt_z", type: "customer.subscription.deleted", data: { object: { id: "sub_other" } } }, mailer), "ignored");
 });
 

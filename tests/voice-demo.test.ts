@@ -405,7 +405,7 @@ test("the demo is mounted on the homepage and /legal, and the privacy policy nam
   assert.match(read("app/ai-chatbot-law-firms/page.tsx"), /LachieLegalDemo/);
   assert.match(read("app/ai-chatbot-law-firms/page.tsx"), /LexWebsiteDemo/);
   const privacy = read("app/privacy/page.tsx");
-  assert.match(privacy, /sole trader business operated by Shane Goldberg/);
+  assert.match(privacy, /issued by Saabai Pty Ltd/);
   assert.match(privacy, /Supabase in Tokyo, Japan/);
   assert.match(privacy, /xAI/);
   assert.match(privacy, /United States/);

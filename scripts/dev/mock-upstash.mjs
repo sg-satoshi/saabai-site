@@ -45,6 +45,13 @@ export function createMockUpstash() {
     if (k !== undefined) alive(k);
     switch (name) {
       case "PING": return "PONG";
+      case "EVAL": {
+        // Only the compare-and-delete script is supported: EVAL script 1 key value.
+        const [script, , key, val] = args;
+        if (!/redis\.call\(["']get["']/i.test(script) || !/["']del["']/i.test(script)) throw new Error("mock EVAL: unsupported script");
+        alive(key);
+        return strings.get(key) === val ? del(key) : 0;
+      }
       case "GET": return strings.get(k) ?? null;
       case "SET": {
         let nx = false, xx = false, ex = null;
