@@ -6,7 +6,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "../../../../../lib/stripe";
-import { moneyAdmin } from "../../../../../lib/billing/money-auth";
+import { moneyAdmin, moneyDeny } from "../../../../../lib/billing/money-auth";
 import { logMoneyAction } from "../../../../../lib/billing/audit-log";
 import { listProducts } from "../../../../../lib/product-catalogue";
 import { catalogueItems, getEnabledKeys, setPickerEnabled, stripeItems, validPickerKey } from "../../../../../lib/billing/picker";
@@ -15,7 +15,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  if (!(await moneyAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!(await moneyAdmin())) return moneyDeny();
   const all = req.nextUrl.searchParams.get("all") === "1";
   const enabled = await getEnabledKeys();
   const cat = catalogueItems(await listProducts(), enabled);
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   const actor = await moneyAdmin();
-  if (!actor) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!actor) return moneyDeny();
   const body = await req.json().catch(() => null);
   if (!validPickerKey(body?.key)) return NextResponse.json({ error: "Unknown product" }, { status: 400 });
   await setPickerEnabled(body.key, !!body.enabled);

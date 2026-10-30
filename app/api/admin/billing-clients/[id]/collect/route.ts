@@ -5,9 +5,9 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "../../../../../../lib/stripe";
-import { moneyAdmin } from "../../../../../../lib/billing/money-auth";
+import { moneyAdmin, moneyDeny } from "../../../../../../lib/billing/money-auth";
 import { logMoneyAction } from "../../../../../../lib/billing/audit-log";
-import { cleanRequestId, idemKey } from "../../../../../../lib/billing/idempotency";
+import { idemKey, requireRequestId } from "../../../../../../lib/billing/idempotency";
 import { getBillingClient } from "../../../../../../lib/billing/clients";
 import { resolveMoneyCustomer } from "../../../../../../lib/billing/money-customer";
 import { getPriceLines } from "../../../../../../lib/billing/price-lines";
@@ -34,7 +34,7 @@ async function emailCheckoutLink(to: string, name: string, url: string, totalCen
 
 export async function POST(req: NextRequest, ctx: Ctx) {
   const actor = await moneyAdmin();
-  if (!actor) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!actor) return moneyDeny();
   const client = await getBillingClient((await ctx.params).id);
   if (!client) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const body = await req.json().catch(() => null);
@@ -44,9 +44,9 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const lines = saved.filter((l) => ids.includes(l.id));
   if (!lines.length || lines.length !== new Set(ids).size) return NextResponse.json({ error: "Pick saved price lines for this client" }, { status: 400 });
   // requestId is required: one per form submission, renewed by the browser after an error or a change.
-  const requestId = cleanRequestId(body.requestId);
-  if (!requestId) return NextResponse.json({ error: "Missing request id. Reload and try again" }, { status: 400 });
-  const base = idemKey(`collect-${body.method}`, requestId, { actor, clientId: client.id, ids });
+  const rid = requireRequestId(body);
+  if ("error" in rid) return NextResponse.json({ error: rid.error }, { status: rid.status });
+  const base = idemKey(`collect-${body.method}`, rid.requestId, { actor, clientId: client.id, ids, lines });
   const action = `collect.${body.method}`;
   try {
     const stripe = getStripe();

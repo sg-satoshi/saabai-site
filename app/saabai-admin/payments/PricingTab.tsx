@@ -5,6 +5,7 @@
  * Light mode only; navy primary buttons (.btn.pri). GST is stored, never charged here.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { SubmissionKey } from "../../../lib/billing/request-id";
 
 type Interval = "once" | "weekly" | "fortnightly" | "monthly" | "quarterly" | "yearly";
 interface Client { id: string; name: string; firm?: string; email: string }
@@ -31,7 +32,6 @@ const lbl: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: "#5f658
 const inp: React.CSSProperties = { width: "100%", height: 36, padding: "0 10px", border: "1px solid #c6cad6", borderRadius: 8, fontSize: 14, background: "#fff", color: "#13152a" };
 const th: React.CSSProperties = { textAlign: "left", fontSize: 12, color: "#5f6580", fontWeight: 600, padding: "8px 6px", borderBottom: "1px solid #dfe2ea" };
 const td: React.CSSProperties = { fontSize: 13, color: "#13152a", padding: "6px", borderBottom: "1px solid #eceef4", verticalAlign: "middle" };
-const newReqId = () => (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, "") : Math.random().toString(36).slice(2) + Date.now().toString(36));
 
 /** Same maths as lib/billing/price-lines lineTotals. */
 export function lineNet(l: Pick<Line, "unitAmount" | "quantity" | "discount">): number {
@@ -58,8 +58,8 @@ export function PricingTab() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string; url?: string } | null>(null);
   const [dirty, setDirty] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const reqId = useRef(newReqId());
-  const renew = () => { reqId.current = newReqId(); };
+  const subKey = useRef(new SubmissionKey());
+  const renew = () => subKey.current.renew();
 
   useEffect(() => {
     fetch("/api/admin/billing-clients").then((r) => r.json()).then((d) => setClients(d.clients || [])).catch(() => {});
@@ -99,7 +99,7 @@ export function PricingTab() {
     try {
       const res = await fetch(`/api/admin/billing-clients/${clientId}/collect`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ method, lineIds: [...picked], requestId: reqId.current, daysUntilDue: days }),
+        body: JSON.stringify({ method, lineIds: [...picked], requestId: subKey.current.key({ clientId, method, lineIds: [...picked], days }), daysUntilDue: days }),
       });
       const d = await res.json();
       if (!res.ok) { setMsg({ ok: false, text: d.error || "Payment failed" }); renew(); return; }

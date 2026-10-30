@@ -101,12 +101,12 @@ test("Phase B routes are full-admin only; collect requires a requestId; every St
   for (const r of routes) {
     const src = readFileSync(r, "utf8");
     const handlers = src.match(/export async function (GET|PUT|POST)/g) || [];
-    const gates = src.match(/await moneyAdmin\(\)\)?\)? ?(return|;)|const actor = await moneyAdmin\(\);\s*if \(!actor\) return/g) || [];
+    const gates = src.match(/return moneyDeny\(\)/g) || [];
     assert.ok(handlers.length > 0 && gates.length >= handlers.length, `${r}: every handler gated`);
     assert.ok(!src.includes("isAdminRequest") && !src.includes("isAdminOrGranted"), `${r}: no granted staff`);
   }
   const collectRoute = readFileSync("app/api/admin/billing-clients/[id]/collect/route.ts", "utf8");
-  assert.match(collectRoute, /if \(!requestId\) return/);
+  assert.match(collectRoute, /requireRequestId\(body\)/);
   for (const f of ["lib/billing/collect.ts", "lib/billing/price-lines.ts"]) {
     const src = readFileSync(f, "utf8");
     const creates = src.match(/\.(create|finalizeInvoice|sendInvoice)\([\s\S]*?\);/g) || [];

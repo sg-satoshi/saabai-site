@@ -4,7 +4,7 @@
  * Full admins only. Saving lines moves no money and makes no Stripe calls.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { moneyAdmin } from "../../../../../../lib/billing/money-auth";
+import { moneyAdmin, moneyDeny } from "../../../../../../lib/billing/money-auth";
 import { logMoneyAction } from "../../../../../../lib/billing/audit-log";
 import { getBillingClient } from "../../../../../../lib/billing/clients";
 import { getPriceLines, savePriceLines, validateLine, type PriceLine } from "../../../../../../lib/billing/price-lines";
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, ctx: Ctx) {
-  if (!(await moneyAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!(await moneyAdmin())) return moneyDeny();
   const client = await getBillingClient((await ctx.params).id);
   if (!client) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ lines: await getPriceLines(client.id) });
@@ -23,7 +23,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
 
 export async function PUT(req: NextRequest, ctx: Ctx) {
   const actor = await moneyAdmin();
-  if (!actor) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!actor) return moneyDeny();
   const client = await getBillingClient((await ctx.params).id);
   if (!client) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const body = await req.json().catch(() => null);
