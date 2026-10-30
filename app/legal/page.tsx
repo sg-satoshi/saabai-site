@@ -88,7 +88,6 @@ const lexSchema = {
     name: "Firm",
     price: 299,
     priceCurrency: "AUD",
-    url: "https://www.saabai.ai/lex/signup",
     areaServed: { "@type": "Country", name: "Australia" },
     description: "3 lawyer seats, unlimited legal research and 20 documents a month. AUD. GST not applicable. Enterprise plans for larger firms.",
     priceSpecification: { "@type": "UnitPriceSpecification", price: 299, priceCurrency: "AUD", unitText: "MONTH" },
