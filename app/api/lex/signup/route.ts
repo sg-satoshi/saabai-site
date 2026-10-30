@@ -8,23 +8,13 @@ import { ATTR_COOKIE, attrMetadata, parseAttr } from "@/lib/growth/attribution";
 import { getStripe } from "@/lib/stripe";
 import { siteUrl } from "@/lib/billing/stripe-ops";
 import { savePendingSignup, validateSignup } from "@/lib/lex-subscription";
+import { stripeErrorFields } from "@/lib/lex-signup-log";
 
 export const runtime = "nodejs";
 
 function lexPriceId(): string | undefined {
   const v = process.env.STRIPE_LEX_FIRM_PRICE_ID?.trim();
   return v || undefined;
-}
-
-/** Stripe error cause only: type, code, param, message. No request body, customer data or secrets. */
-function stripeErrorFields(err: unknown): Record<string, string> {
-  if (!err || typeof err !== "object") return { name: typeof err };
-  const e = err as Record<string, unknown>;
-  const out: Record<string, string> = {};
-  for (const k of ["name", "type", "code", "param", "message"]) {
-    if (typeof e[k] === "string") out[k] = (e[k] as string).replace(/[^\s@]+@[^\s@]+/g, "[email]").slice(0, 300);
-  }
-  return out;
 }
 
 export async function GET() {
