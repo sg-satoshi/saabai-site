@@ -27,3 +27,5 @@ jobs:
         run: npx tsx --test tests/wholesale-login-limit.test.ts
       - name: Security headers
         run: npx tsx --test tests/security-headers.test.ts
+      - name: Lex free trial and signup
+        run: npx tsx --test tests/lex-trial.test.ts tests/lex-signup.test.ts

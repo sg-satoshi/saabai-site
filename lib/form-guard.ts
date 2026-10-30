@@ -20,6 +20,7 @@ export const FORM_RULES: Rule[] = [
   { prefix: "/api/analyze-document", limit: 30, windowSec: 60 * 60 },
   { prefix: "/api/lex-leads", limit: 10, windowSec: 60 * 60 },
   { prefix: "/api/lex/signup", limit: 10, windowSec: 60 * 60 },
+  { prefix: "/api/lex/trial", limit: 10, windowSec: 60 * 60 },
 ];
 
 export function formRuleFor(pathname: string): Rule | null {

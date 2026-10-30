@@ -5,6 +5,7 @@
 import { resolveSessionEmail } from "@/lib/lex-review-access";
 import { LEX_SEAT_CAP, firmByEmail, inviteMember, revokeMember, seatsUsed } from "@/lib/lex-subscription";
 import { lexMailer } from "@/lib/lex-subscription-emails";
+import { trialInfo } from "@/lib/lex-trial";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,6 +24,7 @@ function view(f: NonNullable<Awaited<ReturnType<typeof firmByEmail>>>, isAdmin: 
     cancelAtPeriodEnd: !!f.cancelAtPeriodEnd, periodEnd: f.periodEnd ?? null,
     seats: { used: seatsUsed(f), cap: LEX_SEAT_CAP },
     admin: f.adminEmail, members: isAdmin ? f.members : [],
+    trial: f.status === "trial" ? trialInfo(f) : null,
   };
 }
 
