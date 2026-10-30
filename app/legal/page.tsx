@@ -208,7 +208,7 @@ export default function LegalPage() {
         <div className="lx-wrap">
           <div className="lx-head">
             <div className="lx-eyebrow">How it works</div>
-            <h2>AI legal research and drafting, from question to cited draft.</h2>
+            <h2>From question to cited draft.</h2>
             <p className="lx-lead">Lex lists its sources with the answer, so checking takes seconds, not a second search.</p>
           </div>
           <div className="lx-steps">
@@ -241,7 +241,7 @@ export default function LegalPage() {
         <div className="lx-wrap">
           <div className="lx-head">
             <div className="lx-eyebrow">Sources</div>
-            <h2>Australian legal research with cited sources.</h2>
+            <h2>Research with cited Australian sources.</h2>
             <p className="lx-lead">No tab switching, no manual cross-referencing.</p>
           </div>
           <div className="lx-srcs">
@@ -266,7 +266,7 @@ export default function LegalPage() {
         <div className="lx-wrap">
           <div className="lx-head">
             <div className="lx-eyebrow">Features</div>
-            <h2>AI legal drafting for small Australian firms: trust deeds, family law and commercial agreements.</h2>
+            <h2>Drafting for small firms: trust deeds, family law and commercial agreements.</h2>
           </div>
           <div className="lx-feats">
             <div className="lx-card lx-feat">
