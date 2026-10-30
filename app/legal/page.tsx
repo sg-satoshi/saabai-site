@@ -55,6 +55,10 @@ const DOC_TYPES = [
 ];
 
 const LEX_FAQS = [
+  { q: "Is Lex an AI legal drafting tool for small Australian law firms?", a: "Yes. Lex is built for small and mid-sized Australian firms: the Firm plan covers 3 lawyer seats, unlimited legal research and 20 documents a month. It drafts from structured templates for Australian law, runs a QA pass on every draft, and a lawyer reviews and finalises the work. It is drafting and research assistance only, not legal advice." },
+  { q: "Can Lex draft trust deeds?", a: "Yes. Lex drafts discretionary (family) trust deeds and unit trust deeds, and annual trust distribution resolutions, with notes on the Commonwealth tax rules and state stamp duty positions that apply. Every draft must be checked by a lawyer before it is used." },
+  { q: "Can Lex do Australian legal research?", a: "Yes. Research is unlimited on the Firm plan. Lex searches ATO rulings and interpretive decisions, the Federal Register of Legislation, ASIC and the Fair Work Commission, and cites each source so you can check it. Case citations are checked against a licensed snapshot, not live case law." },
+  { q: "Does Lex draft wills or conveyancing documents?", a: "Not as a built-in document type today. Lex's templates cover trusts, family law agreements and orders, and commercial agreements. You can draft a custom document from your own instructions, which a lawyer must review." },
   { q: "What is Lex?", a: "Lex is an AI legal assistant for research and drafting at Australian law firms. It searches public Australian government sources, including ATO rulings and Commonwealth legislation, and every answer cites its source." },
   { q: "Is the website chatbot the same as Lex?", a: "No. Lex is the AI legal assistant for research and drafting. The chat demo on this page is a separate website chatbot for a fictional firm. It answers visitor questions. It does not search legislation or draft documents." },
   { q: "Can I rely on Lex's answers without checking?", a: "No. Lex cites the legislation and rulings it relies on and says when the law is uncertain. A case citation can be checked against a licensed snapshot of NSW Caselaw, Federal Court and High Court decisions (cutoff 10 March 2025). That snapshot is not live case law and does not cover every court. Always check primary sources before advising a client." },
@@ -72,14 +76,21 @@ const lexSchema = {
   "@type": "SoftwareApplication",
   name: "Lex",
   applicationCategory: "BusinessApplication",
+  applicationSubCategory: "AI legal research and drafting",
   operatingSystem: "Web",
   url: "https://www.saabai.ai/legal",
+  description: "AI legal research and drafting assistant for small Australian law firms: cited research across public Australian government sources, and drafts of trust deeds, trust distribution resolutions, family law agreements and commercial agreements for lawyer review. Drafting assistance only, not legal advice.",
+  areaServed: { "@type": "Country", name: "Australia" },
+  audience: { "@type": "BusinessAudience", audienceType: "Australian law firms" },
   publisher: orgRef,
   offers: {
     "@type": "Offer",
     name: "Firm",
     price: 299,
     priceCurrency: "AUD",
+    url: "https://www.saabai.ai/lex/signup",
+    areaServed: { "@type": "Country", name: "Australia" },
+    description: "3 lawyer seats, unlimited legal research and 20 documents a month. AUD. GST not applicable. Enterprise plans for larger firms.",
     priceSpecification: { "@type": "UnitPriceSpecification", price: 299, priceCurrency: "AUD", unitText: "MONTH" },
   },
 };
@@ -198,7 +209,7 @@ export default function LegalPage() {
         <div className="lx-wrap">
           <div className="lx-head">
             <div className="lx-eyebrow">How it works</div>
-            <h2>From question to cited answer to draft.</h2>
+            <h2>AI legal research and drafting, from question to cited draft.</h2>
             <p className="lx-lead">Lex lists its sources with the answer, so checking takes seconds, not a second search.</p>
           </div>
           <div className="lx-steps">
@@ -231,7 +242,7 @@ export default function LegalPage() {
         <div className="lx-wrap">
           <div className="lx-head">
             <div className="lx-eyebrow">Sources</div>
-            <h2>Searches Australian legal sources together.</h2>
+            <h2>Australian legal research with cited sources.</h2>
             <p className="lx-lead">No tab switching, no manual cross-referencing.</p>
           </div>
           <div className="lx-srcs">
@@ -256,7 +267,7 @@ export default function LegalPage() {
         <div className="lx-wrap">
           <div className="lx-head">
             <div className="lx-eyebrow">Features</div>
-            <h2>One workspace for research and drafting.</h2>
+            <h2>AI legal drafting for small Australian firms: trust deeds, family law and commercial agreements.</h2>
           </div>
           <div className="lx-feats">
             <div className="lx-card lx-feat">
@@ -335,7 +346,7 @@ export default function LegalPage() {
         <div className="lx-wrap">
           <div className="lx-head lx-center">
             <div className="lx-eyebrow">Pricing</div>
-            <h2>Simple, transparent pricing.</h2>
+            <h2>Lex pricing for small firms.</h2>
             <p className="lx-lead">Firm is $299 a month. Enterprise is custom.</p>
           </div>
           <div className="lx-plans">
