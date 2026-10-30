@@ -11,6 +11,7 @@
  * The 'lex' product on a directory user is only removed when this module added it
  * (firm.granted), so a user who had Lex before a subscription never loses it here.
  */
+import { isLexDemoIdentity } from "./lex-demo-config";
 import { randomBytes } from "crypto";
 import { getRedis } from "./redis";
 import { getDirectoryUser, saveDirectoryUser } from "./user-directory";
@@ -98,6 +99,11 @@ export async function savePendingSignup(v: SignupInput, now = new Date()): Promi
 export async function getPendingSignup(id: string): Promise<PendingSignup | null> {
   if (!/^ls_[a-f0-9]{24}$/.test(id)) return null;
   return parse<PendingSignup>(await redis().get(`lex:signup:pending:${id}`));
+}
+
+/** Defence in depth: the demo is never a firm record, but if one ever looks like it, the crons skip it. */
+export function isDemoFirm(f: Pick<LexFirm, "firmId" | "adminEmail"> | null | undefined): boolean {
+  return !!f && (isLexDemoIdentity(f.firmId) || isLexDemoIdentity(f.adminEmail));
 }
 
 // ── Firm records ─────────────────────────────────────────────────────────
@@ -362,6 +368,7 @@ export async function sweepGrace(mailer: Mailer, liveStatus: StatusLookup, now =
     cursor = String(next);
     for (const k of keys) {
       const f0 = parse<LexFirm>(await r.get(k));
+      if (isDemoFirm(f0)) continue; // the demo firm is never billed, lapsed or restored
       if (!(f0?.status === "grace" && f0.graceUntil && new Date(f0.graceUntil) <= now)) continue;
       const status = f0.subscriptionId ? await liveStatus(f0.subscriptionId).catch(() => null) : null;
       if (!status) { out.skipped++; continue; }
@@ -449,6 +456,7 @@ export async function sweepDataRetention(del: DataDeleter, firmKeyOf: (email: st
     cursor = String(next);
     for (const k of keys) {
       const f0 = parse<LexFirm>(await r.get(k));
+      if (isDemoFirm(f0)) continue; // the demo firm is never deleted by clause 10.7
       if (!(f0?.status === "lapsed" && f0.lapseReason === "cancelled" && f0.dataDeleteAfter && !f0.dataDeletedAt && new Date(f0.dataDeleteAfter) <= now)) continue;
       live ??= new Set((await lexUsers()).map(firmKeyOf));
       const liveKeys = live;

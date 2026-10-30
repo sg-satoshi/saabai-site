@@ -110,6 +110,7 @@ export default function LexPage() {
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [firmUsage, setFirmUsage] = useState<FirmUsage | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [demoLabel, setDemoLabel] = useState<string | null>(null);
   const [copiedMsg, setCopiedMsg] = useState<number | null>(null);
 
   // ── Draft mode state ───────────────────────────────────────────────────────
@@ -235,6 +236,7 @@ export default function LexPage() {
         if (typeof d?.name === "string" && d.name) setDisplayName(d.name);
         if (d?.admin === true) setDisplayName("Saabai admin");
         setIsAdmin(d?.admin === true);
+        if (typeof d?.demo?.label === "string") { setDemoLabel(d.demo.label); if (typeof d.demo.firmName === "string") setFirmName(d.demo.firmName); }
         if (d?.usage && typeof d.usage.reviews === "number") setFirmUsage(d.usage as FirmUsage);
         return typeof d?.email === "string" ? d.email : null;
       }).catch(() => null);
@@ -1024,6 +1026,12 @@ export default function LexPage() {
 
   return (
     <div className={`lx${showPanel ? " lx-panel" : ""}${navOpen ? " nav-open" : ""}`}>
+      {demoLabel ? (
+        <div role="status" data-testid="lex-demo-banner" className="lx-demo-banner"
+          style={{ position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", zIndex: 1000, background: "#1b2a4a", color: "#fff", fontSize: 12, fontWeight: 600, padding: "4px 12px", borderRadius: "0 0 8px 8px" }}>
+          {demoLabel}
+        </div>
+      ) : null}
       <div className="lx-scrim" onClick={() => setNavOpen(false)} />
       <Sidebar
         mode={mode} setMode={(m) => { setMode(m); setNavOpen(false); }} onNew={newThread}

@@ -1,6 +1,7 @@
 import { type NextRequest } from "next/server";
 import { createSessionToken, sessionCookieHeader } from "../../../../lib/auth";
 import { authenticateWithPassword } from "../../../../lib/password-auth";
+import { LEX_DEMO_CLIENT_ID } from "../../../../lib/lex-demo-config";
 import { safeRedirect } from "../../../../lib/safe-redirect";
 import { resolveStaff } from "../../../../lib/auth";
 import { recordLogin } from "../../../../lib/login-stamp";
@@ -57,6 +58,7 @@ export async function POST(req: NextRequest) {
   let auth = await authenticateWithPassword(email, password);
   const staff = auth ? await resolveStaff(auth.clientId) : null; // null for disabled / expired / non-staff
   if (auth && adminOnly && !staff) auth = null;
+  if (auth && adminOnly && auth.clientId === LEX_DEMO_CLIENT_ID) auth = null;
 
   if (!auth) {
     await tooManyAttempts(email, ip, true);
@@ -92,7 +94,8 @@ export async function POST(req: NextRequest) {
 
   // If there's an explicit redirect (user came from a protected page), honour it.
   // Otherwise send to the unified /dashboard hub.
-  const destination = redirect || "/dashboard";
+  // The Lex demo login only ever lands in Lex.
+  const destination = auth.clientId === LEX_DEMO_CLIENT_ID ? "/lex" : redirect || "/dashboard";
   const destUrl     = new URL(destination, req.url).toString();
 
   return new Response(null, {
