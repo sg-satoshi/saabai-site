@@ -2,6 +2,7 @@
 import { notify, confirmDialog } from "../ui/Feedback";
 
 import { useState, useEffect, useCallback } from "react";
+import type { PayInfo } from "../../../lib/invoice-pay-info";
 import type { Invoice, InvoiceLineItem, InvoiceClient } from "../../../lib/invoice-store";
 import { lineTotal, numFieldText, numFromText, textFromNum } from "../../../lib/invoice-number-input";
 
@@ -63,11 +64,6 @@ const MY_INFO = {
   website: "www.saabai.ai",
 };
 
-const PAY_INFO = {
-  accountName: "Shane Goldberg",
-  bsb: "084899",
-  accountNumber: "726851250",
-};
 
 function calcLineTotal(item: InvoiceLineItem): number {
   return lineTotal(item);
@@ -155,7 +151,7 @@ function InvStatusBadge({ status }: { status: string }) {
 
 // ── Invoice Tracker ─────────────────────────────────────────────────────────
 
-export default function InvoiceTracker() {
+export default function InvoiceTracker({ payInfo = null }: { payInfo?: PayInfo | null } = {}) {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<InvoiceClient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -786,8 +782,14 @@ export default function InvoiceTracker() {
               {/* Payment info */}
               <div style={{ marginTop: 40, padding: 16, background: "#f9f9f9", borderRadius: 8, fontSize: 12 }}>
                 <p style={{ margin: "0 0 8px", fontWeight: 700, fontSize: 13 }}>Payment Details</p>
-                <p style={{ margin: 0 }}>Account Name: {PAY_INFO.accountName}</p>
-                <p style={{ margin: "3px 0" }}>BSB: {PAY_INFO.bsb} &middot; Account: {PAY_INFO.accountNumber}</p>
+                {payInfo ? (
+                  <>
+                    <p style={{ margin: 0 }}>Account Name: {payInfo.accountName}</p>
+                    <p style={{ margin: "3px 0" }}>BSB: {payInfo.bsb} &middot; Account: {payInfo.accountNumber}</p>
+                  </>
+                ) : (
+                  <p style={{ margin: 0 }}>Payment details provided on request: hello@saabai.ai</p>
+                )}
                 {inv.bankRef && <p style={{ margin: "3px 0 0", color: "#666" }}>Reference: {inv.bankRef}</p>}
               </div>
 
