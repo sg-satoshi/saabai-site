@@ -269,3 +269,7 @@ a.btn{text-decoration:none}
   .ch-thread{max-height:calc(100vh - 220px);overflow-y:auto}
   .lg-fields{grid-template-columns:160px minmax(0,1fr) 160px minmax(0,1fr)}
 }
+:root{--sh-pop:0 12px 32px rgba(11,9,46,.16)}
+.pfoot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;flex-wrap:wrap}
+.fi.ro,.fi.ro input,.fi.ro textarea,.fi.ro select{background:var(--n-50);border-color:var(--n-200);color:#4e546c}
+.lockbanner{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#eef0f7;border:1px solid #c9cde0;border-radius:10px;padding:12px 14px}

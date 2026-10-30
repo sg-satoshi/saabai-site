@@ -7,6 +7,9 @@ import { effectiveEngage, validateEngage } from "@/lib/chatbot/engage";
 import { addChangeLogEntry } from "@/lib/change-log";
 import { listChatbotCanonical } from "@/lib/chatbot/admin-list";
 import { sumUsage } from "@/lib/chatbot/canonical-rows";
+import { loadChatActivity } from "@/lib/chatbot/activity";
+import { clientIdentity } from "@/lib/chatbot/list-view";
+import { leadCaptureEnabled } from "@/lib/chatbot/lead-capture";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +18,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   if (!(await readActor())) return Response.json({ error: "Forbidden" }, { status: 403 });
   // Display only. Duplicate copies stay in Redis. Conversation and message counts are added across their slugs.
-  const groups = await listChatbotCanonical();
+  const [groups, activity] = await Promise.all([listChatbotCanonical(), loadChatActivity()]);
   const rows = await Promise.all(
     groups.map(async ({ site: s, slugs, domains, folded }) => {
       const bespoke = BESPOKE_SLUGS.includes(s.slug);
@@ -26,12 +29,23 @@ export async function GET() {
         isEnabled(s.slug, s.chatbot?.enabled),
       ]);
       const usage = sumUsage(parts);
+      const client = clientIdentity(s);
+      let leads = 0;
+      let lastChatAt: string | null = null;
+      for (const slug of slugs) {
+        const stat = activity.get(slug);
+        if (!stat) continue;
+        leads += stat.leads;
+        if (stat.lastChatAt && (!lastChatAt || Date.parse(stat.lastChatAt) > Date.parse(lastChatAt))) lastChatAt = stat.lastChatAt;
+      }
       return {
         id: s.id,
         slug: s.slug,
         name: s.name,
         domains,
         folded,
+        clientKey: client.key,
+        clientName: client.name,
         engine: bespoke ? "bespoke" : "platform",
         enabled: bespoke ? null : enabled,
         plan: config.plan,
@@ -45,6 +59,10 @@ export async function GET() {
         canRemovePoweredBy: canRemovePoweredBy(config.plan),
         usage,
         cap: capState(usage.conversations, config.plan),
+        leads: bespoke ? null : leads,
+        lastChatAt,
+        botLock: config.botLock ?? { locked: false },
+        leadCapture: leadCaptureEnabled(),
         lastChange: meta,
       };
     })
@@ -53,7 +71,7 @@ export async function GET() {
   return Response.json({ rows: rows.sort((a, b) => a.name.localeCompare(b.name)), kill, plans: PLANS.map((p) => ({ key: p, label: PLAN_LABEL[p], cap: CAPS[p] })) });
 }
 
-type Body = { slug?: string; action?: string; enabled?: boolean; reason?: string; plan?: string; skin?: unknown; content?: unknown; goal?: unknown; engage?: unknown };
+type Body = { slug?: string; action?: string; enabled?: boolean; locked?: boolean; reason?: string; plan?: string; skin?: unknown; content?: unknown; goal?: unknown; engage?: unknown };
 
 /** Admin only (writes need a real admin session). */
 export async function POST(req: Request) {
@@ -133,6 +151,14 @@ export async function POST(req: Request) {
         await saveConfig({ ...cur, engage: e.value, updatedBy: actor });
         await addChangeLogEntry({ siteId: site.slug, siteName: site.name, summary: "Chatbot conversion playbook updated", source: "manual", authorName: actor }).catch(() => {});
         return Response.json({ ok: true, engage: e.value });
+      }
+      case "set_lock": {
+        if (typeof b.locked !== "boolean") return Response.json({ error: "locked must be true or false" }, { status: 400 });
+        const cur = await getConfig(site.slug);
+        const botLock = { locked: b.locked, by: actor, at: new Date().toISOString() };
+        await saveConfig({ ...cur, botLock, updatedBy: actor });
+        await addChangeLogEntry({ siteId: site.slug, siteName: site.name, summary: b.locked ? "Chatbot locked for the client" : "Chatbot unlocked for the client", source: "manual", authorName: actor }).catch(() => {});
+        return Response.json({ ok: true, botLock });
       }
       default:
         return Response.json({ error: "Unknown action" }, { status: 400 });
