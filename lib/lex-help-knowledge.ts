@@ -1,5 +1,5 @@
 /**
- * Lex help assistant knowledge: editable source in content/lex-help/*.md, compiled by
+ * Lex Assist knowledge: editable source in content/lex-help/*.md, compiled by
  * scripts/build-lex-help.mjs into lex-help-content.generated.ts (CI checks it is fresh).
  * The privacy placeholder is filled from the live copy. Terms are written in content/lex-help/terms.md WITHOUT
  * prices (Chief ruling): the terms module is never imported here, and stripPrices is a second line of defence.

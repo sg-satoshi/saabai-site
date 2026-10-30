@@ -1,5 +1,5 @@
 /**
- * Signed-in firm context for the Lex help assistant. Built ONLY from the session actor (never from the
+ * Signed-in firm context for Lex Assist. Built ONLY from the session actor (never from the
  * request body), so a user can only ever see their own firm's plan, trial and usage.
  */
 import { firmByEmail, LEX_SEAT_CAP, seatsUsed } from "./lex-subscription";
