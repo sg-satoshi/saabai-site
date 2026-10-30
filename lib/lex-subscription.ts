@@ -216,7 +216,7 @@ const idOf = (v: unknown): string | undefined => (typeof v === "string" ? v : (v
 export async function provisionLexCheckout(eventId: string, s: CheckoutLike, mailer: Mailer, alert: (msg: string) => Promise<void>, eventCreated?: number): Promise<string> {
   if (s.metadata?.product !== "lex") return "not-lex";
   if (s.metadata?.plan !== "firm") {
-    // Legacy /api/checkout (Starter/Growth with a setup fee) also tags product "lex". Never auto-provision it.
+    // Legacy Starter/Growth checkouts (old /api/checkout, removed) tagged product "lex". Never auto-provision them.
     await alert(`Legacy Lex checkout ${s.id} (plan "${s.metadata?.plan ?? "none"}") completed. Nothing was provisioned and no welcome email was sent.`);
     return "legacy-plan";
   }

@@ -105,7 +105,6 @@ const PUBLIC_API = [
   // Blueprint search onboarding. Same fact-find token, no login. The route stores nothing for demo tokens.
   "/api/audit/onboarding",
   // Payments (Stripe verifies its own webhook signatures)
-  "/api/checkout",
   "/api/lex/signup",         // Lex Firm plan signup -> Stripe Checkout (validated, honeypot, rate limited in form-guard)
   "/api/blueprint/checkout", // Saabai Blueprint one-off Stripe Checkout (public buyers)
   "/api/blueprint/score",    // AI Readiness Score results email (public quiz)
