@@ -8,7 +8,8 @@
  */
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { Resend } from "resend";
-import { MY_INFO, PAY_INFO, type Invoice, type InvoiceClient } from "./invoice-store";
+import { getPayInfo, PAY_INFO_FALLBACK } from "./invoice-pay-info";
+import { MY_INFO, type Invoice, type InvoiceClient } from "./invoice-store";
 
 const FROM_EMAIL = "Saabai <noreply@saabai.ai>";
 
@@ -70,14 +71,15 @@ export async function buildInvoicePdf(invoice: Invoice, client: InvoiceClient): 
 
   // ── Line items table ─────────────────────────────────────────────────────
   const colDesc = left;
-  const colHours = right - 150;
-  const colRate = right - 80;
-  const colAmt = right;
+  const colHours = right - 190;
+  const colRate = right - 90; // right edge of Rate column
+  const colAmt = right; // right edge of Amount column
+  const rx = (t: string, edge: number, f: typeof font, size: number) => edge - f.widthOfTextAtSize(t, size);
 
   page.drawText("Description", { x: colDesc, y, size: 9, font: bold, color: rgb(0.6, 0.6, 0.6) });
   page.drawText("Hours", { x: colHours, y, size: 9, font: bold, color: rgb(0.6, 0.6, 0.6) });
-  page.drawText("Rate", { x: colRate, y, size: 9, font: bold, color: rgb(0.6, 0.6, 0.6) });
-  page.drawText("Amount", { x: colAmt - 60, y, size: 9, font: bold, color: rgb(0.6, 0.6, 0.6) });
+  page.drawText("Rate", { x: rx("Rate", colRate, bold, 9), y, size: 9, font: bold, color: rgb(0.6, 0.6, 0.6) });
+  page.drawText("Amount", { x: rx("Amount", colAmt, bold, 9), y, size: 9, font: bold, color: rgb(0.6, 0.6, 0.6) });
   y -= 14;
   page.drawLine({ start: { x: left, y }, end: { x: right, y }, thickness: 0.6, color: rgb(0.8, 0.8, 0.8) });
   y -= 16;
@@ -88,8 +90,10 @@ export async function buildInvoicePdf(invoice: Invoice, client: InvoiceClient): 
     const desc = li.description.length > 52 ? li.description.slice(0, 49) + "..." : li.description;
     page.drawText(desc, { x: colDesc, y, size: 10, font, color: rgb(0.15, 0.15, 0.15) });
     page.drawText(li.hours ? String(li.hours) : "-", { x: colHours, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
-    page.drawText(li.rate ? money(li.rate) : "-", { x: colRate, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
-    page.drawText(money(li.total), { x: colAmt - 60, y, size: 10, font, color: rgb(0.15, 0.15, 0.15) });
+    const rateTxt = li.rate ? money(li.rate) : "-";
+    const amtTxt = money(li.total);
+    page.drawText(rateTxt, { x: rx(rateTxt, colRate, font, 10), y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
+    page.drawText(amtTxt, { x: rx(amtTxt, colAmt, font, 10), y, size: 10, font, color: rgb(0.15, 0.15, 0.15) });
     y -= 16;
   }
 
@@ -115,11 +119,14 @@ export async function buildInvoicePdf(invoice: Invoice, client: InvoiceClient): 
   // ── Payment details ──────────────────────────────────────────────────────
   page.drawText("Payment Details", { x: left, y, size: 10, font: bold, color: rgb(0.1, 0.1, 0.1) });
   y -= 15;
-  page.drawText(`Account Name: ${PAY_INFO.accountName}`, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
-  y -= 15;
-  page.drawText(`BSB: ${PAY_INFO.bsb} · Account: ${PAY_INFO.accountNumber}`, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
-  y -= 15;
-  page.drawText(`ABN: ${MY_INFO.abn}`, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
+  const pay = getPayInfo();
+  if (pay) {
+    page.drawText(`Account Name: ${pay.accountName}`, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
+    y -= 15;
+    page.drawText(`BSB: ${pay.bsb} · Account: ${pay.accountNumber}`, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
+  } else {
+    page.drawText(PAY_INFO_FALLBACK, { x: left, y, size: 10, font, color: rgb(0.3, 0.3, 0.3) });
+  }
 
   if (invoice.notes) {
     // Move to a lower area to avoid overlap; keep it simple.

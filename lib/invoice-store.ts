@@ -53,11 +53,7 @@ export const MY_INFO = {
   website: "www.saabai.ai",
 };
 
-export const PAY_INFO = {
-  accountName: "Shane Goldberg",
-  bsb: "084899",
-  accountNumber: "726851250",
-};
+// Bank details: see lib/invoice-pay-info.ts (env vars, server-only).
 
 const INV_PREFIX = "admin:invoices:";
 const CLI_PREFIX = "admin:invoice-clients:";

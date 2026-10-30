@@ -7,6 +7,7 @@ import AdminShell from "../AdminSidebar";
 import { CardElement, useStripe, useElements, Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import InvoiceTracker from "./InvoiceTracker";
+import type { PayInfo } from "../../../lib/invoice-pay-info";
 import CouponPicker from "./CouponPicker";
 import type { PaymentRecord } from "../../api/admin/payments/history/route";
 
@@ -974,7 +975,7 @@ function PaymentHistory() {
 
 // ── Main Client Component ───────────────────────────────────────────────────
 
-export default function PaymentsClient({ publishableKey }: { publishableKey: string | null }) {
+export default function PaymentsClient({ publishableKey, payInfo = null }: { publishableKey: string | null; payInfo?: PayInfo | null }) {
   const [refreshKey, setRefreshKey] = useState(0);
 
   if (!publishableKey) {
@@ -1064,7 +1065,7 @@ export default function PaymentsClient({ publishableKey }: { publishableKey: str
         ) : tab === "audit" ? (
           <MoneyAuditTab />
         ) : (
-          <InvoiceTracker />
+          <InvoiceTracker payInfo={payInfo} />
         )}
       </div>
     </AdminShell>
