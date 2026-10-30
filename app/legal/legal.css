@@ -97,6 +97,7 @@
 .lx-price small{font-size:17px;color:var(--dim);font-weight:500;letter-spacing:0}
 .lx-plan ul{margin:22px 0 28px;gap:10px;flex:1}
 .lx-plan .lx-btn{width:100%}
+.lx-plan .lx-plan-note{margin:10px 0 0;text-align:center;font-size:13px;color:var(--dim)}
 .lx-fine{text-align:center;margin-top:22px !important;font-size:14px;color:var(--dim)}
 
 /* faq */
