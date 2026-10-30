@@ -176,3 +176,28 @@ test("checkout price: founding price only when the env var is set AND the conver
   assert.match(route, /lexCheckoutPrice\(trialFirm\)/);
   assert.match(route, /convertibleTrialFirm\(v\.value\.email\)/);
 });
+
+test("10.7 live deletion of an ended trial releases the owner email; a re-trial still needs a new code", async () => {
+  const { createInvite, startTrial, sweepTrials } = await T();
+  const { getFirm, sweepDataRetention } = await S();
+  const { getRedis } = await import("../lib/redis");
+  const now = new Date("2026-11-03T00:00:00Z");
+  const inv = await createInvite({ createdBy: "admin" }, now);
+  const r = await startTrial(input("owner@released.test"), inv.code, mailer, now);
+  assert.ok(r.ok);
+  const end = new Date(r.firm.trialEndsAt!);
+  await sweepTrials(mailer, new Date(end.getTime() + 3600_000));
+  const res = await sweepDataRetention({ matters: async () => 0, threads: async () => {} }, (e) => `k:${e}`, async () => [], new Date(end.getTime() + 31 * DAY), { mode: "live", log: () => {} });
+  assert.ok(res.deleted >= 1);
+  assert.ok((await getFirm(r.firm.firmId))!.dataDeletedAt);
+  assert.equal(await getRedis()!.get("lex:firm:byemail:owner@released.test"), null);
+  assert.equal((await startTrial(input("owner@released.test"), inv.code, mailer, now)).ok, false, "old single-use code is spent");
+});
+
+test("GET invite check is rate limited per IP; banner is in the Lex layout (every screen) without setState in an effect", () => {
+  const route = readFileSync("app/api/lex/trial/route.ts", "utf8");
+  assert.match(route, /checkLimited\(req\)[\s\S]*status: 429/);
+  assert.match(readFileSync("app/lex/layout.tsx", "utf8"), /<TrialBanner \/>\{children\}/);
+  assert.doesNotMatch(readFileSync("app/lex/page.tsx", "utf8"), /TrialBanner/);
+  assert.doesNotMatch(readFileSync("app/lex/_components/TrialBanner.tsx", "utf8"), /useEffect\(\(\) => \{ if \(t\) set/);
+});

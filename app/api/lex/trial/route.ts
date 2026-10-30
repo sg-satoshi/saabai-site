@@ -8,12 +8,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateSignup } from "@/lib/lex-subscription";
 import { lexMailer } from "@/lib/lex-subscription-emails";
 import { checkInvite, startTrial, TRIAL_DAYS } from "@/lib/lex-trial";
+import { getRedis } from "@/lib/redis";
+
+/** GET code checks: 30 an hour per IP (POST is limited in form-guard). */
+export const CHECKS_PER_HOUR = 30;
+async function checkLimited(req: NextRequest): Promise<boolean> {
+  const r = getRedis();
+  if (!r) return false;
+  const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || req.headers.get("x-real-ip") || "unknown";
+  const k = `lex:trial:check:${ip.slice(0, 64)}`;
+  const n = Number(await r.incr(k));
+  if (n === 1) await r.expire(k, 3600);
+  return n > CHECKS_PER_HOUR;
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
+    if (await checkLimited(req)) return NextResponse.json({ valid: false, error: "Too many attempts. Please try again later." }, { status: 429 });
     const chk = await checkInvite(req.nextUrl.searchParams.get("code"));
     return NextResponse.json({ valid: chk.ok, days: TRIAL_DAYS, ...(chk.ok ? {} : { error: chk.error }) });
   } catch {

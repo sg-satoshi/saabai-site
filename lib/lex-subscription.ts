@@ -499,6 +499,9 @@ export async function sweepDataRetention(del: DataDeleter, firmKeyOf: (email: st
         for (const key of firmKeys) matters += await del.matters(key);
         for (const e of chatPeople) await del.threads(e);
         f.dataDeletedAt = now.toISOString();
+        // An ended trial's owner email is released once its data is gone, so it can start fresh
+        // (a new trial still needs a new admin invite code). Paid firms keep the owner link for resubscribe.
+        if (f.lapseReason === "trial_ended") await r.eval(RELEASE_IF_OWNER, [`lex:firm:byemail:${f.adminEmail}`], [f.firmId]);
         out.deleted++;
         log(`[lex retention] firm=${f.firmId} mode=live keys=${firmKeys.length} matters=${matters} chats=${chatPeople.length} outcome=deleted`);
       });

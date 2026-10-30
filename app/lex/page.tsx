@@ -1,7 +1,6 @@
 "use client";
 
 import FirmPlan from "./_components/FirmPlan";
-import TrialBanner from "./_components/TrialBanner";
 import { addLexFiles, LexUploadError, timeoutMessage } from "../../lib/lex-upload-client";
 import { PORTAL_REQUESTS_HREF } from "@/lib/portal-pages";
 
@@ -1093,7 +1092,6 @@ export default function LexPage() {
 
       {/* ── Main ──────────────────────────────────────────────────────────── */}
       <main className="lx-main">
-        <TrialBanner />
         <div className="lx-top">
           <button type="button" className="burger" aria-label="Open navigation" onClick={() => setNavOpen(true)}><Icon name="menu" size={20} /></button>
           {mode === "research" && (
