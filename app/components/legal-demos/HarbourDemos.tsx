@@ -29,7 +29,7 @@ export function LachieLegalDemo({ ready }: { ready: boolean }) {
     <div className="lx-demo-grid">
       <div className="lx-head">
         <div className="lx-eyebrow">Browser voice demo</div>
-        <LachieLockup as="h2" second="Legend" descriptor="A browser demo of Saabai's AI voice receptionist." />
+        <LachieLockup as="h2" second="Legend" descriptor="An AI voice demo you talk to in your browser." />
         <p className="lx-demo-line">Lex is the legal assistant on this page. Lachie is this browser demo, not a phone line. He is not the website chatbot above, and he is not the Lex research workspace.</p>
         <p className="lx-demo-fine">Harbour Street Legal is an example firm. Nothing you say is sent to a real firm.</p>
       </div>

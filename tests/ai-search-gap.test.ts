@@ -74,7 +74,7 @@ test("Gold Coast receptionist is a website chatbot of about 1,000 words, with no
   assert.match(page, /calendly\.com\/shanegoldberg\/30min/);
   assert.match(page, /Book a demo/);
   assert.match(page, /LachieLockup as="h2" second="Legend"/);
-  assert.match(page, /LachiePortrait alt="Lachie, Saabai's AI voice receptionist"/);
+  assert.match(page, /LachiePortrait alt="Lachie, Saabai's AI voice demo"/);
   assert.doesNotMatch(page, /VoiceDemo|LachieLegalDemo/);
   const lachie = read("app/components/sb/LachieLockup.tsx");
   assert.match(lachie, /Meet/);
