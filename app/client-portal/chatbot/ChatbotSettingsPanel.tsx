@@ -5,6 +5,7 @@ import "../../components/billing/billing.css";
 import GoalEditor, { EMPTY_GOAL } from "../../components/chatbot/GoalEditor";
 import type { GoalConfig } from "../../../lib/chatbot/goal";
 import EngageEditor from "../../components/chatbot/EngageEditor";
+import InsightsPanel from "../../components/chatbot/InsightsPanel";
 import { DEFAULT_ENGAGE, type EngageConfig } from "../../../lib/chatbot/engage";
 
 type Data = { site: { name: string }; goal: GoalConfig | null; locked: string[]; engage: EngageConfig };
@@ -51,6 +52,7 @@ export function ChatbotSettingsPanel({ readOnly }: { readOnly?: boolean }) {
       <GoalEditor value={goal} onChange={setGoal} errors={fields} mode="client" readOnly={readOnly} />
       <EngageEditor value={engage} onChange={setEngage} errors={fields} readOnly={readOnly} />
       <button className="bl-btn pri" onClick={() => void save()} disabled={busy || readOnly} data-testid="portal-chatbot-save">{busy ? "Saving" : "Save chatbot settings"}</button>
+      <InsightsPanel endpoint="/api/portal/chatbot/insights" />
     </div>
   );
 }

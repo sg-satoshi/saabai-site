@@ -8,6 +8,7 @@ import FaqBulkAdd from "./FaqBulkAdd";
 import GoalEditor, { EMPTY_GOAL } from "../../components/chatbot/GoalEditor";
 import type { GoalConfig } from "../../../lib/chatbot/goal";
 import EngageEditor from "../../components/chatbot/EngageEditor";
+import InsightsPanel from "../../components/chatbot/InsightsPanel";
 import { DEFAULT_ENGAGE, type EngageConfig } from "../../../lib/chatbot/engage";
 
 export type EditorRow = {
@@ -168,6 +169,11 @@ export default function ChatbotEditor({ row, onSaved }: { row: EditorRow; onSave
             Show &quot;Powered by Saabai&quot;
           </label>
           <div className="hint">{canHide ? "You can switch this line off on this plan." : "Always shown on the Presence plan. It can be removed on Growth and Signature."}</div>{err("showPoweredBy")}
+        </fieldset>
+
+        <fieldset data-testid="insights-section">
+          <h3>Funnel and transcripts</h3>
+          <InsightsPanel endpoint={`/api/admin/chatbots/insights?slug=${encodeURIComponent(row.slug)}`} />
         </fieldset>
 
         <fieldset>
