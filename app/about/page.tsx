@@ -222,7 +222,7 @@ export default function About() {
               The chatbot answers visitors and keeps a log of each chat. It is trained on your services, hours and policies, and it should say so rather than invent an answer.
               It should not give clinical, financial or legal advice, and it does not price jobs. Quoting is separate work, scoped and quoted.
               Enquiry alerts are coming soon.
-              Phone answering with Lachie is coming soon. It is not live. A voice demo runs in the browser, not on a phone line.
+              A Lachie voice demo runs in the browser, not on a phone line.
             </p>
 
             <h3 className="text-lg font-semibold tracking-tight">Lex, for law firms</h3>

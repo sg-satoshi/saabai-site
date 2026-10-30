@@ -6,6 +6,7 @@ import { getRedis } from "../../../../lib/redis";
 import { listPortalUsers } from "../../../../lib/portal-users";
 import { getLexClients } from "../../../../lib/lex-config";
 import { lexAlert, lexMailer } from "../../../../lib/lex-subscription-emails";
+import { flushFeedbackDigest } from "../../../../lib/lex-feedback";
 import { getStripe } from "../../../../lib/stripe";
 import { sweepTrials } from "../../../../lib/lex-trial";
 
@@ -36,7 +37,8 @@ export async function GET(req: Request) {
       new Date(),
       { alert: lexAlert }, // mode from LEX_DATA_DELETION_MODE; unset means dry_run
     );
-    return Response.json({ ok: true, result, trials, data });
+    const feedbackDigest = await flushFeedbackDigest(lexAlert).catch(() => 0);
+    return Response.json({ ok: true, result, trials, data, feedbackDigest });
   } catch (err) {
     console.error("[lex grace]", err instanceof Error ? err.name : err);
     return Response.json({ error: "Sweep failed" }, { status: 500 });

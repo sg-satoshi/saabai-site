@@ -38,11 +38,11 @@ export async function sendTrialVerifyEmail(o: { email: string; name: string; url
 }
 
 /** Internal alert to Saabai. Never throws. */
-export async function lexAlert(message: string): Promise<void> {
+export async function lexAlert(message: string, opts: { prefix?: string; title?: string } = {}): Promise<void> {
   try {
     await sendBrandedEmail({
       to: "hello@saabai.ai", from: EMAIL_BRAND.from,
-      email: renderBrandedEmail({ subject: `Stripe: ${message.slice(0, 80)}`, title: "Stripe checkout needs a look", bodyHtml: `<p>${escapeHtml(message)}</p>`, textBody: [message] }),
+      email: renderBrandedEmail({ subject: `${opts.prefix ?? "Stripe"}: ${message.slice(0, 80)}`, title: opts.title ?? "Stripe checkout needs a look", bodyHtml: `<p>${escapeHtml(message)}</p>`, textBody: [message] }),
     });
   } catch (err) { console.error("[lex alert]", err instanceof Error ? err.name : err); }
 }
