@@ -31,3 +31,5 @@ jobs:
         run: npx tsx --test tests/lex-trial.test.ts tests/lex-signup.test.ts
       - name: Lex feedback
         run: npx tsx --test tests/lex-feedback.test.ts
+      - name: Lex help assistant
+        run: npx tsx --test tests/lex-help.test.ts

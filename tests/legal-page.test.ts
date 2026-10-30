@@ -29,10 +29,11 @@ test("unverified or retired claims are gone", () => {
 });
 
 test("prices, GST line and demo CTA are as approved", () => {
-  assert.ok(page.includes("$299<small> per month</small>"));
+  assert.ok(page.includes("Free<small> for 60 days</small>"));
+  assert.ok(!page.includes("299") && !/nlimited legal research/.test(page));
   assert.ok(!page.includes("> /month<") && !page.includes(">/month<") && !page.includes("> /year<"));
   assert.ok(page.includes(">Custom<"));
-  assert.ok(page.includes("Prices in AUD. GST not applicable."));
+  assert.ok(page.includes("60-day free trial, no card needed."));
   assert.ok(!page.includes("Tributum"));
   assert.ok(!page.includes("tributumlaw.com"));
   assert.ok(page.includes(">Book a demo</a>"));
