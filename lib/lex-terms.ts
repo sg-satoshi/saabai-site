@@ -2,6 +2,9 @@
  * Lex subscription terms copy. Approved by Shane 30 Oct 2026 (issue #388); price clause updated 30 Oct 2026, 2:00 PM (#430): no figure on public terms.
  * Bump LEX_TERMS_VERSION in lib/lex-subscription.ts whenever this copy changes.
  */
+/** Lex Firm price shown only to signed-in firms before checkout. Shane, 30 Oct 2026: $299 a month including GST. Not for public pages. */
+export const LEX_FIRM_PRICE_LABEL = "$299 a month (AUD, includes GST)";
+
 export const LEX_TERMS_SUMMARY =
   "Billed monthly. Cancel anytime. When you cancel, Lex stays on until the end of the month you've paid for, and we don't refund part months. Prices in AUD and include GST.";
 

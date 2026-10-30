@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import SignupForm from "./SignupForm";
 import { COOKIE_NAME, verifySessionToken } from "@/lib/auth";
+import { LEX_FIRM_PRICE_LABEL } from "@/lib/lex-terms";
 import "./signup.css";
 
 export const metadata: Metadata = { title: "Start Lex: Firm plan", robots: { index: false, follow: false } };
@@ -17,8 +18,8 @@ export default async function LexSignupPage({ searchParams }: { searchParams: Pr
         <h1>Start Lex</h1>
         {signedIn ? (
           <p className="lede">
-            Firm plan: $299 a month for 3 lawyer seats. Billed monthly. Cancel anytime. When you cancel, Lex stays on until the end of the
-            month you&apos;ve paid for, and we don&apos;t refund part months. Prices in AUD. GST not applicable.
+            Firm plan: {LEX_FIRM_PRICE_LABEL || "$299 a month (AUD, includes GST)"} for 3 lawyer seats. Billed monthly. Cancel anytime. When you cancel, Lex stays on until the end of the
+            month you&apos;ve paid for, and we don&apos;t refund part months.
           </p>
         ) : (
           <p className="lede">
