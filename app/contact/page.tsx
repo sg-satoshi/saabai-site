@@ -14,7 +14,7 @@ export const metadata: Metadata = publicPageMeta.contact;
 const ROWS: [string, string][] = [
   ["Email", NAP.email],
   ["Address", NAP.addressLine],
-  ["ABN", NAP.abn],
+  ["Company", `${NAP.legalName}, ACN ${NAP.acn}`],
   ["Service areas", "Gold Coast, Brisbane and Queensland, with clients Australia-wide online"],
   ["GST", "Not applicable"],
 ];

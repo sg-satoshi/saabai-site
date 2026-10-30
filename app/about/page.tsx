@@ -46,7 +46,7 @@ export default function About() {
 
         <div className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed text-left flex flex-col gap-6">
           <p>
-            Saabai is a sole trader business operated by Shane Goldberg, based in {NAP.addressLine}.
+            Saabai is operated by Saabai Pty Ltd (ACN 703 735 264), founded by Shane Goldberg, based in {NAP.addressLine}.
             We work with Australian small businesses, including law firms and accounting firms, on the Gold Coast, in Brisbane and across Queensland, and with clients Australia-wide online.
             Saabai is an online business. We do not operate a public shopfront, and visits are by appointment only.
           </p>
@@ -64,7 +64,7 @@ export default function About() {
         <InShort>
           <p>Saabai is a Gold Coast, Queensland AI business founded by Shane Goldberg.</p>
           <p>
-            Shane operates it as a sole trader from {NAP.addressLine} (ABN {NAP.abn}).
+            It is operated by {NAP.legalName} (ACN {NAP.acn}) from {NAP.addressLine}.
             Website care starts from <strong>$100 a month</strong>, and builds start from <strong>$2,000</strong>.
             The Blueprint starts from <strong>$497</strong>. Lex starts with a <strong>60-day free trial</strong>.
           </p>
@@ -105,8 +105,8 @@ export default function About() {
 
           <div className="flex flex-col gap-6">
             <p className="text-xl md:text-2xl text-saabai-text-muted leading-relaxed">
-              Shane Goldberg founded Saabai and operates it as a sole trader.
-              The public address is {NAP.addressLine}. The ABN on this site, {NAP.abn}, is the sole trader ABN.
+              Shane Goldberg founded Saabai. It is operated by {NAP.legalName} (ACN {NAP.acn}).
+              The public address is {NAP.addressLine}.
               The contact email is {NAP.email}.
             </p>
             <p className="text-lg text-saabai-text-muted leading-relaxed">

@@ -12,11 +12,10 @@ export const FOUNDER_ID = `${SITE_URL}/#shane-goldberg`;
  */
 export const NAP = {
   name: "Saabai",
-  legalName: "Saabai",
+  legalName: "Saabai Pty Ltd",
+  acn: "703 735 264",
   url: SITE_URL,
   email: "hello@saabai.ai",
-  abn: "71 889 082 572",
-  taxID: "ABN 71 889 082 572",
   addressLine: "Merrimac QLD 4226, Australia",
   logo: `${SITE_URL}/brand/saabai-logo.png`,
 } as const;
@@ -258,8 +257,7 @@ export const organizationSchema = {
       logo: NAP.logo,
       image: `${SITE_URL}/og-image.png`,
       email: NAP.email,
-      taxID: NAP.taxID,
-      identifier: { "@type": "PropertyValue", propertyID: "ABN", value: "71889082572" },
+      identifier: { "@type": "PropertyValue", propertyID: "ACN", value: "703735264" },
       description:
         "Saabai builds, hosts and manages websites for small businesses, and delivers the Saabai Blueprint AI audit. Based in Merrimac on the Gold Coast, serving Brisbane, Queensland and Australia.",
       address: POSTAL_ADDRESS,
@@ -337,7 +335,7 @@ export const aboutPageSchema = schemaGraph([
     ...founderSchema,
     image: `${SITE_URL}/shane-goldberg.jpg`,
     description:
-      "Shane Goldberg is the founder of Saabai, a sole trader business based in Merrimac on the Gold Coast, Queensland.",
+      "Shane Goldberg is the founder of Saabai (Saabai Pty Ltd), based in Merrimac on the Gold Coast, Queensland.",
   },
   organizationSchema["@graph"][0],
 ]);

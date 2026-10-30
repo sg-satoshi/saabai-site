@@ -95,7 +95,7 @@ export default function SbFooter({ lex = false }: { lex?: boolean } = {}) {
         </div>
         <div className="legal">
           <span>
-            © 2026 {NAP.name}. ABN {NAP.abn}. {NAP.addressLine}.{" "}
+            © 2026 {NAP.legalName}. ACN {NAP.acn}. {NAP.addressLine}.{" "}
             <a href={`mailto:${NAP.email}`}>{NAP.email}</a>.{lex ? null : " Prices in AUD. GST not applicable."}
           </span>
         </div>

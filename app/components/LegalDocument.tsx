@@ -41,7 +41,7 @@ export default function LegalDocument({
           </div>
 
           <p className="dim" style={{ marginTop: 28, fontSize: 14 }}>
-            {NAP.name}, ABN {NAP.abn}, {NAP.addressLine}. {NAP.email}
+            {NAP.legalName} (ACN {NAP.acn}), {NAP.addressLine}. {NAP.email}
             {links.length > 0 ? (
               <>
                 .{" "}
