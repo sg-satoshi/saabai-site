@@ -50,6 +50,7 @@ export type LexFirm = {
   /** founding_member: joined a trial while the founding offer was open; may convert at STRIPE_PRICE_LEX_FOUNDING. */
   foundingMember?: boolean;
   foundingLostAt?: string;
+  foundingCountedAt?: string;
   /** Stripe event.created (seconds) of the latest successful payment; older payment_failed events are ignored. */
   lastPaidAt?: number;
   /** Staff released when the plan was cancelled (kept for the record only). */
@@ -278,7 +279,13 @@ export async function provisionLexCheckout(eventId: string, s: CheckoutLike, mai
     await withFirmLock(firmId, async (f) => {
       f.customerId = idOf(s.customer) ?? f.customerId;
       f.subscriptionId = subId ?? f.subscriptionId;
-      if (f.status === "trial" || f.lapseReason === "trial_ended") { f.convertedFromTrialAt = new Date().toISOString(); f.dataDeleteAfter = undefined; f.dataDeletionHeldAt = undefined; }
+      if (f.status === "trial" || f.lapseReason === "trial_ended") {
+        f.convertedFromTrialAt = new Date().toISOString(); f.dataDeleteAfter = undefined; f.dataDeletionHeldAt = undefined;
+        // Founding place taken on a paid conversion at the founding price (cap mode "paid_conversions").
+        if (FOUNDING_CAP_COUNTS === "paid_conversions" && f.foundingMember && s.metadata?.founding === "1" && !f.foundingCountedAt) {
+          await r.incr(FOUNDING_COUNT_KEY); f.foundingCountedAt = f.convertedFromTrialAt;
+        }
+      }
       f.status = "active"; f.lapseReason = undefined; f.graceUntil = undefined;
       f.lastPaidAt = Math.max(f.lastPaidAt ?? 0, eventCreated ?? s.created ?? 0);
       await setAccess(f, true, mailer);
@@ -302,6 +309,9 @@ export const invoiceSubId = (inv: InvoiceLike) => idOf(inv.subscription) ?? idOf
  * Single switch in case Shane rules otherwise.
  */
 export const FOUNDING_LOST_ON_LAPSE = true;
+/** What the founding cap counts: "paid_conversions" (default) or "trial_starts". Shane to confirm. */
+export const FOUNDING_CAP_COUNTS: "paid_conversions" | "trial_starts" = "paid_conversions";
+export const FOUNDING_COUNT_KEY = "lex:trial:founding:count";
 
 /** Mutates f (caller holds the firm lock). */
 export async function lapseFirm(f: LexFirm, reason: LapseReason, mailer: Mailer, dataClockFrom = new Date()): Promise<void> {

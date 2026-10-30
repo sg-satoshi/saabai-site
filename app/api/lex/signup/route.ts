@@ -8,7 +8,7 @@ import { ATTR_COOKIE, attrMetadata, parseAttr } from "@/lib/growth/attribution";
 import { getStripe } from "@/lib/stripe";
 import { siteUrl } from "@/lib/billing/stripe-ops";
 import { convertibleTrialFirm, savePendingSignup, validateSignup } from "@/lib/lex-subscription";
-import { getFoundingConfig, lexCheckoutPrice } from "@/lib/lex-trial";
+import { foundingCheckoutOpen, lexCheckoutPrice } from "@/lib/lex-trial";
 
 export const runtime = "nodejs";
 
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   // Founding trial firms convert at STRIPE_PRICE_LEX_FOUNDING when it is set; else the normal price.
   const trialFirm = await convertibleTrialFirm(v.value.email).catch(() => null);
   // trial_ended firms still link (convertibleTrialFirm) but pay the normal price; see lexCheckoutPrice.
-  const foundingOn = trialFirm?.foundingMember ? (await getFoundingConfig().catch(() => null))?.enabled === true : false;
+  const foundingOn = trialFirm?.foundingMember ? await foundingCheckoutOpen().catch(() => false) : false;
   const { price, founding } = lexCheckoutPrice(trialFirm, foundingOn);
   if (!price || !process.env.STRIPE_SECRET_KEY) {
     return NextResponse.json({ error: "Online signup for Lex isn't open yet. Please book a demo and we'll set you up." }, { status: 503 });

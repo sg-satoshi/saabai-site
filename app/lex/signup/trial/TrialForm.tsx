@@ -40,22 +40,20 @@ export default function TrialForm({ code }: { code: string }) {
   if (done) {
     return (
       <div role="status">
-        <p className="lede"><strong>Your trial has started.</strong> Check your inbox for a link to set your password (or sign in with your existing Saabai login), then open Lex. You can invite 2 colleagues from Firm Settings.</p>
-        <a className="btn" href="/lex">Open Lex</a>
+        <p className="lede"><strong>Check your inbox.</strong> We&apos;ve sent a link to confirm your email. Your free trial starts when you open it. The link expires in 24 hours.</p>
       </div>
     );
   }
 
   return (
     <form ref={formRef} onSubmit={submit} noValidate>
-      <label htmlFor="code">Invite code</label>
-      <input id="code" name="code" {...bad("code")} type="text" defaultValue={code} autoComplete="off" required maxLength={40} placeholder="LEX-XXXXXXXXXX" />
-      <label htmlFor="name">Full name</label>
+      {code ? <input type="hidden" name="code" value={code} /> : null}
+      <label htmlFor="firmName">Firm name</label>
+      <input id="firmName" name="firmName" {...bad("firmName")} type="text" autoComplete="organization" required maxLength={160} />
+      <label htmlFor="name">Your name</label>
       <input id="name" name="name" {...bad("name")} type="text" autoComplete="name" required maxLength={120} />
       <label htmlFor="email">Work email</label>
       <input id="email" name="email" {...bad("email")} type="email" autoComplete="email" required maxLength={200} />
-      <label htmlFor="firmName">Firm name</label>
-      <input id="firmName" name="firmName" {...bad("firmName")} type="text" autoComplete="organization" required maxLength={160} />
       <label htmlFor="phone">Phone <small>(optional)</small></label>
       <input id="phone" name="phone" {...bad("phone")} type="tel" autoComplete="tel" maxLength={40} />
       <label htmlFor="abn">ABN <small>(optional)</small></label>
@@ -69,8 +67,8 @@ export default function TrialForm({ code }: { code: string }) {
         <span>I agree to the <a href="/terms#lex" target="_blank" rel="noopener">Lex Terms</a> and the <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span>
       </label>
       {error ? <p id="trial-error" className="err" role="alert">{error}</p> : null}
-      <button className="btn" type="submit" disabled={busy}>{busy ? "Starting your trial…" : "Start free trial"}</button>
-      <p className="note">No card and no payment during the trial. Lex is a drafting and research tool, not legal advice.</p>
+      <button className="btn" type="submit" disabled={busy}>{busy ? "Sending…" : "Start my free trial"}</button>
+      <p className="note">No card, and you won&apos;t be charged unless you choose to subscribe. One free trial per firm. Lex is a drafting and research tool, not legal advice.</p>
     </form>
   );
 }

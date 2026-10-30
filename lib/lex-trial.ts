@@ -15,7 +15,7 @@ import { randomBytes } from "crypto";
 import { getRedis } from "./redis";
 import {
   LEX_TERMS_VERSION, type LexFirm, type Mailer, type SignupInput,
-  getFirm, lapseFirm, setAccess, withFirmLock,
+  getFirm, lapseFirm, setAccess, withFirmLock, FOUNDING_CAP_COUNTS, FOUNDING_COUNT_KEY,
 } from "./lex-subscription";
 
 export const TRIAL_DAYS = 60;
@@ -138,12 +138,12 @@ export const TRIAL_GENERIC_ERROR = "We couldn't start a trial for that email. If
  */
 export type FoundingConfig = { enabled: boolean; deadline: string | null; cap: number | null; updatedBy?: string; updatedAt?: string };
 const FOUNDING_KEY = "lex:trial:founding";
-const FOUNDING_COUNT = "lex:trial:founding:count";
+
 export const MAX_FOUNDING_CAP = 10000;
 export async function getFoundingConfig(): Promise<FoundingConfig & { used: number }> {
   const r = redis();
   const c = parse<FoundingConfig>(await r.get(FOUNDING_KEY)) ?? { enabled: false, deadline: null, cap: null };
-  return { ...c, used: Number(await r.get(FOUNDING_COUNT)) || 0 };
+  return { ...c, used: Number(await r.get(FOUNDING_COUNT_KEY)) || 0 };
 }
 export async function setFoundingConfig(raw: { enabled?: unknown; deadline?: unknown; cap?: unknown }, by: string, now = new Date()): Promise<FoundingConfig> {
   let deadline: string | null = null;
@@ -159,12 +159,23 @@ export async function setFoundingConfig(raw: { enabled?: unknown; deadline?: unk
   return c;
 }
 /** Claims a founding place (atomic INCR against the cap). Returns false when the offer is closed. */
-async function claimFounding(now: Date): Promise<boolean> {
+/**
+ * Flags a new trial as founding. With FOUNDING_CAP_COUNTS "trial_starts" the place is taken now (atomic INCR);
+ * with "paid_conversions" (default) the trial is flagged while places remain and the count moves on paid conversion.
+ */
+async function claimFounding(now: Date): Promise<false | "counted" | "flagged"> {
   const c = await getFoundingConfig();
   if (!c.enabled || (c.deadline && now.getTime() > Date.parse(c.deadline))) return false;
-  const n = Number(await redis().incr(FOUNDING_COUNT));
-  if (c.cap !== null && n > c.cap) { await redis().incrby(FOUNDING_COUNT, -1); return false; }
-  return true;
+  if (FOUNDING_CAP_COUNTS === "paid_conversions") return c.cap === null || c.used < c.cap ? "flagged" : false;
+  const n = Number(await redis().incr(FOUNDING_COUNT_KEY));
+  if (c.cap !== null && n > c.cap) { await redis().incrby(FOUNDING_COUNT_KEY, -1); return false; }
+  return "counted";
+}
+/** Whether checkout may still give the founding price (switch on, and places left when the cap counts paid conversions). */
+export async function foundingCheckoutOpen(): Promise<boolean> {
+  const c = await getFoundingConfig();
+  if (!c.enabled) return false;
+  return FOUNDING_CAP_COUNTS === "trial_starts" || c.cap === null || c.used < c.cap;
 }
 
 /**
@@ -186,20 +197,50 @@ export function lexCheckoutPrice(
   return { price: normal, founding: false };
 }
 
+/** Webmail and ISP domains: one trial per full email address; any other domain is treated as one firm. */
+export const PUBLIC_EMAIL_DOMAINS = new Set([
+  "gmail.com", "googlemail.com", "outlook.com", "outlook.com.au", "hotmail.com", "hotmail.com.au", "live.com", "live.com.au",
+  "msn.com", "yahoo.com", "yahoo.com.au", "ymail.com", "icloud.com", "me.com", "mac.com", "aol.com", "proton.me", "protonmail.com",
+  "pm.me", "gmx.com", "zoho.com", "fastmail.com", "bigpond.com", "bigpond.net.au", "optusnet.com.au", "tpg.com.au", "iinet.net.au", "internode.on.net",
+]);
+/** One trial per firm, forever: keyed by email domain, or by full email for public domains. */
+export function trialClaimKey(email: string): string {
+  const e = lc(email);
+  const domain = e.split("@")[1] ?? "";
+  return `lex:trial:claim:${PUBLIC_EMAIL_DOMAINS.has(domain) ? e : domain}`;
+}
+export const TRIAL_ALREADY_USED = "A Lex free trial has already been used for this firm. To keep using Lex, subscribe or talk to us at hello@saabai.ai.";
+export const SELF_SERVE_SOURCE = "Self-serve";
+
+/**
+ * Starts a 60-day trial. The trial is open self-serve: an invite code is optional (kept for tracking; a code that
+ * is given must be valid and is redeemed atomically). Claims one-trial-per-firm (permanent), then the owner email,
+ * creates the firm and grants Lex. Every failure after a claim gives it back. Never charges or converts to paid.
+ * Public callers reach this only through activateTrial (verified email).
+ */
 export async function startTrial(v: SignupInput, rawCode: unknown, mailer: Mailer, now = new Date()): Promise<{ ok: true; firm: LexFirm } | { ok: false; error: string; field?: string }> {
-  const chk = await checkInvite(rawCode, now);
-  if (!chk.ok) return { ok: false, error: chk.error, field: "code" };
-  const inv = chk.invite;
+  let inv: TrialInvite | null = null;
+  if (typeof rawCode === "string" && rawCode.trim()) {
+    const chk = await checkInvite(rawCode, now);
+    if (!chk.ok) return { ok: false, error: chk.error, field: "code" };
+    inv = chk.invite;
+  }
   const r = redis();
   const email = lc(v.email);
   if (await r.get(`lex:firm:byemail:${email}`)) return { ok: false, error: TRIAL_GENERIC_ERROR, field: "email" };
-  const usesKey = `lex:trial:invite:uses:${inv.code}`;
-  const n = Number(await r.incr(usesKey));
-  if (n > inv.maxUses) { await r.incrby(usesKey, -1); return { ok: false, error: INVITE_INVALID, field: "code" }; }
+  if (await r.get(trialClaimKey(email))) return { ok: false, error: TRIAL_ALREADY_USED, field: "email" };
+  const usesKey = inv ? `lex:trial:invite:uses:${inv.code}` : null;
+  if (inv && usesKey) {
+    const n = Number(await r.incr(usesKey));
+    if (n > inv.maxUses) { await r.incrby(usesKey, -1); return { ok: false, error: INVITE_INVALID, field: "code" }; }
+  }
+  const refundUse = async () => { if (usesKey) await r.incrby(usesKey, -1); };
   const firmId = `lf_t${randomBytes(10).toString("hex")}`;
+  const claimKey = trialClaimKey(email);
+  if ((await r.set(claimKey, firmId, { nx: true })) !== "OK") { await refundUse(); return { ok: false, error: TRIAL_ALREADY_USED, field: "email" }; }
   const claimed = (await r.set(`lex:firm:byemail:${email}`, firmId, { nx: true })) === "OK";
-  if (!claimed) { await r.incrby(usesKey, -1); return { ok: false, error: TRIAL_GENERIC_ERROR, field: "email" }; }
-  let founding = false;
+  if (!claimed) { await refundUse(); await r.del(claimKey); return { ok: false, error: TRIAL_GENERIC_ERROR, field: "email" }; }
+  let founding: false | "counted" | "flagged" = false;
   try {
     founding = await claimFounding(now);
     const iso = now.toISOString();
@@ -207,7 +248,7 @@ export async function startTrial(v: SignupInput, rawCode: unknown, mailer: Maile
       firmId, firmName: v.firmName, adminEmail: email, adminName: v.name,
       members: [], granted: [], status: "trial",
       trialStartedAt: iso, trialEndsAt: new Date(now.getTime() + TRIAL_DAYS * DAY).toISOString(),
-      inviteCode: inv.code, inviteSource: inv.label, ...(founding ? { foundingMember: true } : {}),
+      inviteCode: inv?.code, inviteSource: inv?.label ?? SELF_SERVE_SOURCE, ...(founding ? { foundingMember: true } : {}),
       termsVersion: LEX_TERMS_VERSION, termsAcceptedAt: iso, createdAt: iso, updatedAt: iso,
     };
     await r.set(`lex:firm:${firmId}`, JSON.stringify(firm), { nx: true });
@@ -215,11 +256,40 @@ export async function startTrial(v: SignupInput, rawCode: unknown, mailer: Maile
     const out = await withFirmLock(firmId, async (f) => { await setAccess(f, true, mailer); return f; });
     return { ok: true, firm: out };
   } catch (err) {
-    await r.incrby(usesKey, -1);
-    if (founding) await r.incrby(FOUNDING_COUNT, -1);
+    await refundUse();
+    if (founding === "counted") await r.incrby(FOUNDING_COUNT_KEY, -1);
     await r.del(`lex:firm:byemail:${email}`);
+    await r.del(claimKey);
     throw err;
   }
+}
+
+/** Email verification before the trial activates. Pending requests live 24 hours; a token works once. */
+export const VERIFY_TTL_SECONDS = 24 * 3600;
+export type TrialVerifySender = (o: { email: string; name: string; url: string }) => Promise<void>;
+export async function requestTrial(v: SignupInput, rawCode: unknown, send: TrialVerifySender, site: string, now = new Date()): Promise<{ ok: true } | { ok: false; error: string; field?: string }> {
+  if (typeof rawCode === "string" && rawCode.trim()) {
+    const chk = await checkInvite(rawCode, now);
+    if (!chk.ok) return { ok: false, error: chk.error, field: "code" };
+  }
+  const r = redis();
+  const email = lc(v.email);
+  if (await r.get(`lex:firm:byemail:${email}`)) return { ok: false, error: TRIAL_GENERIC_ERROR, field: "email" };
+  if (await r.get(trialClaimKey(email))) return { ok: false, error: TRIAL_ALREADY_USED, field: "email" };
+  const token = randomBytes(24).toString("hex");
+  await r.set(`lex:trial:verify:${token}`, JSON.stringify({ v, code: normaliseCode(rawCode) || null, at: now.toISOString() }), { ex: VERIFY_TTL_SECONDS });
+  await send({ email, name: v.name, url: `${site}/lex/signup/trial/verify?token=${token}` });
+  return { ok: true };
+}
+export const VERIFY_INVALID = "That link has expired or was already used. Please start your trial again.";
+export async function activateTrial(rawToken: unknown, mailer: Mailer, now = new Date()): Promise<{ ok: true; firm: LexFirm } | { ok: false; error: string; field?: string }> {
+  const token = typeof rawToken === "string" && /^[a-f0-9]{48}$/.test(rawToken) ? rawToken : null;
+  if (!token) return { ok: false, error: VERIFY_INVALID };
+  const r = redis();
+  const p = parse<{ v: SignupInput; code: string | null }>(await r.get(`lex:trial:verify:${token}`));
+  if (!p || (await r.set(`lex:trial:verify:used:${token}`, "1", { nx: true, ex: VERIFY_TTL_SECONDS })) !== "OK") return { ok: false, error: VERIFY_INVALID };
+  await r.del(`lex:trial:verify:${token}`);
+  return startTrial(p.v, p.code ?? "", mailer, now);
 }
 
 /**

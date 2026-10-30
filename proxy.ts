@@ -107,7 +107,7 @@ const PUBLIC_API = [
   // Payments (Stripe verifies its own webhook signatures)
   "/api/checkout",
   "/api/lex/signup",         // Lex Firm plan signup -> Stripe Checkout (validated, honeypot, rate limited in form-guard)
-  "/api/lex/trial",          // Lex invite-only free trial signup (invite code, honeypot, rate limited in form-guard; no Stripe)
+  "/api/lex/trial",          // Lex self-serve free trial: request + /verify (email confirm, honeypot, rate limited in form-guard; no Stripe)
   "/api/blueprint/checkout", // Saabai Blueprint one-off Stripe Checkout (public buyers)
   "/api/blueprint/score",    // AI Readiness Score results email (public quiz)
   "/api/site-scan",          // website scan step of /score: self-gates (404 unless flag on or admin), rate limited.

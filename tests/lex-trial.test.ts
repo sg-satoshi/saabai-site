@@ -143,22 +143,24 @@ test("wiring: public route + rate limit, cron runs the trial sweep, admin page i
 });
 
 test("founding offer: off by default; on before the deadline and under the cap flags founding_member; after the deadline or cap it doesn't", async () => {
-  const { createInvite, startTrial, getFoundingConfig, setFoundingConfig } = await T();
+  const { createInvite, startTrial, getFoundingConfig, setFoundingConfig, foundingCheckoutOpen } = await T();
   const now = new Date("2026-11-05T00:00:00Z");
   const inv = await createInvite({ createdBy: "admin", maxUses: 10, expiresInDays: 60 }, now);
-  const off = await startTrial(input("f0@found.test"), inv.code, mailer, now);
+  const off = await startTrial(input("f0@found0.test"), inv.code, mailer, now);
   assert.ok(off.ok && !off.firm.foundingMember, "off until an admin turns it on");
   await setFoundingConfig({ enabled: true, deadline: "2026-11-30", cap: 2 }, "admin", now);
   const cfg = await getFoundingConfig();
   assert.equal(cfg.deadline, "2026-11-30T13:59:59.000Z", "end of day Brisbane");
-  const a = await startTrial(input("f1@found.test"), inv.code, mailer, now);
-  const b = await startTrial(input("f2@found.test"), inv.code, mailer, now);
-  const c = await startTrial(input("f3@found.test"), inv.code, mailer, now);
+  const a = await startTrial(input("f1@found1.test"), inv.code, mailer, now);
+  const b = await startTrial(input("f2@found2.test"), inv.code, mailer, now);
   assert.ok(a.ok && a.firm.foundingMember && b.ok && b.firm.foundingMember);
+  assert.equal((await getFoundingConfig()).used, 0, "default FOUNDING_CAP_COUNTS=paid_conversions: trial starts don't take places");
+  await (await import("../lib/redis")).getRedis()!.set("lex:trial:founding:count", "2"); // two paid founding conversions
+  assert.equal(await foundingCheckoutOpen(), false, "cap reached: checkout falls back to the normal price");
+  const c = await startTrial(input("f3@found3.test"), inv.code, mailer, now);
   assert.ok(c.ok && !c.firm.foundingMember, "cap of 2 reached");
-  assert.equal((await getFoundingConfig()).used, 2);
   await setFoundingConfig({ enabled: true, deadline: "2026-11-30", cap: "" }, "admin", now);
-  const late = await startTrial(input("f4@found.test"), inv.code, mailer, new Date("2026-12-01T00:00:00Z"));
+  const late = await startTrial(input("f4@found4.test"), inv.code, mailer, new Date("2026-12-01T00:00:00Z"));
   assert.ok(late.ok && !late.firm.foundingMember, "after the deadline");
   await assert.rejects(setFoundingConfig({ enabled: true, deadline: "not a date" }, "admin"));
   await assert.rejects(setFoundingConfig({ enabled: true, cap: -1 }, "admin"));
@@ -179,7 +181,7 @@ test("checkout price: founding only with switch ON + env var + flag + active tri
   assert.deepEqual(lexCheckoutPrice({ ...trial, status: "lapsed" as const }, true, env, now), N, "trial_ended firm pays normal");
   assert.deepEqual(lexCheckoutPrice(trial, true, env, new Date("2026-12-01T00:00:01Z")), N, "after trialEndsAt");
   const route = readFileSync("app/api/lex/signup/route.ts", "utf8");
-  assert.match(route, /getFoundingConfig\(\)/);
+  assert.match(route, /foundingCheckoutOpen\(\)/);
   assert.match(route, /lexCheckoutPrice\(trialFirm, foundingOn\)/);
 });
 
@@ -200,7 +202,7 @@ test("founding status is lost on any lapse of a paid founding subscription (unpa
 test("10.7 live deletion of an ended trial releases the owner email; a re-trial still needs a new code", async () => {
   const { createInvite, startTrial, sweepTrials } = await T();
   const { getFirm, sweepDataRetention } = await S();
-  const { getRedis } = await import("../lib/redis");
+
   const now = new Date("2026-11-03T00:00:00Z");
   const inv = await createInvite({ createdBy: "admin" }, now);
   const r = await startTrial(input("owner@released.test"), inv.code, mailer, now);
@@ -210,7 +212,7 @@ test("10.7 live deletion of an ended trial releases the owner email; a re-trial 
   const res = await sweepDataRetention({ matters: async () => 0, threads: async () => {} }, (e) => `k:${e}`, async () => [], new Date(end.getTime() + 31 * DAY), { mode: "live", log: () => {} });
   assert.ok(res.deleted >= 1);
   assert.ok((await getFirm(r.firm.firmId))!.dataDeletedAt);
-  assert.equal(await getRedis()!.get("lex:firm:byemail:owner@released.test"), null);
+  assert.equal(await (await import("../lib/redis")).getRedis()!.get("lex:firm:byemail:owner@released.test"), null);
   assert.equal((await startTrial(input("owner@released.test"), inv.code, mailer, now)).ok, false, "old single-use code is spent");
 });
 
@@ -220,4 +222,57 @@ test("GET invite check is rate limited per IP; banner is in the Lex layout (ever
   assert.match(readFileSync("app/lex/layout.tsx", "utf8"), /<TrialBanner \/>\{children\}/);
   assert.doesNotMatch(readFileSync("app/lex/page.tsx", "utf8"), /TrialBanner/);
   assert.doesNotMatch(readFileSync("app/lex/_components/TrialBanner.tsx", "utf8"), /useEffect\(\(\) => \{ if \(t\) set/);
+});
+
+test("open self-serve: no code needed; email must be verified before the trial starts; token single use; code optional for tracking", async () => {
+  const { requestTrial, activateTrial, createInvite, SELF_SERVE_SOURCE } = await T();
+  const sent: { email: string; url: string }[] = [];
+  const send = async (o: { email: string; name: string; url: string }) => { sent.push(o); };
+  const r = await requestTrial(input("owner@openfirm.test"), "", send, "https://x.test");
+  assert.ok(r.ok);
+  assert.equal(await hasLex("owner@openfirm.test"), false, "nothing starts before verification");
+  assert.equal(await (await import("../lib/redis")).getRedis()!.get("lex:firm:byemail:owner@openfirm.test"), null);
+  const token = new URL(sent[0].url).searchParams.get("token");
+  assert.equal(sent[0].email, "owner@openfirm.test");
+  assert.equal((await activateTrial("nope", mailer)).ok, false);
+  const a = await activateTrial(token, mailer);
+  assert.ok(a.ok && a.firm.status === "trial" && a.firm.inviteSource === SELF_SERVE_SOURCE);
+  assert.equal(await hasLex("owner@openfirm.test"), true);
+  assert.equal((await activateTrial(token, mailer)).ok, false, "token works once");
+  const inv = await createInvite({ createdBy: "admin", label: "Law Society", expiresInDays: 30 });
+  const sent2: string[] = [];
+  assert.ok((await requestTrial(input("o@tracked.test"), inv.code, async (o) => { sent2.push(o.url); }, "https://x.test")).ok);
+  const t = await activateTrial(new URL(sent2[0]).searchParams.get("token"), mailer);
+  assert.ok(t.ok && t.firm.inviteSource === "Law Society");
+  assert.equal((await requestTrial(input("o@bad.test"), "LEX-NOTREAL00", send, "https://x.test")).ok, false, "a given code must be valid");
+});
+
+test("one trial per firm: same domain blocked (even after deletion); webmail keyed by full email", async () => {
+  const { startTrial, requestTrial, trialClaimKey, TRIAL_ALREADY_USED } = await T();
+  assert.equal(trialClaimKey("A@Gmail.com"), "lex:trial:claim:a@gmail.com");
+  assert.equal(trialClaimKey("x@acmelaw.com.au"), "lex:trial:claim:acmelaw.com.au");
+  assert.ok((await startTrial(input("one@acmelaw.test"), "", mailer)).ok);
+  const again = await startTrial(input("two@acmelaw.test"), "", mailer);
+  assert.ok(!again.ok && again.error === TRIAL_ALREADY_USED);
+  const req = await requestTrial(input("three@acmelaw.test"), "", async () => { throw new Error("must not send"); }, "https://x.test");
+  assert.equal(req.ok, false, "blocked before any email is sent");
+  await (await import("../lib/redis")).getRedis()!.del("lex:firm:byemail:one@acmelaw.test");
+  assert.equal((await startTrial(input("one@acmelaw.test"), "", mailer)).ok, false, "re-trial after deletion still blocked");
+  assert.ok((await startTrial(input("solo1@gmail.com"), "", mailer)).ok);
+  assert.ok((await startTrial(input("solo2@gmail.com"), "", mailer)).ok, "webmail: different people");
+});
+
+test("paid founding conversion counts the cap once (FOUNDING_CAP_COUNTS default), never auto-converts", async () => {
+  const sub = await import("../lib/lex-subscription");
+  assert.equal(sub.FOUNDING_CAP_COUNTS, "paid_conversions");
+  const src = readFileSync("lib/lex-subscription.ts", "utf8");
+  assert.match(src, /FOUNDING_CAP_COUNTS === "paid_conversions" && f\.foundingMember && s\.metadata\?\.founding === "1" && !f\.foundingCountedAt/);
+  assert.doesNotMatch(readFileSync("lib/lex-trial.ts", "utf8"), /getStripe|checkout\.sessions|subscriptions\.create/);
+  const verify = readFileSync("app/api/lex/trial/verify/route.ts", "utf8");
+  assert.match(verify, /export async function POST/);
+  assert.doesNotMatch(verify, /export async function GET/, "link scanners can't start a trial");
+  const form = readFileSync("app/lex/signup/trial/TrialForm.tsx", "utf8") + readFileSync("app/lex/signup/trial/page.tsx", "utf8");
+  assert.doesNotMatch(form, /[Ii]nvite code|[Bb]y invitation|beta invite/);
+  assert.match(form, /name="website"/, "honeypot kept");
+  assert.match(form, /Don&apos;t pay a cent until you&apos;ve tried it/);
 });
