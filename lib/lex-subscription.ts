@@ -257,11 +257,11 @@ export async function provisionLexCheckout(eventId: string, s: CheckoutLike, mai
       }
       else if (cur !== firmId) await alert(`Lex checkout ${s.id}: ${email} is already linked to firm ${cur}. The new firm ${firmId} was provisioned but the login stays linked to the old firm. Check by hand.`);
     }
-    const known = await knownPeriod(s, subId);
+    const known = await knownPeriod(subId);
     await withFirmLock(firmId, async (f) => {
       // Billing cycle for the document allowance, from the first draft (no extra Stripe call).
-      if (!f.periodEnd || (known && Date.parse(known.end) > Date.parse(f.periodEnd))) {
-        if (known) { f.periodStart = known.start; f.periodEnd = known.end; }
+      if (!f.periodEnd || known) {
+        if (known) advancePeriod(f, known);
         else {
           // Checkout completion is the subscription start, so its time anchors the first cycle until a webhook corrects it.
           const anchor = (eventCreated ?? s.created ?? Math.floor(Date.now() / 1000)) * 1000;
@@ -299,9 +299,20 @@ const invoicePeriod = (inv: InvoiceLike): Period | null => {
   for (const l of inv.lines?.data ?? []) { const p = toPeriod(l.period?.start, l.period?.end); if (p && (!best || p.end > best.end)) best = p; }
   return best;
 };
-/** Period at checkout: an expanded subscription on the session, else one stashed from a subscription event that beat the firm record. */
-async function knownPeriod(s: CheckoutLike, subId?: string): Promise<Period | null> {
-  if (s.subscription && typeof s.subscription === "object") { const p = subPeriod(s.subscription as SubLike); if (p) return p; }
+/** Gap below which an incoming period is the same cycle as the stored one (checkout-time anchor vs Stripe's start). */
+const SAME_CYCLE_MS = 86400_000;
+/**
+ * Forward-only: a period replaces the stored one only when it is a later cycle (end more than a day past the stored end).
+ * The doc counter is keyed on periodStart, so a near-identical or stale (replayed) period must never rewrite it.
+ */
+export function advancePeriod(f: { periodStart?: string; periodEnd?: string }, p: Period): boolean {
+  const cur = f.periodEnd ? Date.parse(f.periodEnd) : NaN;
+  if (Number.isFinite(cur) && Date.parse(p.end) <= cur + SAME_CYCLE_MS) return false;
+  f.periodStart = p.start; f.periodEnd = p.end;
+  return true;
+}
+/** Period at checkout: the one stashed from a subscription event that beat the firm record. */
+async function knownPeriod(subId?: string): Promise<Period | null> {
   if (!subId) return null;
   return parse<Period>(await redis().get(periodStashKey(subId)));
 }
@@ -363,7 +374,7 @@ export async function handleLexLifecycle(event: LexEvent, mailer: Mailer, now = 
           {
             // A renewal invoice carries the new cycle, so a late subscription.updated can't leave the allowance stale.
             const p = invoicePeriod(o);
-            if (p && (!firm.periodEnd || Date.parse(p.end) > Date.parse(firm.periodEnd))) { firm.periodStart = p.start; firm.periodEnd = p.end; }
+            if (p) advancePeriod(firm, p);
           }
           if (firm.status === "grace" || (firm.status === "lapsed" && firm.lapseReason === "unpaid")) { await restoreFirm(firm); return "restored"; }
           return "noop";
@@ -374,7 +385,7 @@ export async function handleLexLifecycle(event: LexEvent, mailer: Mailer, now = 
         case "customer.subscription.created": {
           firm.cancelAtPeriodEnd = !!o.cancel_at_period_end;
           const p = subPeriod(o);
-          if (p) { firm.periodStart = p.start; firm.periodEnd = p.end; }
+          if (p) advancePeriod(firm, p); // forward-only, like invoice.paid
           if (o.status === "canceled") { await lapseFirm(firm, "cancelled", mailer); return "lapsed"; }
           if (o.status === "active" && firm.status !== "active" && firm.lapseReason !== "cancelled") { await restoreFirm(firm); return "restored"; }
           return "updated";

@@ -344,10 +344,6 @@ test("r2 (#411): new firm right after checkout counts on its billing cycle, not 
   await provisionLexCheckout("evt_new2", { id: "cs_new2", payment_status: "paid", customer: "cus_new2", subscription: "sub_new2", created, metadata: { product: "lex", plan: "firm", pendingId: p2.id } }, mailer, alert, created);
   const g = (await firmBySubscription("sub_new2"))!;
   assert.equal(g.periodStart, "2026-01-31T02:00:00.000Z"); assert.equal(g.periodEnd, "2026-02-28T02:00:00.000Z");
-  // Expanded subscription object on the session wins.
-  const p3 = await savePendingSignup({ name: "Exp Firm", email: "exp@expfirm.test", firmName: "Exp Firm" });
-  await provisionLexCheckout("evt_new3", { id: "cs_new3", payment_status: "paid", customer: "cus_new3", subscription: { id: "sub_new3", current_period_start: ps, current_period_end: pe }, metadata: { product: "lex", plan: "firm", pendingId: p3.id } }, mailer, alert);
-  assert.equal((await firmBySubscription("sub_new3"))!.periodEnd, "2026-11-20T05:00:00.000Z");
 });
 
 test("r2 (#411): late renewal webhook: roll-forward scope until it lands, then the same scope; invoice.paid stores the new cycle", async () => {
@@ -366,4 +362,37 @@ test("r2 (#411): late renewal webhook: roll-forward scope until it lands, then t
   // An older invoice replayed later doesn't move the period back.
   await handleLexLifecycle({ id: "evt_inv_old", type: "invoice.paid", created: s2 - 86400 * 30, data: { object: { id: "in_old", parent: { subscription_details: { subscription: "sub_new" } }, lines: { data: [{ period: { start: s2 - 86400 * 31, end: s2 } }] } } } }, mailer);
   assert.equal((await firmBySubscription("sub_new"))!.periodEnd, "2026-12-20T05:00:00.000Z");
+});
+
+test("r3 (#411): checkout before subscription.created: no reset, max 20 docs in the first cycle; stale updated replay can't move the period back", async () => {
+  const { savePendingSignup, provisionLexCheckout, firmBySubscription, handleLexLifecycle } = await L();
+  const { resolveDocPeriod, takeDocument, FIRM_PLAN_MONTHLY_DOCS } = await import("../lib/lex-doc-allowance");
+  const quiet = () => {};
+  const stripeStart = Date.parse("2026-11-10T02:00:00Z") / 1000, stripeEnd = Date.parse("2026-12-10T02:00:00Z") / 1000;
+  const checkoutAt = stripeStart + 5; // checkout.session.completed a few seconds after Stripe's real start, no stash yet
+  const p = await savePendingSignup({ name: "First Order", email: "fo@cofirst.test", firmName: "Co First" });
+  await provisionLexCheckout("evt_cf", { id: "cs_cf", payment_status: "paid", customer: "cus_cf", subscription: "sub_cf", created: checkoutAt, metadata: { product: "lex", plan: "firm", pendingId: p.id } }, mailer, alert, checkoutAt);
+  const f0 = (await firmBySubscription("sub_cf"))!;
+  const at = new Date("2026-11-12T00:00:00Z");
+  const p0 = resolveDocPeriod(f0, "cofirst.test", at, quiet);
+  assert.equal(p0.basis, "billing");
+  let used = 0;
+  for (let i = 0; i < FIRM_PLAN_MONTHLY_DOCS; i++) if ((await takeDocument(p0, `a${i}`, undefined, quiet)).ok) used++;
+  // Now subscription.created (and an updated) land with Stripe's start, seconds earlier.
+  const sub = { id: "sub_cf", status: "active", items: { data: [{ current_period_start: stripeStart, current_period_end: stripeEnd }] } };
+  assert.equal(await handleLexLifecycle({ id: "evt_cf_sc", type: "customer.subscription.created", data: { object: sub } }, mailer), "updated");
+  assert.equal(await handleLexLifecycle({ id: "evt_cf_su", type: "customer.subscription.updated", data: { object: sub } }, mailer), "updated");
+  const f1 = (await firmBySubscription("sub_cf"))!;
+  assert.equal(f1.periodStart, f0.periodStart); assert.equal(f1.periodEnd, f0.periodEnd);
+  const p1 = resolveDocPeriod(f1, "cofirst.test", at, quiet);
+  assert.equal(p1.scope, p0.scope);
+  for (let i = 0; i < 5; i++) if ((await takeDocument(p1, `b${i}`, undefined, quiet)).ok) used++;
+  assert.equal(used, FIRM_PLAN_MONTHLY_DOCS); // never more than 20 in the first cycle
+  // Renewal advances; then a stale replay of the first cycle's updated event must not move it back.
+  const s2 = { ...sub, items: { data: [{ current_period_start: stripeEnd, current_period_end: Date.parse("2027-01-10T02:00:00Z") / 1000 }] } };
+  await handleLexLifecycle({ id: "evt_cf_ren", type: "customer.subscription.updated", data: { object: s2 } }, mailer);
+  assert.equal((await firmBySubscription("sub_cf"))!.periodStart, "2026-12-10T02:00:00.000Z");
+  await handleLexLifecycle({ id: "evt_cf_stale", type: "customer.subscription.updated", data: { object: sub } }, mailer);
+  const f2 = (await firmBySubscription("sub_cf"))!;
+  assert.equal(f2.periodStart, "2026-12-10T02:00:00.000Z"); assert.equal(f2.periodEnd, "2027-01-10T02:00:00.000Z");
 });

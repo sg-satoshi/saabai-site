@@ -8,7 +8,9 @@
  *      (clamped to month end) as the start. The period is stored at provisioning and on every renewal (invoice.paid,
  *      subscription.created/updated), so a new firm counts on its billing cycle from its first draft.
  *      If the stored period has ended but the subscription is still live (renewal webhook late), the window rolls
- *      forward by whole billing intervals from the stored anchor, so the scope matches the one the webhook will store.
+ *      forward from the stored period end (the next cycle's start), so the scope matches the one the webhook will store.
+ *      Stored periods only move forward to a new cycle, so a near-identical or stale Stripe period never resets the counter.
+ *      A firm that is not live keeps its last billing scope (no fresh counter).
  *   3. No firm record or no usable period: Brisbane calendar month for the email domain (logged).
  *
  *   lex:docs:used:{scope}           counter, scope = firm:{firmId}:{periodStart} | dom:{domain}:{YYYY-MM}
@@ -44,6 +46,15 @@ export function addMonthsClamped(ms: number, months: number): number {
   const y = Math.floor(total / 12), m = total - y * 12;
   const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
   return Date.UTC(y, m, Math.min(d.getUTCDate(), last), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds(), d.getUTCMilliseconds());
+}
+
+/** ms plus `months` calendar months, on day `day` of the target month (clamped to its last day), same UTC time. */
+export function atDayClamped(ms: number, months: number, day: number): number {
+  const d = new Date(ms);
+  const total = d.getUTCFullYear() * 12 + d.getUTCMonth() + months;
+  const y = Math.floor(total / 12), m = total - y * 12;
+  const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  return Date.UTC(y, m, Math.min(day, last), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds(), d.getUTCMilliseconds());
 }
 
 /** Whole months from a to b (at least 1). A Stripe monthly cycle anchored on the 31st still counts as 1. */
@@ -95,13 +106,19 @@ export function resolveDocPeriod(firm: FirmForDocs | null, domain: string, now =
       if (pe > t) return out(ps, pe);
       const live = !!firm.subscriptionId && (firm.status === undefined || firm.status === "active" || firm.status === "grace");
       if (live) {
-        // Renewal webhook not in yet: roll forward from the anchor (ps) by whole intervals, never fall back.
+        // Renewal webhook not in yet: the next cycle starts exactly at the stored end (Stripe's next periodStart),
+        // so the scope matches what the webhook will store. Later boundaries use the anchor day (29th to 31st survive clamped months).
         const n = intervalMonths(ps, pe);
-        let k = 1;
-        while (addMonthsClamped(ps, (k + 1) * n) <= t && k < 1200) k++;
-        log(`[lex-docs] billing period ended, rolled forward ${k} interval(s): firm ${firm.firmId}`);
-        return out(addMonthsClamped(ps, k * n), addMonthsClamped(ps, (k + 1) * n));
+        const day = Math.max(new Date(ps).getUTCDate(), new Date(pe).getUTCDate());
+        const boundary = (j: number) => atDayClamped(pe, j * n, day);
+        let k = 0;
+        while (boundary(k + 1) <= t && k < 1200) k++;
+        log(`[lex-docs] billing period ended, rolled forward ${k + 1} interval(s): firm ${firm.firmId}`);
+        return out(k === 0 ? pe : boundary(k), boundary(k + 1));
       }
+      // Not live (lapsed or no subscription): keep the last billing scope so no fresh counter is handed out.
+      log(`[lex-docs] billing period ended and firm ${firm.firmId} is not live: keeping its last billing scope`);
+      return out(ps, pe);
     }
     log(`[lex-docs] fallback to calendar month: firm ${firm.firmId} has no current billing period`);
   } else {

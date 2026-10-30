@@ -59,7 +59,8 @@ test("no firm record or no current period: domain plus Brisbane calendar month, 
   const a = resolveDocPeriod(null, "solo.com.au", NOW, (m) => logs.push(m));
   assert.equal(a.basis, "month"); assert.equal(a.scope, "dom:solo.com.au:2026-10"); assert.equal(resetDateLabel(a.end), "1 November 2026");
   const b = resolveDocPeriod({ firmId: "lf_old", periodEnd: "2026-09-01T00:00:00.000Z" }, "old.com", NOW, (m) => logs.push(m));
-  assert.equal(b.basis, "month");
+  // r3: an ended period on a non-live firm keeps its last billing scope (no fresh counter), logged.
+  assert.equal(b.basis, "billing"); assert.equal(b.scope, "firm:lf_old:2026-08-01T00:00:00.000Z");
   assert.equal(logs.length, 2); assert.match(logs[0], /no firm record/); assert.match(logs[1], /lf_old/);
   assert.equal(brisbaneMonth(new Date("2026-10-31T14:30:00Z")), "2026-11");
 });
@@ -138,6 +139,7 @@ test("r2: month arithmetic clamps to month end (31 Mar - 1 month = 28/29 Feb, ne
 
 test("r2: stored period ended but subscription live: rolls forward by whole intervals, never to the calendar month", () => {
   const live = { ...PAID, subscriptionId: "sub_1", status: "active" };
+  const p0scope = billing().scope;
   const logs: string[] = [];
   const a = resolveDocPeriod(live, "firm.com.au", new Date("2026-11-13T00:00:00Z"), (m) => logs.push(m));
   assert.equal(a.basis, "billing");
@@ -155,7 +157,24 @@ test("r2: stored period ended but subscription live: rolls forward by whole inte
   // Exactly at the boundary: start inclusive.
   const d = resolveDocPeriod(live, "firm.com.au", new Date("2026-11-12T04:00:00.000Z"), quiet);
   assert.equal(d.start, "2026-11-12T04:00:00.000Z");
-  // Lapsed or no subscription: no roll-forward.
-  assert.equal(resolveDocPeriod({ ...live, status: "lapsed" }, "firm.com.au", new Date("2026-11-13T00:00:00Z"), quiet).basis, "month");
-  assert.equal(resolveDocPeriod(PAID, "firm.com.au", new Date("2026-11-13T00:00:00Z"), quiet).basis, "month");
+  // Lapsed or no subscription: no roll-forward and no fresh counter: the last billing scope is kept.
+  const lapsed = resolveDocPeriod({ ...live, status: "lapsed" }, "firm.com.au", new Date("2026-11-13T00:00:00Z"), quiet);
+  assert.equal(lapsed.basis, "billing"); assert.equal(lapsed.scope, p0scope);
+  assert.equal(resolveDocPeriod(PAID, "firm.com.au", new Date("2026-11-13T00:00:00Z"), quiet).scope, p0scope);
+});
+
+test("r3: roll-forward starts at the stored period end; 29th-31st anchors survive a clamped month", () => {
+  // Stored cycle is the clamped one (28 Feb to 31 Mar, anchor the 31st); renewal webhook late.
+  const f = { firmId: "lf_31", subscriptionId: "sub_31", status: "active", periodStart: "2026-02-28T01:00:00.000Z", periodEnd: "2026-03-31T01:00:00.000Z" };
+  const a = resolveDocPeriod(f, "x.com", new Date("2026-04-05T00:00:00Z"), quiet);
+  assert.equal(a.start, "2026-03-31T01:00:00.000Z"); assert.equal(a.end, "2026-04-30T01:00:00.000Z");
+  // The webhook then stores Stripe's 31 Mar to 30 Apr: same scope, same counter.
+  const stored = resolveDocPeriod({ ...f, periodStart: "2026-03-31T01:00:00.000Z", periodEnd: "2026-04-30T01:00:00.000Z" }, "x.com", new Date("2026-04-05T00:00:00Z"), quiet);
+  assert.equal(stored.scope, a.scope);
+  // Two cycles late: 30 Apr to 31 May (back on the 31st).
+  const b = resolveDocPeriod(f, "x.com", new Date("2026-05-10T00:00:00Z"), quiet);
+  assert.equal(b.start, "2026-04-30T01:00:00.000Z"); assert.equal(b.end, "2026-05-31T01:00:00.000Z");
+  // 29th anchor through February (non-leap): 29 Jan to 28 Feb stored, then 28 Feb to 29 Mar.
+  const c = resolveDocPeriod({ ...f, periodStart: "2026-01-29T01:00:00.000Z", periodEnd: "2026-02-28T01:00:00.000Z" }, "x.com", new Date("2026-03-02T00:00:00Z"), quiet);
+  assert.equal(c.start, "2026-02-28T01:00:00.000Z"); assert.equal(c.end, "2026-03-29T01:00:00.000Z");
 });
