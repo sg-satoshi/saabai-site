@@ -1,39 +1,75 @@
 /**
  * POST /api/lex-help: the in-app Lex help assistant. Signed-in Lex users only (proxy session check
  * plus resolveReviewActor). Rate limits and size caps: the shared chat guard (CHAT_API in lib/chat-guard).
- * The model call goes through LexGateway, which masks every message and fails closed.
- * Logged like Lex chats: logChatTurn with the MASKED text, same 90-day chat-log retention purge.
- * Never files feedback itself; it returns an offer the user must confirm in the panel.
+ *
+ *   {messages, conversationId}  -> {reply, offer?, offerId?}
+ *   {confirmOffer: offerId}     -> files the offered item into the feedback inbox (source "assistant")
+ *
+ * Legal or injection questions get a fixed refusal before any model call; the model's answer is checked again
+ * and replaced with the refusal if it reads like legal advice. Only the user's own questions are sent
+ * (client-supplied assistant turns are dropped). The model call goes through LexGateway (masking, fail closed).
+ * Logged like Lex chats: logChatTurn with the MASKED text, same 90-day chat-log purge.
+ * Offers are kept server-side for 15 minutes, bound to the user, and filed only on confirm.
  */
+import { randomBytes } from "node:crypto";
 import { resolveReviewActor } from "@/lib/lex-review-access";
 import { LexGateway, threadSeed } from "@/lib/lex-privacy/gateway";
 import { LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "@/lib/lex-privacy/mask";
 import { logChatTurn } from "@/lib/chat-log";
-import { HELP_LABEL, LEGAL_REFUSAL, helpSystemPrompt, isLegalQuestion, normaliseHelpMessages, parseHelpReply } from "@/lib/lex-help";
+import { getRedis } from "@/lib/redis";
+import { alertFeedback, appVersion, saveFeedback, validateFeedback } from "@/lib/lex-feedback";
+import { lexAlert } from "@/lib/lex-subscription-emails";
+import { HELP_LABEL, LEGAL_REFUSAL, helpSystemPrompt, isLegalQuestion, latestQuestion, looksLikeLegalAdvice, normaliseHelpMessages, parseHelpReply, type HelpOffer } from "@/lib/lex-help";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
+const OFFER_TTL = 15 * 60;
 
 export async function POST(req: Request) {
   const actor = await resolveReviewActor(req);
   if (!actor) return Response.json({ error: "Sign in to use help" }, { status: 401 });
-  const body = (await req.json().catch(() => null)) as { messages?: unknown; conversationId?: unknown } | null;
-  const messages = normaliseHelpMessages(body?.messages);
-  if (!messages.length || messages[messages.length - 1].role !== "user") return Response.json({ error: "messages required" }, { status: 400 });
-  const conversationId = typeof body?.conversationId === "string" ? body.conversationId.slice(0, 64) : null;
+  const body = (await req.json().catch(() => null)) as { messages?: unknown; conversationId?: unknown; confirmOffer?: unknown; page?: unknown } | null;
   const firm = actor.kind === "firm" ? actor.firm : "saabai-staff";
-  const last = messages[messages.length - 1].content;
+  const user = actor.kind === "firm" ? actor.email : `admin:${actor.id}`;
+  const redis = getRedis();
 
-  if (isLegalQuestion(last)) return Response.json({ reply: LEGAL_REFUSAL, offer: null, label: HELP_LABEL, routed: "legal_refusal" });
+  if (typeof body?.confirmOffer === "string") {
+    if (!redis || !/^[a-f0-9]{24}$/.test(body.confirmOffer)) return Response.json({ error: "That offer has expired" }, { status: 400 });
+    const key = `lex:help:offer:${body.confirmOffer}`;
+    const raw = await redis.get(key);
+    const o = (typeof raw === "string" ? JSON.parse(raw) : raw) as (HelpOffer & { user: string }) | null;
+    if (!o || o.user !== user) return Response.json({ error: "That offer has expired" }, { status: 400 });
+    await redis.del(key);
+    const v = validateFeedback({ type: o.type, message: o.summary, page: body.page });
+    if (!v.ok) return Response.json({ error: v.error }, { status: 400 });
+    const item = await saveFeedback(v.value, { firm, user, browser: req.headers.get("user-agent") ?? "", appVersion: appVersion(), source: "assistant" });
+    await alertFeedback(item, lexAlert);
+    return Response.json({ ok: true, id: item.id });
+  }
+
+  const latest = latestQuestion(body?.messages);
+  const messages = normaliseHelpMessages(body?.messages);
+  if (!latest.trim() || !messages.length) return Response.json({ error: "messages required" }, { status: 400 });
+  const conversationId = typeof body?.conversationId === "string" ? body.conversationId.slice(0, 64) : null;
+
+  if (isLegalQuestion(latest)) return Response.json({ reply: LEGAL_REFUSAL, offer: null, label: HELP_LABEL, routed: "legal_refusal" });
 
   const gw = await LexGateway.open({ route: "lex-help", firm, model: { kind: "saabai", modelId: "claude-haiku-4-5-20251001" }, thread: threadSeed(conversationId, messages) });
   if (!gw) return privacyFailResponse();
   try {
     const masked = gw.maskMessages(messages);
     const res = await gw.generateText({ system: helpSystemPrompt() + PRIVACY_SYSTEM_NOTE, messages: masked, maxOutputTokens: 600 });
-    const { reply, offer } = parseHelpReply(res.text);
-    logChatTurn({ bot: "lex-help", siteId: firm, conversationId, model: gw.modelId, usage: res.totalUsage ?? res.usage, userText: gw.mask(last), assistantText: res.maskedText });
-    return Response.json({ reply, offer, label: HELP_LABEL, routed: "assistant" });
+    const parsed = parseHelpReply(res.text);
+    const advice = looksLikeLegalAdvice(parsed.reply);
+    const reply = advice ? LEGAL_REFUSAL : parsed.reply;
+    const offer = advice ? null : parsed.offer;
+    logChatTurn({ bot: "lex-help", siteId: firm, conversationId, model: gw.modelId, usage: res.totalUsage ?? res.usage, userText: gw.mask(latest), assistantText: advice ? LEGAL_REFUSAL : res.maskedText });
+    let offerId: string | null = null;
+    if (offer && redis) {
+      offerId = randomBytes(12).toString("hex");
+      await redis.set(`lex:help:offer:${offerId}`, JSON.stringify({ ...offer, user }), { ex: OFFER_TTL });
+    }
+    return Response.json({ reply, offer: offerId ? offer : null, offerId, label: HELP_LABEL, routed: advice ? "output_refusal" : "assistant" });
   } catch (err) {
     if (err instanceof LexPrivacyError) return privacyFailResponse();
     console.error("[lex-help]", err instanceof Error ? err.name : "error");

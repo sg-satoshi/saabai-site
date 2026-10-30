@@ -18,7 +18,7 @@ export default function HelpAssistant() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
-  const [offer, setOffer] = useState<Offer | null>(null);
+  const [offer, setOffer] = useState<(Offer & { id: string }) | null>(null);
   const [cid] = useState(() => Math.random().toString(36).slice(2, 12));
   if (path.startsWith("/lex/signup")) return null;
 
@@ -31,14 +31,14 @@ export default function HelpAssistant() {
       const r = await fetch("/api/lex-help", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: next, conversationId: cid }) });
       const d = await r.json().catch(() => ({}));
       setMsgs([...next, { role: "assistant", content: d.reply || d.error || d.content || "Sorry, I couldn't answer that. Please try again." }]);
-      setOffer(d.offer ?? null);
+      setOffer(d.offer && d.offerId ? { ...d.offer, id: d.offerId } : null);
     } catch { setMsgs([...next, { role: "assistant", content: "Sorry, help is unavailable right now." }]); }
     setBusy(false);
   }
 
-  async function confirmLog(o: Offer) {
+  async function confirmLog(o: Offer & { id: string }) {
     setOffer(null);
-    const r = await fetch("/api/lex-feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: o.type, message: o.summary, page: path, source: "assistant" }) });
+    const r = await fetch("/api/lex-help", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirmOffer: o.id, page: path }) });
     setMsgs((m) => [...m, { role: "assistant", content: r.ok ? `Logged your ${OFFER_LABEL[o.type]} for the Saabai team. Thanks.` : "Sorry, I couldn't log that. You can use Report an issue instead." }]);
   }
 
