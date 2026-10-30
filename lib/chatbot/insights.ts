@@ -49,6 +49,16 @@ export function buildFunnel(month: string, raw: Record<string, unknown> | null):
   };
 }
 
+/** Adds step counts across slugs, then recomputes rates. Months are not mixed. */
+export function mergeFunnels(funnels: Funnel[]): Funnel {
+  if (funnels.length === 0) return buildFunnel(monthKey(), null);
+  const counts: Record<string, number> = {};
+  for (const funnel of funnels) {
+    for (const step of funnel.steps) counts[step.key] = (counts[step.key] ?? 0) + step.count;
+  }
+  return buildFunnel(funnels[0].month, counts);
+}
+
 export async function readFunnel(slug: string, month = monthKey()): Promise<Funnel> {
   try {
     const r = getRedis();
@@ -84,18 +94,36 @@ export function groupTranscripts(rows: Row[], slugCheck: (id: string) => boolean
   return list.sort((a, b) => b.startedAt.localeCompare(a.startedAt)).slice(0, limit);
 }
 
-export async function listTranscripts(slug: string, limit = 50): Promise<{ transcripts: Transcript[]; available: boolean }> {
+function transcriptSlugs(slug: string, also: string[]): string[] {
+  const out = [slug];
+  const seen = new Set([slug]);
+  for (const raw of also) {
+    const id = raw.trim();
+    if (!id || id === slug || id.length > 80 || seen.has(id)) continue;
+    if (!/^[A-Za-z0-9][A-Za-z0-9 _.-]{0,79}$/.test(id)) continue;
+    seen.add(id);
+    out.push(id);
+    if (out.length >= 12) break;
+  }
+  return out;
+}
+
+/** `also` is for log ids the caller already resolved (legacy short ids, folded copies). */
+export async function listTranscripts(slug: string, limit = 50, also: string[] = []): Promise<{ transcripts: Transcript[]; available: boolean }> {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return { transcripts: [], available: false };
   try {
     const { serviceClient } = await import("../agent-supabase");
     const cutoff = retentionCutoff();
-    const { data, error } = await serviceClient()
+    const slugs = transcriptSlugs(slug, also);
+    const base = serviceClient()
       .from("messages")
       .select("conversation_id, role, content, created_at")
-      .eq("bot_slug", slug)
       .gte("created_at", cutoff)
       .order("created_at", { ascending: false })
       .limit(1000);
+    const { data, error } = slugs.length === 1
+      ? await base.eq("bot_slug", slug)
+      : await base.in("bot_slug", slugs);
     if (error) return { transcripts: [], available: false };
     return { transcripts: groupTranscripts((data ?? []) as Row[], () => true, cutoff, limit), available: true };
   } catch {
