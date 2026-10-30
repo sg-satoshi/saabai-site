@@ -15,8 +15,9 @@ const PER_HOUR = 20;
 
 export async function POST(req: Request) {
   const actor = await resolveReviewActor(req);
-  if (!actor) return Response.json({ error: "Sign in to send feedback" }, { status: 401 });
+  if (!actor) { console.warn("[lex-feedback] 401 no Lex session"); return Response.json({ error: "Sign in to send feedback" }, { status: 401 }); }
   const v = validateFeedback(await req.json().catch(() => null));
+  if (!v.ok) console.warn("[lex-feedback] 400", v.field ?? "");
   if (!v.ok) return Response.json({ error: v.error, field: v.field }, { status: 400 });
   const user = actor.kind === "firm" ? actor.email : `admin:${actor.id}`;
   try {
@@ -32,6 +33,7 @@ export async function POST(req: Request) {
       browser: req.headers.get("user-agent") ?? "", appVersion: appVersion(),
     });
     await alertFeedback(item, lexAlert);
+    console.log("[lex-feedback] saved", item.id);
     return Response.json({ ok: true, id: item.id, screenshotSkipped: v.value.screenshotRejected });
   } catch (err) {
     console.error("[lex-feedback]", err instanceof Error ? err.name : "error");

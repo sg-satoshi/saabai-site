@@ -23,7 +23,7 @@ import { lexAlert } from "@/lib/lex-subscription-emails";
 import { cleanRoute, retrieveHelp } from "@/lib/lex-help-knowledge";
 import { helpContextText, helpFirmContext } from "@/lib/lex-help-context";
 import { HELP_LABEL, helpSystemPrompt, isLegalQuestion, latestQuestion, normaliseHelpMessages, type HelpOffer } from "@/lib/lex-help";
-import { HELP_CAP_REPLY, HELP_DAILY_CAP, HELP_DECLINE, helpDayKey, runHelp } from "@/lib/lex-help-flow";
+import { HELP_GREETING, isGreeting, HELP_CAP_REPLY, HELP_DAILY_CAP, HELP_DECLINE, helpDayKey, runHelp } from "@/lib/lex-help-flow";
 import { PRICE_ANSWER, isPriceQuestion } from "@/lib/lex-help-knowledge";
 
 export const runtime = "nodejs";
@@ -64,6 +64,8 @@ export async function POST(req: Request) {
   if (!latest.trim() || !messages.length) return Response.json({ error: "messages required" }, { status: 400 });
   const conversationId = typeof body?.conversationId === "string" ? body.conversationId.slice(0, 64) : null;
 
+  // Greetings never reach the model (the classifier would decline them as general chat).
+  if (isGreeting(latest)) return Response.json({ reply: HELP_GREETING, offer: null, label: HELP_LABEL, routed: "greeting" });
   // Price questions never reach the model.
   if (isPriceQuestion(latest) && !isLegalQuestion(latest)) {
     return Response.json({ reply: PRICE_ANSWER, offer: null, label: HELP_LABEL, routed: "price" });
@@ -77,7 +79,7 @@ export async function POST(req: Request) {
   }
 
   const gw = await LexGateway.open({ route: "lex-help", firm, model: { kind: "saabai", modelId: "claude-haiku-4-5-20251001" }, thread: threadSeed(conversationId, messages) });
-  if (!gw) return privacyFailResponse();
+  if (!gw) { console.error("[lex-help] model unavailable"); return privacyFailResponse(); }
   try {
     const masked = gw.maskMessages(messages);
     const maskedLatest = gw.mask(latest);
@@ -103,7 +105,7 @@ export async function POST(req: Request) {
     }
     return Response.json({ reply: out.reply, offer: offerId ? offer : null, offerId, label: HELP_LABEL, routed: out.routed });
   } catch (err) {
-    if (err instanceof LexPrivacyError) return privacyFailResponse();
+    if (err instanceof LexPrivacyError) { console.error("[lex-help] privacy check failed"); return privacyFailResponse(); }
     console.error("[lex-help]", err instanceof Error ? err.name : "error");
     return Response.json({ error: "Help is unavailable right now. Please try again." }, { status: 502 });
   }

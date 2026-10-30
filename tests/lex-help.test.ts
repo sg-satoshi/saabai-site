@@ -272,3 +272,19 @@ test("classifier input is delimited; embedded tags can't close the block", async
   assert.match(c.QUESTION_CLASSIFIER, /between <user_message> and <\/user_message>/);
   assert.match(c.ANSWER_CLASSIFIER, /between <draft_reply> and <\/draft_reply>/);
 });
+
+test("greetings get a friendly reply without a model call; errors are human", async () => {
+  const { runHelp, isGreeting, HELP_GREETING } = await import("../lib/lex-help-flow");
+  for (const g of ["Hi Lex", "hi", "Hello!", "hey lex assist", "G'day", "thanks", "Good morning Lex"]) assert.ok(isGreeting(g), g);
+  for (const q of ["Hi, how do I upload a document?", "hello can I evict a tenant"]) assert.ok(!isGreeting(q), q);
+  let calls = 0;
+  const out = await runHelp("Hi Lex", { classify: async () => { calls++; return "OTHER"; }, answer: async () => { calls++; return ""; } });
+  assert.equal(out.reply, HELP_GREETING); assert.equal(out.routed, "greeting"); assert.equal(calls, 0);
+  const { helpError } = await import("../app/lex/_components/HelpAssistant");
+  assert.match(helpError(503, { error: "privacy_check_failed" }), /try again/);
+  assert.doesNotMatch(helpError(503, { error: "privacy_check_failed" }), /privacy_check_failed/);
+  assert.match(helpError(500, {}), /Report an issue/);
+  const fb = readFileSync("app/lex/_components/FeedbackButton.tsx", "utf8");
+  assert.ok(fb.includes("Thanks, your report is in") && fb.includes("Thank you for your feedback. It helps us make Lex the best legal assistant on the market.") && fb.includes(">Done<"));
+  assert.ok(fb.includes("Try again") && fb.includes("!d.ok"));
+});
