@@ -1,6 +1,6 @@
 /**
  * Instagram launch copy. Public pages should not promise that Saabai never
- * misses a lead, and live phone answering stays "coming soon".
+ * misses a lead, and live phone answering is never mentioned.
  *   npx tsx --test tests/ig-launch-copy.test.ts
  */
 import test from "node:test";
@@ -33,10 +33,10 @@ test("public launch pages do not promise you never miss a lead or a call", () =>
   }
 });
 
-test("pricing includes the website chatbot and keeps Lachie phone answering as coming soon", () => {
+test("pricing includes the website chatbot and never mentions live phone answering", () => {
   const pricing = read("app/pricing/page.tsx");
   assert.match(pricing, /the chatbot, and it is included in the website tiers/);
-  assert.match(pricing, /Phone answering with Lachie is coming soon\. It is not live\./);
+  assert.doesNotMatch(pricing, /phone answering[^.]*coming soon/i);
   assert.doesNotMatch(pricing, /AI receptionist<\/a> and a website chatbot are included/);
   assert.ok(!/[\u2012-\u2015]/.test(pricing));
 });

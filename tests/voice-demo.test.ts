@@ -440,3 +440,9 @@ test("blueprint credit block uses the approved line, no '100% credited'", () => 
   assert.doesNotMatch(bp, /100% credited/i);
   assert.match(bp, /From \{TIERS\.starter\.priceLabel\}\. The fee is credited if you build with Saabai within 30 days\./);
 });
+
+test("no page mentions live phone answering as coming soon", () => {
+  for (const p of ["app/about/page.tsx", "app/pricing/page.tsx", "app/ai-receptionist-gold-coast/page.tsx", "app/legal/page.tsx", "app/ai-chatbot-law-firms/page.tsx", "app/components/legal-demos/HarbourDemos.tsx"]) {
+    assert.doesNotMatch(read(p), /phone answering[^.]*coming soon|coming soon[^.]*phone/i, p);
+  }
+});
