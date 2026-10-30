@@ -36,7 +36,9 @@ test("prices, GST line and demo CTA are as approved", () => {
   assert.ok(page.includes("60-day free trial, no card needed."));
   assert.ok(!page.includes("Tributum"));
   assert.ok(!page.includes("tributumlaw.com"));
-  assert.ok(page.includes(">Book a demo</a>"));
+  assert.ok(/lx-plan lx-hi">[\s\S]*?href="\/lex\/signup\/trial">Sign up now<\/a>/.test(page), "Firm card CTA is Sign up now to trial signup");
+  assert.ok(page.includes(">Contact Us</a>"));
+  assert.ok(page.includes("No credit card required. Cancel anytime."));
   assert.equal((page.match(/lx-plan lx-hi/g) ?? []).length, 1, "exactly one highlighted plan");
   assert.ok(/lx-plan lx-hi">\s*<div className="lx-tier">Firm</.test(page), "Firm is the highlighted plan");
 });

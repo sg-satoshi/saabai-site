@@ -394,7 +394,8 @@ export default function LegalPage() {
                   <li key={i}><Check />{i}</li>
                 ))}
               </ul>
-              <a className="lx-btn lx-pri" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Book a demo</a>
+              <a className="lx-btn lx-pri" href="/lex/signup/trial">Sign up now</a>
+              <p className="lx-plan-note">No credit card required. Cancel anytime.</p>
             </div>
             <div className="lx-plan">
               <div className="lx-tier">Enterprise</div>
