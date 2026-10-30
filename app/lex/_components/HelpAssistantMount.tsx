@@ -1,6 +1,6 @@
 "use client";
 /**
- * Mounts the Lex help assistant only for signed-in Lex users on app screens (not sign-in or signup).
+ * Mounts Lex Assist only for signed-in Lex users on app screens (not sign-in or signup).
  * GET /api/lex-help is auth-gated (401 signed out). The panel itself is swappable: replace HelpAssistant
  * with the Designer build; it receives the signed-in firm's own context.
  */

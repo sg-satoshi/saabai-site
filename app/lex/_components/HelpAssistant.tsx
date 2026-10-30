@@ -1,6 +1,6 @@
 "use client";
 /**
- * In-app Lex help assistant panel. Clearly labelled as an AI assistant; product help only.
+ * In-app Lex Assist panel. Clearly labelled as an AI assistant; product help only.
  * When the assistant offers to log a problem or idea, nothing is sent until the user taps "Yes, log it",
  * which files it in the feedback inbox (/api/lex-feedback, source "assistant").
  */
@@ -44,11 +44,11 @@ export default function HelpAssistant() {
 
   return (
     <>
-      <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} style={{ ...navy, position: "fixed", right: 16, bottom: 136, zIndex: 60, borderRadius: 999, padding: "6px 12px", fontSize: 12 }}>Help</button>
+      <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} style={{ ...navy, position: "fixed", right: 16, bottom: 136, zIndex: 60, borderRadius: 999, padding: "6px 12px", fontSize: 12 }}aria-label="Open Lex Assist">Lex Assist</button>
       {open ? (
-        <section role="dialog" aria-label="Lex help assistant" style={{ position: "fixed", right: 16, bottom: 176, zIndex: 61, width: "min(380px, calc(100vw - 32px))", height: "min(520px, 70vh)", display: "flex", flexDirection: "column", background: "#fff", color: "#111827", border: "1px solid #d8dce5", borderRadius: 14, boxShadow: "0 12px 32px rgba(0,0,0,0.18)" }}>
+        <section role="dialog" aria-label="Lex Assist" style={{ position: "fixed", right: 16, bottom: 176, zIndex: 61, width: "min(380px, calc(100vw - 32px))", height: "min(520px, 70vh)", display: "flex", flexDirection: "column", background: "#fff", color: "#111827", border: "1px solid #d8dce5", borderRadius: 14, boxShadow: "0 12px 32px rgba(0,0,0,0.18)" }}>
           <header style={{ padding: "10px 14px", borderBottom: "1px solid #eef0f4", display: "flex", justifyContent: "space-between", alignItems: "start", gap: 8 }}>
-            <div><strong style={{ fontSize: 14 }}>Lex help assistant</strong><div style={{ fontSize: 11, color: "#6b7280" }}>AI assistant for using Lex. Not legal advice. Don&apos;t include client details.</div></div>
+            <div><strong style={{ fontSize: 14 }}>Lex Assist</strong><div style={{ fontSize: 11, color: "#6b7280" }}>AI assistant for using Lex. Not legal advice. Don&apos;t include client details.</div></div>
             <button type="button" onClick={() => setOpen(false)} aria-label="Close help" style={{ background: "none", border: 0, fontSize: 18, cursor: "pointer" }}>×</button>
           </header>
           <div style={{ flex: 1, overflowY: "auto", padding: 12, fontSize: 13, lineHeight: 1.45 }} aria-live="polite">
@@ -64,7 +64,7 @@ export default function HelpAssistant() {
             ) : null}
           </div>
           <form onSubmit={(e) => { e.preventDefault(); void send(); }} style={{ display: "flex", gap: 6, padding: 10, borderTop: "1px solid #eef0f4" }}>
-            <input aria-label="Ask the help assistant" value={text} maxLength={2000} onChange={(e) => setText(e.target.value)} placeholder="How do I…" style={{ flex: 1, padding: 8, border: "1px solid #cfd4dd", borderRadius: 8, fontSize: 13 }} />
+            <input aria-label="Ask Lex Assist" value={text} maxLength={2000} onChange={(e) => setText(e.target.value)} placeholder="How do I…" style={{ flex: 1, padding: 8, border: "1px solid #cfd4dd", borderRadius: 8, fontSize: 13 }} />
             <button type="submit" disabled={busy || !text.trim()} style={{ ...navy, padding: "6px 12px", fontSize: 13, opacity: busy ? 0.6 : 1 }}>Send</button>
           </form>
         </section>

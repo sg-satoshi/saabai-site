@@ -1,4 +1,4 @@
-/** Lex help assistant: routing, offers, knowledge, gateway and logging wiring.  npx tsx --test tests/lex-help.test.ts */
+/** Lex Assist (help assistant): routing, offers, knowledge, gateway and logging wiring.  npx tsx --test tests/lex-help.test.ts */
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -70,7 +70,7 @@ test("wiring: gateway only, shared chat rate limits, masked logging, confirmed f
   
   assert.ok(CHAT_API.includes("/api/lex-help"));
   const panel = readFileSync("app/lex/_components/HelpAssistant.tsx", "utf8");
-  assert.match(panel, /Lex help assistant/);
+  assert.match(panel, />Lex Assist</); assert.match(panel, /aria-label="Open Lex Assist"/); assert.doesNotMatch(panel, /Lex help assistant|>Help</);
   assert.match(panel, /Not legal advice/);
   assert.match(panel, /onClick=\{\(\) => confirmLog\(offer\)\}>Yes, log it/);
   assert.match(panel, /confirmOffer: o\.id/);
@@ -234,4 +234,11 @@ test("per-firm daily cost cap", async () => {
   assert.ok(HELP_DAILY_CAP > 0 && HELP_DAILY_CAP <= 500);
   assert.equal(helpDayKey("alpha.test", new Date("2026-10-30T15:00:00Z")), "lex:help:day:alpha.test:2026-10-31", "Brisbane day");
   assert.match(readFileSync("app/api/lex-help/route.ts", "utf8"), /helpDayKey\(firm\)[\s\S]*HELP_DAILY_CAP/);
+});
+
+test("name: user-facing labels say Lex Assist", async () => {
+  const { HELP_DECLINE, HELP_CAP_REPLY } = await import("../lib/lex-help-flow");
+  assert.match(HELP_LABEL, /^Lex Assist/); assert.match(helpSystemPrompt(), /You are Lex Assist/);
+  assert.match(LEGAL_REFUSAL, /Lex Assist/); assert.match(HELP_DECLINE, /Lex Assist covers using Lex/); assert.match(HELP_CAP_REPLY, /Lex Assist/);
+  for (const t of [HELP_LABEL, LEGAL_REFUSAL, HELP_DECLINE, HELP_CAP_REPLY, helpSystemPrompt()]) assert.doesNotMatch(t, /Lex help\b/i);
 });

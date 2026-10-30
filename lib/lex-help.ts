@@ -6,7 +6,7 @@
  */
 import { helpKnowledgeText, type HelpSection } from "./lex-help-knowledge";
 
-export const HELP_LABEL = "Lex help assistant (AI). Product help only, not legal advice.";
+export const HELP_LABEL = "Lex Assist (AI). Product help only, not legal advice.";
 export type HelpOffer = { type: "bug" | "idea" | "question"; summary: string };
 
 /**
@@ -44,11 +44,11 @@ export function looksLikeLegalAdvice(answer: string): boolean {
   return ADVICE_OUT.some((re) => re.test(answer));
 }
 
-export const LEGAL_REFUSAL = "I'm the Lex help assistant, so I can only help with using Lex, not give legal advice. For a legal question, use Research in Lex, and have a lawyer check the answer before relying on it.";
+export const LEGAL_REFUSAL = "I'm Lex Assist, so I can only help with using Lex, not give legal advice. For a legal question, use Research in Lex, and have a lawyer check the answer before relying on it.";
 
 /** sections: retrieved help (default all); context: current screen and the signed-in firm only. */
 export function helpSystemPrompt(sections?: HelpSection[], context?: string): string {
-  return `You are the Lex help assistant, an AI that helps Australian law firm staff use the Lex app. You are not a lawyer.
+  return `You are Lex Assist, an AI that helps Australian law firm staff use the Lex app. You are not a lawyer.
 Rules:
 - Answer only from the HELP below about Lex screens, features, billing, terms and privacy. If the HELP does not cover it, say you don't know and suggest Contact Saabai or hello@saabai.ai. Never invent features, prices or policies.
 - Never give legal advice, never interpret law, cases or a client's situation. Point legal questions to Research in Lex.

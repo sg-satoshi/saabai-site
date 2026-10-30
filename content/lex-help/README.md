@@ -1,4 +1,4 @@
-# Lex help assistant knowledge
+# Lex Assist knowledge
 
 One file per topic. Edit the text, then run `node scripts/build-lex-help.mjs` (CI fails if the generated file is stale).
 
