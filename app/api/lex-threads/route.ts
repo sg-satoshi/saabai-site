@@ -10,6 +10,7 @@
 
 import { verifySession } from "../../../lib/portal-session";
 import { getRedis } from "../../../lib/redis";
+import { parseRedisJson } from "../../../lib/redis-json";
 import { resolveReviewActor } from "../../../lib/lex-review-access";
 import { maskThreadAttachments } from "../../../lib/lex-privacy/thread-attachments";
 import { lexFirmFromRequest } from "../../../lib/lex-privacy/firm";
@@ -49,8 +50,9 @@ export async function GET(req: Request) {
   if (!redis) return Response.json({ threads: [] });
 
   try {
-    const raw = await redis.get<string>(`lex:threads:${session.email}`);
-    const threads = raw ? JSON.parse(raw) : [];
+    const raw = await redis.get(`lex:threads:${session.email}`);
+    const parsed = parseRedisJson<unknown>(raw);
+    const threads = Array.isArray(parsed) ? parsed : [];
     return Response.json({ threads });
   } catch (err) {
     console.error("[lex-threads GET]", err);
