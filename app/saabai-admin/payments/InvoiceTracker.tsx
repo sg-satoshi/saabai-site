@@ -54,8 +54,9 @@ const LINE_TEMPLATES = [
 ];
 
 const MY_INFO = {
-  name: "Shane Goldberg",
-  abn: "71 889 082 572",
+  name: "Saabai Pty Ltd",
+  abn: "44 703 735 264",
+  acn: "703 735 264",
   address: "4302/31 Bourton Road, Merrimac QLD 4226",
   phone: "0415 622 733",
   email: "hello@saabai.ai",
@@ -645,7 +646,7 @@ export default function InvoiceTracker() {
                   <span>Subtotal</span><span>{fmt(subtotal)}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: C.muted, padding: "3px 0" }}>
-                  <span>GST</span><span>$0.00 (not registered)</span>
+                  <span>GST</span><span>Not applicable</span>
                 </div>
                 <div style={{
                   display: "flex", justifyContent: "space-between", fontSize: 15, fontWeight: 700,
@@ -732,7 +733,7 @@ export default function InvoiceTracker() {
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <p style={{ margin: 0, fontWeight: 600 }}>{MY_INFO.name}</p>
-                  <p style={{ margin: "2px 0", fontSize: 12, color: "#666" }}>ABN: {MY_INFO.abn}</p>
+                  <p style={{ margin: "2px 0", fontSize: 12, color: "#666" }}>ABN: {MY_INFO.abn} · ACN: {MY_INFO.acn}</p>
                   <p style={{ margin: 0, fontSize: 12, color: "#666" }}>{MY_INFO.address}</p>
                   <p style={{ margin: "2px 0 0", fontSize: 12, color: "#666" }}>{MY_INFO.phone}</p>
                   <p style={{ margin: 0, fontSize: 12, color: "#666" }}>{MY_INFO.email}</p>
@@ -775,7 +776,7 @@ export default function InvoiceTracker() {
                   <span>Subtotal</span><span>${inv.subtotal.toFixed(2)}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 12, color: "#666" }}>
-                  <span>GST</span><span>$0.00</span>
+                  <span>GST</span><span>Not applicable</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 18, fontWeight: 700, borderTop: "1px solid #333" }}>
                   <span>TOTAL DUE</span><span>$${inv.total.toFixed(2)}</span>

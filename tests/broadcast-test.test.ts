@@ -59,7 +59,7 @@ test("test email uses the production builder: [TEST] subject, sender ID, footer,
   assert.equal(m.subject, "[TEST] Tips");
   assert.equal(m.from, "Shane at Saabai <hello@saabai.ai>");
   assert.ok(m.html.includes("<p>Hi Sam</p>"), "test send uses sample values");
-  assert.ok(m.html.includes("ABN 71 889 082 572") && m.html.includes("Merrimac QLD 4226"));
+  assert.ok(m.html.includes("ABN 44 703 735 264") && m.html.includes("Merrimac QLD 4226"));
   assert.ok(m.html.includes("Unsubscribe") && m.html.includes("hello%40saabai.ai&amp;t=tok"));
   assert.equal(m.headers["List-Unsubscribe"], "<https://saabai.ai/unsubscribe?e=hello%40saabai.ai&t=tok>");
   assert.equal(m.headers["List-Unsubscribe-Post"], "List-Unsubscribe=One-Click");

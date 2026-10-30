@@ -232,7 +232,7 @@ test("about page publishes AboutPage, Person and Organization JSON-LD", () => {
   assert.equal(org.name, NAP.name);
   assert.equal(org.email, NAP.email);
   assert.equal(org.legalName, "Saabai Pty Ltd");
-  assert.equal(org.taxID, undefined);
+  assert.equal(org.taxID, "44703735264");
   assert.equal(org.telephone, undefined);
   assert.deepEqual(org.address, POSTAL_ADDRESS);
   assert.equal((org.address as Record<string, unknown>).streetAddress, undefined);

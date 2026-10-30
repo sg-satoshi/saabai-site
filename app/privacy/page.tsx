@@ -13,7 +13,7 @@ export const metadata: Metadata = publicPageMeta.privacy;
 const SECTIONS: { heading: string; body: string }[] = [
   {
     heading: "1. About this policy",
-    body: `${NAP.legalName} (ACN ${NAP.acn}), ${NAP.addressLine}, trading as ${NAP.name} ("we", "us"). This policy explains what we collect when you use saabai.ai or buy our services, and what we do with it.`,
+    body: `${NAP.legalName} (ABN ${NAP.abn}, ACN ${NAP.acn}), ${NAP.addressLine}, trading as ${NAP.name} ("we", "us"). This policy explains what we collect when you use saabai.ai or buy our services, and what we do with it.`,
   },
   {
     heading: "2. What we collect",

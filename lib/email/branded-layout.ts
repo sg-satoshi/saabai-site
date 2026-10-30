@@ -12,12 +12,10 @@ export const EMAIL_BRAND = {
   siteUrl: "https://www.saabai.ai",
   portalUrl: "https://www.saabai.ai/client-portal",
   supportEmail: "hello@saabai.ai",
-  abn: "71 889 082 572",
-  /**
-   * Legal sender line in every email footer: ONE config value. Saabai Pty Ltd is becoming the entity
-   * (draft #405); update this line (name and ABN) when #405 lands, rather than editing templates.
-   */
-  senderIdentity: "Saabai · ABN 71 889 082 572",
+  abn: "44 703 735 264",
+  acn: "703 735 264",
+  /** Legal sender line in every email footer: ONE config value. Saabai Pty Ltd trading as Saabai, not GST registered. */
+  senderIdentity: "Saabai Pty Ltd trading as Saabai · ABN 44 703 735 264",
   navy: "#0b092e",
   navyDeep: "#07061f",
   teal: "#62c5d1",

@@ -18,7 +18,7 @@ import { getDirectoryUser, saveDirectoryUser } from "./user-directory";
 import { ensureClientAccount } from "./client-account";
 import { deleteFirmFeedback } from "./lex-feedback";
 
-export const LEX_TERMS_VERSION = "lex-terms-2026-10-30c";
+export const LEX_TERMS_VERSION = "lex-terms-2026-10-30d";
 export const LEX_SEAT_CAP = 3; // Firm plan: 3 lawyer seats
 export const GRACE_DAYS = 7;
 /** Clause 10.7: a cancelled firm's Lex data is kept this long, then deleted (a resubscribe within it keeps the data). */

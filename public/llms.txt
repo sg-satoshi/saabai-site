@@ -1,6 +1,6 @@
 # Saabai
 
-> Saabai Pty Ltd (ACN 703 735 264) is a Gold Coast, Queensland business (Merrimac QLD 4226, Australia) founded by Shane Goldberg. All prices are in AUD. Saabai is not GST registered (GST not applicable).
+> Saabai Pty Ltd (ABN 44 703 735 264, ACN 703 735 264) is a Gold Coast, Queensland business (Merrimac QLD 4226, Australia) founded by Shane Goldberg. All prices are in AUD. Saabai is not GST registered (GST not applicable).
 
 ## Products
 
@@ -29,7 +29,7 @@
 
 Price, cancellation and refund lines below are copied from the terms page.
 
-- Prices: Prices are in Australian dollars. Saabai is not registered for GST, so GST is not applicable and invoices are not tax invoices.
+- Prices: Prices are in Australian dollars. Saabai Pty Ltd is not registered for GST, so GST is not applicable and invoices are not tax invoices.
 - Cancellation: You can cancel a care plan at any time by emailing hello@saabai.ai. Cancellation takes effect at the end of the period you have already paid for, and we do not give part-month refunds unless the law requires it.
 - Refunds: Our services come with guarantees that cannot be excluded under the Australian Consumer Law. Nothing in these terms limits those rights. If something is not right, email us and we will work with you to fix it.
 - Liability: To the extent the law allows, our liability is limited to resupplying the service or refunding the amount paid for it. We do not guarantee particular search rankings, traffic or sales results.

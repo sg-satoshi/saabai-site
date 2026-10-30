@@ -523,7 +523,7 @@ test("Lex Terms include the Free trial clause (Shane, 30 Oct 2:34 PM); draft rem
   assert.ok(c, "Free trial section present");
   for (const k of [/legal software or legal AI products/, /competitive analysis/, /scrape, crawl or extract/, /reverse engineer/, /suspend or end a free trial at any time/, /One free trial per firm/]) assert.match(c!.body, k);
   assert.doesNotMatch(c!.body, /DRAFT|Status:/);
-  assert.equal(LEX_TERMS_VERSION, "lex-terms-2026-10-30c");
+  assert.equal(LEX_TERMS_VERSION, "lex-terms-2026-10-30d");
   assert.equal((await import("node:fs")).existsSync("docs/drafts/lex-trial-terms-clause.md"), false);
 });
 

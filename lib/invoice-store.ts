@@ -44,8 +44,9 @@ export interface InvoiceClient {
 // ── Constants ───────────────────────────────────────────────────────────────
 
 export const MY_INFO = {
-  name: "Shane Goldberg",
-  abn: "71 889 082 572",
+  name: "Saabai Pty Ltd",
+  abn: "44 703 735 264",
+  acn: "703 735 264",
   address: "4302/31 Bourton Road, Merrimac QLD 4226",
   phone: "0415 622 733",
   email: "hello@saabai.ai",

@@ -141,7 +141,7 @@ function AuthArt() {
         </div>
       </div>
       <div className="legal">
-        <span>© 2026 Saabai Pty Ltd · ACN 703 735 264</span>
+        <span>© 2026 Saabai Pty Ltd · ABN 44 703 735 264 · ACN 703 735 264</span>
         <a href="/privacy" style={{ color: "inherit" }}>Privacy</a>
         <a href="/terms" style={{ color: "inherit" }}>Terms</a>
         <span>Support: hello@saabai.ai</span>
