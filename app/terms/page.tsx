@@ -9,7 +9,7 @@ import { LEX_TERMS, LEX_TERMS_SUMMARY } from "@/lib/lex-terms";
 export const metadata: Metadata = publicPageMeta.terms;
 
 const SECTIONS: { heading: string; body: string; id?: string }[] = [
-  { heading: "1. Who we are", body: `These terms apply to services supplied by ${NAP.name} (ABN ${NAP.abn}, ${NAP.addressLine}), a sole trader business operated by Shane Goldberg. Contact: ${NAP.email}.` },
+  { heading: "1. Who we are", body: `These terms apply to services supplied by Saabai Pty Ltd (${NAP.addressLine}), trading as ${NAP.name}. Contact: ${NAP.email}.` },
   { heading: "2. Our services", body: "We provide website building, hosting and care plans, and the Saabai Blueprint AI audit. What is included in each is described on the relevant page of saabai.ai at the time you buy, or in a written quote we send you." },
   { heading: "3. Prices and payment", body: "Prices are in Australian dollars. Saabai is not registered for GST, so GST is not applicable and invoices are not tax invoices. If this changes we will update our prices and invoices. Payments are processed securely by Stripe. Care plans are billed monthly in advance until cancelled." },
   { heading: "4. Cancellation", body: CARE_PLAN_CANCELLATION },
