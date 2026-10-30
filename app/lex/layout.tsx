@@ -14,12 +14,13 @@ const LEX_TITLE = "Lex, Australian Legal Research | Saabai";
 
 export const metadata: Metadata = {
   title: { absolute: LEX_TITLE },
-  alternates: { canonical: pageUrl("/lex") },
+  // Canonical points at /legal, the one indexed Lex page.
+  alternates: { canonical: pageUrl("/legal") },
   openGraph: {
     type: "website",
     locale: "en_AU",
     siteName: "Saabai",
-    url: pageUrl("/lex"),
+    url: pageUrl("/legal"),
     title: LEX_TITLE,
     images: [OG_IMAGE],
   },
