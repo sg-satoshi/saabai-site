@@ -248,6 +248,22 @@ export const SELF_SERVE_SOURCE = "Self-serve";
  * creates the firm and grants Lex. Every failure after a claim gives it back. Never charges or converts to paid.
  * Public callers reach this only through activateTrial (verified email).
  */
+/** Webmail / disposable / blocklisted domains never get a trial (defence in depth; the API also checks DNS). */
+async function syncDomainError(email: string): Promise<string | null> {
+  const g = await import("./lex-trial-guard");
+  return g.verdictMessage(g.domainRule(email));
+}
+
+/** New-trial alert to Saabai (never throws). */
+export type TrialAlert = (f: LexFirm) => Promise<void>;
+export const alertNewTrial: TrialAlert = async (f) => {
+  try {
+    const { lexAlert } = await import("./lex-subscription-emails");
+    const a = f.address ? `${f.address.street}, ${f.address.suburb} ${f.address.state} ${f.address.postcode}` : "-";
+    await lexAlert(`New Lex trial: ${f.firmName} (${f.adminEmail.split("@")[1]}). Owner ${f.adminName} <${f.adminEmail}>, phone ${f.phone ?? "-"}, address ${a}. Review or revoke in Saabai admin > Lex trials.`, { prefix: "Lex trial", title: "New Lex free trial" });
+  } catch { /* alert only */ }
+};
+
 export async function startTrial(v: SignupInput, rawCode: unknown, mailer: Mailer, now = new Date()): Promise<{ ok: true; firm: LexFirm } | { ok: false; error: string; field?: string }> {
   let inv: TrialInvite | null = null;
   if (typeof rawCode === "string" && rawCode.trim()) {
@@ -257,6 +273,8 @@ export async function startTrial(v: SignupInput, rawCode: unknown, mailer: Maile
   }
   const r = redis();
   const email = lc(v.email);
+  const ruled = await syncDomainError(email);
+  if (ruled) return { ok: false, error: ruled, field: "email" };
   if (await r.get(`lex:firm:byemail:${email}`)) return { ok: false, error: TRIAL_GENERIC_ERROR, field: "email" };
   if (await r.get(trialClaimKey(email))) return { ok: false, error: TRIAL_ALREADY_USED, field: "email" };
   const usesKey = inv ? `lex:trial:invite:uses:${inv.code}` : null;
@@ -276,6 +294,7 @@ export async function startTrial(v: SignupInput, rawCode: unknown, mailer: Maile
     const iso = now.toISOString();
     const firm: LexFirm = {
       firmId, firmName: v.firmName, adminEmail: email, adminName: v.name,
+      ...(v.phone ? { phone: v.phone } : {}), ...(v.address ? { address: v.address } : {}),
       members: [], granted: [], status: "trial",
       trialStartedAt: iso, trialEndsAt: new Date(now.getTime() + TRIAL_DAYS * DAY).toISOString(),
       inviteCode: inv?.code, inviteSource: inv?.label ?? SELF_SERVE_SOURCE, ...(founding ? { foundingMember: true } : {}),
@@ -305,6 +324,8 @@ export async function requestTrial(v: SignupInput, rawCode: unknown, send: Trial
   }
   const r = redis();
   const email = lc(v.email);
+  const ruled = await syncDomainError(email);
+  if (ruled) return { ok: false, error: ruled, field: "email" };
   if (await r.get(`lex:firm:byemail:${email}`)) return { ok: false, error: TRIAL_GENERIC_ERROR, field: "email" };
   if (await r.get(trialClaimKey(email))) return { ok: false, error: TRIAL_ALREADY_USED, field: "email" };
   // Resend cooldown: one confirm email per identity every RESEND_COOLDOWN_SECONDS (same answer either way).
@@ -316,14 +337,16 @@ export async function requestTrial(v: SignupInput, rawCode: unknown, send: Trial
   return { ok: true };
 }
 export const VERIFY_INVALID = "That link has expired or was already used. Please start your trial again.";
-export async function activateTrial(rawToken: unknown, mailer: Mailer, now = new Date()): Promise<{ ok: true; firm: LexFirm } | { ok: false; error: string; field?: string }> {
+export async function activateTrial(rawToken: unknown, mailer: Mailer, now = new Date(), alert: TrialAlert = alertNewTrial): Promise<{ ok: true; firm: LexFirm } | { ok: false; error: string; field?: string }> {
   const token = typeof rawToken === "string" && /^[a-f0-9]{48}$/.test(rawToken) ? rawToken : null;
   if (!token) return { ok: false, error: VERIFY_INVALID };
   const r = redis();
   const p = parse<{ v: SignupInput; code: string | null }>(await r.get(`lex:trial:verify:${token}`));
   if (!p || (await r.set(`lex:trial:verify:used:${token}`, "1", { nx: true, ex: VERIFY_TTL_SECONDS })) !== "OK") return { ok: false, error: VERIFY_INVALID };
   await r.del(`lex:trial:verify:${token}`);
-  return startTrial(p.v, p.code ?? "", mailer, now);
+  const out = await startTrial(p.v, p.code ?? "", mailer, now);
+  if (out.ok) await alert(out.firm);
+  return out;
 }
 
 /**
@@ -347,10 +370,24 @@ export async function sweepTrials(mailer: Mailer, now = new Date()): Promise<{ e
   return out;
 }
 
+/** Admin: end a trial now (access removed, normal 30-day data clock). Only trial-status firms; idempotent. */
+export async function revokeTrial(firmId: string, by: string, mailer: Mailer, now = new Date()): Promise<boolean> {
+  if (!/^lf_[a-z0-9]+$/.test(firmId) || !(await getFirm(firmId))) return false;
+  let done = false;
+  await withFirmLock(firmId, async (f) => {
+    if (f.status !== "trial" || f.subscriptionId) return;
+    f.trialRevokedAt = now.toISOString(); f.trialRevokedBy = by;
+    await lapseFirm(f, "trial_ended", mailer, now);
+    done = true;
+  });
+  return done;
+}
+
 export type TrialRow = {
   firmId: string; firmName: string; adminEmail: string; status: LexFirm["status"]; lapseReason: string | null;
   seatsUsed: number; daysLeft: number | null; stage: TrialStage | null; trialEndsAt: string | null;
   inviteCode: string | null; inviteSource: string | null; converted: boolean; founding: boolean; dataDeleteAfter: string | null; createdAt: string;
+  domain: string; ownerName: string; phone: string | null; address: string | null; revokedAt: string | null;
 };
 export async function listTrialFirms(now = new Date()): Promise<LexFirm[]> {
   const ids = ((await redis().smembers("lex:trial:firms")) as string[]) ?? [];
@@ -366,5 +403,7 @@ export function trialRow(f: LexFirm, now = new Date()): TrialRow {
     seatsUsed: 1 + f.members.length, daysLeft: t?.daysLeft ?? null, stage: t?.stage ?? null, trialEndsAt: f.trialEndsAt ?? null,
     inviteCode: f.inviteCode ?? null, inviteSource: f.inviteSource ?? null, converted: !!f.convertedFromTrialAt, founding: !!f.foundingMember,
     dataDeleteAfter: f.dataDeleteAfter ?? null, createdAt: f.createdAt,
+    domain: f.adminEmail.split("@")[1] ?? "", ownerName: f.adminName, phone: f.phone ?? null,
+    address: f.address ? `${f.address.street}, ${f.address.suburb} ${f.address.state} ${f.address.postcode}` : null, revokedAt: f.trialRevokedAt ?? null,
   };
 }

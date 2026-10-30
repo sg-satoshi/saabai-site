@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LEX_TRIAL_MARKER_COPY } from "@/lib/lex-trial-copy";
+import { LEX_TRIAL_CONTACT_COPY, LEX_TRIAL_MARKER_COPY } from "@/lib/lex-trial-copy";
 import TrialForm from "./TrialForm";
 import "../signup.css";
 
@@ -17,7 +17,7 @@ export default async function LexTrialPage({ searchParams }: { searchParams: Pro
           we never move you to a paid plan automatically. If you don&apos;t subscribe, Lex is switched off and your Lex data
           is deleted 30 days later.
         </p>
-        <p className="note">{LEX_TRIAL_MARKER_COPY}</p>
+        <p className="note">{LEX_TRIAL_CONTACT_COPY} {LEX_TRIAL_MARKER_COPY}</p>
         <TrialForm code={typeof sp.code === "string" ? sp.code.slice(0, 40) : ""} />
       </div>
     </main>

@@ -19,7 +19,7 @@ export default function TrialForm({ code }: { code: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           code: f.get("code"), name: f.get("name"), email: f.get("email"), firmName: f.get("firmName"),
-          phone: f.get("phone"), abn: f.get("abn"), website: f.get("website"),
+          phone: f.get("phone"), street: f.get("street"), suburb: f.get("suburb"), state: f.get("state"), postcode: f.get("postcode"), abn: f.get("abn"), website: f.get("website"),
           acceptTerms: f.get("acceptTerms") === "on",
         }),
       });
@@ -52,10 +52,24 @@ export default function TrialForm({ code }: { code: string }) {
       <input id="firmName" name="firmName" {...bad("firmName")} type="text" autoComplete="organization" required maxLength={160} />
       <label htmlFor="name">Your name</label>
       <input id="name" name="name" {...bad("name")} type="text" autoComplete="name" required maxLength={120} />
-      <label htmlFor="email">Work email</label>
+      <label htmlFor="email">Work email <small>(your firm address, not Gmail or similar)</small></label>
       <input id="email" name="email" {...bad("email")} type="email" autoComplete="email" required maxLength={200} />
-      <label htmlFor="phone">Phone <small>(optional)</small></label>
-      <input id="phone" name="phone" {...bad("phone")} type="tel" autoComplete="tel" maxLength={40} />
+      <label htmlFor="phone">Phone</label>
+      <input id="phone" name="phone" {...bad("phone")} type="tel" autoComplete="tel" required maxLength={40} placeholder="07 3000 0000" />
+      <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+        <legend>Firm address</legend>
+        <label htmlFor="street">Street address</label>
+        <input id="street" name="street" {...bad("street")} type="text" autoComplete="street-address" required maxLength={160} />
+        <label htmlFor="suburb">Suburb</label>
+        <input id="suburb" name="suburb" {...bad("suburb")} type="text" autoComplete="address-level2" required maxLength={80} />
+        <label htmlFor="state">State</label>
+        <select id="state" name="state" {...bad("state")} required defaultValue="">
+          <option value="" disabled>Choose…</option>
+          {["ACT", "NSW", "NT", "QLD", "SA", "TAS", "VIC", "WA"].map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <label htmlFor="postcode">Postcode</label>
+        <input id="postcode" name="postcode" {...bad("postcode")} type="text" inputMode="numeric" autoComplete="postal-code" required maxLength={4} pattern="[0-9]{4}" />
+      </fieldset>
       <label htmlFor="abn">ABN <small>(optional)</small></label>
       <input id="abn" name="abn" {...bad("abn")} type="text" inputMode="numeric" maxLength={20} />
       <div className="hp" aria-hidden="true">

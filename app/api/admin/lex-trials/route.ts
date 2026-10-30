@@ -1,11 +1,13 @@
 /**
- * Admin: Lex free trials. GET -> { trials, invites }. POST {action:"create", label, maxUses, expiresInDays} | {action:"revoke", code}.
+ * Admin: Lex free trials. GET -> { trials, invites }. POST {action:"create", label, maxUses, expiresInDays} | {action:"revoke", code}
+ * | {action:"revokeTrial", firmId} (ends a trial now).
  * Behind ADMIN_API in proxy.ts; checked again here.
  */
 import { cookies } from "next/headers";
 import { verifySessionToken, COOKIE_NAME, isAdminSession } from "@/lib/auth";
 import { firmKeyForEmail, firmUsageToday } from "@/lib/lex-review-access";
-import { getFoundingConfig, setFoundingConfig, createInvite, listInvites, listTrialFirms, revokeInvite, trialRow } from "@/lib/lex-trial";
+import { getFoundingConfig, setFoundingConfig, createInvite, listInvites, listTrialFirms, revokeInvite, revokeTrial, trialRow } from "@/lib/lex-trial";
+import { lexMailer } from "@/lib/lex-subscription-emails";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,7 +37,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const who = await adminId();
   if (!who) return Response.json({ error: "Unauthorized" }, { status: 403 });
-  let body: { action?: string; label?: unknown; maxUses?: unknown; expiresInDays?: unknown; code?: unknown; enabled?: unknown; deadline?: unknown; cap?: unknown };
+  let body: { action?: string; firmId?: unknown; label?: unknown; maxUses?: unknown; expiresInDays?: unknown; code?: unknown; enabled?: unknown; deadline?: unknown; cap?: unknown };
   try { body = await req.json(); } catch { return Response.json({ error: "Invalid request" }, { status: 400 }); }
   try {
     if (body.action === "create") {
@@ -44,6 +46,9 @@ export async function POST(req: Request) {
     }
     if (body.action === "revoke" && typeof body.code === "string") {
       return (await revokeInvite(body.code)) ? Response.json({ ok: true }) : Response.json({ error: "Not found" }, { status: 404 });
+    }
+    if (body.action === "revokeTrial" && typeof body.firmId === "string") {
+      return (await revokeTrial(body.firmId, who, lexMailer)) ? Response.json({ ok: true }) : Response.json({ error: "Not an active trial" }, { status: 404 });
     }
     if (body.action === "founding") {
       try { return Response.json({ founding: await setFoundingConfig(body, who) }); }

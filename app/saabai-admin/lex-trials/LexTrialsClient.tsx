@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 type Founding = { enabled: boolean; deadline: string | null; cap: number | null; used: number; priceConfigured: boolean };
 type Invite = { code: string; label: string; maxUses: number; uses: number; expiresAt: string; state: string; createdAt: string };
 type Trial = {
-  firmId: string; firmName: string; adminEmail: string; status: string; lapseReason: string | null; seatsUsed: number;
+  firmId: string; firmName: string; adminEmail: string; domain: string; ownerName: string; phone: string | null; address: string | null; revokedAt: string | null; createdAt: string; status: string; lapseReason: string | null; seatsUsed: number;
   daysLeft: number | null; stage: string | null; trialEndsAt: string | null; inviteCode: string | null; inviteSource: string | null;
   converted: boolean; founding: boolean; dataDeleteAfter: string | null; usageToday: { reviews: number; compares: number } | null;
 };
@@ -84,16 +84,18 @@ export default function LexTrialsClient() {
       <section style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 16, overflowX: "auto" }}>
         <h2 style={{ fontSize: 15, margin: "0 0 10px" }}>Trial firms ({data?.trials.length ?? 0})</h2>
         <table style={{ borderCollapse: "collapse", width: "100%" }}>
-          <thead><tr>{["Firm", "Owner", "Founding", "Status", "Days left", "Seats", "Usage today", "Invite source", "Ends", "Data delete after"].map((h) => <th key={h} style={{ ...cell, color: "#6b7280", fontWeight: 600 }}>{h}</th>)}</tr></thead>
+          <thead><tr>{["Firm", "Domain", "Owner", "Phone", "Address", "Created", "Founding", "Status", "Days left", "Seats", "Usage today", "Invite source", "Ends", "Data delete after", ""].map((h) => <th key={h} style={{ ...cell, color: "#6b7280", fontWeight: 600 }}>{h}</th>)}</tr></thead>
           <tbody>
             {(data?.trials ?? []).map((t) => (
               <tr key={t.firmId}>
-                <td style={cell}>{t.firmName}</td><td style={cell}>{t.adminEmail}</td><td style={cell}>{t.founding ? "yes" : ""}</td>
+                <td style={cell}>{t.firmName}</td><td style={cell}>{t.domain}</td><td style={cell}>{t.ownerName}<br /><span style={{ color: "#6b7280" }}>{t.adminEmail}</span></td>
+                <td style={cell}>{t.phone ?? "–"}</td><td style={cell}>{t.address ?? "–"}</td><td style={cell}>{day(t.createdAt)}</td><td style={cell}>{t.founding ? "yes" : ""}</td>
                 <td style={cell}>{t.converted && t.status === "active" ? "subscribed" : t.lapseReason === "trial_ended" ? "trial ended" : t.status}{t.stage && t.stage !== "none" ? ` (${t.stage})` : ""}</td>
                 <td style={cell}>{t.daysLeft ?? "–"}</td><td style={cell}>{t.seatsUsed} / 3</td>
                 <td style={cell}>{t.usageToday ? `${t.usageToday.reviews} reviews, ${t.usageToday.compares} compares` : "–"}</td>
                 <td style={cell}>{t.inviteSource ?? ""} <span style={{ color: "#9ca3af", fontFamily: "monospace" }}>{t.inviteCode ?? ""}</span></td>
                 <td style={cell}>{day(t.trialEndsAt)}</td><td style={cell}>{day(t.dataDeleteAfter)}</td>
+                <td style={cell}>{t.status === "trial" && !t.converted ? <button type="button" style={plain} onClick={() => { if (window.confirm(`End the free trial for ${t.firmName} (${t.domain}) now? Their Lex access stops straight away.`)) void post({ action: "revokeTrial", firmId: t.firmId }); }}>Revoke trial</button> : t.revokedAt ? `revoked ${day(t.revokedAt)}` : null}</td>
               </tr>
             ))}
           </tbody>

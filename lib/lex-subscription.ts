@@ -48,6 +48,10 @@ export type LexFirm = {
   trialStartedAt?: string; trialEndsAt?: string; inviteCode?: string; inviteSource?: string;
   /** Set when a trial firm subscribed through /lex/signup (same firm record, linked by owner email). */
   convertedFromTrialAt?: string;
+  /** Firm contact details collected at trial signup (privacy policy section 6). */
+  phone?: string; address?: FirmAddress;
+  /** Set when Saabai ended a trial early from the admin trial list. */
+  trialRevokedAt?: string; trialRevokedBy?: string;
   /** founding_member: joined a trial while the founding offer was open; may convert at STRIPE_PRICE_LEX_FOUNDING. */
   foundingMember?: boolean;
   foundingLostAt?: string;
@@ -81,7 +85,8 @@ const lc = (s: string) => s.trim().toLowerCase();
 const clean = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export type SignupInput = { name: string; email: string; firmName: string; phone?: string; abn?: string };
+export type FirmAddress = { street: string; suburb: string; state: string; postcode: string };
+export type SignupInput = { name: string; email: string; firmName: string; phone?: string; abn?: string; address?: FirmAddress };
 export function validateSignup(body: Record<string, unknown>): { ok: true; value: SignupInput } | { ok: false; error: string; bot?: boolean; field?: string } {
   // Honeypot: a hidden "website" field real people never fill in.
   if (clean(body.website, 200)) return { ok: false, error: "Invalid request", bot: true };

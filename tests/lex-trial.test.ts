@@ -247,7 +247,7 @@ test("open self-serve: no code needed; email must be verified before the trial s
   assert.equal((await requestTrial(input("o@bad.test"), "LEX-NOTREAL00", send, "https://x.test")).ok, false, "a given code must be valid");
 });
 
-test("one trial per firm: same domain blocked (even after deletion); webmail keyed by full email", async () => {
+test("one trial per firm: same domain blocked (even after deletion); webmail refused", async () => {
   const { startTrial, requestTrial, trialClaimKey, TRIAL_ALREADY_USED } = await T();
   assert.equal(trialClaimKey("A@Gmail.com"), trialClaimKey("a@gmail.com"));
   assert.equal(trialClaimKey("x@acmelaw.com.au"), trialClaimKey("y@mail.acmelaw.com.au"));
@@ -258,8 +258,9 @@ test("one trial per firm: same domain blocked (even after deletion); webmail key
   assert.equal(req.ok, false, "blocked before any email is sent");
   await (await import("../lib/redis")).getRedis()!.del("lex:firm:byemail:one@acmelaw.test");
   assert.equal((await startTrial(input("one@acmelaw.test"), "", mailer)).ok, false, "re-trial after deletion still blocked");
-  assert.ok((await startTrial(input("solo1@gmail.com"), "", mailer)).ok);
-  assert.ok((await startTrial(input("solo2@gmail.com"), "", mailer)).ok, "webmail: different people");
+  const { WORK_EMAIL_REQUIRED } = await import("../lib/lex-trial-guard");
+  const wm = await startTrial(input("solo1@gmail.com"), "", mailer);
+  assert.ok(!wm.ok && wm.error === WORK_EMAIL_REQUIRED, "webmail never gets a trial (work email only)");
 });
 
 test("paid founding conversion counts the cap once (FOUNDING_CAP_COUNTS default), never auto-converts", async () => {
@@ -305,8 +306,7 @@ test("QA r1 open trial: claim keys are hashes holding only a marker; no address 
   assert.ok((await startTrial(input("owner@hashfirm.test"), "", mailer)).ok);
   assert.equal(await (await import("../lib/redis")).getRedis()!.get(k).then(String), "1");
   assert.equal((await startTrial(input("other@sub.hashfirm.test"), "", mailer)).ok, false, "subdomain is the same firm");
-  assert.equal((await startTrial(input("jo@gmail.com"), "", mailer)).ok, true);
-  assert.equal((await startTrial(input("j.o+2@gmail.com"), "", mailer)).ok, false, "same Gmail inbox blocked");
+  assert.equal((await startTrial(input("x+2@mail.hashfirm.test"), "", mailer)).ok, false, "+tag on a subdomain is the same firm");
   const copy = readFileSync("lib/lex-trial-copy.ts", "utf8");
   assert.match(copy, /one-way coded marker/);
   assert.match(readFileSync("app/privacy/page.tsx", "utf8"), /LEX_TRIAL_MARKER_COPY/);
@@ -374,4 +374,150 @@ test("QA r1 open trial: no price anywhere on trial pages, confirm email or trial
   }
   const { TRIAL_ALREADY_USED, TRIAL_GENERIC_ERROR, VERIFY_INVALID, INVITE_INVALID } = await T();
   for (const t of [TRIAL_ALREADY_USED, TRIAL_GENERIC_ERROR, VERIFY_INVALID, INVITE_INVALID]) assert.doesNotMatch(t, /\$|\b(299|249)\b/);
+});
+
+// ── Round 2: anti-competitor trial signup (Shane, 30 Oct 2:07/2:08 PM) ──
+const G = () => import("../lib/lex-trial-guard");
+const okDns = { resolveMx: async () => [{ exchange: "mx.firm", priority: 10 }], lookup: async () => ({ address: "1.2.3.4" }) };
+
+test("R2 required fields: phone (AU) and firm address with postcode matching state", async () => {
+  const { validateTrialContact, normaliseAuPhone, postcodeMatchesState } = await G();
+  const base = { phone: "07 3000 0000", street: "1 George St", suburb: "Brisbane City", state: "QLD", postcode: "4000" };
+  const ok = validateTrialContact(base);
+  assert.ok(ok.ok && ok.value.phone === "0730000000" && ok.value.address.state === "QLD");
+  for (const [p, n] of [["+61 400 123 456", "0400123456"], ["(02) 9000 1234", "0290001234"], ["1300 123 456", "1300123456"], ["61 8 9000 1234", "0890001234"]]) assert.equal(normaliseAuPhone(p), n, p);
+  for (const p of ["12345", "+1 415 555 0100", "0500 000 000", "0400 12"]) assert.equal(normaliseAuPhone(p), null, p);
+  const bad = (o: object) => { const r = validateTrialContact({ ...base, ...o }); return r.ok ? null : r.field; };
+  assert.equal(bad({ phone: "" }), "phone");
+  assert.equal(bad({ phone: "555-1234" }), "phone");
+  assert.equal(bad({ street: "" }), "street");
+  assert.equal(bad({ suburb: "" }), "suburb");
+  assert.equal(bad({ state: "XX" }), "state");
+  assert.equal(bad({ postcode: "40000" }), "postcode");
+  assert.equal(bad({ postcode: "2000" }), "postcode", "Sydney postcode with QLD");
+  for (const [pc, st] of [["2000", "NSW"], ["2600", "ACT"], ["0200", "ACT"], ["2913", "ACT"], ["3000", "VIC"], ["5000", "SA"], ["6000", "WA"], ["7000", "TAS"], ["0800", "NT"]]) assert.ok(postcodeMatchesState(pc, st), `${pc} ${st}`);
+  assert.ok(!postcodeMatchesState("2600", "NSW") && !postcodeMatchesState("0800", "QLD"));
+  const route = readFileSync("app/api/lex/trial/route.ts", "utf8");
+  assert.match(route, /validateTrialContact\(body\)/);
+  assert.match(route, /checkTrialDomain\(v\.value\.email\)/);
+  const form = readFileSync("app/lex/signup/trial/TrialForm.tsx", "utf8");
+  for (const n of ["name", "email", "firmName", "phone", "street", "suburb", "state", "postcode"]) assert.match(form, new RegExp(`name="${n}"[^>]*required|name="${n}"[\\s\\S]{0,80}required`), n);
+  assert.doesNotMatch(form, /Phone <small>\(optional\)/);
+});
+
+test("R2 work email only: webmail/ISP and disposable refused with the friendly message", async () => {
+  const { checkTrialDomain, WORK_EMAIL_REQUIRED } = await G();
+  for (const e of ["a@gmail.com", "a@googlemail.com", "a@bigpond.com", "a@outlook.com.au", "a@westnet.com.au", "a@icloud.com", "a@mailinator.com", "a@yopmail.com", "a@sub.guerrillamail.com", "a@duck.com"]) {
+    const r = await checkTrialDomain(e, okDns);
+    assert.ok(!r.ok && r.error === WORK_EMAIL_REQUIRED, e);
+  }
+  assert.equal(WORK_EMAIL_REQUIRED, "Please use your firm email address.");
+  assert.ok((await checkTrialDomain("jane@smithlaw.com.au", okDns)).ok);
+});
+
+test("R2 competitor blocklist: neutral message, no reason, subdomains covered, list is editable config", async () => {
+  const { checkTrialDomain, TRIAL_BLOCKED, domainRule } = await G();
+  const { LEX_TRIAL_BLOCKED_DOMAINS } = await import("../config/lex-trial-blocklist");
+  for (const d of ["leap.com.au", "leaplegalsoftware.com", "smokeball.com.au", "smokeball.com", "clio.com", "actionstep.com", "lawpath.com.au", "lexisnexis.com.au", "lexisnexis.com", "thomsonreuters.com", "infotrack.com.au", "harvey.ai", "josef.legal"]) {
+    assert.ok(LEX_TRIAL_BLOCKED_DOMAINS.includes(d), d);
+    const r = await checkTrialDomain(`x@${d}`, okDns);
+    assert.ok(!r.ok && r.error === TRIAL_BLOCKED, d);
+  }
+  assert.equal(domainRule("x@au.mail.clio.com"), "blocked");
+  assert.equal(TRIAL_BLOCKED, "We couldn't start a trial for this address. Contact us.");
+  assert.doesNotMatch(TRIAL_BLOCKED, /competitor|block|vendor/i);
+  const { startTrial } = await T();
+  const r = await startTrial(input("spy@smokeball.com"), "", mailer);
+  assert.ok(!r.ok && r.error === TRIAL_BLOCKED, "enforced in startTrial too");
+});
+
+test("R2 domain must look real: MX + website, short timeout, fails closed", async () => {
+  const { checkTrialDomain, domainLooksReal, DOMAIN_UNVERIFIED, DNS_TIMEOUT_MS } = await G();
+  assert.ok(DNS_TIMEOUT_MS <= 3000);
+  const fail = async () => { throw new Error("ENOTFOUND"); };
+  assert.equal(await domainLooksReal("a@firm.com.au", { ...okDns, resolveMx: async () => [] }), false, "no MX");
+  assert.equal(await domainLooksReal("a@firm.com.au", { ...okDns, resolveMx: fail }), false, "MX error");
+  assert.equal(await domainLooksReal("a@firm.com.au", { ...okDns, lookup: fail }), false, "no website");
+  let looked: string[] = [];
+  assert.equal(await domainLooksReal("a@mail.firm.com.au", { ...okDns, lookup: async (h: string) => { looked.push(h); if (h !== "www.firm.com.au") throw new Error("x"); return {}; } }), true, "www. counts");
+  assert.ok(looked.includes("firm.com.au"));
+  const hang = () => new Promise<never>(() => {});
+  const t0 = Date.now();
+  assert.equal(await domainLooksReal("a@firm.com.au", { resolveMx: hang, lookup: hang }, 50), false, "timeout fails closed");
+  assert.ok(Date.now() - t0 < 1000);
+  const r = await checkTrialDomain("a@firm.com.au", { ...okDns, resolveMx: fail });
+  assert.ok(!r.ok && r.error === DOMAIN_UNVERIFIED);
+  looked = [];
+});
+
+test("R2 contact details stored on the firm; new trial alerts admin; admin list shows them; revoke is admin-only", async () => {
+  const { requestTrial, activateTrial, trialRow, revokeTrial } = await T();
+  const sub = await import("../lib/lex-subscription");
+  const r = (await import("../lib/redis")).getRedis()!;
+  let url = "";
+  const v = { ...input("owner@contactfirm.test"), phone: "0733334444", address: { street: "1 Eagle St", suburb: "Brisbane City", state: "QLD", postcode: "4000" } };
+  assert.ok((await requestTrial(v, "", async (o) => { url = o.url; }, "https://x.test")).ok);
+  const alerts: string[] = [];
+  const out = await activateTrial(new URL(url).searchParams.get("token"), mailer, new Date(), async (f) => { alerts.push(f.firmId); });
+  assert.ok(out.ok);
+  assert.deepEqual(alerts, [out.firm.firmId], "admin alerted once per new trial");
+  const f = await sub.getFirm(out.firm.firmId);
+  assert.equal(f?.phone, "0733334444");
+  assert.equal(f?.address?.postcode, "4000");
+  const row = trialRow(f!);
+  assert.equal(row.domain, "contactfirm.test");
+  assert.equal(row.ownerName, "Jane Citizen");
+  assert.equal(row.phone, "0733334444");
+  assert.equal(row.address, "1 Eagle St, Brisbane City QLD 4000");
+  assert.ok(row.createdAt);
+  assert.equal(await revokeTrial("lf_nope", "admin1", mailer), false);
+  assert.equal(await revokeTrial(f!.firmId, "admin1", mailer), true);
+  const g = await sub.getFirm(f!.firmId);
+  assert.equal(g?.status, "lapsed");
+  assert.equal(g?.lapseReason, "trial_ended");
+  assert.equal(g?.trialRevokedBy, "admin1");
+  assert.equal(await revokeTrial(f!.firmId, "admin1", mailer), false, "idempotent");
+  void r;
+  const api = readFileSync("app/api/admin/lex-trials/route.ts", "utf8");
+  assert.match(api, /if \(!who\) return Response\.json\(\{ error: "Unauthorized" \}, \{ status: 403 \}\)[\s\S]*revokeTrial\(body\.firmId, who/);
+  const ui = readFileSync("app/saabai-admin/lex-trials/LexTrialsClient.tsx", "utf8");
+  assert.match(ui, /window\.confirm\([\s\S]{0,200}revokeTrial/);
+  for (const h of ["Domain", "Owner", "Phone", "Address", "Created"]) assert.match(ui, new RegExp(`"${h}"`));
+  const emails = readFileSync("lib/lex-trial.ts", "utf8");
+  assert.match(emails, /alertNewTrial[\s\S]*lexAlert/);
+});
+
+test("R2 privacy policy and trial page disclose the contact details and watermark", async () => {
+  const { LEX_TRIAL_CONTACT_COPY } = await import("../lib/lex-trial-copy");
+  assert.match(LEX_TRIAL_CONTACT_COPY, /phone number/);
+  assert.match(LEX_TRIAL_CONTACT_COPY, /street address/);
+  assert.match(LEX_TRIAL_CONTACT_COPY, /watermark/);
+  assert.match(readFileSync("app/privacy/page.tsx", "utf8"), /LEX_TRIAL_CONTACT_COPY/);
+  assert.match(readFileSync("app/lex/signup/trial/page.tsx", "utf8"), /LEX_TRIAL_CONTACT_COPY/);
+});
+
+test("R2 watermark: firm + email, tiled, low opacity, click-through, trial firms, not on signup", async () => {
+  const w = await import("../lib/lex-watermark");
+  assert.ok(w.WATERMARK_OPACITY > 0 && w.WATERMARK_OPACITY <= 0.08, "subtle");
+  assert.equal(w.watermarkText("Smith Law", "jane@smithlaw.com.au"), "Smith Law · jane@smithlaw.com.au");
+  const bg = decodeURIComponent(w.watermarkBackground(w.watermarkText("A&B <Law>", "x@y.au")));
+  assert.match(bg, /A&amp;B &lt;Law&gt;/, "escaped");
+  assert.match(bg, /fill-opacity="0\.0\d"/);
+  assert.ok(w.showWatermark({ status: "trial", firmName: "A", me: "a@b.au" }));
+  assert.ok(!w.showWatermark({ status: "trial", firmName: "A", me: null }));
+  assert.equal(w.showWatermark({ status: "active", firmName: "A", me: "a@b.au" }), w.WATERMARK_ALL_FIRMS);
+  const c = readFileSync("app/lex/_components/Watermark.tsx", "utf8");
+  assert.match(c, /pointerEvents: "none"/);
+  assert.match(c, /aria-hidden="true"/);
+  assert.match(c, /backgroundRepeat: "repeat"/);
+  assert.match(c, /startsWith\("\/lex\/signup"\)/);
+  assert.match(readFileSync("app/lex/layout.tsx", "utf8"), /<Watermark \/>/);
+  assert.match(readFileSync("app/api/lex/team/route.ts", "utf8"), /me: me \?\? null/);
+});
+
+test("R2 trial terms clause is a draft only (not live)", () => {
+  const d = readFileSync("docs/drafts/lex-trial-terms-clause.md", "utf8");
+  assert.match(d, /DRAFT, NOT LIVE/);
+  for (const k of [/competitive analysis/, /reverse engineer/, /scrape/, /end a free trial at any time/]) assert.match(d, k);
+  assert.doesNotMatch(readFileSync("app/terms/page.tsx", "utf8"), /competitive analysis/);
 });
