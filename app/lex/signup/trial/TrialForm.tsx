@@ -89,11 +89,12 @@ export default function TrialForm({ code }: { code: string }) {
         <span>I agree to the <a href="/terms#lex" target="_blank" rel="noopener">Lex Terms</a> and the <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span>
       </label>
       <p className="note" style={{ textAlign: "left", marginTop: 6 }}>
-        <TrialDetails contactCopy={LEX_TRIAL_CONTACT_COPY} markerCopy={LEX_TRIAL_MARKER_COPY} label="Read the key points" />
+        <TrialDetails contactCopy={LEX_TRIAL_CONTACT_COPY} markerCopy={LEX_TRIAL_MARKER_COPY} label="Your details, privacy and trial terms" />
       </p>
       {error ? <p id="trial-error" className="err" role="alert">{error}</p> : null}
       <button className="btn" type="submit" disabled={busy}>{busy ? "Sending…" : "Start my free trial"}</button>
       <p className="note">No card, and you won&apos;t be charged unless you choose to subscribe.</p>
+      <p className="note">Lex is a drafting and research tool, not legal advice.</p>
     </form>
   );
 }
