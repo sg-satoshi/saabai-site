@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { BillingClientsTab, MoneyAuditTab } from "./BillingClientsTab";
+import { PricingTab } from "./PricingTab";
 import AdminShell from "../AdminSidebar";
 import { CardElement, useStripe, useElements, Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
@@ -981,7 +982,7 @@ export default function PaymentsClient({ publishableKey }: { publishableKey: str
   }
 
   const stripePromise = loadStripe(publishableKey);
-  const [tab, setTab] = useState<"payments" | "clients" | "invoices" | "audit">("payments");
+  const [tab, setTab] = useState<"payments" | "clients" | "pricing" | "invoices" | "audit">("payments");
 
   return (
     <AdminShell activePath="/saabai-admin/payments">
@@ -998,6 +999,7 @@ export default function PaymentsClient({ publishableKey }: { publishableKey: str
           {([
             { id: "payments" as const, label: "Payments" },
             { id: "clients" as const, label: "Clients" },
+            { id: "pricing" as const, label: "Client pricing" },
             { id: "invoices" as const, label: "Invoices" },
             { id: "audit" as const, label: "Audit log" },
           ]).map(t => (
@@ -1034,6 +1036,8 @@ export default function PaymentsClient({ publishableKey }: { publishableKey: str
           </>
         ) : tab === "clients" ? (
           <BillingClientsTab />
+        ) : tab === "pricing" ? (
+          <PricingTab />
         ) : tab === "audit" ? (
           <MoneyAuditTab />
         ) : (
