@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { BillingClientsTab, MoneyAuditTab } from "./BillingClientsTab";
 import AdminShell from "../AdminSidebar";
 import { CardElement, useStripe, useElements, Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
@@ -9,6 +10,8 @@ import CouponPicker from "./CouponPicker";
 import type { PaymentRecord } from "../../api/admin/payments/history/route";
 
 // ── Theme ───────────────────────────────────────────────────────────────────
+
+import { SubmissionKey, httpOutcome, stripeErrorOutcome, type SubmitOutcome } from "../../../lib/billing/request-id";
 
 const C = {
   // Mission Control tokens (see admin.css)
@@ -239,7 +242,28 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
     }
   }
 
+  // Double-charge guard: one request at a time, and one Stripe idempotency id per submission.
+  const inFlight = useRef(false);
+  // Same id for an identical resubmit (kept after ambiguous failures); renewed on success, a definite 4xx/decline, or a field change.
+  const subKey = useRef(new SubmissionKey());
+  const outcome = useRef<SubmitOutcome>("ambiguous");
   async function handleSubmit() {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    outcome.current = "ambiguous";
+    try { await doSubmit(); } finally {
+      // Ambiguous failures (exception, timeout, 5xx, Stripe connection error) keep the id so a retry
+      // cannot double-bill; success or a definite 4xx/decline renews it.
+      subKey.current.settle(outcome.current);
+      inFlight.current = false;
+    }
+  }
+  /** Body for a money create: the id is tied to these exact details (a changed field gets a new id). */
+  function withKey<T extends object>(payload: T): T & { requestId: string } {
+    return { ...payload, requestId: subKey.current.key(payload) };
+  }
+
+  async function doSubmit() {
     setError(null);
     setSuccess(null);
 
@@ -270,17 +294,18 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
         const res = await fetch("/api/admin/payments/create-intent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+          body: JSON.stringify(withKey({
             amount: amtCents,
             description: description.trim(),
             customerName: customerName.trim() || undefined,
             customerEmail: customerEmail.trim() || undefined,
             promotionCode: coupon.trim() || undefined,
-          }),
+          })),
         });
 
         const data = await res.json();
         if (!res.ok) {
+          outcome.current = httpOutcome(res.status);
           setError(data.error || "Failed to create payment");
           setLoading(false);
           return;
@@ -291,6 +316,8 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
         });
 
         if (confirmError) {
+
+          outcome.current = stripeErrorOutcome(confirmError);
           setError(confirmError.message || "Payment failed");
         } else if (paymentIntent.status === "succeeded") {
           setSuccess(`Payment succeeded — ${fmtDollar(paymentIntent.amount)}`);
@@ -304,7 +331,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
         const res = await fetch("/api/admin/payments/create-subscription", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+          body: JSON.stringify(withKey({
             amount: amtCents,
             description: description.trim(),
             customerName: customerName.trim() || undefined,
@@ -314,11 +341,12 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
             promotionCode: coupon.trim() || undefined,
             setupFee: setupFee.trim() ? Math.round(parseFloat(setupFee) * 100) : undefined,
             startDate: subStartDate || undefined,
-          }),
+          })),
         });
 
         const data = await res.json();
         if (!res.ok) {
+          outcome.current = httpOutcome(res.status);
           setError(data.error || "Failed to create subscription");
           setLoading(false);
           return;
@@ -330,6 +358,8 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
           });
 
           if (confirmError) {
+
+            outcome.current = stripeErrorOutcome(confirmError);
             setError(confirmError.message || "Subscription payment failed");
           } else if (paymentIntent.status === "succeeded") {
             const first = data.setupAmount ? `First payment ${fmtDollar(data.setupAmount)} taken. ` : "";
@@ -349,6 +379,8 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
           });
 
           if (confirmError) {
+
+            outcome.current = stripeErrorOutcome(confirmError);
             setError(confirmError.message || "Card could not be saved");
           } else if (setupIntent.status === "succeeded") {
             const starts = data.startDate ? ` starting ${data.startDate}` : "";
@@ -377,6 +409,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
   }
 
   function clearForm() {
+    outcome.current = "success";
     setAmount("");
     setDescription("");
     setCustomerName("");
@@ -625,7 +658,24 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
     }
   }
 
+  // Double-charge guard: one request at a time, and one Stripe idempotency id per submission.
+  const inFlight = useRef(false);
+  const subKey = useRef(new SubmissionKey());
+  const outcome = useRef<SubmitOutcome>("ambiguous");
   async function handleSubmit() {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    outcome.current = "ambiguous";
+    try { await doSubmit(); } finally {
+      subKey.current.settle(outcome.current);
+      inFlight.current = false;
+    }
+  }
+  function withInvoiceKey<T extends object>(payload: T): T & { requestId: string } {
+    return { ...payload, requestId: subKey.current.key(payload) };
+  }
+
+  async function doSubmit() {
     setError(null);
     setResult(null);
 
@@ -648,7 +698,7 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
       const res = await fetch("/api/admin/payments/create-invoice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: JSON.stringify(withInvoiceKey({
           amount: amtCents,
           description: description.trim(),
           customerName: customerName.trim() || undefined,
@@ -657,13 +707,15 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
           promotionCode: coupon.trim() || undefined,
           daysUntilDue: parseInt(termsDays, 10),
           dueDate: exactDate || undefined,
-        }),
+        })),
       });
 
       const data = await res.json();
       if (!res.ok) {
+        outcome.current = httpOutcome(res.status);
         setError(data.error || "Failed to create invoice");
       } else {
+        outcome.current = "success";
         setResult(data);
         setAmount("");
         setDescription("");
@@ -952,7 +1004,7 @@ export default function PaymentsClient({ publishableKey }: { publishableKey: str
   }
 
   const stripePromise = loadStripe(publishableKey);
-  const [tab, setTab] = useState<"payments" | "invoices">("payments");
+  const [tab, setTab] = useState<"payments" | "clients" | "invoices" | "audit">("payments");
 
   return (
     <AdminShell activePath="/saabai-admin/payments">
@@ -968,7 +1020,9 @@ export default function PaymentsClient({ publishableKey }: { publishableKey: str
         <div className="seg pay-tabs" role="tablist" style={{ marginBottom: 20 }}>
           {([
             { id: "payments" as const, label: "Payments" },
+            { id: "clients" as const, label: "Clients" },
             { id: "invoices" as const, label: "Invoices" },
+            { id: "audit" as const, label: "Audit log" },
           ]).map(t => (
             <button
               key={t.id}
@@ -1001,6 +1055,10 @@ export default function PaymentsClient({ publishableKey }: { publishableKey: str
               <PaymentHistory />
             </div>
           </>
+        ) : tab === "clients" ? (
+          <BillingClientsTab />
+        ) : tab === "audit" ? (
+          <MoneyAuditTab />
         ) : (
           <InvoiceTracker />
         )}

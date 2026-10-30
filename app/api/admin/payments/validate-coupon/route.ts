@@ -5,15 +5,16 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "../../../../../lib/stripe";
-import { isAdminRequest } from "../../../../../lib/product-stripe";
+import { moneyAdmin, moneyDeny } from "../../../../../lib/billing/money-auth";
 import { resolveCouponForManual, couponOff } from "../../../../../lib/sell";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  if (!(await isAdminRequest())) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  // Money route: full admins only (restricted staff are refused).
+  if (!(await moneyAdmin())) {
+    return moneyDeny();
   }
   const body = await req.json().catch(() => ({}));
 

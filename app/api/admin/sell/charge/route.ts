@@ -8,7 +8,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "../../../../../lib/stripe";
 import { getProduct, INTERVAL_MAP } from "../../../../../lib/product-catalogue";
-import { isAdminRequest } from "../../../../../lib/product-stripe";
+import { moneyAdmin, moneyDeny } from "../../../../../lib/billing/money-auth";
+import { logMoneyAction } from "../../../../../lib/billing/audit-log";
+import { idemKey, priceSignature, requireRequestId, stepKey } from "../../../../../lib/billing/idempotency";
 import { markUsed } from "../../../../../lib/coupons/once";
 import { resolveCoupon, bakedAmounts, couponOff, createOrFindCustomer } from "../../../../../lib/sell";
 import { ensureClientAccount } from "../../../../../lib/client-account";
@@ -17,8 +19,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  if (!(await isAdminRequest())) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  // Money route: full admins only (restricted staff are refused).
+  const actor = await moneyAdmin();
+  if (!actor) {
+    return moneyDeny();
   }
 
   const body = await req.json().catch(() => ({}));
@@ -28,6 +32,11 @@ export async function POST(req: NextRequest) {
 
   const product = await getProduct(String(body?.productId || ""));
   if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
+  const rid = requireRequestId(body);
+  if ("error" in rid) return NextResponse.json({ error: rid.error }, { status: rid.status });
+  const { requestId } = rid;
+  // Key covers the submission plus the price actually charged, so a price edit never reuses a key.
+  const base = idemKey("sell-charge", requestId, { actor, productId: product.id, customerEmail, code: body?.code, priceVersion: priceSignature(product) });
 
   try {
     const stripe = getStripe();
@@ -35,7 +44,7 @@ export async function POST(req: NextRequest) {
     const { coupon, error } = await resolveCoupon(stripe, body?.code, product, customerEmail);
     if (error) return NextResponse.json({ error }, { status: 400 });
 
-    const customerId = await createOrFindCustomer(stripe, customerName, customerEmail);
+    const customerId = await createOrFindCustomer(stripe, customerName, customerEmail, stepKey(base, "customer"));
     const baked = bakedAmounts(product);
     const taxBehavior: "inclusive" | "exclusive" = product.gstInclusive ? "inclusive" : "exclusive";
     const metaBase = { source: "saabai-sell", product_id: product.id, product_name: product.name, customer_email: customerEmail };
@@ -52,8 +61,9 @@ export async function POST(req: NextRequest) {
         customer: customerId,
         metadata: metaBase,
         automatic_payment_methods: { enabled: true },
-      });
+      }, { idempotencyKey: stepKey(base, "pi") });
       clientSecret = pi.client_secret;
+      await logMoneyAction({ actor, action: "sell.charge", amountCents: amount, currency: "aud", clientEmail: customerEmail, stripeIds: { payment_intent: pi.id, customer: customerId }, productId: product.id, ok: true, note: product.name });
     } else {
       const cfg = INTERVAL_MAP[product.interval!];
       const recurringPrice = await stripe.prices.create({
@@ -62,7 +72,7 @@ export async function POST(req: NextRequest) {
         unit_amount: baked.recurring || 0,
         recurring: { interval: cfg.interval, interval_count: cfg.interval_count },
         tax_behavior: taxBehavior,
-      });
+      }, { idempotencyKey: stepKey(base, "price") });
 
       const subParams: import("stripe").Stripe.SubscriptionCreateParams = {
         customer: customerId,
@@ -80,7 +90,8 @@ export async function POST(req: NextRequest) {
       if (product.trialDays) subParams.trial_period_days = product.trialDays;
       if (coupon) subParams.discounts = [{ promotion_code: coupon.promotionCodeId }];
 
-      const subscription = await stripe.subscriptions.create(subParams);
+      const subscription = await stripe.subscriptions.create(subParams, { idempotencyKey: stepKey(base, "sub") });
+      await logMoneyAction({ actor, action: "sell.subscription", amountCents: baked.recurring || 0, currency: "aud", clientEmail: customerEmail, stripeIds: { subscription: subscription.id, customer: customerId, price: recurringPrice.id }, productId: product.id, ok: true, note: product.name });
       const latestInvoice = subscription.latest_invoice as unknown as Record<string, unknown>;
       if (latestInvoice && typeof latestInvoice !== "string") {
         const pi = latestInvoice.payment_intent;
@@ -100,6 +111,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[admin/sell/charge]", msg);
+    await logMoneyAction({ actor, action: "sell.charge", clientEmail: customerEmail, ok: false, note: msg });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
