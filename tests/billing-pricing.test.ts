@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { billedUnit, ensurePrice, gstNote, lineTotals, priceLookupKey, priceMatches, validateLine } from "../lib/billing/price-lines";
 import { planCollection } from "../lib/billing/collect";
+import { SubmissionKey, httpOutcome } from "../lib/billing/request-id";
 import { catalogueItems, intervalFromRecurring, stripeItems, validPickerKey } from "../lib/billing/picker";
 
 const L = (o: Record<string, unknown>) => { const r = validateLine({ description: "Work", unitAmount: 10000, ...o }); assert.ok(r.line, r.error); return r.line!; };
@@ -120,4 +121,35 @@ test("Phase B UI: no em dashes, no gold, GST not applicable shown", () => {
   assert.ok(!src.includes("\u2014"));
   assert.ok(!/gold|#c9a|#d4af/i.test(src));
   assert.ok(src.includes("GST not applicable"));
+});
+
+test("pricing tab collect: keeps the request id after a 502 or network error, renews after a definite 4xx or success", () => {
+  const src = readFileSync("app/saabai-admin/payments/PricingTab.tsx", "utf8");
+  const take = src.slice(src.indexOf("async function take("), src.indexOf("const chosen ="));
+  assert.ok(!take.includes("renew()"), "collect never renews unconditionally");
+  assert.match(take, /outcome = httpOutcome\(res\.status\)/);
+  assert.match(take, /finally \{ subKey\.current\.settle\(outcome\)/);
+  const route = readFileSync("app/api/admin/billing-clients/[id]/collect/route.ts", "utf8");
+  assert.match(route, /CollectError \? 400 : 502/, "Stripe failures are ambiguous (502), validation is 400");
+
+  // Simulate the take() flow with the same payload.
+  let n = 0;
+  const k = new SubmissionKey(() => `rid${++n}bbbbb`);
+  const payload = { clientId: "c1", method: "send_invoice", lineIds: ["l1"], days: 14 };
+  const first = k.key(payload);
+  k.settle(httpOutcome(502)); // Stripe may have created and emailed the invoice
+  assert.equal(k.key(payload), first, "retry after a 502 reuses the key");
+  k.settle("ambiguous"); // fetch threw: network error, timeout or abort
+  assert.equal(k.key(payload), first, "retry after a network error reuses the key");
+  k.settle(httpOutcome(400));
+  const second = k.key(payload);
+  assert.notEqual(second, first, "retry after a definite 400 gets a new key");
+  k.settle("success");
+  assert.notEqual(k.key(payload), second, "a genuine second collection gets a new key");
+});
+
+test("checkout from the pricing tab returns to a thank-you page, not the homepage", () => {
+  const src = readFileSync("lib/billing/collect.ts", "utf8");
+  assert.match(src, /success_url: `\$\{SITE\}\/pay\/thanks\?status=success`/);
+  assert.match(src, /cancel_url: `\$\{SITE\}\/pay\/thanks\?status=cancelled`/);
 });

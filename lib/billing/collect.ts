@@ -136,8 +136,8 @@ export async function collect(
     mode: rec.length ? "subscription" : "payment",
     customer: customerId,
     line_items: items.map((i) => ({ price: i.priceId, quantity: i.quantity })),
-    success_url: `${SITE}/?purchase=success`,
-    cancel_url: `${SITE}/?purchase=cancelled`,
+    success_url: `${SITE}/pay/thanks?status=success`,
+    cancel_url: `${SITE}/pay/thanks?status=cancelled`,
     metadata: md,
     ...(rec.length ? { subscription_data: { metadata: md } } : { payment_intent_data: { metadata: md }, invoice_creation: { enabled: true } }),
   }, { idempotencyKey: stepKey(idemBase, "checkout") });

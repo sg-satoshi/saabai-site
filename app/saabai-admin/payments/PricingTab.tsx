@@ -5,7 +5,7 @@
  * Light mode only; navy primary buttons (.btn.pri). GST is stored, never charged here.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { SubmissionKey } from "../../../lib/billing/request-id";
+import { SubmissionKey, httpOutcome, type SubmitOutcome } from "../../../lib/billing/request-id";
 
 type Interval = "once" | "weekly" | "fortnightly" | "monthly" | "quarterly" | "yearly";
 interface Client { id: string; name: string; firm?: string; email: string }
@@ -96,18 +96,22 @@ export function PricingTab() {
     const label = METHODS.find((m) => m.id === method)!.label;
     if (!window.confirm(`${label} for ${money(total)}?`)) return;
     setBusy(true); setMsg(null);
+    // Keep the id after ambiguous failures (5xx, network error, timeout, abort): Stripe may already have
+    // charged or emailed, and an identical retry is deduplicated. Renew on success or a definite 4xx.
+    let outcome: SubmitOutcome = "ambiguous";
     try {
       const res = await fetch(`/api/admin/billing-clients/${clientId}/collect`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ method, lineIds: [...picked], requestId: subKey.current.key({ clientId, method, lineIds: [...picked], days }), daysUntilDue: days }),
       });
       const d = await res.json();
-      if (!res.ok) { setMsg({ ok: false, text: d.error || "Payment failed" }); renew(); return; }
+      if (!res.ok) { outcome = httpOutcome(res.status); setMsg({ ok: false, text: d.error || "Payment failed" }); return; }
+      outcome = "success";
       setMsg({ ok: true, text: `${d.note}. ${money(d.amountCents)}`, url: d.url });
       if (method === "card_now" && d.url) window.open(d.url, "_blank", "noopener");
-      setPicked(new Set()); renew();
-    } catch { setMsg({ ok: false, text: "Network error" }); renew(); }
-    finally { setBusy(false); }
+      setPicked(new Set());
+    } catch { setMsg({ ok: false, text: "Network error. Retrying with the same details is safe." }); }
+    finally { subKey.current.settle(outcome); setBusy(false); }
   }
 
   const chosen = lines.filter((l) => l.id && picked.has(l.id));
@@ -134,8 +138,8 @@ export function PricingTab() {
       {client && (
         <div style={box}>
           <h3 style={{ margin: "0 0 12px", fontSize: 15, color: "#13152a" }}>Pricing for {client.firm || client.name}</h3>
-          <div className="tbl-scroll">
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div className="tbl-scroll" style={{ overflowX: "auto", maxWidth: "100%" }}>
+            <table style={{ width: "100%", minWidth: 720, borderCollapse: "collapse" }}>
               <thead><tr><th style={th}></th><th style={th}>Item</th><th style={th}>Unit $</th><th style={th}>Qty</th><th style={th}>Billing</th><th style={th}>Discount</th><th style={th}>Total</th><th style={th}></th></tr></thead>
               <tbody>
                 {lines.map((l, i) => (
