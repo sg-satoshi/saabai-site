@@ -25,6 +25,18 @@ export function clientWriteBlocked(lock: BotLock | undefined | null): boolean {
   return lock?.locked === true;
 }
 
+/**
+ * Whole-bot lock is full-admin only. Restricted staff stay blocked even when they can write other chatbot settings.
+ * A body that carries botLock is treated as a lock change, same as set_lock.
+ */
+export function botLockDenied(fullAdmin: boolean, action: string, bodyHasBotLock = false): { status: 403; error: string } | null {
+  if (fullAdmin) return null;
+  if (action === "set_lock" || bodyHasBotLock) {
+    return { status: 403, error: "Only an admin can lock or unlock a chatbot." };
+  }
+  return null;
+}
+
 export function portalWriteGuard(lock: BotLock | undefined | null): { ok: true } | { ok: false; status: 403; error: string } {
   if (clientWriteBlocked(lock)) {
     return { ok: false, status: 403, error: "This chatbot is managed by Saabai. Contact us to make changes." };

@@ -1,4 +1,6 @@
 import { adminActor, readActor } from "@/lib/exp/actor";
+import { isAdminSession } from "@/lib/auth";
+import { botLockDenied } from "@/lib/chatbot/bot-lock";
 import { APP_ROUTER_SITES, getSiteBySlug } from "@/lib/site-registry";
 import { BESPOKE_SLUGS, canRemovePoweredBy, capState, isPlan, validateSkin, validateContent, toPublicConfig, effectiveGoal, PLAN_LABEL, PLANS, CAPS, type Plan } from "@/lib/chatbot/core";
 import { getConfig, getMeta, getUsage, isEnabled, saveConfig, setEnabled } from "@/lib/chatbot/store";
@@ -16,7 +18,9 @@ export const dynamic = "force-dynamic";
 
 /** Admin and Chief read-only: one row per client site that has (or is set up for) a chatbot. */
 export async function GET() {
-  if (!(await readActor())) return Response.json({ error: "Forbidden" }, { status: 403 });
+  const actor = await readActor();
+  if (!actor) return Response.json({ error: "Forbidden" }, { status: 403 });
+  const canLock = actor !== "chief" && await isAdminSession(actor);
   // Display only. Duplicate copies stay in Redis. Conversation and message counts are added across their slugs.
   const [groups, activity] = await Promise.all([listChatbotCanonical(), loadChatActivity()]);
   const rows = await Promise.all(
@@ -63,10 +67,10 @@ export async function GET() {
     })
   );
   const kill = process.env.CHATBOTS_KILL === "1";
-  return Response.json({ rows: rows.sort((a, b) => a.name.localeCompare(b.name)), kill, plans: PLANS.map((p) => ({ key: p, label: PLAN_LABEL[p], cap: CAPS[p] })) });
+  return Response.json({ rows: rows.sort((a, b) => a.name.localeCompare(b.name)), kill, canLock, plans: PLANS.map((p) => ({ key: p, label: PLAN_LABEL[p], cap: CAPS[p] })) });
 }
 
-type Body = { slug?: string; action?: string; enabled?: boolean; locked?: boolean; reason?: string; plan?: string; skin?: unknown; content?: unknown; goal?: unknown; engage?: unknown };
+type Body = { slug?: string; action?: string; enabled?: boolean; locked?: boolean; reason?: string; plan?: string; skin?: unknown; content?: unknown; goal?: unknown; engage?: unknown; botLock?: unknown };
 
 /** Admin only (writes need a real admin session). */
 export async function POST(req: Request) {
@@ -78,6 +82,8 @@ export async function POST(req: Request) {
   const site = (await getSiteBySlug(b.slug)) ?? APP_ROUTER_SITES.find((s) => s.slug === b.slug) ?? null;
   if (!site) return Response.json({ error: "Unknown site" }, { status: 404 });
   if (BESPOKE_SLUGS.includes(site.slug)) return Response.json({ error: "This site uses its own chat route. It moves to the platform in a later release." }, { status: 409 });
+  const lockDeny = botLockDenied(await isAdminSession(actor), b.action, Object.prototype.hasOwnProperty.call(b, "botLock"));
+  if (lockDeny) return Response.json({ error: lockDeny.error }, { status: lockDeny.status });
 
   try {
     switch (b.action) {

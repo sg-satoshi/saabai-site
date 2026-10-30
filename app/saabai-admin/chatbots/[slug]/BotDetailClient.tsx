@@ -38,6 +38,7 @@ export default function BotDetailClient({ slug }: { slug: string }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [msg, setMsg] = useState("");
+  const [canLock, setCanLock] = useState(false);
   const [lockOpen, setLockOpen] = useState(false);
   const [more, setMore] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -49,6 +50,7 @@ export default function BotDetailClient({ slug }: { slug: string }) {
     setRows(j.rows ?? []);
     setPlans(j.plans ?? []);
     setKill(!!j.kill);
+    setCanLock(!!j.canLock);
     setFailed(false);
     setLoaded(true);
   }, []);
@@ -110,7 +112,7 @@ export default function BotDetailClient({ slug }: { slug: string }) {
             </p>
           </div>
           <div className="cbed-actions">
-            {!bespoke && (
+            {canLock && !bespoke && (
               <Button variant="sec" aria-pressed={locked} aria-label="Lock this bot for the client" onClick={() => { if (locked) void post({ action: "set_lock", locked: false }); else setLockOpen((v) => !v); }} style={locked ? { borderColor: "var(--navy-900)", boxShadow: "0 0 0 1px var(--navy-900)" } : undefined}>
                 <LockIcon open={!locked} /> {locked ? "Locked" : "Lock this bot"}
               </Button>
@@ -126,7 +128,7 @@ export default function BotDetailClient({ slug }: { slug: string }) {
             )}
           </div>
         </div>
-        {lockOpen && !locked && (
+        {canLock && lockOpen && !locked && (
           <div className="cbed-lockpop" role="dialog" aria-label="Lock this bot?">
             <h6>Lock this bot?</h6>
             <p>{"The client can view it but can't change any settings. You and the Saabai team can still edit everything here, and unlock it at any time. Saved in the change log."}</p>

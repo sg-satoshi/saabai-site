@@ -2,12 +2,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import http from "node:http";
 import type { AddressInfo } from "node:net";
 import { createMockUpstash } from "../scripts/dev/mock-upstash.mjs";
+import { resetRedisForTests } from "./reset-redis";
 import { countLeads, formatLastChat, isEngagedChat, isGreetingOnly, summariseActivity, brisbaneMonthRange } from "../lib/chatbot/leads";
 import { activityIdsForRow, sumAliasActivity } from "../lib/chatbot/activity";
-import { clientWriteBlocked, portalWriteGuard, readBotLock } from "../lib/chatbot/bot-lock";
+import { botLockDenied, clientWriteBlocked, portalWriteGuard, readBotLock } from "../lib/chatbot/bot-lock";
 import {
   arrangeGroups, filterRows, multiSiteClients, pageBots, parseListQuery, serialiseListQuery, sortRows,
   type BotListRow,
@@ -173,6 +173,10 @@ test("whole-bot lock blocks every client write and is ignored when unset", () =>
   assert.match(admin, /setLock: true/);
   assert.match(admin, /leads: bespoke \? null : leads/);
   assert.match(admin, /adminActor\(\)/);
+  assert.match(admin, /botLockDenied\(/);
+  assert.match(admin, /canLock/);
+  assert.match(read("app/saabai-admin/chatbots/[slug]/BotDetailClient.tsx"), /canLock && !bespoke/);
+  assert.doesNotMatch(read("lib/redis.ts"), /resetRedisForTests/);
 });
 
 test("the editor copy drops per-setting lock wording and the lock popover sits in the header", () => {
@@ -207,7 +211,14 @@ test("the editor copy drops per-setting lock wording and the lock popover sits i
   assert.match(read("app/saabai-admin/chatbots/ChatbotEditor.tsx"), /transcriptsOn=\{draft\.engage\.transcripts\}/);
 });
 
-test("a settings save keeps the stored lock, and a failed lock read rejects the client write", async () => {
+test("only a full admin can lock or unlock; a staff save keeps the lock", async () => {
+  assert.equal(botLockDenied(true, "set_lock"), null);
+  assert.equal(botLockDenied(false, "set_lock")?.status, 403);
+  assert.equal(botLockDenied(false, "save_goal"), null);
+  assert.equal(botLockDenied(false, "save_all"), null);
+  assert.equal(botLockDenied(false, "set_plan"), null);
+  assert.equal(botLockDenied(false, "save_goal", true)?.status, 403, "a body that carries botLock is a lock change");
+
   const mock = createMockUpstash();
   const prevUrl = process.env.UPSTASH_REDIS_REST_URL;
   const prevToken = process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -215,33 +226,41 @@ test("a settings save keeps the stored lock, and a failed lock read rejects the 
   const { port } = mock.server.address() as AddressInfo;
   process.env.UPSTASH_REDIS_REST_URL = `http://127.0.0.1:${port}`;
   process.env.UPSTASH_REDIS_REST_TOKEN = "test";
-  const { resetRedisForTests } = await import("../lib/redis");
   resetRedisForTests();
   try {
     const { getConfig, saveConfig, loadConfigForClientWrite } = await import("../lib/chatbot/store");
     const lock = { locked: true, by: "Shane", at: "2026-10-01T00:00:00.000Z" };
     await saveConfig({ schema: 1, slug: "locked-bot", plan: "presence", skin: {}, botLock: lock }, { setLock: true });
-    await saveConfig({ schema: 1, slug: "locked-bot", plan: "growth", skin: { botName: "Bea" }, botLock: { locked: false } });
+    assert.equal((await getConfig("locked-bot")).botLock?.locked, true);
+
+    const staffLock = botLockDenied(false, "set_lock");
+    assert.equal(staffLock?.status, 403);
+    assert.equal((await getConfig("locked-bot")).botLock?.locked, true, "a refused lock change writes nothing");
+
+    await saveConfig({ schema: 1, slug: "locked-bot", plan: "signature", skin: { botName: "Bea" }, botLock: { locked: false } });
     const kept = await getConfig("locked-bot");
-    assert.equal(kept.plan, "growth");
+    assert.equal(kept.plan, "signature");
     assert.equal(kept.skin.botName, "Bea");
     assert.equal(kept.botLock?.locked, true);
     assert.equal(kept.botLock?.by, "Shane");
 
-    await saveConfig({ schema: 1, slug: "locked-bot", plan: "growth", skin: {}, botLock: { locked: false, by: "Sam", at: "2026-10-02T00:00:00.000Z" } }, { setLock: true });
+    await saveConfig({ schema: 1, slug: "locked-bot", plan: "signature", skin: kept.skin, botLock: { locked: false, by: "Admin", at: "2026-10-02T00:00:00.000Z" } }, { setLock: true });
     assert.equal((await getConfig("locked-bot")).botLock?.locked, false);
+    await saveConfig({ schema: 1, slug: "locked-bot", plan: "signature", skin: kept.skin, botLock: { locked: true, by: "Admin", at: "2026-10-03T00:00:00.000Z" } }, { setLock: true });
+    assert.equal((await getConfig("locked-bot")).botLock?.locked, true);
 
-    const bad = http.createServer((_req, res) => { res.statusCode = 500; res.end('{"error":"down"}'); });
-    await new Promise<void>((resolve) => bad.listen(0, "127.0.0.1", () => resolve()));
-    const badPort = (bad.address() as AddressInfo).port;
-    process.env.UPSTASH_REDIS_REST_URL = `http://127.0.0.1:${badPort}`;
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async () => new Response(JSON.stringify({ error: "down" }), { status: 500, headers: { "content-type": "application/json" } });
     resetRedisForTests();
-    const denied = await loadConfigForClientWrite("locked-bot");
-    assert.equal(denied.ok, false);
-    if (!denied.ok) assert.equal(denied.status, 503);
-    const open = await getConfig("locked-bot");
-    assert.equal(open.botLock, undefined, "a normal read still fails open");
-    await new Promise<void>((resolve) => bad.close(() => resolve()));
+    try {
+      const denied = await loadConfigForClientWrite("locked-bot");
+      assert.equal(denied.ok, false);
+      if (!denied.ok) assert.equal(denied.status, 503);
+      const open = await getConfig("locked-bot");
+      assert.equal(open.botLock, undefined, "a normal read still fails open");
+    } finally {
+      globalThis.fetch = realFetch;
+    }
   } finally {
     if (prevUrl === undefined) delete process.env.UPSTASH_REDIS_REST_URL;
     else process.env.UPSTASH_REDIS_REST_URL = prevUrl;
