@@ -117,6 +117,7 @@ const NAV: NavGroup[] = [
     collapsible: true,
     items: [
       { label: "Lex Clients", href: "/saabai-admin/lex-clients", icon: "scale" },
+      { label: "Lex Feedback", href: "/saabai-admin/lex-feedback", icon: "bell" },
       { label: "Lex Orders", href: "/saabai-admin/orders?kind=lex", icon: "list" },
       { label: "LLM Config", href: "/saabai-admin/lex-settings", icon: "cpu" },
       { label: "Privacy Log", href: "/saabai-admin/lex-privacy", icon: "lock" },
