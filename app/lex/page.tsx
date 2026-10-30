@@ -35,6 +35,7 @@ import { FirmDashboard } from "./_components/Dashboard";
 import { MattersView, MatterDetail, MatterBar, NewMatterDialog } from "./_components/Matters";
 import type { Matter, MatterItem } from "../../lib/lex-matters";
 import type { FirmUsage } from "../../lib/lex-review-access";
+import type { DocUsage } from "../../lib/lex-doc-allowance-shared";
 import type { QAReport } from "../../lib/lex-draft-display";
 import type { ReviewReport } from "../../lib/lex-review-display";
 import { ReviewView } from "./_components/Review";
@@ -109,6 +110,7 @@ export default function LexPage() {
   const [displayEmail, setDisplayEmail] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [firmUsage, setFirmUsage] = useState<FirmUsage | null>(null);
+  const [docUsage, setDocUsage] = useState<DocUsage | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [copiedMsg, setCopiedMsg] = useState<number | null>(null);
 
@@ -236,6 +238,7 @@ export default function LexPage() {
         if (d?.admin === true) setDisplayName("Saabai admin");
         setIsAdmin(d?.admin === true);
         if (d?.usage && typeof d.usage.reviews === "number") setFirmUsage(d.usage as FirmUsage);
+        if (d?.docs && typeof d.docs.used === "number") setDocUsage(d.docs as DocUsage);
         return typeof d?.email === "string" ? d.email : null;
       }).catch(() => null);
       try { const am = localStorage.getItem("lex:matter"); if (am) setActiveMatterIdState(am); } catch {}
@@ -803,6 +806,7 @@ export default function LexPage() {
 
     draftAbortRef.current?.abort();
     draftAbortRef.current = new AbortController();
+    const draftRequestId = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Date.now());
 
     try {
       const res = await fetch("/api/lex-draft", {
@@ -816,12 +820,21 @@ export default function LexPage() {
           responseLength: draftResponseLength !== "default" ? draftResponseLength : undefined,
           messages: [],
           matterId: activeMatterId ?? undefined,
+          draftRequestId,
         }),
         signal: draftAbortRef.current.signal,
       });
 
       if (!res.ok) {
         clearInterval(labelTimer);
+        if (res.status === 429) {
+          const body = await res.clone().json().catch(() => null);
+          if (body?.error === "doc_limit" && body.docUsage) {
+            setDocUsage(body.docUsage as DocUsage);
+            setDraftLoading(false);
+            return;
+          }
+        }
         setDraftError(await lexErrorFromResponse(res, "draft"));
         setDraftLoading(false);
         return;
@@ -854,6 +867,8 @@ export default function LexPage() {
 
       clearInterval(labelTimer);
       setDraftLoading(false);
+      // Refresh the monthly document count after a draft.
+      fetch("/api/lex-me").then(r => (r.ok ? r.json() : null)).then(d => { if (d?.docs && typeof d.docs.used === "number") setDocUsage(d.docs as DocUsage); }).catch(() => {});
 
       if (streamFailed || !fullText.trim()) {
         // A half-written or empty draft is not a document: clear it so it can't be exported or emailed.
@@ -1226,7 +1241,7 @@ export default function LexPage() {
             length={draftResponseLength} setLength={setDraftResponseLength}
             instructions={draftInstructions} setInstructions={setDraftInstructions}
             text={draftText} qa={draftQA} loading={draftLoading} qaLoading={draftQALoading} thinkLabel={draftThinkLabel}
-            error={draftError} onDraft={() => sendDraft()}
+            error={draftError} onDraft={() => sendDraft()} docUsage={docUsage}
             copied={draftCopied}
             onCopy={() => { navigator.clipboard.writeText(draftText); setDraftCopied(true); setTimeout(() => setDraftCopied(false), 1500); }}
             onExport={() => exportDraftToWord({ draftText, docTypeName: DOCUMENT_TYPES.find(d => d.id === draftTypeId)?.name ?? "Legal Document", jurisdiction: draftJurisdiction, firmName })}

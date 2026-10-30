@@ -11,6 +11,8 @@
  *
  * Progress is saved in this browser only (lib/lex-draft-progress.ts). Uploaded files are not kept.
  */
+import { DocAllowance, docState } from "./DocAllowance";
+import type { DocUsage } from "../../../lib/lex-doc-allowance-shared";
 import { useEffect, useRef, useState } from "react";
 import { DOCUMENT_TYPES, fillPartiesTemplate, type DocumentType } from "../../../lib/lex-document-types";
 import { DOC_KIND_LABELS, prefillChecklist, profileFor, sourceLabel, type MergedDeed, type PrepState } from "../../../lib/lex-doc-extract";
@@ -52,6 +54,8 @@ export type WorkspaceProps = {
   prep: PrepState; setPrep: (s: PrepState) => void;
   savedAt?: number | null; onReset?: () => void;
   onDraft: () => void; busy: boolean; thinkLabel: string; error: LexError | null;
+  /** Firm plan document allowance (null for admins or when unavailable). */
+  docUsage?: DocUsage | null;
   /** Open on this stage (e.g. "form" when editing answers after a draft). */
   initialStage?: Stage;
 };
@@ -85,6 +89,7 @@ function Chips({ f, onCheck, onConfirm }: { f: FormField; onCheck?: () => void; 
 }
 
 export function DraftWorkspace(p: WorkspaceProps) {
+  const docsFull = docState(p.docUsage ?? null) === "full";
   const doc: DocumentType | undefined = DOCUMENT_TYPES.find((d) => d.id === p.typeId);
   const docName = doc?.name ?? "Custom document";
   const template = doc?.partiesTemplate ? fillPartiesTemplate(doc.partiesTemplate) : "";
@@ -559,8 +564,9 @@ export function DraftWorkspace(p: WorkspaceProps) {
         {doc && doc.draftingWarnings.length > 0 && (
           <div className="lx-verify lxd-risks"><Icon name="warn" /><div><b>Key drafting risks</b><ul>{doc.draftingWarnings.slice(0, 3).map((w, i) => <li key={i}>{w}</li>)}</ul></div></div>
         )}
-        <button type="button" className={`lxw-draft${gate.ok ? "" : " off"}`} aria-disabled={!gate.ok || p.busy} aria-describedby="lxw-gate-why"
-          onClick={() => { if (gate.ok && !p.busy) p.onDraft(); }}>
+        <DocAllowance usage={p.docUsage ?? null} />
+        <button type="button" className={`lxw-draft${gate.ok && !docsFull ? "" : " off"}`} aria-disabled={!gate.ok || p.busy || docsFull} aria-describedby="lxw-gate-why"
+          onClick={() => { if (gate.ok && !p.busy && !docsFull) p.onDraft(); }}>
           <Icon name="draft" />{p.busy ? p.thinkLabel : "Draft document"}
         </button>
         <p id="lxw-gate-why" className={gate.ok ? "lxw-fine" : "lxw-why"}>{gate.ok ? "Lex searches the governing legislation and checks section numbers before it drafts." : gate.reason}</p>

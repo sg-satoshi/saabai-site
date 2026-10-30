@@ -1,6 +1,8 @@
 import { serverVerifyGate } from "../../../lib/lex-draft-form";
 import { matterPartiesFor } from "../../../lib/lex-privacy/matter-parties";
 import { lexErrorResponse } from "../../../lib/lex-errors";
+import { resolveReviewActor } from "../../../lib/lex-review-access";
+import { takeDocument, requestFingerprint } from "../../../lib/lex-doc-allowance";
 /**
  * Lex Document Drafting API: /api/lex-draft
  *
@@ -185,6 +187,7 @@ MANDATORY FIRST STEP: Before drafting a single clause, search for the governing 
 // ── POST handler ──────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
+  let docRefund: () => Promise<void> = async () => {};
   try {
     const {
       documentType,
@@ -198,6 +201,7 @@ export async function POST(req: Request) {
       clientId,
       threadId,
       matterId,
+      draftRequestId,
     } = await req.json();
 
     // Verify gate, server side: a checklist that still has an unresolved Verify is not drafted.
@@ -208,13 +212,24 @@ export async function POST(req: Request) {
       if (verifyBlock || markBlock) return Response.json({ error: verifyBlock ?? markBlock }, { status: 409 });
     }
 
+    // Firm plan document allowance: only new drafts count (not QA passes, research or edits).
+    if (!(requestQA && completedDraft)) {
+      const actor = await resolveReviewActor(req).catch(() => null);
+      if (actor?.kind === "firm") {
+        const fp = requestFingerprint([typeof draftRequestId === "string" ? draftRequestId.slice(0, 80) : null, documentType ?? null, parties ?? null, jurisdiction ?? null, specialInstructions ?? null, responseLength ?? null, matterId ?? null, messages ?? null]);
+        const take = await takeDocument(actor.firm, fp);
+        if (!take.ok) return Response.json({ error: "doc_limit", message: take.message, docUsage: take.usage }, { status: 429 });
+        docRefund = take.refund;
+      }
+    }
+
     // Same model rule as research: the firm's own model if saved, else LEX_RESEARCH_MODEL
     // (which falls back to PREMIUM_CHAT_MODEL).
     // The gateway picks it and masks every client-supplied text before the model sees it. Fail closed.
     const lexConfigId = getLexConfig(clientId).id;
     const firm = lexFirmFromRequest(req, lexConfigId);
     const gw = await LexGateway.open({ route: requestQA && completedDraft ? "lex-draft-qa" : "lex-draft", firm, model: { kind: "firm", configId: lexConfigId }, thread: threadSeed(threadId, Array.isArray(messages) ? messages : undefined), parties: await matterPartiesFor(req, matterId) });
-    if (!gw) return privacyFailResponse();
+    if (!gw) { await docRefund(); return privacyFailResponse(); }
     // Open-source name model, inside this function (no external API). Best effort: patterns and matter parties always run.
     await gw.scanNames([parties, specialInstructions, messages, completedDraft]);
     const masker = gw.masker;
@@ -473,6 +488,7 @@ export async function POST(req: Request) {
 
     return result.toUIMessageStreamResponse();
   } catch (err) {
+    await docRefund();
     if (err instanceof LexPrivacyError) return privacyFailResponse();
     console.error("[lex-draft]", err);
     return lexErrorResponse(500, "draft_failed");
