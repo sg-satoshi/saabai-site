@@ -5,6 +5,7 @@ import { cors, optionsResponse, originDecision } from "@/lib/chatbot/handler";
 import { recordChatEvent } from "@/lib/chatbot/store";
 import { SLUG_RE } from "@/lib/chat-origin";
 import { getSiteBySlug } from "@/lib/site-registry";
+import { eventRateLimited } from "@/lib/chatbot/ratelimit";
 
 export const runtime = "nodejs";
 
@@ -24,6 +25,8 @@ export async function POST(req: NextRequest) {
   if (!slug || !SLUG_RE.test(slug)) return Response.json({ ok: false }, { status: 400, headers });
   if (!isWidgetEvent(body?.event)) return Response.json({ ok: false }, { status: 400, headers });
 
+  // Rate limit per visitor IP and per bot, so a script cannot inflate a client's funnel counts.
+  if (await eventRateLimited(req, slug)) return Response.json({ ok: false }, { status: 429, headers });
   const site = await getSiteBySlug(slug);
   if (!site) return Response.json({ ok: false }, { status: 404, headers });
   if ((await originDecision(req, slug, domainsForBot(slug, site.domains))) === "block") {

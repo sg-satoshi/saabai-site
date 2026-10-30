@@ -212,7 +212,7 @@ export default function ChatbotEditor({ row, onSaved }: { row: EditorRow; onSave
 
         <fieldset data-testid="engage-section">
           <h3>Conversion playbook</h3>
-          <EngageEditor value={engage} onChange={setEngage} errors={engErrs} />
+          <EngageEditor value={engage} onChange={setEngage} errors={engErrs} mode="admin" />
           <div className="bar">
             <button type="button" className="btn pri" disabled={busy} onClick={() => void saveEngage()} data-testid="engage-save">Save playbook</button>
             {engMsg && <span role="status" style={{ fontSize: 12.5, color: Object.keys(engErrs).length ? "#b42318" : "#137a52" }}>{engMsg}</span>}

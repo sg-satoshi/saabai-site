@@ -3,7 +3,7 @@
  * site. A slug in the request is never trusted: if one is sent and it is not theirs, refuse.
  */
 import { BESPOKE_SLUGS, effectiveGoal } from "./core";
-import { effectiveEngage, validateEngage, type EngageConfig } from "./engage";
+import { ENGAGE_FIELD_KEYS, effectiveEngage, mergeClientEngage, validateEngage, type EngageConfig } from "./engage";
 import { GOAL_FIELDS, GOAL_LABEL, GOAL_LIMITS, GOAL_TYPES, mergeClientGoal, validateGoal, type GoalConfig } from "./goal";
 
 export type PortalBotDecision =
@@ -23,6 +23,7 @@ export function portalView(slug: string, stored: GoalConfig | undefined, engage?
     goal,
     engage: effectiveEngage(engage),
     locked: goal?.locked ?? [],
+    engageLocked: effectiveEngage(engage).locked ?? [],
     options: GOAL_TYPES.map((id) => ({ id, label: GOAL_LABEL[id] })),
     fields: GOAL_FIELDS,
     limits: GOAL_LIMITS,
@@ -38,6 +39,14 @@ export function clientSave(slug: string, stored: GoalConfig | undefined, input: 
   return { ok: true, value: mergeClientGoal(effectiveGoal(slug, stored), v.value) };
 }
 
-export function clientSaveEngage(input: unknown) {
-  return validateEngage(input);
+/** Validate a client playbook save. Clients never set locks, and admin-locked settings keep their stored value. */
+export function clientSaveEngage(stored: Partial<EngageConfig> | undefined, input: unknown): { ok: true; value: EngageConfig } | { ok: false; errors: Record<string, string> } {
+  const raw = input && typeof input === "object" ? { ...(input as Record<string, unknown>) } : {};
+  delete raw.locked;
+  // Locked settings are replaced with the stored value before validating, so a locked field can never fail or change a save.
+  const cur = effectiveEngage(stored) as unknown as Record<string, unknown>;
+  for (const f of effectiveEngage(stored).locked ?? []) for (const k of ENGAGE_FIELD_KEYS[f]) raw[k] = cur[k];
+  const v = validateEngage(raw);
+  if (!v.ok) return v;
+  return { ok: true, value: mergeClientEngage(stored, v.value) };
 }

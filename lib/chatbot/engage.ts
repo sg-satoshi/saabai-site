@@ -42,7 +42,18 @@ export interface EngageConfig {
   returnGreeting?: string;
   /** Review invites for existing clients. */
   reviews: { enabled: boolean; url: string };
+  /** Settings a Saabai admin has locked. Clients cannot change these. */
+  locked?: EngageField[];
 }
+
+/** Lockable playbook settings. "nudges" covers the idle, scroll and exit nudges together. */
+export const ENGAGE_FIELDS = ["endChat", "emailCopy", "transcripts", "openers", "nudges", "microCommit", "objections", "freeOffer", "testimonials", "offer", "returnGreeting", "reviews"] as const;
+export type EngageField = (typeof ENGAGE_FIELDS)[number];
+export const ENGAGE_FIELD_KEYS: Record<EngageField, (keyof EngageConfig)[]> = {
+  endChat: ["endChat"], emailCopy: ["emailCopy"], transcripts: ["transcripts"], openers: ["openers"],
+  nudges: ["idleSeconds", "scrollPercent", "exitIntent"], microCommit: ["microCommit"], objections: ["objections"],
+  freeOffer: ["freeOffer"], testimonials: ["testimonials"], offer: ["offer"], returnGreeting: ["returnGreeting"], reviews: ["reviews"],
+};
 
 export const DEFAULT_ENGAGE: EngageConfig = {
   endChat: true,
@@ -146,7 +157,27 @@ export function validateEngage(input: unknown): { ok: true; value: EngageConfig 
     else v.reviews = { enabled: r.enabled === true && !!url, url: url || "" };
     if (r.enabled === true && !url) errors.reviewsUrl = "Add your review link to switch this on.";
   }
+  if (Array.isArray(o.locked)) {
+    const l = ENGAGE_FIELDS.filter((f) => (o.locked as unknown[]).includes(f));
+    if (l.length) v.locked = l;
+  }
   return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value: v };
+}
+
+/** Client save: locked settings keep their current value, and a client can never change the lock list. */
+export function mergeClientEngage(current: Partial<EngageConfig> | undefined, incoming: EngageConfig): EngageConfig {
+  const cur = effectiveEngage(current);
+  const locked = cur.locked ?? [];
+  const out = { ...incoming } as unknown as Record<string, unknown>;
+  delete out.locked;
+  for (const f of locked) {
+    for (const k of ENGAGE_FIELD_KEYS[f]) {
+      const val = (cur as unknown as Record<string, unknown>)[k];
+      if (val === undefined) delete out[k]; else out[k] = val;
+    }
+  }
+  if (locked.length) out.locked = [...locked];
+  return out as unknown as EngageConfig;
 }
 
 export function effectiveEngage(stored: Partial<EngageConfig> | undefined): EngageConfig {
