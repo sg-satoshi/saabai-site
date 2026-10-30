@@ -1,11 +1,11 @@
-/*! Saabai chat widget v1 (1.0.0). One script for every site:
+/*! Saabai chat widget v1 (1.1.0). One script for every site:
  *  <script src="https://www.saabai.ai/embed/chat.v1.js" data-site="your-site-slug" async></script>
  *  Reads the site's settings (look, on/off, plan rules) from Saabai. No lead capture. No cookies.
  *  Compatible within v1: fixes ship here, breaking changes get a new file name (chat.v2.js).
  */
 (function () {
   "use strict";
-  var VERSION = "1.0.0";
+  var VERSION = "1.1.0";
   var script = document.currentScript;
   if (!script) { var all = document.querySelectorAll("script[data-site]"); script = all[all.length - 1]; }
   if (!script) return;
@@ -46,6 +46,11 @@
     if (u.charAt(0) === "/" && u.charAt(1) !== "/") return base + u;
     try { var x = new URL(u); return x.protocol === "https:" ? x.href : ""; } catch (e) { return ""; }
   }
+  function linkUrl(u) {
+    if (!u || typeof u !== "string") return "";
+    if (/^mailto:[^\s@]+@[^\s@]+/i.test(u) || /^tel:\+?[0-9]{6,20}$/i.test(u)) return u;
+    try { var x = new URL(u); return x.protocol === "https:" ? x.href : ""; } catch (e) { return ""; }
+  }
   function initials(n) { return (n || "?").split(/\s+/).slice(0, 2).map(function (w) { return (w[0] || "").toUpperCase(); }).join(""); }
 
   var CSS = [
@@ -80,6 +85,11 @@
     ".send:disabled{opacity:.45;cursor:default}",
     ".pw{text-align:center;font-size:11px;color:rgba(0,0,0,.45);padding:2px 0 8px;flex:none}.pw a{color:inherit}",
     ".go{text-align:center;padding:0 12px 8px;flex:none}.go a{font-size:13px;color:var(--primary)}",
+    ".qr{display:flex;flex-wrap:wrap;gap:6px;align-self:flex-start;max-width:100%}",
+    ".qr button{border:1.5px solid var(--primary);background:#fff;color:var(--primary);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;min-height:34px}",
+    ".qr button:hover{background:var(--primary);color:#fff}.qr button:focus-visible,.cta:focus-visible{outline:3px solid #62c5d1;outline-offset:2px}",
+    ".cta{align-self:flex-start;display:inline-block;background:var(--primary);color:#fff;border-radius:10px;padding:9px 14px;font-weight:600;font-size:14px;text-decoration:none;border:2px solid var(--accent)}",
+    ".cta.fb{background:#fff;color:var(--primary);border-color:var(--primary)}",
     ".sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}",
     "@media (max-width:480px){.w{bottom:12px}.w.right{right:12px}.w.left{left:12px}.panel{position:fixed;left:8px;right:8px;bottom:84px;width:auto;max-width:none;height:min(560px,calc(100vh - 100px))}}"
   ].join("");
@@ -157,15 +167,38 @@
         els.go.appendChild(link);
       }
     }
-    if (!state.msgs.length && c.greeting) state.msgs = [{ r: "bot", c: c.greeting, g: 1 }];
-    else if (state.msgs[0] && state.msgs[0].g) state.msgs[0].c = c.greeting;
+    var q0 = c.goal && c.goal.quickReplies ? c.goal.quickReplies.slice(0, 4) : [];
+    if (!state.msgs.length && c.greeting) state.msgs = [{ r: "bot", c: c.greeting, g: 1, q: q0 }];
+    else if (state.msgs[0] && state.msgs[0].g) { state.msgs[0].c = c.greeting; state.msgs[0].q = q0; }
     render();
   }
   function bubbleIcon() { return '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/></svg>'; }
 
   function render() {
     els.msgs.textContent = "";
-    state.msgs.forEach(function (m) { els.msgs.appendChild(el("div", "m " + m.r, m.c)); });
+    var last = state.msgs.length - 1;
+    state.msgs.forEach(function (m, i) {
+      els.msgs.appendChild(el("div", "m " + m.r, m.c));
+      if (m.b) {
+        var href = linkUrl(m.b.url);
+        if (href) {
+          var a = el("a", "cta" + (m.b.kind === "fallback" ? " fb" : ""), m.b.label);
+          a.href = href; if (/^https:/.test(href)) { a.target = "_blank"; a.rel = "noopener"; }
+          a.addEventListener("click", function () { track(m.b.kind === "fallback" ? "fallback_click" : "cta_click"); });
+          els.msgs.appendChild(a);
+        }
+      }
+      // Quick replies only under the latest bot message, and only while nothing is pending.
+      if (i === last && m.r === "bot" && m.q && m.q.length && !busy && !ended) {
+        var row = el("div", "qr"); row.setAttribute("role", "group"); row.setAttribute("aria-label", "Suggested replies");
+        m.q.forEach(function (t) {
+          var b = el("button", "", t); b.type = "button";
+          b.addEventListener("click", function () { els.inp.value = t; submit(); });
+          row.appendChild(b);
+        });
+        els.msgs.appendChild(row);
+      }
+    });
     if (busy) { var d = el("div", "dots"); d.setAttribute("aria-label", "Typing"); d.innerHTML = "<i></i><i></i><i></i>"; els.msgs.appendChild(d); }
     els.msgs.scrollTop = els.msgs.scrollHeight;
     els.send.disabled = busy || ended || !els.inp.value.trim();
@@ -183,7 +216,16 @@
     var text = els.inp.value.trim();
     if (!text || busy || ended) return;
     els.inp.value = ""; state.msgs.push({ r: "user", c: text }); busy = true; save(); render();
-    if (preview) { setTimeout(function () { busy = false; state.msgs.push({ r: "bot", c: "This is a preview. Real replies appear on your live site." }); render(); }, 600); return; }
+    if (preview) {
+      setTimeout(function () {
+        busy = false;
+        var pm = { r: "bot", c: "This is a preview. Real replies appear on your live site." };
+        var g = cfg && cfg.goal; var pb = g && (g.cta || g.fallback);
+        if (pb) pm.b = { label: pb.label, url: pb.url, kind: g.cta ? "cta" : "fallback" };
+        state.msgs.push(pm); render();
+      }, 600);
+      return;
+    }
     var history = state.msgs.filter(function (m) { return (m.r === "user" || m.r === "bot") && !m.g && !m.n; }).slice(-10).map(function (m) { return { role: m.r === "bot" ? "assistant" : "user", content: m.c }; });
     fetch(base + "/api/chat-platform/message", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: site, sessionId: state.sid, messages: history }) })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { s: r.status, j: j }; }); })
@@ -194,7 +236,12 @@
         else if (o.s === 429) note(j.content || "Chat is very busy right now. Please try again shortly.");
         else if (o.s === 403 || o.s === 404) { ended = true; note("Chat is not available here right now. Please contact the team directly."); }
         else if (o.s >= 400 || !j.content) note("Sorry, I couldn't answer that just now. Please try again, or contact the team directly.");
-        else { state.msgs.push({ r: "bot", c: j.content }); }
+        else {
+          var bm = { r: "bot", c: j.content };
+          if (j.quickReplies && j.quickReplies.length) bm.q = j.quickReplies.slice(0, 3);
+          if (j.cta && j.cta.label && j.cta.url) bm.b = { label: j.cta.label, url: j.cta.url, kind: j.cta.kind === "fallback" ? "fallback" : "cta" };
+          state.msgs.push(bm);
+        }
         save(); render();
       })
       .catch(function () { busy = false; note("I couldn't connect just now. Please check your connection and try again, or contact the team directly."); render(); });

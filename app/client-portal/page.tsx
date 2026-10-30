@@ -7,6 +7,7 @@ import { PortalShell } from "./components/PortalShell";
 import { LexWorkspace } from "./LexWorkspace";
 import { RequestsPanel } from "./requests/RequestsPanel";
 import { UpgradesPanel } from "./upgrades/UpgradesPanel";
+import { ChatbotSettingsPanel } from "./chatbot/ChatbotSettingsPanel";
 import { portalPageFromSearchParam } from "../../lib/portal-pages";
 import { BLUEPRINT_PAGE_HREF, type BlueprintCreditModel } from "../../lib/blueprint-credit";
 import { CreditPlanRail } from "./credit/CreditPlanRail";
@@ -23,6 +24,7 @@ type PageId =
   | "invoices"
   | "requests"
   | "upgrades"
+  | "chatbot"
   | "account"
   | "manage-agent";
 
@@ -277,7 +279,7 @@ function ClientPortalInner() {
     const accountItems = [
       { label: "Invoices", id: "invoices" as PageId, icon: "card" },
       { label: "Requests", id: "requests" as PageId, icon: "inbox", count: workspace.openRequestCount || undefined },
-      ...(hasWebsite ? [{ label: "Upgrades", id: "upgrades" as PageId, icon: "bolt" }] : []),
+      ...(hasWebsite ? [{ label: "Upgrades", id: "upgrades" as PageId, icon: "bolt" }, { label: "Chatbot", id: "chatbot" as PageId, icon: "chat" }] : []),
       { label: "Account", id: "account" as PageId, icon: "gear" },
     ];
 
@@ -902,6 +904,8 @@ function ClientPortalInner() {
       )}
 
       {page === "upgrades" && <UpgradesPanel readOnly={!!workspace.impersonating} />}
+
+      {page === "chatbot" && <ChatbotSettingsPanel readOnly={!!workspace.impersonating} />}
 
       {page === "account" && (
         <>

@@ -1,7 +1,8 @@
 import { adminActor, readActor } from "@/lib/exp/actor";
 import { APP_ROUTER_SITES, getSiteBySlug } from "@/lib/site-registry";
-import { BESPOKE_SLUGS, canRemovePoweredBy, capState, isPlan, validateSkin, validateContent, toPublicConfig, PLAN_LABEL, PLANS, CAPS, type Plan } from "@/lib/chatbot/core";
+import { BESPOKE_SLUGS, canRemovePoweredBy, capState, isPlan, validateSkin, validateContent, toPublicConfig, effectiveGoal, PLAN_LABEL, PLANS, CAPS, type Plan } from "@/lib/chatbot/core";
 import { getConfig, getMeta, getUsage, isEnabled, saveConfig, setEnabled } from "@/lib/chatbot/store";
+import { validateGoal } from "@/lib/chatbot/goal";
 import { addChangeLogEntry } from "@/lib/change-log";
 import { listChatbotCanonical } from "@/lib/chatbot/admin-list";
 import { sumUsage } from "@/lib/chatbot/canonical-rows";
@@ -37,6 +38,8 @@ export async function GET() {
         resolved: toPublicConfig({ active: bespoke ? true : enabled, config, site: s }),
         tone: config.tone ?? "friendly",
         knowledge: config.knowledge ?? { facts: "", faqs: [] },
+        goal: effectiveGoal(s.slug, config.goal) ?? null,
+        goalSource: config.goal ? "saved" : effectiveGoal(s.slug, undefined) ? "default" : "none",
         canRemovePoweredBy: canRemovePoweredBy(config.plan),
         usage,
         cap: capState(usage.conversations, config.plan),
@@ -48,7 +51,7 @@ export async function GET() {
   return Response.json({ rows: rows.sort((a, b) => a.name.localeCompare(b.name)), kill, plans: PLANS.map((p) => ({ key: p, label: PLAN_LABEL[p], cap: CAPS[p] })) });
 }
 
-type Body = { slug?: string; action?: string; enabled?: boolean; reason?: string; plan?: string; skin?: unknown; content?: unknown };
+type Body = { slug?: string; action?: string; enabled?: boolean; reason?: string; plan?: string; skin?: unknown; content?: unknown; goal?: unknown };
 
 /** Admin only (writes need a real admin session). */
 export async function POST(req: Request) {
@@ -110,6 +113,16 @@ export async function POST(req: Request) {
         const parts = [...Object.keys(sk.value), ...Object.keys(ct.value)];
         await addChangeLogEntry({ siteId: site.slug, siteName: site.name, summary: `Chatbot settings updated (${parts.join(", ") || "no changes"})`, source: "manual", authorName: actor }).catch(() => {});
         return Response.json({ ok: true });
+      }
+      case "save_goal": {
+        // Admin can set every field and the lock list. Locked fields cannot be changed from the client portal.
+        const g = validateGoal(b.goal);
+        if (!g.ok) return Response.json({ error: "Some goal fields need fixing. Nothing was saved.", fields: g.errors }, { status: 400 });
+        const cur = await getConfig(site.slug);
+        await saveConfig({ ...cur, goal: g.value, updatedBy: actor });
+        const locks = g.value.locked?.length ? `, locked: ${g.value.locked.join(", ")}` : "";
+        await addChangeLogEntry({ siteId: site.slug, siteName: site.name, summary: `Chatbot goal updated (${g.value.primary}${locks})`, source: "manual", authorName: actor }).catch(() => {});
+        return Response.json({ ok: true, goal: g.value });
       }
       default:
         return Response.json({ error: "Unknown action" }, { status: 400 });

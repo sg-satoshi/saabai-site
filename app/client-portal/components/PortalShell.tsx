@@ -31,6 +31,7 @@ const ICONS: Record<string, React.ReactNode> = {
   bell: <><path d="M6 16V11a6 6 0 0112 0v5l2 2H4z"/><path d="M10 21h4"/></>,
   plus: <><path d="M12 5v14M5 12h14"/></>,
   more: <><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></>,
+  chat: <><path d="M4 5h16v11H9l-5 4z"/></>,
   bolt: <><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></>,
   shield: <><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></>,
 };

@@ -1,5 +1,6 @@
+import { toPublicGoal, type GoalConfig, type PublicGoal } from "./goal";
 import { handoffTarget, type HandoffLink } from "./disclosure";
-import { greetingForSlug } from "./personas";
+import { getPersona, greetingForSlug } from "./personas";
 /** Pure rules for the central chatbot platform. No I/O, easy to test. */
 
 export const PLANS = ["presence", "growth", "signature"] as const;
@@ -52,6 +53,8 @@ export interface ChatbotConfig {
   skin: Partial<Skin>;
   tone?: Tone;
   knowledge?: Knowledge;
+  /** Goal-first settings. Missing means the persona default, or no goal. */
+  goal?: GoalConfig;
   updatedAt?: string;
   updatedBy?: string;
 }
@@ -238,9 +241,11 @@ export interface PublicWidgetConfig {
   offMessage: string;
   /** Call or email link. Null when the site has neither. Clicking it is a handoff event, not a lead post. */
   handoff: HandoffLink | null;
+  /** Quick replies and buttons. Null when the bot has no goal. */
+  goal: PublicGoal | null;
 }
 
-export function toPublicConfig(opts: { slug?: string; active: boolean; config: Pick<ChatbotConfig, "plan" | "skin">; site: { name: string; business?: { name?: string; phone?: string; email?: string }; chatbot?: { name?: string; greeting?: string; avatarUrl?: string } } }): PublicWidgetConfig {
+export function toPublicConfig(opts: { slug?: string; active: boolean; config: Pick<ChatbotConfig, "plan" | "skin" | "goal">; site: { name: string; business?: { name?: string; phone?: string; email?: string }; chatbot?: { name?: string; greeting?: string; avatarUrl?: string } } }): PublicWidgetConfig {
   const sk = resolveSkin(opts.config, { botName: opts.site.chatbot?.name, greeting: opts.site.chatbot?.greeting, avatarUrl: opts.site.chatbot?.avatarUrl });
   const businessName = opts.site.business?.name || opts.site.name;
   const bot = sk.botName || businessName;
@@ -259,5 +264,11 @@ export function toPublicConfig(opts: { slug?: string; active: boolean; config: P
     placeholder: `Ask about ${businessName}...`,
     offMessage: offMessage(opts.site.business),
     handoff: handoffTarget(opts.site.business),
+    goal: toPublicGoal(effectiveGoal(opts.slug, opts.config.goal)),
   };
+}
+
+/** Stored goal wins, then the persona default, else none. */
+export function effectiveGoal(slug: string | undefined, stored: GoalConfig | undefined): GoalConfig | undefined {
+  return stored ?? (slug ? getPersona(slug)?.goal : undefined);
 }

@@ -1,4 +1,5 @@
 import { lmmLicensingLine } from "../lmm-legal";
+import type { GoalConfig } from "./goal";
 import { DISCLOSURE_ONCE_RULE, NOT_SURE_RULE, openingGreeting } from "./disclosure";
 
 /**
@@ -27,6 +28,8 @@ export interface BotPersona {
   bannedNames: readonly string[];
   facts: readonly PersonaFact[];
   rules: readonly string[];
+  /** Default goal-first settings. A goal saved in admin or the client portal replaces it. */
+  goal?: GoalConfig;
 }
 
 const VERIFIED = /^\d{4}-\d{2}-\d{2}$/;
@@ -113,13 +116,37 @@ const ZARA_RULES = [
   "If someone needs help with their own situation, suggest a strategy call with Nick.",
 ];
 
+/**
+ * LMM goal: book a strategy call with Nick. Nick's booking link is not known yet, so the
+ * primary button url is empty and the bot offers the call-back email instead.
+ * PENDING NICK: put the booking link in cta.url (admin, Chatbots, lmm-site, Goal) once supplied.
+ */
+export const LMM_GOAL: GoalConfig = {
+  primary: "book_call",
+  fallback: "call_back",
+  persona: "Warm, calm and practical. General information only, never personal advice.",
+  questions: [
+    "What are you hoping to do, buy a first home, invest, or something else?",
+    "Roughly when are you hoping to make a move?",
+    "Do you already own any property?",
+  ],
+  stages: ["Greet", "Find out their goal", "Share general information", "Ask the qualifying questions", "Offer a chat with Nick", "Confirm the next step"],
+  cta: { label: "Book a free strategy call with Nick", url: "" },
+  fallbackCta: {
+    label: "Have Nick call me back",
+    url: "mailto:nick@lifestylemoneymanagement.com.au?subject=Call-back%20request&body=Name%3A%20%0APhone%3A%20%0ABest%20time%20to%20call%3A%20",
+  },
+  handoff: "Anything about their own numbers, borrowing amount, rates or approval goes to Nick. Offer the call-back button.",
+  quickReplies: ["First home", "Investing", "Something else"],
+};
+
 export const ZARA_PERSONA: BotPersona = {
   slug: "lmm-site",
   botName: "Zara",
   businessName: "Lifestyle Money Management (LMM)",
   role: "You help visitors with general information about property and borrowing. Nick Foale is the Managing Director, based in Adelaide. Questions about a person's own situation go to Nick.",
   domains: ["lifestylemoneymanagement.com.au", "www.lifestylemoneymanagement.com.au"],
-  greetingFollowOn: "I can share general information about property and borrowing, and I can point you to Nick.",
+  greetingFollowOn: "I can share general information about property and borrowing, and I can point you to Nick. Are you looking at a first home, an investment, or something else?",
   bannedNames: ["Jeff", "Lily", "Andy"],
   facts: [
     {
@@ -153,6 +180,7 @@ export const ZARA_PERSONA: BotPersona = {
     zaraLicenceFact(),
   ],
   rules: ZARA_RULES,
+  goal: LMM_GOAL,
 };
 
 const CHRISTINA_RULES = [

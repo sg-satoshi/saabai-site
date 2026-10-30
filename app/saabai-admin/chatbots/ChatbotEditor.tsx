@@ -5,12 +5,15 @@ import { appendFaqs } from "../../../lib/chatbot/faq-import";
 import { installSnippet } from "../../../lib/chatbot/seed-shared";
 import { contrast } from "../../../lib/announce/core";
 import FaqBulkAdd from "./FaqBulkAdd";
+import GoalEditor, { EMPTY_GOAL } from "../../components/chatbot/GoalEditor";
+import type { GoalConfig } from "../../../lib/chatbot/goal";
 
 export type EditorRow = {
   slug: string; name: string; plan: string;
   skin: { showPoweredBy?: boolean };
   resolved: PublicWidgetConfig;
   tone: Tone; knowledge: { facts: string; faqs: Faq[] };
+  goal?: GoalConfig | null; goalSource?: "saved" | "default" | "none";
 };
 
 const css = `
@@ -69,6 +72,9 @@ export default function ChatbotEditor({ row, onSaved }: { row: EditorRow; onSave
   const [back, setBack] = useState<"light" | "dark" | "photo">("light");
   const [showOff, setShowOff] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [goal, setGoal] = useState<GoalConfig>(() => row.goal ?? EMPTY_GOAL);
+  const [goalErrs, setGoalErrs] = useState<Record<string, string>>({});
+  const [goalMsg, setGoalMsg] = useState("");
   const frame = useRef<HTMLIFrameElement>(null);
   const ready = useRef(false);
   const dirty = JSON.stringify(d) !== JSON.stringify(saved);
@@ -101,6 +107,14 @@ export default function ChatbotEditor({ row, onSaved }: { row: EditorRow; onSave
     const a = await post({ action: "save_all", skin, content: { tone: d.tone, facts: d.facts, faqs: d.faqs } });
     if (!a.ok) { setErrs(a.j.fields ?? {}); setMsg(a.j.error || "Couldn't save."); setBusy(false); return; }
     setSaved(d); setMsg("Saved. The live widget picks it up within about a minute."); await onSaved(); setBusy(false);
+  }
+
+  async function saveGoal() {
+    setBusy(true); setGoalMsg(""); setGoalErrs({});
+    const a = await post({ action: "save_goal", goal });
+    setBusy(false);
+    if (!a.ok) { setGoalErrs(a.j.fields ?? {}); setGoalMsg(a.j.error || "Couldn't save."); return; }
+    setGoalMsg("Goal saved."); await onSaved();
   }
 
   const lowContrast = (fg: string, bgc: string) => isHex(fg) && isHex(bgc) && contrast(fg, bgc) < 4.5;
@@ -164,6 +178,16 @@ export default function ChatbotEditor({ row, onSaved }: { row: EditorRow; onSave
           <div className="bar">
             <button type="button" className="btn sm" disabled={d.faqs.length >= LIMITS.faqs} onClick={() => set("faqs", [...d.faqs, { q: "", a: "" }])} data-testid="faq-add">Add a question</button>
             <FaqBulkAdd existing={d.faqs} onAppend={(rows) => setD((cur) => ({ ...cur, faqs: appendFaqs(cur.faqs, rows) }))} />
+          </div>
+        </fieldset>
+
+        <fieldset data-testid="goal-section">
+          <h3>Goal and buttons</h3>
+          <div className="hint">{row.goalSource === "default" ? "Showing this bot's built-in default goal. Saving stores your version." : row.goalSource === "saved" ? "Saved goal. Locked fields cannot be changed by the client." : "No goal set. The bot answers questions only until you pick one."}</div>
+          <GoalEditor value={goal} onChange={setGoal} errors={goalErrs} mode="admin" />
+          <div className="bar">
+            <button type="button" className="btn pri" disabled={busy} onClick={() => void saveGoal()} data-testid="goal-save">Save goal</button>
+            {goalMsg && <span role="status" style={{ fontSize: 12.5, color: Object.keys(goalErrs).length ? "#b42318" : "#137a52" }}>{goalMsg}</span>}
           </div>
         </fieldset>
 
