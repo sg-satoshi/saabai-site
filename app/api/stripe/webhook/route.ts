@@ -14,7 +14,7 @@ export const runtime = "nodejs";
 /**
  * Canonical Stripe webhook for Blueprint and Lex (secret: STRIPE_WEBHOOK_SECRET).
  * Routes strictly by metadata.product. Lex provisioning lives only here (lib/lex-subscription).
- * app/api/webhooks/stripe is a legacy duplicate that must never provision Lex.
+ * app/api/webhooks/stripe is retired (410).
  * Events: checkout.session.completed, customer.subscription.created/updated/deleted, invoice.paid, invoice.payment_failed.
  */
 const LEX_LIFECYCLE = new Set(["customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted", "invoice.paid", "invoice.payment_failed"]);
