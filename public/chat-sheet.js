@@ -63,6 +63,7 @@
   var locks = 0;
   var saved = null;
   var scrollY = 0;
+  var openSheets = [];
 
   function onTouch(e) {
     if (locks === 0) return;
@@ -117,6 +118,21 @@
     document.removeEventListener("touchmove", onTouch);
     global.scrollTo(0, scrollY);
     saved = null;
+  }
+
+  // Back/bfcache restores the page with whatever inline styles were on body.
+  // Drop the lock on pagehide so the cached page can scroll, then lock again
+  // if the sheet is still open when the page is restored.
+  function releaseLocksForCache() {
+    for (var i = 0; i < openSheets.length; i++) openSheets[i].pauseLock();
+    while (locks > 0) unlockPage();
+  }
+  if (global.addEventListener) {
+    global.addEventListener("pagehide", releaseLocksForCache);
+    global.addEventListener("pageshow", function (e) {
+      if (!e.persisted) return;
+      for (var i = 0; i < openSheets.length; i++) openSheets[i].sync();
+    });
   }
 
   function layoutChildren(panel) {
@@ -281,6 +297,7 @@
       panel.removeEventListener("focusin", later);
       panel.removeEventListener("focusout", later);
       if (panel._saabaiSheet === api) delete panel._saabaiSheet;
+      openSheets = openSheets.filter(function (s) { return s !== api; });
     }
 
     var api = {
@@ -291,8 +308,10 @@
       },
       sync: sync,
       destroy: destroy,
-      isActive: function () { return active; }
+      isActive: function () { return active; },
+      pauseLock: function () { active = false; }
     };
+    openSheets.push(api);
     panel._saabaiSheet = api;
     return api;
   }

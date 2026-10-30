@@ -9,7 +9,7 @@ import { trackMarketingLead } from "../../lib/marketing/browser";
 import { NUDGE_DELAY_MS, NUDGE_SCROLL_RATIO, NUDGE_SESSION_KEY, nudgeFor } from "../../lib/mia-nudge";
 import { interruptBlocked, noteVisitorMessage, subscribeConversationActivity } from "@/lib/conversation-activity";
 import { useChatOpen } from "./useChatOpen";
-import { useMobileChatSheet } from "@/lib/use-mobile-chat-sheet";
+import { scrollChatToEnd, useMobileChatSheet } from "@/lib/use-mobile-chat-sheet";
 import { CTA_META, ctaHref, isCtaStep, newSessionId, type CtaStep } from "../../lib/mia-cta";
 import { MiaReplyText } from "../../lib/mia-reply-format";
 
@@ -412,8 +412,7 @@ export default function ChatWidget() {
 
   // ── Auto-scroll ──────────────────────────────────────────────────────
   useEffect(() => {
-    const scroller = messagesEndRef.current?.parentElement;
-    if (scroller) scroller.scrollTop = scroller.scrollHeight;
+    scrollChatToEnd(messagesEndRef.current);
   }, [messages, isLoading, isEnded]);
 
   // ── Tool detection ───────────────────────────────────────────────────

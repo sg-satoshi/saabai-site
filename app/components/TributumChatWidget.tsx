@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import type { UIMessage } from "ai";
 import { noteVisitorMessage } from "@/lib/conversation-activity";
 import { useChatOpen } from "./useChatOpen";
-import { useMobileChatSheet } from "@/lib/use-mobile-chat-sheet";
+import { scrollChatToEnd, useMobileChatSheet } from "@/lib/use-mobile-chat-sheet";
 
 const STORAGE_KEY = "tributum-law-v2-conversation";
 const STORAGE_TTL = 7 * 24 * 60 * 60 * 1000;
@@ -65,8 +65,7 @@ export default function TributumChatWidget() {
 
   useEffect(() => {
     saveStored(messages);
-    const scroller = endRef.current?.parentElement;
-    if (scroller) scroller.scrollTop = scroller.scrollHeight;
+    scrollChatToEnd(endRef.current);
   }, [messages]);
 
   async function send() {

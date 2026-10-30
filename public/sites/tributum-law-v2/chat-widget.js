@@ -233,7 +233,7 @@
   // Show greeting on first open
   let firstOpen = true;
   function saabaiSheet(panelEl, open) {
-    var src = '/chat-sheet.js?v=1';
+    var src = 'https://www.saabai.ai/chat-sheet.js?v=1';
     function run() {
       if (!window.SaabaiChatSheet) return;
       if (!panelEl._saabaiSheet) panelEl._saabaiSheet = window.SaabaiChatSheet.attach(panelEl);

@@ -126,9 +126,54 @@ test("factory and agent scripts still parse and keep the sheet", () => {
 });
 
 test("client script tags bust the cache after the widget change", () => {
-  assert.match(readFileSync("public/clients/lmm-site/index.html", "utf8"), /chat-widget\.js\?v=13/);
-  assert.match(readFileSync("public/clients/nextinvestment/index.html", "utf8"), /chat-widget\.js\?v=9/);
+  assert.match(readFileSync("public/clients/lmm-site/index.html", "utf8"), /chat-widget\.js\?v=14/);
+  assert.match(readFileSync("public/clients/nextinvestment/index.html", "utf8"), /chat-widget\.js\?v=10/);
   for (const file of readdirSync("public/clients/nico-moretti").filter((name) => name.endsWith(".html"))) {
-    assert.match(readFileSync(join("public/clients/nico-moretti", file), "utf8"), /chat-widget\.js\?6/, file);
+    assert.match(readFileSync(join("public/clients/nico-moretti", file), "utf8"), /chat-widget\.js\?7/, file);
   }
+});
+
+/** Root-relative `/chat-sheet.js` is rewritten to `/sites/{slug}/…` on a client domain. */
+function proxyRewrittenSheetUrls(src: string): string[] {
+  const hits: string[] = [];
+  const re = /(['"])\/chat-sheet\.js\?v=\d+\1/g;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(src))) {
+    const before = src.slice(Math.max(0, match.index - 24), match.index);
+    if (/\+\s*$/.test(before)) continue;
+    hits.push(match[0]);
+  }
+  return hits;
+}
+
+test("no widget loads the sheet from a root-relative path a custom domain would rewrite", () => {
+  assert.deepEqual(proxyRewrittenSheetUrls("s.src = '/chat-sheet.js?v=1'"), ["'/chat-sheet.js?v=1'"]);
+  assert.deepEqual(proxyRewrittenSheetUrls('src="/chat-sheet.js?v=1"'), ['"/chat-sheet.js?v=1"']);
+  assert.deepEqual(proxyRewrittenSheetUrls('base + "/chat-sheet.js?v=1"'), []);
+  assert.deepEqual(proxyRewrittenSheetUrls('src="https://www.saabai.ai/chat-sheet.js?v=1"'), []);
+  const files = walk(".").filter((file) => !file.startsWith("tests/") && !file.endsWith("public/chat-sheet.js"));
+  const loaders = files.filter((file) => /chat-sheet\.js\?v=/.test(readFileSync(file, "utf8")));
+  assert.ok(loaders.some((file) => file.endsWith("app/layout.tsx")));
+  assert.ok(loaders.some((file) => file.endsWith("lib/use-mobile-chat-sheet.ts")));
+  assert.ok(loaders.some((file) => file.endsWith("public/clients/lmm-site/assets/chat-widget.js")));
+  for (const file of loaders) {
+    const src = readFileSync(file, "utf8");
+    const bad = proxyRewrittenSheetUrls(src);
+    assert.deepEqual(bad, [], `${file} loads ${bad.join(", ")}`);
+    assert.match(src, /www\.saabai\.ai|base \+ "\/chat-sheet\.js\?v=1"/, file);
+  }
+});
+
+test("desktop message scroll stays smooth, and Back releases the page lock", () => {
+  const helper = readFileSync("lib/use-mobile-chat-sheet.ts", "utf8");
+  assert.match(helper, /scrollIntoView\(\{ behavior: "smooth" \}\)/);
+  assert.match(helper, /saabai-mobile-sheet/);
+  for (const file of walk(".").filter((path) => /ChatWidget\.tsx$/.test(path))) {
+    assert.match(readFileSync(file, "utf8"), /scrollChatToEnd\(/, file);
+  }
+  assert.match(sheetJs, /pagehide/);
+  assert.match(sheetJs, /pageshow/);
+  assert.match(sheetJs, /e\.persisted/);
+  assert.match(readFileSync("next.config.ts", "utf8"), /\/chat-sheet\.js/);
+  assert.match(readFileSync("next.config.ts", "utf8"), /Access-Control-Allow-Origin/);
 });

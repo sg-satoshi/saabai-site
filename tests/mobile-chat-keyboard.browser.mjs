@@ -129,8 +129,14 @@ async function prepare(page, ua, width, height) {
   await page.setRequestInterception(true);
   page.on("request", (req) => {
     const url = req.url();
-    if (req.method() !== "GET" || /saabai\.ai|\/api\/(chat|lead|signup|draft|subscribe)/.test(url)) req.abort();
-    else req.continue();
+    if (req.method() !== "GET" || /\/api\/(chat|lead|signup|draft|subscribe)/.test(url)) { req.abort(); return; }
+    if (/chat-sheet\.js/.test(url)) {
+      if (!serveSheet) { req.abort(); return; }
+      req.respond({ status: 200, contentType: "application/javascript", body: sheetJs.toString() });
+      return;
+    }
+    if (/saabai\.ai/.test(url)) { req.abort(); return; }
+    req.continue();
   });
 }
 
@@ -257,7 +263,12 @@ await desktop.setViewport({ width: 1280, height: 800, deviceScaleFactor: 1 });
 await desktop.evaluateOnNewDocument(boot);
 await desktop.setRequestInterception(true);
 desktop.on("request", (req) => {
-  if (req.method() !== "GET" || /saabai\.ai/.test(req.url())) req.abort();
+  if (req.method() !== "GET") { req.abort(); return; }
+  if (/chat-sheet\.js/.test(req.url())) {
+    req.respond({ status: 200, contentType: "application/javascript", body: sheetJs.toString() });
+    return;
+  }
+  if (/saabai\.ai/.test(req.url())) req.abort();
   else req.continue();
 });
 serveSheet = true;

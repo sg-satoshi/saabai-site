@@ -12,7 +12,11 @@ declare global {
 
 let loading: Promise<void> | null = null;
 
-/** Loads `/chat-sheet.js?v=1` once. The same file drives the vanilla widgets. */
+/**
+ * Loads the sheet from www.saabai.ai. A root-relative `/chat-sheet.js` 404s on
+ * client custom domains: proxy.ts rewrites unknown paths to `/sites/{slug}/…`.
+ * A classic script tag does not need CORS. `?v=1` is the cache key.
+ */
 export function loadChatSheet(): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
   if (window.SaabaiChatSheet) return Promise.resolve();
@@ -28,7 +32,7 @@ export function loadChatSheet(): Promise<void> {
       return;
     }
     const s = document.createElement("script");
-    s.src = "/chat-sheet.js?v=1";
+    s.src = "https://www.saabai.ai/chat-sheet.js?v=1";
     s.async = true;
     s.setAttribute("data-saabai-sheet", "1");
     s.onload = done;
@@ -36,6 +40,17 @@ export function loadChatSheet(): Promise<void> {
     document.head.appendChild(s);
   });
   return loading;
+}
+
+/** Smooth on the desktop card. Instant inside the phone sheet so the page does not drift. */
+export function scrollChatToEnd(end: HTMLElement | null) {
+  if (!end) return;
+  const scroller = end.parentElement;
+  if (scroller?.closest(".saabai-mobile-sheet")) {
+    scroller.scrollTop = scroller.scrollHeight;
+    return;
+  }
+  end.scrollIntoView({ behavior: "smooth" });
 }
 
 /**

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { noteVisitorMessage } from "@/lib/conversation-activity";
 import { useChatOpen } from "../../../components/useChatOpen";
-import { useMobileChatSheet } from "@/lib/use-mobile-chat-sheet";
+import { scrollChatToEnd, useMobileChatSheet } from "@/lib/use-mobile-chat-sheet";
 
 const STORAGE_KEY = "wholesale-homes-conversation";
 const STORAGE_TTL = 7 * 24 * 60 * 60 * 1000;
@@ -63,8 +63,7 @@ export function ChatWidget() {
 
   useEffect(() => {
     saveStored(messages);
-    const scroller = endRef.current?.parentElement;
-    if (scroller) scroller.scrollTop = scroller.scrollHeight;
+    scrollChatToEnd(endRef.current);
   }, [messages]);
 
   // Auto-open chat after 7 seconds on first ever visit

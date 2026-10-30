@@ -205,7 +205,7 @@ test("widgets call the platform with the slug, fallbacks remain, contact forms s
   assert.match(lmm, /https:\/\/www\.saabai\.ai\/api\/chat-platform\/message/);
   assert.match(lmm, /https:\/\/www\.saabai\.ai\/api\/chat-platform\/config\?site=lmm-site/);
   assert.doesNotMatch(lmm, /\/api\/lmm-chat/);
-  assert.match(read("public/clients/lmm-site/index.html"), /chat-widget\.js\?v=13/);
+  assert.match(read("public/clients/lmm-site/index.html"), /chat-widget\.js\?v=14/);
   for (const f of ["app/api/bo-chat/route.ts", "app/api/lmm-chat/route.ts"]) {
     assert.match(read(f), /Delete this route after 27 October 2026/);
     assert.match(read(f), /export async function POST/);

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import type { UIMessage } from "ai";
 import { noteVisitorMessage } from "@/lib/conversation-activity";
 import { useChatOpen } from "./useChatOpen";
-import { useMobileChatSheet } from "@/lib/use-mobile-chat-sheet";
+import { scrollChatToEnd, useMobileChatSheet } from "@/lib/use-mobile-chat-sheet";
 
 const SLUG = "bo-consultancy";
 const STORAGE_KEY = "bo-consultancy-conversation";
@@ -88,8 +88,7 @@ export default function BOChatWidget() {
 
   useEffect(() => {
     saveStored(messages);
-    const scroller = endRef.current?.parentElement;
-    if (scroller) scroller.scrollTop = scroller.scrollHeight;
+    scrollChatToEnd(endRef.current);
   }, [messages]);
 
   async function send() {
