@@ -65,7 +65,7 @@ export const publicPageMeta = {
     path: "/legal/lex-vs-ai-legal-tools",
     title: "Lex vs other AI legal tools 2026 | Saabai",
     description:
-      "Published facts on price, sources and data location for Lex, Harvey, CoCounsel and Lexis+ AI. Lex is an AI legal assistant from Saabai on the Gold Coast, and the Firm plan is $299 a month.",
+      "Published facts for Lex vs Quillio, Smokeball Archie, LEAP, Clio, Habeas, Harvey, CoCounsel and Lexis+ AI. Lex is an AI legal research and drafting assistant for Australian firms, and the Firm plan is $299 a month.",
   }),
   queenslandChatbot: pageMeta({
     path: "/ai-chatbot-developer-queensland",
