@@ -21,3 +21,15 @@ test("stripeErrorFields keeps only allowed fields, masked", () => {
   assert.ok(!f.message.includes("sk_"));
   assert.deepEqual(stripeErrorFields(null), { name: "object" });
 });
+
+test("masks keys embedded in other text", () => {
+  const m = maskLogText("idxsk_live_ABCDEF123 and key_whsec_abc and xrk_test_Q9");
+  assert.doesNotMatch(m, /ABCDEF123|whsec_abc|Q9/);
+  assert.equal((m.match(/\[key\]/g) ?? []).length, 3);
+});
+
+test("masks mixed-case key prefixes", () => {
+  const m = maskLogText("Sk_live_AbC123 SK_TEST_xyz Whsec_Zz9 RK_live_k1");
+  assert.doesNotMatch(m, /AbC123|xyz|Zz9|k1/);
+  assert.equal((m.match(/\[key\]/g) ?? []).length, 4);
+});

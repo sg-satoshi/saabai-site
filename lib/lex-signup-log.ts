@@ -2,8 +2,8 @@
 export function maskLogText(s: string): string {
   return s
     .replace(/[^\s@]+@[^\s@]+/g, "[email]")
-    .replace(/\b(?:sk|rk|pk)_(?:live|test)_[A-Za-z0-9*]+/g, "[key]")
-    .replace(/\b(?:sk|rk|pk|whsec)_[A-Za-z0-9*]+/g, "[key]")
+    .replace(/(?:sk|rk|pk)_(?:live|test)_[A-Za-z0-9*]+/gi, "[key]")
+    .replace(/(?:sk|rk|pk|whsec)_[A-Za-z0-9*]+/gi, "[key]")
     .slice(0, 300);
 }
 
