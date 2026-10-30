@@ -141,3 +141,38 @@ test("wiring: public route + rate limit, cron runs the trial sweep, admin page i
   assert.doesNotMatch(readFileSync("app/api/lex/trial/route.ts", "utf8"), /getStripe|checkout\.sessions/);
   assert.match(readFileSync("app/api/lex/signup/route.ts", "utf8"), /checkout\.sessions\.create/);
 });
+
+test("founding offer: off by default; on before the deadline and under the cap flags founding_member; after the deadline or cap it doesn't", async () => {
+  const { createInvite, startTrial, getFoundingConfig, setFoundingConfig } = await T();
+  const now = new Date("2026-11-05T00:00:00Z");
+  const inv = await createInvite({ createdBy: "admin", maxUses: 10, expiresInDays: 60 }, now);
+  const off = await startTrial(input("f0@found.test"), inv.code, mailer, now);
+  assert.ok(off.ok && !off.firm.foundingMember, "off until an admin turns it on");
+  await setFoundingConfig({ enabled: true, deadline: "2026-11-30", cap: 2 }, "admin", now);
+  const cfg = await getFoundingConfig();
+  assert.equal(cfg.deadline, "2026-11-30T13:59:59.000Z", "end of day Brisbane");
+  const a = await startTrial(input("f1@found.test"), inv.code, mailer, now);
+  const b = await startTrial(input("f2@found.test"), inv.code, mailer, now);
+  const c = await startTrial(input("f3@found.test"), inv.code, mailer, now);
+  assert.ok(a.ok && a.firm.foundingMember && b.ok && b.firm.foundingMember);
+  assert.ok(c.ok && !c.firm.foundingMember, "cap of 2 reached");
+  assert.equal((await getFoundingConfig()).used, 2);
+  await setFoundingConfig({ enabled: true, deadline: "2026-11-30", cap: "" }, "admin", now);
+  const late = await startTrial(input("f4@found.test"), inv.code, mailer, new Date("2026-12-01T00:00:00Z"));
+  assert.ok(late.ok && !late.firm.foundingMember, "after the deadline");
+  await assert.rejects(setFoundingConfig({ enabled: true, deadline: "not a date" }, "admin"));
+  await assert.rejects(setFoundingConfig({ enabled: true, cap: -1 }, "admin"));
+});
+
+test("checkout price: founding price only when the env var is set AND the converting trial firm is founding; else $299 price", async () => {
+  const { lexCheckoutPrice } = await T();
+  const env = { STRIPE_LEX_FIRM_PRICE_ID: "price_normal", STRIPE_PRICE_LEX_FOUNDING: "price_founding" };
+  assert.deepEqual(lexCheckoutPrice({ foundingMember: true }, env), { price: "price_founding", founding: true });
+  assert.deepEqual(lexCheckoutPrice({ foundingMember: false }, env), { price: "price_normal", founding: false });
+  assert.deepEqual(lexCheckoutPrice(null, env), { price: "price_normal", founding: false });
+  assert.deepEqual(lexCheckoutPrice({ foundingMember: true }, { STRIPE_LEX_FIRM_PRICE_ID: "price_normal" }), { price: "price_normal", founding: false });
+  assert.deepEqual(lexCheckoutPrice({ foundingMember: true }, { ...env, STRIPE_PRICE_LEX_FOUNDING: "  " }), { price: "price_normal", founding: false });
+  const route = readFileSync("app/api/lex/signup/route.ts", "utf8");
+  assert.match(route, /lexCheckoutPrice\(trialFirm\)/);
+  assert.match(route, /convertibleTrialFirm\(v\.value\.email\)/);
+});

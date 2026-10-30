@@ -2,11 +2,12 @@
 /** Lex free trials: invite codes (single-use, 14 days by default) and trial firms with usage, days left and invite source. Light mode, navy buttons. */
 import { useCallback, useEffect, useState } from "react";
 
+type Founding = { enabled: boolean; deadline: string | null; cap: number | null; used: number; priceConfigured: boolean };
 type Invite = { code: string; label: string; maxUses: number; uses: number; expiresAt: string; state: string; createdAt: string };
 type Trial = {
   firmId: string; firmName: string; adminEmail: string; status: string; lapseReason: string | null; seatsUsed: number;
   daysLeft: number | null; stage: string | null; trialEndsAt: string | null; inviteCode: string | null; inviteSource: string | null;
-  converted: boolean; dataDeleteAfter: string | null; usageToday: { reviews: number; compares: number } | null;
+  converted: boolean; founding: boolean; dataDeleteAfter: string | null; usageToday: { reviews: number; compares: number } | null;
 };
 const navy: React.CSSProperties = { background: "#1b2559", color: "#fff", border: 0, borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" };
 const plain: React.CSSProperties = { background: "#fff", color: "#1b2559", border: "1px solid #cfd4dd", borderRadius: 8, padding: "4px 10px", fontSize: 12, cursor: "pointer" };
@@ -14,13 +15,15 @@ const cell: React.CSSProperties = { padding: "8px 10px", borderBottom: "1px soli
 const day = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric", timeZone: "Australia/Brisbane" }) : "");
 
 export default function LexTrialsClient() {
-  const [data, setData] = useState<{ trials: Trial[]; invites: Invite[] } | null>(null);
+  const [data, setData] = useState<{ trials: Trial[]; invites: Invite[]; founding?: Founding } | null>(null);
   const [label, setLabel] = useState("");
   const [maxUses, setMaxUses] = useState(1);
   const [days, setDays] = useState(14);
+  const [fd, setFd] = useState<{ enabled: boolean; deadline: string; cap: string } | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const load = useCallback(() => { fetch("/api/admin/lex-trials").then((r) => r.json()).then(setData).catch(() => setMsg("Could not load")); }, []);
   useEffect(load, [load]);
+  useEffect(() => { const f = data?.founding; if (f && !fd) setFd({ enabled: f.enabled, deadline: f.deadline ? new Date(f.deadline).toLocaleDateString("en-CA", { timeZone: "Australia/Brisbane" }) : "", cap: f.cap === null ? "" : String(f.cap) }); }, [data, fd]);
   const origin = typeof window === "undefined" ? "" : window.location.origin;
 
   async function post(body: object) {
@@ -29,6 +32,7 @@ export default function LexTrialsClient() {
     const d = await r.json().catch(() => ({}));
     if (!r.ok) setMsg(d.error || "Something went wrong");
     else if (d.invite) { setMsg(`Created ${d.invite.code}`); setLabel(""); }
+    else if (d.founding) setMsg("Founding offer saved");
     load();
   }
 
@@ -46,6 +50,19 @@ export default function LexTrialsClient() {
           <button type="button" style={navy} onClick={() => post({ action: "create", label, maxUses, expiresInDays: days })}>Create invite</button>
         </div>
         {msg ? <p role="status" style={{ fontSize: 13, color: "#1b2559" }}>{msg}</p> : null}
+      </section>
+
+      <section style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 16, marginBottom: 20 }}>
+        <h2 style={{ fontSize: 15, margin: "0 0 6px" }}>Founding offer</h2>
+        <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 10px" }}>Trials started while this is on, by the deadline (end of day, Brisbane) and under the cap, are founding members and convert at the founding price. {data?.founding ? `${data.founding.used} founding places used. ` : ""}{data?.founding && !data.founding.priceConfigured ? "STRIPE_PRICE_LEX_FOUNDING is not set, so founding firms currently pay the normal price." : ""}</p>
+        {fd ? (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "end" }}>
+            <label style={{ fontSize: 12 }}><input type="checkbox" checked={fd.enabled} onChange={(e) => setFd({ ...fd, enabled: e.target.checked })} /> On</label>
+            <label style={{ fontSize: 12 }}>Deadline<br /><input type="date" value={fd.deadline} onChange={(e) => setFd({ ...fd, deadline: e.target.value })} style={{ padding: 7, border: "1px solid #cfd4dd", borderRadius: 8 }} /></label>
+            <label style={{ fontSize: 12 }}>Cap (blank = none)<br /><input type="number" min={0} value={fd.cap} onChange={(e) => setFd({ ...fd, cap: e.target.value })} style={{ padding: 7, border: "1px solid #cfd4dd", borderRadius: 8, width: 100 }} /></label>
+            <button type="button" style={navy} onClick={() => post({ action: "founding", enabled: fd.enabled, deadline: fd.deadline, cap: fd.cap })}>Save founding offer</button>
+          </div>
+        ) : null}
       </section>
 
       <section style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 16, marginBottom: 20, overflowX: "auto" }}>
@@ -68,11 +85,11 @@ export default function LexTrialsClient() {
       <section style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 16, overflowX: "auto" }}>
         <h2 style={{ fontSize: 15, margin: "0 0 10px" }}>Trial firms ({data?.trials.length ?? 0})</h2>
         <table style={{ borderCollapse: "collapse", width: "100%" }}>
-          <thead><tr>{["Firm", "Owner", "Status", "Days left", "Seats", "Usage today", "Invite source", "Ends", "Data delete after"].map((h) => <th key={h} style={{ ...cell, color: "#6b7280", fontWeight: 600 }}>{h}</th>)}</tr></thead>
+          <thead><tr>{["Firm", "Owner", "Founding", "Status", "Days left", "Seats", "Usage today", "Invite source", "Ends", "Data delete after"].map((h) => <th key={h} style={{ ...cell, color: "#6b7280", fontWeight: 600 }}>{h}</th>)}</tr></thead>
           <tbody>
             {(data?.trials ?? []).map((t) => (
               <tr key={t.firmId}>
-                <td style={cell}>{t.firmName}</td><td style={cell}>{t.adminEmail}</td>
+                <td style={cell}>{t.firmName}</td><td style={cell}>{t.adminEmail}</td><td style={cell}>{t.founding ? "yes" : ""}</td>
                 <td style={cell}>{t.converted && t.status === "active" ? "subscribed" : t.lapseReason === "trial_ended" ? "trial ended" : t.status}{t.stage && t.stage !== "none" ? ` (${t.stage})` : ""}</td>
                 <td style={cell}>{t.daysLeft ?? "–"}</td><td style={cell}>{t.seatsUsed} / 3</td>
                 <td style={cell}>{t.usageToday ? `${t.usageToday.reviews} reviews, ${t.usageToday.compares} compares` : "–"}</td>

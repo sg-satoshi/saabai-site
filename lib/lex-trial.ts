@@ -132,6 +132,53 @@ export const TRIAL_GENERIC_ERROR = "We couldn't start a trial for that email. If
  * Starts a 60-day trial: checks and redeems the invite atomically (INCR against maxUses), claims the owner email,
  * creates the firm and grants Lex. Every failure after the redeem gives the use back.
  */
+/**
+ * Founding offer (admin-configurable). Trial firms that start while it is enabled, before the deadline and
+ * under the cap, are flagged foundingMember. Off until an admin turns it on. Key: lex:trial:founding.
+ */
+export type FoundingConfig = { enabled: boolean; deadline: string | null; cap: number | null; updatedBy?: string; updatedAt?: string };
+const FOUNDING_KEY = "lex:trial:founding";
+const FOUNDING_COUNT = "lex:trial:founding:count";
+export const MAX_FOUNDING_CAP = 10000;
+export async function getFoundingConfig(): Promise<FoundingConfig & { used: number }> {
+  const r = redis();
+  const c = parse<FoundingConfig>(await r.get(FOUNDING_KEY)) ?? { enabled: false, deadline: null, cap: null };
+  return { ...c, used: Number(await r.get(FOUNDING_COUNT)) || 0 };
+}
+export async function setFoundingConfig(raw: { enabled?: unknown; deadline?: unknown; cap?: unknown }, by: string, now = new Date()): Promise<FoundingConfig> {
+  let deadline: string | null = null;
+  if (typeof raw.deadline === "string" && raw.deadline.trim()) {
+    const d = new Date(/^\d{4}-\d{2}-\d{2}$/.test(raw.deadline.trim()) ? `${raw.deadline.trim()}T23:59:59+10:00` : raw.deadline);
+    if (Number.isNaN(d.getTime())) throw new Error("Invalid deadline");
+    deadline = d.toISOString();
+  }
+  const capN = raw.cap === null || raw.cap === "" || raw.cap === undefined ? null : Math.floor(Number(raw.cap));
+  if (capN !== null && !(capN >= 0 && capN <= MAX_FOUNDING_CAP)) throw new Error("Invalid cap");
+  const c: FoundingConfig = { enabled: raw.enabled === true, deadline, cap: capN, updatedBy: lc(by).slice(0, 200), updatedAt: now.toISOString() };
+  await redis().set(FOUNDING_KEY, JSON.stringify(c));
+  return c;
+}
+/** Claims a founding place (atomic INCR against the cap). Returns false when the offer is closed. */
+async function claimFounding(now: Date): Promise<boolean> {
+  const c = await getFoundingConfig();
+  if (!c.enabled || (c.deadline && now.getTime() > Date.parse(c.deadline))) return false;
+  const n = Number(await redis().incr(FOUNDING_COUNT));
+  if (c.cap !== null && n > c.cap) { await redis().incrby(FOUNDING_COUNT, -1); return false; }
+  return true;
+}
+
+/**
+ * Checkout price for a /lex/signup. A founding trial firm (still convertible: on trial, or lapsed
+ * trial_ended inside the data window) gets STRIPE_PRICE_LEX_FOUNDING when set; everyone else, or when unset,
+ * gets the normal STRIPE_LEX_FIRM_PRICE_ID ($299).
+ */
+export function lexCheckoutPrice(trialFirm: Pick<LexFirm, "foundingMember"> | null, env: Record<string, string | undefined> = process.env): { price: string | undefined; founding: boolean } {
+  const normal = env.STRIPE_LEX_FIRM_PRICE_ID?.trim() || undefined;
+  const founding = env.STRIPE_PRICE_LEX_FOUNDING?.trim() || undefined;
+  if (founding && trialFirm?.foundingMember) return { price: founding, founding: true };
+  return { price: normal, founding: false };
+}
+
 export async function startTrial(v: SignupInput, rawCode: unknown, mailer: Mailer, now = new Date()): Promise<{ ok: true; firm: LexFirm } | { ok: false; error: string; field?: string }> {
   const chk = await checkInvite(rawCode, now);
   if (!chk.ok) return { ok: false, error: chk.error, field: "code" };
@@ -145,13 +192,15 @@ export async function startTrial(v: SignupInput, rawCode: unknown, mailer: Maile
   const firmId = `lf_t${randomBytes(10).toString("hex")}`;
   const claimed = (await r.set(`lex:firm:byemail:${email}`, firmId, { nx: true })) === "OK";
   if (!claimed) { await r.incrby(usesKey, -1); return { ok: false, error: TRIAL_GENERIC_ERROR, field: "email" }; }
+  let founding = false;
   try {
+    founding = await claimFounding(now);
     const iso = now.toISOString();
     const firm: LexFirm = {
       firmId, firmName: v.firmName, adminEmail: email, adminName: v.name,
       members: [], granted: [], status: "trial",
       trialStartedAt: iso, trialEndsAt: new Date(now.getTime() + TRIAL_DAYS * DAY).toISOString(),
-      inviteCode: inv.code, inviteSource: inv.label,
+      inviteCode: inv.code, inviteSource: inv.label, ...(founding ? { foundingMember: true } : {}),
       termsVersion: LEX_TERMS_VERSION, termsAcceptedAt: iso, createdAt: iso, updatedAt: iso,
     };
     await r.set(`lex:firm:${firmId}`, JSON.stringify(firm), { nx: true });
@@ -160,6 +209,7 @@ export async function startTrial(v: SignupInput, rawCode: unknown, mailer: Maile
     return { ok: true, firm: out };
   } catch (err) {
     await r.incrby(usesKey, -1);
+    if (founding) await r.incrby(FOUNDING_COUNT, -1);
     await r.del(`lex:firm:byemail:${email}`);
     throw err;
   }
@@ -189,7 +239,7 @@ export async function sweepTrials(mailer: Mailer, now = new Date()): Promise<{ e
 export type TrialRow = {
   firmId: string; firmName: string; adminEmail: string; status: LexFirm["status"]; lapseReason: string | null;
   seatsUsed: number; daysLeft: number | null; stage: TrialStage | null; trialEndsAt: string | null;
-  inviteCode: string | null; inviteSource: string | null; converted: boolean; dataDeleteAfter: string | null; createdAt: string;
+  inviteCode: string | null; inviteSource: string | null; converted: boolean; founding: boolean; dataDeleteAfter: string | null; createdAt: string;
 };
 export async function listTrialFirms(now = new Date()): Promise<LexFirm[]> {
   const ids = ((await redis().smembers("lex:trial:firms")) as string[]) ?? [];
@@ -203,7 +253,7 @@ export function trialRow(f: LexFirm, now = new Date()): TrialRow {
   return {
     firmId: f.firmId, firmName: f.firmName, adminEmail: f.adminEmail, status: f.status, lapseReason: f.lapseReason ?? null,
     seatsUsed: 1 + f.members.length, daysLeft: t?.daysLeft ?? null, stage: t?.stage ?? null, trialEndsAt: f.trialEndsAt ?? null,
-    inviteCode: f.inviteCode ?? null, inviteSource: f.inviteSource ?? null, converted: !!f.convertedFromTrialAt,
+    inviteCode: f.inviteCode ?? null, inviteSource: f.inviteSource ?? null, converted: !!f.convertedFromTrialAt, founding: !!f.foundingMember,
     dataDeleteAfter: f.dataDeleteAfter ?? null, createdAt: f.createdAt,
   };
 }

@@ -47,6 +47,8 @@ export type LexFirm = {
   trialStartedAt?: string; trialEndsAt?: string; inviteCode?: string; inviteSource?: string;
   /** Set when a trial firm subscribed through /lex/signup (same firm record, linked by owner email). */
   convertedFromTrialAt?: string;
+  /** founding_member: joined a trial while the founding offer was open; may convert at STRIPE_PRICE_LEX_FOUNDING. */
+  foundingMember?: boolean;
   /** Stripe event.created (seconds) of the latest successful payment; older payment_failed events are ignored. */
   lastPaidAt?: number;
   /** Staff released when the plan was cancelled (kept for the record only). */
