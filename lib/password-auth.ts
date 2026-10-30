@@ -10,6 +10,7 @@ import { loadClients } from "./clients";
 import { getDirectoryUser, saveDirectoryUser } from "./user-directory";
 import { hashPassword, verifyPassword } from "./password";
 import { getPortalUser } from "./portal-users";
+import { authenticateLexDemo } from "./lex-demo";
 
 export interface AuthResult {
   clientId: string;
@@ -25,6 +26,10 @@ export async function authenticateWithPassword(rawEmail: string, password: strin
     await verifyPassword("x", undefined); // keep timing consistent
     return null;
   }
+
+  // 0. Lex demo login (fictional firm), only when LEX_DEMO_EMAIL and LEX_DEMO_PASSWORD are set.
+  const demoId = await authenticateLexDemo(email, password);
+  if (demoId) return { clientId: demoId, dashboardUrl: "/lex", source: "env", upgraded: false };
 
   // 1. Env-var clients (read-only; value may be plaintext or a scrypt hash).
   const envClient = loadClients().find((c) => c.email.toLowerCase() === email);

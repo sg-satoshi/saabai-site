@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isLexDemoClientId, lexDemoAllowed, LEX_DEMO_BLOCKED_MESSAGE } from "./lib/lex-demo-config";
 import { ATTR_COOKIE, ATTR_MAX_AGE, mergeTouch, parseAttr, serialiseAttr, touchFrom } from "./lib/growth/attribution";
 import { Redis } from "@upstash/redis";
 import { verifySessionToken, COOKIE_NAME, resolveStaff } from "./lib/auth";
@@ -429,6 +430,17 @@ export async function proxy(req: NextRequest) {
           : new NextResponse("Forbidden (chief is read-only)", { status: 403 });
       }
       return NextResponse.next();
+    }
+  }
+
+  // ── Lex demo session (fictional firm): hard allowlist, read-mostly ──
+  const demoTok = req.cookies.get(COOKIE_NAME)?.value;
+  if (demoTok) {
+    const ds = await verifySessionToken(demoTok);
+    if (ds && isLexDemoClientId(ds.clientId) && !lexDemoAllowed(req.method, pathname)) {
+      return pathname.startsWith("/api/")
+        ? NextResponse.json({ error: "demo_read_only", message: LEX_DEMO_BLOCKED_MESSAGE }, { status: 403 })
+        : NextResponse.redirect(new URL("/lex", req.url));
     }
   }
 

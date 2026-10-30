@@ -21,6 +21,7 @@ import { getRedis } from "./redis";
 import { verifySessionToken, COOKIE_NAME, resolveStaff } from "./auth";
 import { verifySession } from "./portal-session";
 import { isKnownLexPortalClient } from "./lex-portal-access";
+import { LEX_DEMO_ACTOR_EMAIL, LEX_DEMO_FIRM_KEY, isLexDemoClientId, lexDemoEnabled } from "./lex-demo-config";
 
 export const DEFAULT_REVIEW_DAILY_CAP = 20;
 export const DEFAULT_COMPARE_DAILY_CAP = 20;
@@ -30,7 +31,7 @@ export type ReviewAction = "review" | "submit";
 
 export type LexReviewActor =
   | { kind: "admin"; id: string }
-  | { kind: "firm"; email: string; firm: string };
+  | { kind: "firm"; email: string; firm: string; demo?: true };
 
 const FREE_MAIL = new Set([
   "gmail.com", "googlemail.com", "outlook.com", "hotmail.com", "live.com", "msn.com", "yahoo.com", "yahoo.com.au",
@@ -57,6 +58,10 @@ export async function resolveReviewActor(req: Request): Promise<LexReviewActor |
   const token = cookie(req, COOKIE_NAME);
   if (token) {
     const s = await verifySessionToken(token);
+    // Lex demo login: a fixed fictional firm, only while the demo env vars are set.
+    if (s?.clientId && isLexDemoClientId(s.clientId)) {
+      return lexDemoEnabled() ? { kind: "firm", email: LEX_DEMO_ACTOR_EMAIL, firm: LEX_DEMO_FIRM_KEY, demo: true } : null;
+    }
     if (s?.clientId) {
       const staff = await resolveStaff(s.clientId);
       if (staff?.grant.role === "admin") return { kind: "admin", id: staff.id };
