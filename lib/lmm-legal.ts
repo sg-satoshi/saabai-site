@@ -15,7 +15,7 @@ export type LmmLegalIdentity = {
 export const LMM_LEGAL_IDENTITY: LmmLegalIdentity = {
   entityName: null, // TODO: legal entity name
   abn: null, // TODO: ABN
-  aclOrCreditRep: null, // TODO: Australian Credit Licence or credit representative number
+  aclOrCreditRep: "Australian Credit Licence 530067", // confirmed 31 October 2026
   licenseeOrAggregator: null, // TODO: licensee or aggregator name
   afcaMemberNo: null, // TODO: AFCA member number
 };
@@ -57,7 +57,7 @@ export const LMM_OAIC = {
   post: "GPO Box 5288, Sydney NSW 2001",
 } as const;
 
-export const LMM_LEGAL_UPDATED = "26 October 2026";
+export const LMM_LEGAL_UPDATED = "31 October 2026";
 
 const HOME_MARKER = "<!-- LMM-LEGAL-FOOTER -->";
 

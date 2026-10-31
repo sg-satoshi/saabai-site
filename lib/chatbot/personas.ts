@@ -79,7 +79,7 @@ export function domainsForBot(slug: string, siteDomains?: string[]): string[] {
   return out;
 }
 
-/** Empty until Nick supplies the numbers. An empty line is not spoken and not shown. */
+/** Speaks the licensing line once particulars are filled in. An empty line is not spoken. */
 function zaraLicenceFact(): PersonaFact {
   const line = lmmLicensingLine();
   if (!line) {
@@ -95,7 +95,7 @@ function zaraLicenceFact(): PersonaFact {
     id: "licence",
     text: line,
     source: "lib/lmm-legal.ts LMM_LEGAL_IDENTITY",
-    verified: "2026-10-26",
+    verified: "2026-10-31",
     speak: true,
   };
 }
