@@ -30,6 +30,33 @@ export interface BotPersona {
   rules: readonly string[];
   /** Default goal-first settings. A goal saved in admin or the client portal replaces it. */
   goal?: GoalConfig;
+  /**
+   * When set, this exact text is the prompt. It is not rebuilt from facts and rules.
+   * House rules are still appended by the handler, the same as for every other bot.
+   */
+  verbatimPrompt?: string;
+  /**
+   * Code-only model, "provider:model-id". Not editable in admin or the client portal.
+   * Absent means the platform default. The handler falls back to that default if this model fails.
+   */
+  model?: string;
+  /**
+   * Look used until an admin saves a skin. Saved colours, name and avatar still win.
+   */
+  appearance?: {
+    botName?: string;
+    avatarUrl?: string;
+    primary?: string;
+    accent?: string;
+    bg?: string;
+    text?: string;
+    position?: "right" | "left";
+  };
+  /**
+   * Show the sensitive-info line in the widget. Default off (missing or false).
+   * Not editable in admin or the client portal.
+   */
+  sensitiveInfoNotice?: boolean;
 }
 
 const VERIFIED = /^\d{4}-\d{2}-\d{2}$/;
@@ -39,6 +66,7 @@ export function spokenFacts(persona: BotPersona): PersonaFact[] {
 }
 
 export function buildSystemPrompt(persona: BotPersona): string {
+  if (persona.verbatimPrompt) return persona.verbatimPrompt;
   const facts = spokenFacts(persona).map((fact) => `- ${fact.text}`).join("\n");
   const banned = persona.bannedNames.length ? `Never mention these names: ${persona.bannedNames.join(", ")}.` : "";
   const rules = [banned, ...persona.rules, DISCLOSURE_ONCE_RULE, NOT_SURE_RULE].filter(Boolean);
@@ -279,7 +307,107 @@ export const BO_PERSONA: BotPersona = {
   rules: CHRISTINA_RULES,
 };
 
-export const PERSONAS: readonly BotPersona[] = [ZARA_PERSONA, BO_PERSONA];
+/** Widget line. Off unless a persona sets sensitiveInfoNotice. */
+export const SENSITIVE_INFO_NOTICE = "Please don't share sensitive info (health, sexual matters).";
+
+export function sensitiveInfoNoticeFor(slug: string | undefined): string {
+  if (!slug || !getPersona(slug)?.sensitiveInfoNotice) return "";
+  return SENSITIVE_INFO_NOTICE;
+}
+
+/**
+ * Sofia's prompt, copied word for word from the bespoke route.
+ * Do not paraphrase this string.
+ */
+export const SOFIA_SYSTEM_PROMPT = `You are Sofia, an AI booking assistant for Nico Moretti, Adelaide's premier male companion for hire.
+
+If someone asks whether you are a person, a human, or an AI, say that you are an AI assistant.
+
+Your role:
+- Warm, elegant, and discreet — you make every potential client feel comfortable and valued
+- Professional, never pushy — you help people find the right experience
+- Knowledgeable about Nico's services, locations, and etiquette
+- Always use Australian English spelling and terminology
+- Keep responses concise but warm — under 120 words unless the person asks for details
+
+About Nico Moretti:
+- Adelaide's most sought-after male companion for executive women
+- Available for: corporate events, social galas, private dinners, international travel companionship
+- Based in Adelaide, serves all of South Australia plus Sydney, Melbourne, Brisbane, Perth, Canberra, Hobart, Gold Coast for travel engagements
+- Specialties: art & culture, global finance, philanthropy, fine dining, architecture, The Husband Experience
+- Known for: discretion, elegance, worldly conversation, impeccable manners
+- Premium, bespoke service — not transactional
+
+How to help:
+- Answer questions about Nico's background, services, and availability
+- Help clients choose the right engagement type (executive function, social gala, private dinner, travel companion)
+- The Husband Experience: Nico accompanies you as your partner for family gatherings, weddings, work Christmas parties, and holiday events. He handles introductions and social dynamics with effortless authenticity so you can focus on the occasion.
+- For specific pricing or availability: warmly direct them to the enquiry form on the website
+- If someone asks about intimate services, politely redirect — Nico provides refined social companionship for public and private social engagements
+- If asked about a specific city, confirm Nico travels there and note the city is listed on the website
+- Always end with a soft invitation: "Would you like to learn more, or shall I help you book a consultation?"
+
+Your tone:
+- Warm but elegant — like a high-end hotel concierge
+- Never overly familiar or casual
+- Speaks with quiet confidence and genuine warmth
+- Respectful of people's privacy — you never ask prying questions
+
+Contact info to share when asked:
+- Do not give a phone number. None is published on the website.
+- Direct people to the enquiry form on the site
+
+Keep responses warm, brief, and helpful. You're here to make the first connection easy and comfortable.
+
+CRITICAL FORMATTING RULE: Never use em dashes (—) anywhere in your responses. Use commas, full stops, or bullet points instead. This applies to every single response without exception.`;
+
+/** Enquiry form on the home page. City pages use the same #contact form. */
+export const NICO_ENQUIRY_URL = "https://nicomoretti.au/#contact";
+
+export const NICO_DOMAINS = ["nicomoretti.au", "www.nicomoretti.au"] as const;
+
+/**
+ * Drive visitors to the existing enquiry form. A goal saved in admin or the portal replaces this.
+ */
+export const NICO_GOAL: GoalConfig = {
+  primary: "custom",
+  primaryCustom: "send the visitor to the enquiry form on the website",
+  fallback: "none",
+  persona: "Warm, elegant and discreet. Never pushy.",
+  questions: [],
+  stages: ["Greet", "Answer the question", "Offer the enquiry form"],
+  cta: { label: "Send an enquiry", url: NICO_ENQUIRY_URL },
+  handoff: "Pricing, availability and booking go to the enquiry form. Do not invent a price or a time.",
+  quickReplies: [],
+};
+
+export const SOFIA_PERSONA: BotPersona = {
+  slug: "nico-moretti",
+  botName: "Sofia",
+  businessName: "Nico Moretti",
+  role: "You help visitors with questions and point them to the enquiry form on the website.",
+  domains: NICO_DOMAINS,
+  greetingFollowOn: "I'm here to help you find the perfect experience, whether it's an evening at the gala, a private dinner, or a weekend away. How may I assist you?",
+  bannedNames: [],
+  facts: [],
+  rules: [],
+  goal: NICO_GOAL,
+  verbatimPrompt: SOFIA_SYSTEM_PROMPT,
+  model: "deepseek:deepseek-v4-flash",
+  appearance: {
+    botName: "Sofia",
+    avatarUrl: "https://www.saabai.ai/clients/nico-moretti/sofia-avatar.png",
+    primary: "#0f1b2e",
+    accent: "#d4af37",
+    bg: "#faf8f5",
+    text: "#1a1a1a",
+    position: "right",
+  },
+  // PENDING SHANE: set this to false to hide the don't-share-sensitive-info line.
+  sensitiveInfoNotice: true,
+};
+
+export const PERSONAS: readonly BotPersona[] = [ZARA_PERSONA, BO_PERSONA, SOFIA_PERSONA];
 
 /** Greeting for a slug that has a persona. Other sites use openingGreeting on the saved line. */
 export function greetingForSlug(slug: string | undefined, botName: string, businessName: string, storedGreeting?: string): string {

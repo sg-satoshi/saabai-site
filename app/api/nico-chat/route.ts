@@ -1,151 +1,32 @@
-import { lastUserText, logChatTurn } from "../../../lib/chat-log";
+import { NextRequest } from "next/server";
+import { handleChat, optionsResponse } from "../../../lib/chatbot/handler";
 
+// Cached widgets still post here, without a slug. Delete this route after 7 November 2026 (one week).
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-const SYSTEM_PROMPT = `You are Sofia, an AI booking assistant for Nico Moretti, Adelaide's premier male companion for hire.
+const SLUG = "nico-moretti";
 
-If someone asks whether you are a person, a human, or an AI, say that you are an AI assistant.
+export const OPTIONS = (req: NextRequest) => optionsResponse(req);
 
-Your role:
-- Warm, elegant, and discreet — you make every potential client feel comfortable and valued
-- Professional, never pushy — you help people find the right experience
-- Knowledgeable about Nico's services, locations, and etiquette
-- Always use Australian English spelling and terminology
-- Keep responses concise but warm — under 120 words unless the person asks for details
-
-About Nico Moretti:
-- Adelaide's most sought-after male companion for executive women
-- Available for: corporate events, social galas, private dinners, international travel companionship
-- Based in Adelaide, serves all of South Australia plus Sydney, Melbourne, Brisbane, Perth, Canberra, Hobart, Gold Coast for travel engagements
-- Specialties: art & culture, global finance, philanthropy, fine dining, architecture, The Husband Experience
-- Known for: discretion, elegance, worldly conversation, impeccable manners
-- Premium, bespoke service — not transactional
-
-How to help:
-- Answer questions about Nico's background, services, and availability
-- Help clients choose the right engagement type (executive function, social gala, private dinner, travel companion)
-- The Husband Experience: Nico accompanies you as your partner for family gatherings, weddings, work Christmas parties, and holiday events. He handles introductions and social dynamics with effortless authenticity so you can focus on the occasion.
-- For specific pricing or availability: warmly direct them to the enquiry form on the website
-- If someone asks about intimate services, politely redirect — Nico provides refined social companionship for public and private social engagements
-- If asked about a specific city, confirm Nico travels there and note the city is listed on the website
-- Always end with a soft invitation: "Would you like to learn more, or shall I help you book a consultation?"
-
-Your tone:
-- Warm but elegant — like a high-end hotel concierge
-- Never overly familiar or casual
-- Speaks with quiet confidence and genuine warmth
-- Respectful of people's privacy — you never ask prying questions
-
-Contact info to share when asked:
-- Do not give a phone number. None is published on the website.
-- Direct people to the enquiry form on the site
-
-Keep responses warm, brief, and helpful. You're here to make the first connection easy and comfortable.
-
-CRITICAL FORMATTING RULE: Never use em dashes (—) anywhere in your responses. Use commas, full stops, or bullet points instead. This applies to every single response without exception.`;
-
-export async function OPTIONS() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    },
+/** Old widget roles use "bot". The platform handler only accepts user and assistant. */
+function platformMessages(input: unknown): unknown {
+  if (!Array.isArray(input)) return input;
+  return input.map((m) => {
+    if (!m || typeof m !== "object") return m;
+    const row = m as { role?: unknown; content?: unknown };
+    return { role: row.role === "bot" ? "assistant" : row.role, content: row.content };
   });
 }
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    const incomingMessages = body.messages || [];
-
-    // Map widget roles (bot -> assistant) and extract text from content
-    const chatMessages = incomingMessages
-      .filter((m: { role: string }) => m.role !== "system")
-      .map((m: { role: string; content: any }) => {
-        let role = m.role;
-        if (role === "bot") role = "assistant";
-
-        let text = "";
-        if (typeof m.content === "string") {
-          text = m.content;
-        } else if (Array.isArray(m.content)) {
-          text = m.content.map((c: any) => c.text || "").join("\n");
-        }
-
-        return { role, content: text };
-      });
-
-    const deepseekMessages = [
-      { role: "system", content: SYSTEM_PROMPT },
-      ...chatMessages.map((m: { role: string; content: string }) => ({
-        role: m.role,
-        content: m.content,
-      })),
-    ];
-
-    const apiKey = process.env.DEEPSEEK_API_KEY;
-    if (!apiKey) {
-      console.error("DEEPSEEK_API_KEY is not set");
-      return new Response(
-        JSON.stringify({ error: "Configuration error" }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "deepseek-v4-flash",
-        messages: deepseekMessages,
-        max_tokens: 500,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("DeepSeek error:", response.status, errorText);
-      return new Response(
-        JSON.stringify({ error: "Failed to generate response", details: `HTTP ${response.status}` }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || "";
-    const usage = data.usage ?? {};
-    logChatTurn({
-      bot: "nico",
-      siteId: "nico-moretti",
-      model: "deepseek-v4-flash",
-      usage: { inputTokens: usage.prompt_tokens, outputTokens: usage.completion_tokens },
-      userText: lastUserText(chatMessages),
-      assistantText: content,
-    });
-
-    return new Response(JSON.stringify({ content }), {
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
-  } catch (error) {
-    console.error("Nico chat error:", error);
-    return new Response(
-      JSON.stringify({ error: "Failed to generate response", details: String(error) }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-  }
+export async function POST(req: NextRequest) {
+  const body = await req.json().catch(() => ({}));
+  const record = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+  const slug = typeof record.slug === "string" && record.slug.trim() ? record.slug : SLUG;
+  const next = new NextRequest(req.url, {
+    method: "POST",
+    headers: req.headers,
+    body: JSON.stringify({ ...record, slug, messages: platformMessages(record.messages) }),
+  });
+  return handleChat(next);
 }

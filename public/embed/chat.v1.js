@@ -1,11 +1,11 @@
-/*! Saabai chat widget v1 (1.2.0). One script for every site:
+/*! Saabai chat widget v1 (1.3.0). One script for every site:
  *  <script src="https://www.saabai.ai/embed/chat.v1.js" data-site="your-site-slug" async></script>
  *  Reads the site's settings (look, on/off, plan rules) from Saabai. No lead capture. No cookies.
  *  Compatible within v1: fixes ship here, breaking changes get a new file name (chat.v2.js).
  */
 (function () {
   "use strict";
-  var VERSION = "1.2.0";
+  var VERSION = "1.3.0";
   var script = document.currentScript;
   if (!script) { var all = document.querySelectorAll("script[data-site]"); script = all[all.length - 1]; }
   if (!script) return;
@@ -97,6 +97,7 @@
     ".cta.fb{background:#fff;color:var(--primary);border-color:var(--primary)}",
     ".hb{background:none;border:1px solid rgba(255,255,255,.5);color:#fff;font:600 11px system-ui,sans-serif;border-radius:999px;padding:4px 9px;cursor:pointer;margin-left:4px}",
     ".hb:focus-visible,.nd button:focus-visible,.fu button:focus-visible{outline:3px solid #62c5d1;outline-offset:2px}",
+    ".sn{display:none;font-size:11px;color:rgba(0,0,0,.55);text-align:center;padding:0 12px 4px;flex:none}",
     ".offer{margin:0 12px 6px;padding:6px 10px;border-radius:8px;background:#eef6ff;color:#1c3a5c;font-size:12.5px;flex:none}",
     ".nd{position:absolute;bottom:72px;width:260px;max-width:calc(100vw - 40px);background:#fff;color:#1c2430;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:12px 34px 12px 12px;font-size:13.5px;cursor:pointer}",
     ".right .nd{right:0}.left .nd{left:0}",
@@ -139,7 +140,8 @@
     var a = el("a", "", "Saabai AI"); a.href = "https://www.saabai.ai"; a.target = "_blank"; a.rel = "noopener"; pw.appendChild(document.createTextNode("Powered by ")); pw.appendChild(a);
     var go = el("div", "go"); els.go = go;
     var offer = el("div", "offer"); offer.style.display = "none"; els.offer = offer;
-    panel.appendChild(head); panel.appendChild(offer); panel.appendChild(msgs); panel.appendChild(go); panel.appendChild(bar); panel.appendChild(pw);
+    var sn = el("div", "sn"); els.sn = sn;
+    panel.appendChild(head); panel.appendChild(offer); panel.appendChild(msgs); panel.appendChild(go); panel.appendChild(bar); panel.appendChild(sn); panel.appendChild(pw);
     w.appendChild(panel); w.appendChild(btn); root.appendChild(w);
     document.body.appendChild(host);
     els.host = host;
@@ -192,6 +194,11 @@
       }
     }
     var eg = c.engage || {};
+    if (els.sn) {
+      var notice = typeof c.sensitiveNotice === "string" ? c.sensitiveNotice : "";
+      els.sn.textContent = notice;
+      els.sn.style.display = notice ? "" : "none";
+    }
     if (eg.offer && eg.offer.text) { els.offer.textContent = eg.offer.text + " Offer ends " + auDate(eg.offer.endsOn) + "."; els.offer.style.display = ""; } else els.offer.style.display = "none";
     if (eg.freeOffer && linkUrl(eg.freeOffer.url)) {
       var lm = el("a", "", eg.freeOffer.label); lm.href = linkUrl(eg.freeOffer.url); lm.target = "_blank"; lm.rel = "noopener"; lm.style.marginLeft = "10px";

@@ -9,7 +9,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Privacy Policy | Nico Moretti</title>
-<meta name="description" content="How Nico Moretti handles personal information from the website chat and the inquiry form, including the DeepSeek chatbot and overseas storage."/>
+<meta name="description" content="How Nico Moretti handles personal information from the website chat and the inquiry form, including DeepSeek, the Anthropic fallback, conversation ids and overseas storage."/>
 <meta name="robots" content="index, follow"/>
 <link rel="canonical" href="https://nicomoretti.au/privacy-policy"/>
 <meta property="og:type" content="website"/>
@@ -83,7 +83,7 @@
 </header>
 <main>
   <h1>Privacy Policy</h1>
-  <p class="lede">Last updated: 27 October 2026</p>
+  <p class="lede">Last updated: 31 October 2026</p>
 
   <h2>About this policy</h2>
   <p>This policy explains how Nico Moretti, based in Adelaide, South Australia, handles personal information collected on nicomoretti.au. It is written in plain English for the Australian Privacy Principles in the Privacy Act 1988 (Cth), in particular APP 1 (an open and transparent policy), APP 5 (telling you when information is collected) and APP 8 (sending information outside Australia).</p>
@@ -91,17 +91,19 @@
   <p>The website does not publish an ABN, a phone number, or an email address. To ask about your information, use the inquiry form on the <a href="https://nicomoretti.au/#contact">contact section of the website</a> and say that your message is about privacy. Enquiries and privacy requests are kept until Nico deletes them or you ask for them to be deleted. Copies also exist in the email and Telegram services named in this policy.</p>
 
   <h2>The website chat</h2>
-  <p>The site has a chat called Sofia. Sofia is an AI assistant. The replies are not typed by a person. The chat says this when it opens, and a short notice stays under the message box, including when an older chat is restored on your device.</p>
+  <p>The site has a chat called Sofia. Sofia is an AI assistant. The replies are not typed by a person. The first message in the chat says this. Under the message box, the chat says it is powered by Saabai. It can also show a short line asking you not to share sensitive information.</p>
   <p>When you send a message, this is what happens.</p>
   <ul>
-    <li>Your browser keeps the chat on this device, under the name nico-chat-history. It keeps the last 40 messages. That copy stays until you clear this site's saved data, or your browser removes it.</li>
-    <li>The chat kept in the browser, up to those 40 messages, is sent to this website's server with each new message. That server runs in Sydney, Australia, on Vercel.</li>
+    <li>Your browser keeps this chat for the tab, under the name saabai-chat:nico-moretti. It keeps the last 40 messages and a conversation id for that chat. That copy stays until you close the tab, the chat has been idle for 30 minutes, or you clear this site's saved data.</li>
+    <li>The chat kept in the browser, up to those 40 messages, is sent to this website's server with each new message, together with the conversation id. That server runs in Sydney, Australia, on Vercel.</li>
     <li>The server sends those messages to DeepSeek so DeepSeek can write the reply. The call goes to api.deepseek.com and uses the model deepseek-v4-flash. DeepSeek is Hangzhou DeepSeek Artificial Intelligence Co., Ltd. DeepSeek's Open Platform Terms of Service are governed by the law of the People's Republic of China. Those terms say DeepSeek's consumer privacy policy does not cover people who use a developer's app, and that the developer must explain how that information is handled. The terms do not name a storage country for API messages. DeepSeek is based in China and may process and store data there. Sending your messages there is a disclosure outside Australia under APP 8.</li>
+    <li>If DeepSeek does not answer, the server sends the same messages to Anthropic so Anthropic can write the reply. That call goes to api.anthropic.com and uses Claude Haiku 4.5 (model id claude-haiku-4-5). This is the platform default in the site code when no other default model is set. Anthropic, PBC is based in the United States and processes these API requests there. Sending your messages there is also a disclosure outside Australia under APP 8.</li>
   </ul>
-  <p>Do not type sensitive information into the chat. That includes passwords, payment card numbers, bank details, tax file numbers, identity document numbers, health information, sexual matters, and sexual preferences or practices. What you type is sent to DeepSeek, and DeepSeek is based in China and may process and store data there. A copy may also be stored in Japan, as described below.</p>
+  <p>Do not type sensitive information into the chat. That includes passwords, payment card numbers, bank details, tax file numbers, identity document numbers, health information, sexual matters, and sexual preferences or practices. What you type is sent to DeepSeek, and if DeepSeek does not answer, to Anthropic in the United States. A copy may also be stored in Japan, as described below.</p>
 
   <h2>What we store from the chat, and for how long</h2>
-  <p>A copy of each chat is kept in Supabase, in Tokyo, Japan, for 90 days. The copy includes your latest message and Sofia's reply. Text longer than 20,000 characters is shortened. The record also includes the time, the model name, the token counts, a cost figure for that reply, and labels for the bot (nico) and the site (nico-moretti). Each reply is stored as its own record. Earlier messages in the same chat are sent again to DeepSeek with your next message. They are not written again unless they were the latest message on an earlier reply. That chat record does not include your IP address. A separate copy stays in your browser until you clear this site's saved data.</p>
+  <p>A copy of each chat is kept in Supabase, in Tokyo, Japan, for 90 days. The copy includes your latest message and Sofia's reply. Text longer than 20,000 characters is shortened. The record also includes the time, the model name (including which provider answered), the token counts, a cost figure for that reply, a conversation id, and labels for the bot and the site. New messages are labelled nico-moretti for both. Older messages may still be labelled nico. They are not moved. Each reply is stored as its own record. Messages with the same conversation id are one chat. Earlier messages in the same chat are sent again with your next message, to DeepSeek or to Anthropic if DeepSeek does not answer. They are not written again unless they were the latest message on an earlier reply. That chat record does not include your raw IP address. The conversation id is a random id from your browser. If the browser does not send one, the server uses a hash of the IP address, the browser and the day. The hash does not contain the raw IP address. A separate copy stays in the browser tab until you close it, leave the chat idle for 30 minutes, or clear this site's saved data.</p>
+  <p>A chat is counted as a lead when you send more than a greeting. A greeting on its own is not counted. The lead is a count of those chats for the month. It is worked out from the stored messages and the conversation id. It is not a copy of the inquiry form, and typing in the chat does not fill in the form. A button in the chat can open the enquiry form at https://nicomoretti.au/#contact. Sending that form is a separate step, described below.</p>
   <p>Chat requests also store your IP address in Upstash Redis so the site can limit how many messages one address can send. That rate-limit record is kept for about 26 hours. A shorter counter, used when messages arrive in a burst, is kept for about 11 minutes. Upstash stores each database in a region chosen for that database. Upstash publishes regions in Sydney, the United States, Europe (including Ireland, Germany and the United Kingdom), Japan, Singapore, India, Brazil, South Africa and Canada. The IP address may be stored in Australia or in one or more of those countries.</p>
 
   <h2>The inquiry form</h2>
@@ -109,7 +111,7 @@
   <p>The inquiry is saved in the same Upstash Redis service. There is no expiry on that record. Enquiries and privacy requests are kept until Nico deletes them or you ask for them to be deleted. Copies also exist in the email and Telegram services named in this policy. The saved inquiry may be stored in Australia or in one or more of those countries.</p>
   <p>A copy is emailed to the business through Resend. Resend's published GDPR notice says Resend stores customer data in the United States, including message content. Choosing a sending region does not change that storage location.</p>
   <p>The same inquiry is sent to Telegram at api.telegram.org. Telegram's privacy policy is published by Telegram Messenger Inc. It names Telegram Group Inc. and Telegraph Inc. in the British Virgin Islands, and Telegram FZ-LLC in Dubai, United Arab Emirates. Telegram stores cloud messages on servers in several countries.</p>
-  <p>The chat and the inquiry form are separate. Typing in the chat does not fill in the form.</p>
+  <p>The chat and the inquiry form are separate. Typing in the chat does not fill in the form. Opening the enquiry form from the chat does not send the chat.</p>
 
   <h2>Other services that receive a request</h2>
   <ul>
@@ -148,6 +150,6 @@
     });
   }
 </script>
-<script src="/clients/nico-moretti/chat-widget.js?7"></script>
+<script src="https://www.saabai.ai/embed/chat.v1.js?v=1.3.0" data-site="nico-moretti" async></script>
 </body>
 </html>

@@ -62,13 +62,15 @@ export function modelFromSpec(raw: string, label: string, fallback = raw): Langu
       return xai(modelId);
     case "deepseek": {
       // Prefer the product-dedicated key (never clobber Hermes's own key).
+      // .chat() is the OpenAI chat-completions API DeepSeek actually serves.
+      // The provider's default call is the Responses API, which DeepSeek does not.
       const key = process.env.AGENT_DEEPSEEK_API_KEY || process.env.DEEPSEEK_API_KEY;
       if (!key) {
         throw new Error(
           "[chat-config] AGENT_DEEPSEEK_API_KEY (or DEEPSEEK_API_KEY) is not set for provider \"deepseek\""
         );
       }
-      return createOpenAI({ baseURL: DEEPSEEK_BASE_URL, apiKey: key })(modelId);
+      return createOpenAI({ baseURL: DEEPSEEK_BASE_URL, apiKey: key }).chat(modelId);
     }
     default:
       throw new Error(
@@ -81,11 +83,14 @@ export function modelFromSpec(raw: string, label: string, fallback = raw): Langu
 /**
  * Cost-efficient model for all conversations.
  * Controlled by DEFAULT_CHAT_MODEL env var.
- * Fallback: claude-haiku-4-5 (Anthropic) — set DEFAULT_CHAT_MODEL=google:gemini-2.5-flash-lite in Vercel for cheaper Google option.
- * NOTE: gemini-2.0-flash is deprecated June 1 2026 — use gemini-2.5-flash-lite instead.
+ * Fallback when that var is unset: Claude Haiku 4.5 on Anthropic.
+ * Anthropic processes this model's API requests in the United States (api.anthropic.com).
+ * NOTE: gemini-2.0-flash is deprecated June 1 2026. Use gemini-2.5-flash-lite instead.
  */
+export const DEFAULT_MODEL_FALLBACK = "anthropic:claude-haiku-4-5";
+
 export function getDefaultModel(): LanguageModel {
-  return resolveModel("DEFAULT_CHAT_MODEL", "anthropic:claude-haiku-4-5");
+  return resolveModel("DEFAULT_CHAT_MODEL", DEFAULT_MODEL_FALLBACK);
 }
 
 /**
@@ -120,7 +125,7 @@ export function getDeepSeekModel(tier: "default" | "premium" = "default"): Langu
       "[chat-config] AGENT_DEEPSEEK_API_KEY (or DEEPSEEK_API_KEY) is not set (getDeepSeekModel)"
     );
   }
-  return createOpenAI({ baseURL: DEEPSEEK_BASE_URL, apiKey: key })(modelId);
+  return createOpenAI({ baseURL: DEEPSEEK_BASE_URL, apiKey: key }).chat(modelId);
 }
 
 /**

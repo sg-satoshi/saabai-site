@@ -178,10 +178,12 @@ test("wiring: admin API writes need adminActor, bespoke sites cannot be toggled,
   assert.equal((proxy.match(/\/api\/chat-platform\/message/g) ?? []).length >= 2, true);
   assert.match(readFileSync(ROOT + "lib/chat-guard.ts", "utf8"), /\/api\/chat-platform\/message/);
   assert.ok(!BESPOKE_SLUGS.includes("bo-consultancy") && !BESPOKE_SLUGS.includes("lmm-site"), "Christina and Zara are on the platform");
-  for (const slug of ["tributum-law-v2", "nextinvestment", "nico-moretti"]) assert.ok(BESPOKE_SLUGS.includes(slug));
-  for (const f of ["tributum-chat", "nico-chat", "nextinvestment-chat"]) {
+  for (const slug of ["tributum-law-v2", "nextinvestment"]) assert.ok(BESPOKE_SLUGS.includes(slug));
+  assert.equal(BESPOKE_SLUGS.includes("nico-moretti"), false);
+  for (const f of ["tributum-chat", "nextinvestment-chat"]) {
     assert.doesNotMatch(readFileSync(ROOT + `app/api/${f}/route.ts`, "utf8"), /chatbot\/(store|handler)/, `${f} is untouched`);
   }
+  assert.match(readFileSync(ROOT + "app/api/nico-chat/route.ts", "utf8"), /handleChat/);
   for (const f of ["bo-chat", "lmm-chat"]) {
     const src = readFileSync(ROOT + `app/api/${f}/route.ts`, "utf8");
     assert.match(src, /Delete this route after 27 October 2026/, `${f} stays as a one-week fallback`);
