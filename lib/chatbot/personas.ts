@@ -86,7 +86,7 @@ function zaraLicenceFact(): PersonaFact {
     return {
       id: "licence",
       text: "",
-      source: "lib/lmm-legal.ts LMM_LEGAL_IDENTITY. Waiting on Nick Foale for the entity name, ABN, ACL or credit representative number, licensee and AFCA member number.",
+      source: "lib/lmm-legal.ts LMM_LEGAL_IDENTITY",
       verified: "",
       speak: false,
     };

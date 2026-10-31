@@ -1,8 +1,7 @@
 /**
  * Lifestyle Money Management legal particulars.
- * Leave a field null until Nick supplies it. Null and blank values are omitted
- * from the public pages. Do not invent an entity name, ABN, ACL, credit
- * representative number, licensee or aggregator, or AFCA member number.
+ * Null and blank values are omitted from the public pages.
+ * Do not invent an AFSL, a credit representative number, or an aggregator.
  */
 export type LmmLegalIdentity = {
   entityName: string | null;
@@ -13,11 +12,11 @@ export type LmmLegalIdentity = {
 };
 
 export const LMM_LEGAL_IDENTITY: LmmLegalIdentity = {
-  entityName: null, // TODO: legal entity name
-  abn: null, // TODO: ABN
-  aclOrCreditRep: "Australian Credit Licence 530067", // confirmed 31 October 2026
-  licenseeOrAggregator: null, // TODO: licensee or aggregator name
-  afcaMemberNo: null, // TODO: AFCA member number
+  entityName: "Foale Group Pty Ltd",
+  abn: "26 648 878 862",
+  aclOrCreditRep: "Australian Credit Licence 530067",
+  licenseeOrAggregator: null, // Foale Group holds the licence. No separate aggregator was named.
+  afcaMemberNo: "82253",
 };
 
 export const LMM_SITE = {

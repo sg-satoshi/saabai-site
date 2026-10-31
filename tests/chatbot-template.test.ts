@@ -51,10 +51,12 @@ test("spoken facts have a source and a verified date, and unpublished claims are
       }
     }
   }
-  assert.equal(lmmLicensingLine(), "Credit assistance is provided under Australian Credit Licence 530067.");
+  assert.equal(lmmLicensingLine(), "Lifestyle Money Management is the trading name of Foale Group Pty Ltd (ABN 26 648 878 862). Credit assistance is provided under Australian Credit Licence 530067. AFCA member number: 82253.");
   assert.equal(spokenFactIds(ZARA_PERSONA).includes("licence"), true);
   assert.match(ZARA_SYSTEM_PROMPT, /Australian Credit Licence 530067/);
-  assert.doesNotMatch(ZARA_SYSTEM_PROMPT, /\[ACL|\[AFCA|AFCA member number:/);
+  assert.match(ZARA_SYSTEM_PROMPT, /AFCA member number: 82253/);
+  assert.match(ZARA_SYSTEM_PROMPT, /Do not give personal financial, credit, tax or legal advice/);
+  assert.doesNotMatch(ZARA_SYSTEM_PROMPT, /\[ACL|\[AFCA|AFSL/);
   assert.doesNotMatch(ZARA_SYSTEM_PROMPT, /Brisbane/);
   assert.match(ZARA_SYSTEM_PROMPT, /Never mention these names: Jeff, Lily, Andy/);
   assert.doesNotMatch(BO_SYSTEM_PROMPT, /95%|1,000|48hr|Fully compliant labour hire/);

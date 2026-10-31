@@ -13,16 +13,18 @@ const served = prepareLmmHomeHtml(home);
 const privacy = lmmLegalDocument("privacy");
 const complaints = lmmLegalDocument("complaints");
 
-test("Australian Credit Licence 530067 renders and other particulars stay unset", () => {
+const LICENSING_LINE = "Lifestyle Money Management is the trading name of Foale Group Pty Ltd (ABN 26 648 878 862). Credit assistance is provided under Australian Credit Licence 530067. AFCA member number: 82253.";
+
+test("Foale Group particulars render and no aggregator or AFSL is invented", () => {
   assert.deepEqual(LMM_LEGAL_IDENTITY, {
-    entityName: null,
-    abn: null,
+    entityName: "Foale Group Pty Ltd",
+    abn: "26 648 878 862",
     aclOrCreditRep: "Australian Credit Licence 530067",
     licenseeOrAggregator: null,
-    afcaMemberNo: null,
+    afcaMemberNo: "82253",
   });
-  assert.equal(lmmPublicName(), "Lifestyle Money Management");
-  assert.equal(lmmLicensingLine(), "Credit assistance is provided under Australian Credit Licence 530067.");
+  assert.equal(lmmPublicName(), "Foale Group Pty Ltd");
+  assert.equal(lmmLicensingLine(), LICENSING_LINE);
   assert.equal(lmmLicensingLine({
     entityName: "Example Pty Ltd",
     abn: "12 345 678 901",
@@ -37,22 +39,30 @@ test("Australian Credit Licence 530067 renders and other particulars stay unset"
     licenseeOrAggregator: null,
     afcaMemberNo: null,
   }), "");
-  const hidden = ["[ENTITY NAME]", "[ABN]", "[ACL", "[LICENSEE", "[AFCA", "square brackets", "particulars still", "AFCA member number", "trading name of", "AFSL"];
+  const hidden = ["[ENTITY NAME]", "[ABN]", "[ACL", "[LICENSEE", "[AFCA", "square brackets", "particulars still", "authorised through", "AFSL"];
   for (const page of [served, privacy, complaints]) {
     for (const token of hidden) assert.equal(page.includes(token), false, token);
     assert.match(page, /Australian Credit Licence 530067/);
+    assert.match(page, /Foale Group Pty Ltd \(ABN 26 648 878 862\)/);
+    assert.match(page, /AFCA member number: 82253/);
     assert.doesNotMatch(page, /License/);
   }
   const footer = served.slice(served.indexOf('data-lmm-legal="1"'));
   assert.match(footer, /Privacy Policy/);
   assert.match(footer, /Complaints/);
-  assert.match(footer, /<p>Credit assistance is provided under Australian Credit Licence 530067\.<\/p>/);
-  assert.match(home, /"identifier": "Australian Credit Licence 530067"/);
+  assert.match(footer, new RegExp(`<p>${LICENSING_LINE.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}</p>`));
+  assert.match(home, /"legalName": "Foale Group Pty Ltd"/);
+  assert.match(home, /"taxID": "26 648 878 862"/);
+  assert.match(home, /"identifier": \{"@type": "PropertyValue", "name": "Australian Credit Licence", "value": "530067"\}/);
   for (const facts of [llms, llmsFull]) {
+    assert.match(facts, /^- Legal entity: Foale Group Pty Ltd, trading as Lifestyle Money Management$/m);
+    assert.match(facts, /^- ABN: 26 648 878 862$/m);
     assert.match(facts, /^- Australian Credit Licence 530067$/m);
+    assert.match(facts, /^- AFCA member number: 82253$/m);
   }
   assert.match(privacy, /Last updated: 31 October 2026/);
   assert.match(complaints, /Last updated: 31 October 2026/);
+  assert.match(complaints, /Our AFCA member number is 82253\./);
 });
 
 test("the LMM home page links to privacy and complaints and has no draft quotes", () => {
