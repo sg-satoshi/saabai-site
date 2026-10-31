@@ -25,14 +25,24 @@ test("AI disclosure is one sentence, and saying it again does not double it", ()
   assert.equal(openingGreeting({ botName: "Christina", businessName: "BO Consulting", extra: "Good morning. What can I do for you?" }), "Hi, I'm Christina, an AI assistant for BO Consulting. What can I do for you?");
 });
 
-test("a leading greeting also drops the address word that follows it", () => {
+test("a leading greeting drops an address word only when punctuation or the end follows it", () => {
   assert.equal(greetingFollowOn("Hi there! How can I help?", "Ava"), "How can I help?");
   assert.equal(greetingFollowOn("Hi there!", "Ava"), "");
+  assert.equal(greetingFollowOn("Hey everyone!", "Ava"), "");
+  assert.equal(greetingFollowOn("Hi all!", "Ava"), "");
   assert.equal(greetingFollowOn("Hello everyone,", "Ava"), "");
+  assert.equal(greetingFollowOn("Hello there, welcome.", "Ava"), "Welcome.");
   assert.equal(greetingFollowOn("G\u2019day mate!", "Sofia"), "");
+  assert.equal(greetingFollowOn("G\u2019day! How can I help?", "Sofia"), "How can I help?");
   assert.equal(greetingFollowOn("Gday mate", "Sofia"), "");
+  assert.equal(greetingFollowOn("Gday mate, what can I do?", "Sofia"), "What can I do?");
   assert.equal(greetingFollowOn("G'day!", "Sofia"), "");
   assert.equal(greetingFollowOn("Good morning team.", "Christina"), "");
+  assert.equal(greetingFollowOn("Hi team, ask away", "Christina"), "Ask away");
+  assert.equal(greetingFollowOn("Hi, all our plans...", "Ava"), "All our plans...");
+  assert.equal(greetingFollowOn("Hey, mate rates apply...", "Ava"), "Mate rates apply...");
+  assert.equal(greetingFollowOn("Matt here...", "Ava"), "Matt here...");
+  assert.equal(greetingFollowOn("Allison can help", "Ava"), "Allison can help");
   assert.equal(greetingFollowOn("The team can call you back today.", "Ava"), "The team can call you back today.");
 });
 

@@ -22,9 +22,13 @@ export function disclosureCount(text: string): number {
   return text.toLowerCase().match(/ai assistant/g)?.length ?? 0;
 }
 
-/** Hi / Hello / G'day / Good morning, then an optional address (there, mate, team, …). */
+/**
+ * Hi / Hello / G'day / Good morning.
+ * An address word is removed only when ! , . ? or a dash follows it, or it ends the text.
+ * "Hi, all our plans" keeps "all". "Hi all!" does not.
+ */
 const LEADING_GREETING =
-  /^\s*(?:hi|hello|hey|g['\u2018\u2019]?day|good (?:morning|afternoon|evening))\b[!,.]?\s*(?:(?:there|everyone|all|folks|team|mate)\b[!,.]?\s*)?/i;
+  /^\s*(?:hi|hello|hey|g['\u2018\u2019]?day|good (?:morning|afternoon|evening))\b[!,.]?\s*(?:(?:there|everyone|all|folks|team|mate)\b(?:[!,.?\u2014\u2013-]\s*|\s*$))?/i;
 
 /** Drop a saved intro that would say who the bot is a second time, including a leading Hi or Hello. */
 export function greetingFollowOn(extra: string, botName: string): string {
