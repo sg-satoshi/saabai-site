@@ -223,7 +223,6 @@ export interface PublicEngage {
   returnGreeting: string;
   review: { url: string } | null;
   nudgeCap: number;
-  privacyNote: string;
 }
 
 export function toPublicEngage(e: EngageConfig, opts: { leadCapture: boolean; privacyUrl?: string }, now = Date.now()): PublicEngage {
@@ -240,7 +239,6 @@ export function toPublicEngage(e: EngageConfig, opts: { leadCapture: boolean; pr
     returnGreeting: e.returnGreeting ?? "",
     review: e.reviews.enabled && e.reviews.url ? { url: e.reviews.url } : null,
     nudgeCap: NUDGE_CAP,
-    privacyNote: "AI chat. Please don't share sensitive details. Chats are kept for 90 days.",
   };
 }
 

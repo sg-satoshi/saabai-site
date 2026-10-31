@@ -22,7 +22,24 @@ test("existing bots keep their prompt: playbook prompt only when engage is saved
   assert.match(h, /config\.engage \? engagePrompt/);
   const pub = toPublicConfig({ slug: "x", active: true, config: { plan: "presence", skin: {} }, site: { name: "X" } });
   assert.equal(pub.engage.emailCopy, false);
-  assert.match(pub.engage.privacyNote, /90 days/);
+  assert.equal("privacyNote" in pub.engage, false);
+});
+
+const NOTICE = /sensitive details|sensitive info|kept for 90 days|Chats are kept|AI chat\./i;
+
+test("widget does not render the retention or sensitive-details notice", () => {
+  const widget = readFileSync("public/embed/chat.v1.js", "utf8");
+  const mia = readFileSync("app/components/ChatWidget.tsx", "utf8");
+  assert.doesNotMatch(widget, /privacyNote/);
+  assert.doesNotMatch(widget, /el\("div", "pv"\)/);
+  assert.doesNotMatch(widget, NOTICE);
+  assert.doesNotMatch(mia, NOTICE);
+  const pub = toPublicEngage(DEFAULT_ENGAGE, { leadCapture: false });
+  assert.equal("privacyNote" in pub, false);
+  assert.doesNotMatch(JSON.stringify(pub), NOTICE);
+  const preview = readFileSync("public/embed/preview.html", "utf8");
+  assert.match(preview, /embed\/chat\.v1\.js/);
+  assert.doesNotMatch(preview, NOTICE);
 });
 
 test("no fake urgency: offers need a real future date, pressure wording rejected", () => {
