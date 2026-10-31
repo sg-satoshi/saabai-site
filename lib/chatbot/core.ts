@@ -3,7 +3,7 @@ import { toPublicGoal, type GoalConfig, type PublicGoal } from "./goal";
 import { effectiveEngage, toPublicEngage, type EngageConfig, type PublicEngage } from "./engage";
 import { leadCaptureEnabled } from "./lead-capture";
 import { handoffTarget, type HandoffLink } from "./disclosure";
-import { getPersona, greetingForSlug, privacyUrlFor, sensitiveInfoNoticeFor } from "./personas";
+import { getPersona, greetingForSlug, privacyUrlFor } from "./personas";
 /** Pure rules for the central chatbot platform. No I/O, easy to test. */
 
 export const PLANS = ["presence", "growth", "signature"] as const;
@@ -257,11 +257,6 @@ export interface PublicWidgetConfig {
   goal: PublicGoal | null;
   /** Widget features and nudges. */
   engage: PublicEngage;
-  /**
-   * Short line under the composer. Empty for every bot unless that bot's code flag is on.
-   * Not editable in admin or the client portal.
-   */
-  sensitiveNotice: string;
   /** Small Privacy link. Empty unless this bot sets one in code. */
   privacyUrl: string;
 }
@@ -292,7 +287,6 @@ export function toPublicConfig(opts: { slug?: string; active: boolean; config: P
     handoff: handoffTarget(opts.site.business),
     goal: toPublicGoal(effectiveGoal(opts.slug, opts.config.goal)),
     engage: toPublicEngage(effectiveEngage(opts.config.engage), { leadCapture: leadCaptureEnabled() }),
-    sensitiveNotice: sensitiveInfoNoticeFor(opts.slug),
     privacyUrl: privacyUrlFor(opts.slug),
   };
 }

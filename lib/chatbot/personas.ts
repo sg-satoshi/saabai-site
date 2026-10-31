@@ -59,11 +59,6 @@ export interface BotPersona {
     text?: string;
     position?: "right" | "left";
   };
-  /**
-   * Show the sensitive-info line in the widget. Default off (missing or false).
-   * Not editable in admin or the client portal.
-   */
-  sensitiveInfoNotice?: boolean;
 }
 
 const VERIFIED = /^\d{4}-\d{2}-\d{2}$/;
@@ -314,14 +309,6 @@ export const BO_PERSONA: BotPersona = {
   rules: CHRISTINA_RULES,
 };
 
-/** Widget line. Off unless a persona sets sensitiveInfoNotice. */
-export const SENSITIVE_INFO_NOTICE = "Please don't share sensitive info (health, sexual matters).";
-
-export function sensitiveInfoNoticeFor(slug: string | undefined): string {
-  if (!slug || !getPersona(slug)?.sensitiveInfoNotice) return "";
-  return SENSITIVE_INFO_NOTICE;
-}
-
 /** https only. Empty unless this bot sets a privacy policy URL in code. */
 export function privacyUrlFor(slug: string | undefined): string {
   const raw = slug ? getPersona(slug)?.privacyUrl?.trim() : "";
@@ -424,8 +411,6 @@ export const SOFIA_PERSONA: BotPersona = {
     text: "#1a1a1a",
     position: "right",
   },
-  // PENDING SHANE: set this to false to hide the don't-share-sensitive-info line.
-  sensitiveInfoNotice: true,
 };
 
 export const PERSONAS: readonly BotPersona[] = [ZARA_PERSONA, BO_PERSONA, SOFIA_PERSONA];

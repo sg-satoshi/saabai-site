@@ -121,8 +121,7 @@ test("every Nico page links the privacy policy, and the chat discloses the AI", 
   }
   assert.match(widget, /Hi, I'm Sofia, Nico's AI booking assistant/);
   assert.match(widget, /Sofia is an AI assistant/);
-  assert.match(widget, /sexual matters/);
-  assert.match(widget, /sexual preferences or practices/);
+  assert.doesNotMatch(widget, /don't share sensitive|sexual matters|sexual preferences/);
   assert.doesNotMatch(widget, /DeepSeek in China/);
   assert.match(widget, /font-size: 13px/);
   assert.match(widget, /min-height: 44px/);
@@ -135,8 +134,9 @@ test("every Nico page links the privacy policy, and the chat discloses the AI", 
   assert.doesNotMatch(widget, /slice\(-50\)/);
   assert.doesNotMatch(widget, /embed\/chat\.v1|chat-platform/);
   const shared = readFileSync("public/embed/chat.v1.js", "utf8");
-  assert.match(shared, /sensitiveNotice/);
+  assert.doesNotMatch(shared, /sensitiveNotice|sensitive info/);
   assert.match(shared, /privacyUrl/);
+  assert.doesNotMatch(policy, /can also show a short line/);
   assert.match(shared, /nico-chat-history/);
   assert.doesNotMatch(shared, /DeepSeek in China/);
   assert.ok(!/[\u2012-\u2015]/.test(widget));

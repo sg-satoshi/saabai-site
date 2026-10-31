@@ -19,12 +19,10 @@ import { DEFAULT_MODEL_FALLBACK, parseModelSpec } from "../lib/chat-config";
 import {
   NICO_ENQUIRY_URL,
   NICO_GOAL,
-  SENSITIVE_INFO_NOTICE,
   SOFIA_PERSONA,
   SOFIA_SYSTEM_PROMPT,
   buildSystemPrompt,
   getPersona,
-  sensitiveInfoNoticeFor,
 } from "../lib/chatbot/personas";
 import { flushChatLog, setChatLogStoreForTests, type ChatLogStore } from "../lib/chat-log";
 
@@ -164,11 +162,6 @@ test("the prompt is verbatim, DeepSeek is code-only, and other bots stay off it"
   assert.equal(getPersona("lmm-site")?.fallbackModel, undefined);
   assert.equal(getPersona("lmm-site")?.model, undefined);
   assert.equal(getPersona("bo-consultancy")?.model, undefined);
-  assert.equal(sensitiveInfoNoticeFor("lmm-site"), "");
-  assert.equal(sensitiveInfoNoticeFor("bo-consultancy"), "");
-  assert.equal(sensitiveInfoNoticeFor(undefined), "");
-  assert.equal(SOFIA_PERSONA.sensitiveInfoNotice, true);
-  assert.equal(sensitiveInfoNoticeFor("nico-moretti"), SENSITIVE_INFO_NOTICE);
   assert.equal(validateGoal(NICO_GOAL).ok, true);
   assert.equal(NICO_GOAL.cta?.url, NICO_ENQUIRY_URL);
   assert.equal(parseModelSpec(undefined, DEFAULT_MODEL_FALLBACK).provider, "anthropic");
@@ -334,7 +327,7 @@ test("every message is logged with a conversation id, and an engaged chat counts
   assert.deepEqual(historyBotIds("nico-moretti"), ["nico-moretti", "nico"]);
 });
 
-test("public config keeps Sofia's look, greeting, goal and the sensitive-info line", () => {
+test("public config keeps Sofia's look, greeting and goal, with no sensitive-info line", () => {
   const pub = toPublicConfig({
     slug: "nico-moretti",
     active: true,
@@ -348,7 +341,7 @@ test("public config keeps Sofia's look, greeting, goal and the sensitive-info li
   assert.equal(pub.accent, "#d4af37");
   assert.equal(pub.bg, "#faf8f5");
   assert.match(pub.avatarUrl, /sofia-avatar\.png/);
-  assert.equal(pub.sensitiveNotice, SENSITIVE_INFO_NOTICE);
+  assert.equal("sensitiveNotice" in pub, false);
   assert.equal(pub.privacyUrl, "https://nicomoretti.au/privacy-policy");
   assert.equal(pub.goal?.cta?.url, NICO_ENQUIRY_URL);
   assert.equal(pub.goal?.cta?.label, "Send an enquiry");
@@ -361,11 +354,10 @@ test("public config keeps Sofia's look, greeting, goal and the sensitive-info li
   assert.equal(saved.primary, "#112233");
   assert.equal(saved.botName, "Renamed");
   const other = toPublicConfig({ slug: "lmm-site", active: true, config: { plan: "presence", skin: {} }, site: { name: "Lifestyle Money Management" } });
-  assert.equal(other.sensitiveNotice, "");
   assert.equal(other.privacyUrl, "");
   const widget = read("public/embed/chat.v1.js");
   assert.match(widget, /1\.3\.1/);
-  assert.match(widget, /sensitiveNotice/);
+  assert.doesNotMatch(widget, /sensitiveNotice|sensitive info/);
   assert.match(widget, /privacyUrl/);
   assert.match(widget, /"Privacy policy"/);
   assert.doesNotMatch(widget, /DeepSeek/);

@@ -27,7 +27,6 @@ const fallbackResolved = (name: string): PublicWidgetConfig => ({
   v: 1, active: true, botName: name, greeting: "", avatarUrl: "", primary: "#0b5c78", accent: "#62c5d1", bg: "#fbfbfd", text: "#13152a",
   position: "right", poweredBy: true, placeholder: "", offMessage: "", handoff: null, goal: null,
   engage: { endChat: true, emailCopy: false, openers: [], exitIntent: false, idleSeconds: 0, scrollPercent: 0, freeOffer: null, offer: null, returnGreeting: "", review: null, nudgeCap: 3 },
-  sensitiveNotice: "",
   privacyUrl: "",
 });
 
