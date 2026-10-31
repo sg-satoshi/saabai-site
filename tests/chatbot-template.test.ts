@@ -18,7 +18,11 @@ test("AI disclosure is one sentence, and saying it again does not double it", ()
   assert.equal(disclosureCount(personaGreeting(BO_PERSONA)), 1);
   assert.equal(greetingFollowOn("Hi! How can I help?", "Ava"), "How can I help?");
   assert.equal(greetingFollowOn("Hello, how can I help?", "Ava"), "How can I help?");
+  assert.equal(greetingFollowOn("G'day! How can I help?", "Sofia"), "How can I help?");
+  assert.equal(greetingFollowOn("Good morning, how can I help?", "Christina"), "How can I help?");
   assert.equal(openingGreeting({ botName: "Ava", businessName: "Northside Physio", extra: "Hi! How can I help with your recovery today?" }), "Hi, I'm Ava, an AI assistant for Northside Physio. How can I help with your recovery today?");
+  assert.equal(openingGreeting({ botName: "Sofia", businessName: "Nico Moretti", extra: "G'day! How can I help?" }), "Hi, I'm Sofia, an AI assistant for Nico Moretti. How can I help?");
+  assert.equal(openingGreeting({ botName: "Christina", businessName: "BO Consulting", extra: "Good morning. What can I do for you?" }), "Hi, I'm Christina, an AI assistant for BO Consulting. What can I do for you?");
 });
 
 test("each bot has about 20 normal and 10 trick questions, and the eval passes without a lead POST", () => {
