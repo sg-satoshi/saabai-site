@@ -79,6 +79,7 @@ const PUBLIC_API = [
   "/api/chat-platform/message", // central chatbot platform (origin, limits and on/off inside)
   "/api/chat-platform/config",  // public widget config (read-only, no secrets)
   "/api/chat-platform/event",   // handoff click counter (no lead post, no client notify)
+  "/api/reviews",               // public carousel read (stored reviews, Places merge when configured)
   "/api/legal-demo",            // public /legal demo, fictional firm, no lead capture; origin and limits inside
   "/api/bo-contact",
   "/api/lmm-contact",
@@ -187,6 +188,7 @@ const CUSTOM_DOMAIN_PUBLIC_API = [
   "/api/chat-platform/message",
   "/api/chat-platform/config",
   "/api/chat-platform/event",
+  "/api/reviews",
 ];
 
 

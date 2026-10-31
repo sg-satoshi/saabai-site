@@ -29,6 +29,22 @@ function GoogleG() {
 export function ReviewsCarousel() {
   const track = useRef<HTMLUListElement>(null);
   const [paused, setPaused] = useState(false);
+  const [items, setItems] = useState(reviews);
+  const [rating, setRating] = useState(googleRating);
+  const [count, setCount] = useState(googleReviewCount);
+  useEffect(() => {
+    let gone = false;
+    fetch("/api/reviews/cycle-repair")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { reviews?: { name: string; stars: number; text: string; date?: string }[]; rating?: number | null; count?: number } | null) => {
+        if (gone || !d?.reviews?.length) return;
+        setItems(d.reviews.map((r) => ({ name: r.name, stars: r.stars, text: r.text, date: r.date ?? "" })));
+        if (typeof d.rating === "number") setRating(d.rating);
+        if (typeof d.count === "number") setCount(d.count);
+      })
+      .catch(() => {});
+    return () => { gone = true; };
+  }, []);
   const scroll = useCallback((dir: 1 | -1) => {
     const el = track.current;
     if (!el) return;
@@ -60,12 +76,12 @@ export function ReviewsCarousel() {
             </h2>
             <div className="flex flex-wrap items-center gap-3">
               <GoogleG />
-              <Stars n={googleRating} className="[&_svg]:size-6" />
+              <Stars n={rating} className="[&_svg]:size-6" />
               <span className="text-3xl font-display font-semibold tracking-tight text-[#202124]">
-                {googleRating} on Google
+                {rating} on Google
               </span>
-              <span className="text-sm text-[#70757a]">from {googleReviewCount} reviews</span>
-              <span className="sr-only">Rated {googleRating} out of 5</span>
+              <span className="text-sm text-[#70757a]">from {count} reviews</span>
+              <span className="sr-only">Rated {rating} out of 5</span>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -104,11 +120,11 @@ export function ReviewsCarousel() {
           }}
           className="relative flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#1a73e8] rounded-xl"
         >
-          {reviews.map((r, i) => (
+          {items.map((r, i) => (
             <li
-              key={i}
+              key={`${r.name}-${i}`}
               aria-roledescription="slide"
-              aria-label={`Review ${i + 1} of ${reviews.length}, by ${r.name}`}
+              aria-label={`Review ${i + 1} of ${items.length}, by ${r.name}`}
               className="stu-review-card relative overflow-hidden snap-start shrink-0 bg-[#f8f9fa] ring-1 ring-[#dadce0] shadow-sm rounded-2xl p-6 flex flex-col"
             >
               <Stars n={r.stars} />
