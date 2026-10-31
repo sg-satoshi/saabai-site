@@ -367,7 +367,7 @@ test("public config keeps Sofia's look, greeting, goal and the sensitive-info li
   assert.match(widget, /1\.3\.1/);
   assert.match(widget, /sensitiveNotice/);
   assert.match(widget, /privacyUrl/);
-  assert.match(widget, /"Privacy"/);
+  assert.match(widget, /"Privacy policy"/);
   assert.doesNotMatch(widget, /DeepSeek/);
   for (const file of readdirSync("public/clients/nico-moretti").filter((name) => name.endsWith(".html"))) {
     const html = read(`public/clients/nico-moretti/${file}`);

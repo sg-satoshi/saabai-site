@@ -143,7 +143,7 @@
     var go = el("div", "go"); els.go = go;
     var offer = el("div", "offer"); offer.style.display = "none"; els.offer = offer;
     var sn = el("div", "sn"); els.sn = sn;
-    var pl = el("a", "pl", "Privacy"); pl.target = "_blank"; pl.rel = "noopener"; els.pl = pl;
+    var pl = el("a", "pl", "Privacy policy"); pl.target = "_blank"; pl.rel = "noopener"; els.pl = pl;
     panel.appendChild(head); panel.appendChild(offer); panel.appendChild(msgs); panel.appendChild(go); panel.appendChild(bar); panel.appendChild(sn); panel.appendChild(pl); panel.appendChild(pw);
     w.appendChild(panel); w.appendChild(btn); root.appendChild(w);
     document.body.appendChild(host);

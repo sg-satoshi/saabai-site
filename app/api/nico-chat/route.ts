@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { handleChat, optionsResponse } from "../../../lib/chatbot/handler";
 
-// Cached widgets still post here, without a slug. Delete this route after 7 November 2026 (one week).
+// TODO: Delete this route after 7 November 2026.
+// Cached widgets still post here, without a slug. This pass-through goes with the old widget file.
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
