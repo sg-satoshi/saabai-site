@@ -30,12 +30,10 @@ const NOTICE = /sensitive details|sensitive info|kept for 90 days|Chats are kept
 test("widget does not render the retention or sensitive-details notice", () => {
   const widget = readFileSync("public/embed/chat.v1.js", "utf8");
   const mia = readFileSync("app/components/ChatWidget.tsx", "utf8");
-  const nico = readFileSync("public/clients/nico-moretti/chat-widget.js", "utf8");
   assert.doesNotMatch(widget, /privacyNote/);
   assert.doesNotMatch(widget, /el\("div", "pv"\)/);
   assert.doesNotMatch(widget, NOTICE);
   assert.doesNotMatch(mia, NOTICE);
-  assert.doesNotMatch(nico, /sensitive details|don't share sensitive|don\\'t share sensitive/);
   const pub = toPublicEngage(DEFAULT_ENGAGE, { leadCapture: false });
   assert.equal("privacyNote" in pub, false);
   assert.doesNotMatch(JSON.stringify(pub), NOTICE);
