@@ -16,7 +16,8 @@ test("form asks for email only (name optional) and explains why", () => {
 test("consent and privacy line at capture", () => {
   assert.match(w, /Unsubscribe anytime/);
   assert.match(w, /href="\/privacy"/);
-  assert.match(w, /don&apos;t share sensitive info/);
+  assert.doesNotMatch(w, /don&apos;t share sensitive info/);
+  assert.doesNotMatch(w, /sensitive details|kept for 90 days/);
 });
 
 test("summary offer appears after a few messages", () => {

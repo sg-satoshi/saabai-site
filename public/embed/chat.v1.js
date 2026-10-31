@@ -97,7 +97,6 @@
     ".cta.fb{background:#fff;color:var(--primary);border-color:var(--primary)}",
     ".hb{background:none;border:1px solid rgba(255,255,255,.5);color:#fff;font:600 11px system-ui,sans-serif;border-radius:999px;padding:4px 9px;cursor:pointer;margin-left:4px}",
     ".hb:focus-visible,.nd button:focus-visible,.fu button:focus-visible{outline:3px solid #62c5d1;outline-offset:2px}",
-    ".pv{font-size:11px;color:rgba(0,0,0,.5);text-align:center;padding:0 12px 4px;flex:none}",
     ".offer{margin:0 12px 6px;padding:6px 10px;border-radius:8px;background:#eef6ff;color:#1c3a5c;font-size:12.5px;flex:none}",
     ".nd{position:absolute;bottom:72px;width:260px;max-width:calc(100vw - 40px);background:#fff;color:#1c2430;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:12px 34px 12px 12px;font-size:13.5px;cursor:pointer}",
     ".right .nd{right:0}.left .nd{left:0}",
@@ -140,8 +139,7 @@
     var a = el("a", "", "Saabai AI"); a.href = "https://www.saabai.ai"; a.target = "_blank"; a.rel = "noopener"; pw.appendChild(document.createTextNode("Powered by ")); pw.appendChild(a);
     var go = el("div", "go"); els.go = go;
     var offer = el("div", "offer"); offer.style.display = "none"; els.offer = offer;
-    var pv = el("div", "pv"); els.pv = pv;
-    panel.appendChild(head); panel.appendChild(offer); panel.appendChild(msgs); panel.appendChild(go); panel.appendChild(bar); panel.appendChild(pv); panel.appendChild(pw);
+    panel.appendChild(head); panel.appendChild(offer); panel.appendChild(msgs); panel.appendChild(go); panel.appendChild(bar); panel.appendChild(pw);
     w.appendChild(panel); w.appendChild(btn); root.appendChild(w);
     document.body.appendChild(host);
     els.host = host;
@@ -194,7 +192,6 @@
       }
     }
     var eg = c.engage || {};
-    els.pv.textContent = eg.privacyNote || "";
     if (eg.offer && eg.offer.text) { els.offer.textContent = eg.offer.text + " Offer ends " + auDate(eg.offer.endsOn) + "."; els.offer.style.display = ""; } else els.offer.style.display = "none";
     if (eg.freeOffer && linkUrl(eg.freeOffer.url)) {
       var lm = el("a", "", eg.freeOffer.label); lm.href = linkUrl(eg.freeOffer.url); lm.target = "_blank"; lm.rel = "noopener"; lm.style.marginLeft = "10px";

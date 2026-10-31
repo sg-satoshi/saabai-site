@@ -1058,7 +1058,7 @@ export default function ChatWidget() {
                   </button>
                   <p className="text-[10px] text-saabai-text-dim leading-relaxed">
                     We&apos;ll only use your email to reply, send what you asked for and up to two short follow-ups. Unsubscribe anytime.{" "}
-                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-saabai-teal">Privacy</a>. Please don&apos;t share sensitive info in the chat.
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-saabai-teal">Privacy</a>.
                   </p>
                 </div>
               </div>
