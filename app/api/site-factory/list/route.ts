@@ -1,6 +1,7 @@
 import { BO_PERSONA, personaGreeting } from "../../../../lib/chatbot/personas";
 import { BO_SYSTEM_PROMPT } from "../../../../lib/chatbot/platform-bot-seed";
 import { listSites } from "../../../../lib/site-registry";
+import { SUNDER_LEGACY_META } from "../../../../lib/sunder-factory-seed";
 import { readdirSync, existsSync } from "fs";
 import path from "path";
 
@@ -17,6 +18,7 @@ const LEGACY_META: Record<string, LegacyMeta> = {
   "lmm-site":     { name: "Lifestyle Money Management", niche: "finance" },
   "nico-moretti": { name: "Nico Moretti", niche: "professional-services", description: "Bespoke companionship for discerning executive women." },
   "heaven-thai-massage": { name: "Heaven Thai Massage", niche: "health-wellness", description: "Traditional Thai massage studio in Worongary." },
+  ...SUNDER_LEGACY_META,
 };
 
 // App Router sites hardcoded here as a reliable fallback (APP_ROUTER_SITES in site-registry

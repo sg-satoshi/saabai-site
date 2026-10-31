@@ -12,6 +12,7 @@ import { getExperiments } from "./lib/exp/config";
 import { SLOTS } from "./lib/exp/seed";
 import { CHIEF_COOKIE, chiefAllowed, chiefAudit, chiefHostOk, verifyChiefToken } from "./lib/chief";
 import { OV_COOKIE, encodeOverlay, liveOverlays, overlayPathOk } from "./lib/exp/overlay";
+import { SUNDER_ROBOTS, SUNDER_SLUG } from "./lib/sunder-factory-seed";
 import {
   NOINDEX_ROBOTS,
   ROBOTS_REQUEST_HEADER,
@@ -20,6 +21,7 @@ import {
   canonicalHostForSlug,
   clientSiteRequestDecision,
   apexWwwRedirect,
+  hostRedirect,
   isAdminSitePreview,
   isSaabaiProductionHost,
   parseSitesPath,
@@ -275,6 +277,10 @@ export async function proxy(req: NextRequest) {
   const apex = apexWwwRedirect(hostname, req.nextUrl.pathname, req.nextUrl.search);
   if (apex) return NextResponse.redirect(apex.location, apex.status);
 
+  // Old SUNDER hosts 301 to https://sunder.com.au before any site rewrite.
+  const aliased = hostRedirect(hostname, req.nextUrl.pathname, req.nextUrl.search);
+  if (aliased) return NextResponse.redirect(aliased.location, aliased.status);
+
   // Custom domain routing — rewrite to /sites/${slug}
   if (
     hostname !== "saabai.ai" &&
@@ -365,7 +371,9 @@ export async function proxy(req: NextRequest) {
         return NextResponse.next();
       }
       url.pathname = pathname === "/" || pathname === "" ? siteBase : `${siteBase}${pathname}`;
-      return NextResponse.rewrite(url);
+      const rewritten = NextResponse.rewrite(url);
+      if (slug === SUNDER_SLUG) rewritten.headers.set("X-Robots-Tag", SUNDER_ROBOTS);
+      return rewritten;
     }
   }
 

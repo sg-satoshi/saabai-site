@@ -14,12 +14,14 @@ Plain-English guide for agents: which human term (header, hero, footer...) is wh
 | Tributum Law | tributumlaw.com (friendly `/sites/tributumlaw`) | Stored HTML (slug `tributum-law`) + demo `app/sites/tributum-law-v2/` | `app/sites/[slug]/` |
 | Next Investment | domain pending | Static | `public/clients/nextinvestment` |
 | Nico Moretti | nicomoretti.au | Static HTML served from the repo, not Blob | `public/clients/nico-moretti` |
+| SUNDER | sunder.com.au (www too) | Factory shell. HTML in the repo until someone opens it in Site Factory, which migrates it to Blob + Redis | `public/clients/sunder/` and `lib/sunder-factory-seed.ts` |
 
 Registry of coded sites: `lib/site-registry.ts` (`APP_ROUTER_SITES`: slug, domains, description). Stored-HTML sites live in Vercel Blob / Redis and are served by `app/sites/[slug]/route.ts` and `app/sites/[slug]/[page]/route.ts`. Nico Moretti is the exception: `lib/repo-client-html.ts` serves that slug from the repo files, so a Blob edit does not change the live pages.
 
 ## 2. Host mapping (how a custom domain reaches a site)
 
-- `proxy.ts` (Next 16 middleware). Any host that is not saabai.ai, `*.saabai.ai`, `*.vercel.app` or localhost is a custom domain. `www.` is stripped, then the slug comes from `STATIC_DOMAIN_MAP` in `lib/client-site-surface.ts` (only `lifestylemoneymanagement.com.au` -> `lmm-site`) or the Redis hash `saabai:domain-map` (written by `app/api/site-factory/domain/route.ts`).
+- `proxy.ts` (Next 16 middleware). Any host that is not saabai.ai, `*.saabai.ai`, `*.vercel.app` or localhost is a custom domain. `www.` is stripped, then the slug comes from `STATIC_DOMAIN_MAP` in `lib/client-site-surface.ts` (`lifestylemoneymanagement.com.au` -> `lmm-site`, `sunder.com.au` -> `sunder`) or the Redis hash `saabai:domain-map` (written by `app/api/site-factory/domain/route.ts`).
+- `hostRedirect()` in the same helper 301s `sunderpickleball.com` and `sunderpickleball.com.au` (with and without www) to `https://sunder.com.au` before that rewrite. Path and query are kept. SUNDER hosts stay `noindex` until launch (`isPrelaunchNoindexHost`). Other custom domains stay indexable.
 - Matched requests are rewritten: `/` -> `/sites/<slug>`, `/x` -> `/sites/<slug>/x`. Exceptions: `/_next/*`, `/clients/<slug>/*` and static files under `/sites/<slug>` are rewritten to www.saabai.ai; `/favicon.ico` -> `/sites/<slug>/favicon.ico`.
 - LMM specials in `proxy.ts`: brand assets via `lib/lmm-brand.ts` (`lmmBrandAsset`) and `robots.txt, sitemap.xml, llms.txt, llms-full.txt` rewritten to `/clients/lmm-site/...`.
 - `/api/*` on custom domains gets the same deny-by-default auth as saabai.ai. A form endpoint is only callable if it is listed in `PUBLIC_API` in `proxy.ts` (e.g. `/api/lmm-contact`, `/api/cycle-repair/lead`, `/api/site-factory/lead`). `CUSTOM_DOMAIN_PUBLIC_API` holds extras allowed only on custom domains (`/api/site-factory-chat`). A new form route that is not added to `PUBLIC_API` will 401 in production.

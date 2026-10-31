@@ -6,13 +6,25 @@
  *
  * Production saabai.ai /sites/<slug> 301s to the client's canonical host.
  * Sites with no custom domain, and every preview host, are noindex, nofollow.
- * The custom domain itself stays index, follow. Static assets are left alone
+ * The custom domain itself stays index, follow, except hosts in PRELAUNCH_NOINDEX_HOSTS.
+ * Static assets are left alone
  * so the custom-domain image rewrite to www.saabai.ai cannot loop.
  * Logged-in admin preview fetches keep the /sites URL and stay noindex.
  */
 import { CLIENT_SITE_DIRECTORY, type ClientSiteDirectoryEntry } from "./client-site-directory";
+import { SUNDER_ALIAS_HOSTS, SUNDER_CANONICAL_ORIGIN, SUNDER_HOSTS } from "./sunder-factory-seed";
 
 export const NOINDEX_ROBOTS = "noindex, nofollow";
+
+/** Custom hosts that stay noindex until launch. Other registered hosts stay indexable. */
+const PRELAUNCH_NOINDEX_HOSTS = new Set<string>(SUNDER_HOSTS);
+
+export function isPrelaunchNoindexHost(hostname: string | null | undefined): boolean {
+  const host = normaliseHost(hostname);
+  if (!host) return false;
+  const bare = host.replace(/^www\./, "");
+  return PRELAUNCH_NOINDEX_HOSTS.has(host) || PRELAUNCH_NOINDEX_HOSTS.has(bare);
+}
 
 /** Request header read by app/sites/layout.tsx. Response header is X-Robots-Tag. */
 export const ROBOTS_REQUEST_HEADER = "x-saabai-robots";
@@ -23,7 +35,29 @@ export const ROBOTS_REQUEST_HEADER = "x-saabai-robots";
  */
 export const STATIC_DOMAIN_MAP: Record<string, string> = {
   "lifestylemoneymanagement.com.au": "lmm-site",
+  "sunder.com.au": "sunder",
 };
+
+/**
+ * Hosts that 301 to another origin before custom-domain rewrite.
+ * SUNDER's old pickleball domains land on https://sunder.com.au.
+ * Path and query are kept. www.sunder.com.au is not in this map: it serves the site.
+ */
+export const HOST_REDIRECTS: Record<string, string> = Object.fromEntries(
+  SUNDER_ALIAS_HOSTS.map((host) => [host, SUNDER_CANONICAL_ORIGIN]),
+);
+
+export function hostRedirect(
+  hostname: string | null | undefined,
+  pathname: string,
+  search = "",
+): { location: string; status: 301 } | null {
+  const target = HOST_REDIRECTS[normaliseHost(hostname)];
+  if (!target) return null;
+  const path = pathname.startsWith("/") ? pathname : `/${pathname}`;
+  const query = !search ? "" : search.startsWith("?") ? search : `?${search}`;
+  return { location: `${target}${path}${query}`, status: 301 };
+}
 
 const STATIC_ASSET = /\.(?:avif|css|eot|gif|ico|jpe?g|js|map|mjs|mp4|otf|pdf|png|svg|ttf|webm|webp|woff2?)$/i;
 
@@ -211,8 +245,8 @@ export function clientSiteRequestDecision(opts: {
 
   const host = normaliseHost(opts.host);
   const domain = canonicalHostForSlug(parsed.slug, sites, opts.extraDomains);
-  if (domain && (host === domain || host === `www.${domain}`)) return { action: "index" };
-  if (isRegisteredClientHost(host, sites, opts.extraDomains)) return { action: "index" };
+  if (domain && (host === domain || host === `www.${domain}`)) return indexOrHold(host);
+  if (isRegisteredClientHost(host, sites, opts.extraDomains)) return indexOrHold(host);
 
   const search = opts.search ?? "";
   if (isSaabaiProductionHost(host) && domain && !opts.adminPreview) {
@@ -227,14 +261,20 @@ export function clientSiteRequestDecision(opts: {
 
 /**
  * Robots for pages rendered under app/sites. Client custom domains stay
- * index, follow. saabai.ai and preview hosts are noindex, nofollow.
+ * index, follow, except prelaunch hosts. saabai.ai and preview hosts are noindex, nofollow.
  * A child page may still set a stricter robots export (admin, privacy).
  */
+function indexOrHold(host: string): SurfaceDecision {
+  if (isPrelaunchNoindexHost(host)) return { action: "noindex" };
+  return { action: "index" };
+}
+
 export function clientSiteRobots(
   hostname: string | null | undefined,
   headerValue?: string | null,
 ): { index: boolean; follow: boolean } {
   if (headerValue?.includes("noindex")) return { index: false, follow: false };
+  if (isPrelaunchNoindexHost(hostname)) return { index: false, follow: false };
   if (isRegisteredClientHost(hostname)) return { index: true, follow: true };
   return { index: false, follow: false };
 }
