@@ -1,3 +1,6 @@
+// Deprecated. Current pages no longer load this file. Kept so a cached page
+// that still requests it can open the chat through /api/nico-chat.
+// Delete after 7 November 2026.
 (function() {
   'use strict';
 

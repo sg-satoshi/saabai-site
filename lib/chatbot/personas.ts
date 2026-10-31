@@ -37,9 +37,16 @@ export interface BotPersona {
   verbatimPrompt?: string;
   /**
    * Code-only model, "provider:model-id". Not editable in admin or the client portal.
-   * Absent means the platform default. The handler falls back to that default if this model fails.
+   * Absent means the platform default.
    */
   model?: string;
+  /**
+   * Code-only model used when `model` errors or does not answer in time.
+   * Absent means the platform default (getDefaultModel). Not editable in admin or the portal.
+   */
+  fallbackModel?: string;
+  /** https privacy policy for a small Privacy link. Absent means no link. */
+  privacyUrl?: string;
   /**
    * Look used until an admin saves a skin. Saved colours, name and avatar still win.
    */
@@ -315,6 +322,18 @@ export function sensitiveInfoNoticeFor(slug: string | undefined): string {
   return SENSITIVE_INFO_NOTICE;
 }
 
+/** https only. Empty unless this bot sets a privacy policy URL in code. */
+export function privacyUrlFor(slug: string | undefined): string {
+  const raw = slug ? getPersona(slug)?.privacyUrl?.trim() : "";
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    return url.protocol === "https:" ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
 /**
  * Sofia's prompt, copied word for word from the bespoke route.
  * Do not paraphrase this string.
@@ -394,6 +413,8 @@ export const SOFIA_PERSONA: BotPersona = {
   goal: NICO_GOAL,
   verbatimPrompt: SOFIA_SYSTEM_PROMPT,
   model: "deepseek:deepseek-v4-flash",
+  fallbackModel: "anthropic:claude-haiku-4-5",
+  privacyUrl: "https://nicomoretti.au/privacy-policy",
   appearance: {
     botName: "Sofia",
     avatarUrl: "https://www.saabai.ai/clients/nico-moretti/sofia-avatar.png",

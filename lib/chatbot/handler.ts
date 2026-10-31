@@ -50,8 +50,12 @@ export function loggedModel(provider: string, model: unknown): string {
   return `${p}:${id}`;
 }
 
+/** How long the persona's own model may take before the fallback model is used. */
+export const PERSONA_PRIMARY_TIMEOUT_MS = 12_000;
+
 /**
- * Persona model first, when one is set in code. Any failure uses the platform default.
+ * Persona model first, when one is set in code. An error or a hang uses that persona's
+ * fallbackModel, or the platform default when the persona has none.
  * Other bots have no persona model, so they never call DeepSeek.
  */
 async function generateReply(system: string, messages: { role: "user" | "assistant"; content: string }[], persona?: BotPersona) {
@@ -59,14 +63,24 @@ async function generateReply(system: string, messages: { role: "user" | "assista
   if (primary) {
     try {
       const model = modelFromSpec(primary, `persona:${persona?.slug ?? "bot"}`, primary);
-      const result = await generateText({ model, system, messages, maxOutputTokens: 600 });
+      const result = await generateText({
+        model,
+        system,
+        messages,
+        maxOutputTokens: 600,
+        maxRetries: 0,
+        abortSignal: AbortSignal.timeout(PERSONA_PRIMARY_TIMEOUT_MS),
+      });
       return { result, model, provider: parseModelSpec(primary, primary).provider };
     } catch (err) {
-      console.error("persona model failed, using platform default:", err instanceof Error ? err.message : err);
+      console.error("persona model failed, using fallback:", err instanceof Error ? err.message : err);
     }
   }
-  const model = getDefaultModel();
-  const provider = parseModelSpec(process.env.DEFAULT_CHAT_MODEL, DEFAULT_MODEL_FALLBACK).provider;
+  const pinned = persona?.fallbackModel?.trim();
+  const model = pinned ? modelFromSpec(pinned, `persona-fallback:${persona?.slug ?? "bot"}`, pinned) : getDefaultModel();
+  const provider = pinned
+    ? parseModelSpec(pinned, pinned).provider
+    : parseModelSpec(process.env.DEFAULT_CHAT_MODEL, DEFAULT_MODEL_FALLBACK).provider;
   const result = await generateText({ model, system, messages, maxOutputTokens: 600 });
   return { result, model, provider };
 }

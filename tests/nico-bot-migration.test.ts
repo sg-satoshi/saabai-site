@@ -35,6 +35,7 @@ const read = (f: string) => readFileSync(f, "utf8");
 type Call = { url: string; body: string };
 let calls: Call[] = [];
 let deepseekStatus = 200;
+let hangDeepseek = false;
 const logged: Record<string, unknown>[] = [];
 
 const store: ChatLogStore = {
@@ -98,6 +99,19 @@ before(async () => {
     const body = await bodyText(init);
     calls.push({ url, body });
     if (url.includes("api.deepseek.com")) {
+      if (hangDeepseek) {
+        const signal = init?.signal;
+        return new Promise((_resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("test hang exceeded")), 20_000);
+          const onAbort = () => {
+            clearTimeout(timer);
+            const reason = signal?.reason;
+            reject(reason instanceof Error ? reason : new Error("aborted"));
+          };
+          if (signal?.aborted) onAbort();
+          else signal?.addEventListener("abort", onAbort, { once: true });
+        });
+      }
       if (deepseekStatus !== 200) {
         return new Response(JSON.stringify({ error: { message: "deepseek down" } }), {
           status: deepseekStatus,
@@ -122,6 +136,7 @@ beforeEach(() => {
   calls = [];
   logged.length = 0;
   deepseekStatus = 200;
+  hangDeepseek = false;
   process.env.DEEPSEEK_API_KEY = "test-key";
   process.env.DEFAULT_CHAT_MODEL = "anthropic:claude-haiku-4-5";
   process.env.CHAT_ORIGIN_MODE = "enforce";
@@ -145,6 +160,8 @@ const post = (slug: string, origin: string, extra: Record<string, unknown> = {})
 test("the prompt is verbatim, DeepSeek is code-only, and other bots stay off it", () => {
   assert.equal(buildSystemPrompt(SOFIA_PERSONA), SOFIA_SYSTEM_PROMPT);
   assert.equal(getPersona("nico-moretti")?.model, "deepseek:deepseek-v4-flash");
+  assert.equal(getPersona("nico-moretti")?.fallbackModel, "anthropic:claude-haiku-4-5");
+  assert.equal(getPersona("lmm-site")?.fallbackModel, undefined);
   assert.equal(getPersona("lmm-site")?.model, undefined);
   assert.equal(getPersona("bo-consultancy")?.model, undefined);
   assert.equal(sensitiveInfoNoticeFor("lmm-site"), "");
@@ -235,6 +252,33 @@ test("DeepSeek failure falls back to the platform default and the log names the 
   assert.ok(calls.some((c) => c.url.includes("api.anthropic.com")));
 });
 
+test("a hung DeepSeek call falls back after about 12 seconds, and the fallback stays pinned", async () => {
+  const { handleChat, PERSONA_PRIMARY_TIMEOUT_MS } = await import("../lib/chatbot/handler");
+  const { fallbackSessionId } = await import("../lib/chatbot/store");
+  assert.equal(PERSONA_PRIMARY_TIMEOUT_MS, 12_000);
+  const salted = fallbackSessionId("1.2.3.4", "ua", "2026-10-31", "salt-a");
+  assert.notEqual(salted, fallbackSessionId("1.2.3.4", "ua", "2026-10-31", ""));
+  assert.notEqual(salted, fallbackSessionId("1.2.3.4", "ua", "2026-10-31", "salt-b"));
+  assert.ok(!salted.includes("1.2.3.4"));
+
+  process.env.DEFAULT_CHAT_MODEL = "xai:grok-3-mini";
+  deepseekStatus = 400;
+  const pinned = await handleChat(post("nico-moretti", "https://nicomoretti.au"));
+  assert.equal((await pinned.json()).content, "from anthropic");
+  assert.equal(calls.some((c) => c.url.includes("api.x.ai")), false);
+
+  calls = [];
+  hangDeepseek = true;
+  deepseekStatus = 200;
+  const started = Date.now();
+  const hung = await handleChat(post("nico-moretti", "https://nicomoretti.au"));
+  const elapsed = Date.now() - started;
+  assert.equal((await hung.json()).content, "from anthropic");
+  assert.ok(elapsed >= 11_000 && elapsed < 16_000, `elapsed ${elapsed}`);
+  assert.ok(calls.some((c) => c.url.includes("api.deepseek.com")));
+  assert.ok(calls.some((c) => c.url.includes("api.anthropic.com")));
+});
+
 test("a bot without a persona model never calls DeepSeek", async () => {
   mock.seed({
     hashes: {
@@ -305,6 +349,7 @@ test("public config keeps Sofia's look, greeting, goal and the sensitive-info li
   assert.equal(pub.bg, "#faf8f5");
   assert.match(pub.avatarUrl, /sofia-avatar\.png/);
   assert.equal(pub.sensitiveNotice, SENSITIVE_INFO_NOTICE);
+  assert.equal(pub.privacyUrl, "https://nicomoretti.au/privacy-policy");
   assert.equal(pub.goal?.cta?.url, NICO_ENQUIRY_URL);
   assert.equal(pub.goal?.cta?.label, "Send an enquiry");
   const saved = toPublicConfig({
@@ -317,13 +362,16 @@ test("public config keeps Sofia's look, greeting, goal and the sensitive-info li
   assert.equal(saved.botName, "Renamed");
   const other = toPublicConfig({ slug: "lmm-site", active: true, config: { plan: "presence", skin: {} }, site: { name: "Lifestyle Money Management" } });
   assert.equal(other.sensitiveNotice, "");
+  assert.equal(other.privacyUrl, "");
   const widget = read("public/embed/chat.v1.js");
-  assert.match(widget, /1\.3\.0/);
+  assert.match(widget, /1\.3\.1/);
   assert.match(widget, /sensitiveNotice/);
+  assert.match(widget, /privacyUrl/);
+  assert.match(widget, /"Privacy"/);
   assert.doesNotMatch(widget, /DeepSeek/);
   for (const file of readdirSync("public/clients/nico-moretti").filter((name) => name.endsWith(".html"))) {
     const html = read(`public/clients/nico-moretti/${file}`);
-    assert.match(html, /https:\/\/www\.saabai\.ai\/embed\/chat\.v1\.js\?v=1\.3\.0/, file);
+    assert.match(html, /https:\/\/www\.saabai\.ai\/embed\/chat\.v1\.js\?v=1\.3\.1/, file);
     assert.match(html, /data-site="nico-moretti"/, file);
     assert.doesNotMatch(html, /DeepSeek in China/, file);
   }

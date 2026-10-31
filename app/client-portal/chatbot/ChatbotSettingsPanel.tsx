@@ -28,6 +28,7 @@ const fallbackResolved = (name: string): PublicWidgetConfig => ({
   position: "right", poweredBy: true, placeholder: "", offMessage: "", handoff: null, goal: null,
   engage: { endChat: true, emailCopy: false, openers: [], exitIntent: false, idleSeconds: 0, scrollPercent: 0, freeOffer: null, offer: null, returnGreeting: "", review: null, nudgeCap: 3 },
   sensitiveNotice: "",
+  privacyUrl: "",
 });
 
 export function ChatbotSettingsPanel({ readOnly }: { readOnly?: boolean }) {

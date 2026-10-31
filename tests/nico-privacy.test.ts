@@ -24,6 +24,16 @@ test("the privacy policy states the chat facts the code can support", () => {
     "DeepSeek is based in China and may process and store data there",
     "People's Republic of China",
     "saabai-chat:nico-moretti",
+    "saabai-chat:nico-moretti:seen",
+    "saabai-chat:nico-moretti:nd",
+    "saabai-chat:nico-moretti:rv",
+    "nico-chat-history",
+    "deletes it when it loads",
+    "about 12 seconds",
+    "SHA-256",
+    "site session secret",
+    "70 days",
+    "400 days",
     "conversation id",
     "30 minutes",
     "Claude Haiku 4.5",
@@ -82,7 +92,7 @@ test("every Nico page links the privacy policy, and the chat discloses the AI", 
   for (const file of pages) {
     const html = readFileSync(`${dir}/${file}`, "utf8");
     assert.match(html, /nicomoretti\.au\/privacy-policy|href="\/privacy-policy"|privacy-policy\.html/, file);
-    assert.match(html, /embed\/chat\.v1\.js\?v=1\.3\.0/, file);
+    assert.match(html, /embed\/chat\.v1\.js\?v=1\.3\.1/, file);
     assert.match(html, /data-site="nico-moretti"/, file);
     if (html.includes('type="submit"')) formPages.push(file);
   }
@@ -123,6 +133,8 @@ test("every Nico page links the privacy policy, and the chat discloses the AI", 
   assert.doesNotMatch(widget, /embed\/chat\.v1|chat-platform/);
   const shared = readFileSync("public/embed/chat.v1.js", "utf8");
   assert.match(shared, /sensitiveNotice/);
+  assert.match(shared, /privacyUrl/);
+  assert.match(shared, /nico-chat-history/);
   assert.doesNotMatch(shared, /DeepSeek in China/);
   assert.ok(!/[\u2012-\u2015]/.test(widget));
 });
