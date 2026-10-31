@@ -3,7 +3,7 @@ import { toPublicGoal, type GoalConfig, type PublicGoal } from "./goal";
 import { effectiveEngage, toPublicEngage, type EngageConfig, type PublicEngage } from "./engage";
 import { leadCaptureEnabled } from "./lead-capture";
 import { handoffTarget, type HandoffLink } from "./disclosure";
-import { getPersona, greetingForSlug } from "./personas";
+import { getPersona, greetingForSlug, privacyUrlFor } from "./personas";
 /** Pure rules for the central chatbot platform. No I/O, easy to test. */
 
 export const PLANS = ["presence", "growth", "signature"] as const;
@@ -17,7 +17,7 @@ export const CAPS: Record<Plan, number> = { presence: 200, growth: 600, signatur
 export const SEED_OFF = ["cycle-repair"];
 
 /** Sites that still use their own chat route. The platform switch does not control them yet. */
-export const BESPOKE_SLUGS = ["tributum-law-v2", "nextinvestment", "nico-moretti"];
+export const BESPOKE_SLUGS = ["tributum-law-v2", "nextinvestment"];
 
 export const POSITIONS = ["right", "left"] as const;
 export type Position = (typeof POSITIONS)[number];
@@ -149,13 +149,18 @@ export function validateSkin(input: unknown): SkinResult {
   return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value: out };
 }
 
-/** Skin as the widget should see it: defaults, then site values, then saved skin, with plan rules applied. */
-export function resolveSkin(config: Pick<ChatbotConfig, "plan" | "skin">, site?: { botName?: string; greeting?: string; avatarUrl?: string }): Skin & { poweredBy: boolean } {
+/** Skin as the widget should see it: defaults, then persona look, then site values, then saved skin, with plan rules applied. */
+export function resolveSkin(
+  config: Pick<ChatbotConfig, "plan" | "skin">,
+  site?: { botName?: string; greeting?: string; avatarUrl?: string },
+  base?: Partial<Skin>,
+): Skin & { poweredBy: boolean } {
   const merged: Skin = {
     ...DEFAULT_SKIN,
-    ...(site?.botName ? { botName: site.botName } : {}),
+    ...base,
+    ...(site?.botName && !base?.botName ? { botName: site.botName } : {}),
     ...(site?.greeting ? { greeting: site.greeting } : {}),
-    ...(site?.avatarUrl ? { avatarUrl: site.avatarUrl } : {}),
+    ...(site?.avatarUrl && !base?.avatarUrl ? { avatarUrl: site.avatarUrl } : {}),
     ...config.skin,
   };
   return { ...merged, poweredBy: poweredByVisible(config.plan, merged.showPoweredBy) };
@@ -252,10 +257,17 @@ export interface PublicWidgetConfig {
   goal: PublicGoal | null;
   /** Widget features and nudges. */
   engage: PublicEngage;
+  /** Small Privacy link. Empty unless this bot sets one in code. */
+  privacyUrl: string;
 }
 
 export function toPublicConfig(opts: { slug?: string; active: boolean; config: Pick<ChatbotConfig, "plan" | "skin" | "goal" | "engage">; site: { name: string; business?: { name?: string; phone?: string; email?: string }; chatbot?: { name?: string; greeting?: string; avatarUrl?: string } } }): PublicWidgetConfig {
-  const sk = resolveSkin(opts.config, { botName: opts.site.chatbot?.name, greeting: opts.site.chatbot?.greeting, avatarUrl: opts.site.chatbot?.avatarUrl });
+  const persona = opts.slug ? getPersona(opts.slug) : undefined;
+  const sk = resolveSkin(
+    opts.config,
+    { botName: opts.site.chatbot?.name, greeting: opts.site.chatbot?.greeting, avatarUrl: opts.site.chatbot?.avatarUrl },
+    persona?.appearance,
+  );
   const businessName = opts.site.business?.name || opts.site.name;
   const bot = sk.botName || businessName;
   return {
@@ -275,6 +287,7 @@ export function toPublicConfig(opts: { slug?: string; active: boolean; config: P
     handoff: handoffTarget(opts.site.business),
     goal: toPublicGoal(effectiveGoal(opts.slug, opts.config.goal)),
     engage: toPublicEngage(effectiveEngage(opts.config.engage), { leadCapture: leadCaptureEnabled() }),
+    privacyUrl: privacyUrlFor(opts.slug),
   };
 }
 

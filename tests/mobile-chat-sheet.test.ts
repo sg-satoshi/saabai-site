@@ -129,7 +129,7 @@ test("client script tags bust the cache after the widget change", () => {
   assert.match(readFileSync("public/clients/lmm-site/index.html", "utf8"), /chat-widget\.js\?v=14/);
   assert.match(readFileSync("public/clients/nextinvestment/index.html", "utf8"), /chat-widget\.js\?v=10/);
   for (const file of readdirSync("public/clients/nico-moretti").filter((name) => name.endsWith(".html"))) {
-    assert.match(readFileSync(join("public/clients/nico-moretti", file), "utf8"), /chat-widget\.js\?7/, file);
+    assert.match(readFileSync(join("public/clients/nico-moretti", file), "utf8"), /embed\/chat\.v1\.js\?v=1\.3\.1/, file);
   }
 });
 

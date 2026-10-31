@@ -78,8 +78,10 @@ test("portal scoping: slug comes from the session site, other slugs refused", ()
   assert.ok(!other.ok && other.status === 403);
   assert.ok(decidePortalBot({ site: { slug: "mine", name: "Mine" } }).ok);
   assert.ok(decidePortalBot({ site: { slug: "mine", name: "Mine" }, requestedSlug: "mine" }).ok);
-  const bespoke = decidePortalBot({ site: { slug: "nico-moretti", name: "N" } });
+  const bespoke = decidePortalBot({ site: { slug: "tributum-law-v2", name: "T" } });
   assert.ok(!bespoke.ok && bespoke.status === 409);
+  const nico = decidePortalBot({ site: { slug: "nico-moretti", name: "N" } });
+  assert.equal(nico.ok, true);
 });
 
 test("admin locks: client cannot change locked fields or the lock list", () => {

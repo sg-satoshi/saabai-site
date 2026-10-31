@@ -1,3 +1,6 @@
+// TODO: Delete this file after 7 November 2026.
+// Deprecated. Current pages no longer load this file. Kept so a cached page
+// that still requests it can open the chat through /api/nico-chat.
 (function() {
   'use strict';
 
@@ -190,7 +193,7 @@
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>' +
           '</button>' +
         '</div>' +
-        '<div class="nm-disclaimer">Sofia is an AI assistant. Please don\'t share sensitive details such as health, sexual matters, or sexual preferences or practices. Messages are sent to DeepSeek in China. <a href="' + privacyHref() + '">Privacy policy</a></div>' +
+        '<div class="nm-disclaimer">Sofia is an AI assistant. <a href="' + privacyHref() + '">Privacy policy</a></div>' +
       '</div>' +
     '</div>';
 

@@ -122,9 +122,19 @@ export async function setEnabled(opts: { slug: string; siteName: string; siteCha
   return { changed: true };
 }
 
-/** Anonymous conversation id when the widget does not send one: visitor and day, hashed (no raw IP stored). */
-export function fallbackSessionId(ip: string, ua: string, day = new Date().toISOString().slice(0, 10)): string {
-  return "v:" + createHash("sha256").update(`${ip}|${ua}|${day}`).digest("hex").slice(0, 24);
+/**
+ * Anonymous conversation id when the widget does not send one.
+ * SHA-256 of the IP, user agent, day, and the existing site session secret.
+ * The stored value is a short hash. It does not contain the raw IP or the secret.
+ * An empty secret leaves the hash unsalted.
+ */
+export function fallbackSessionId(
+  ip: string,
+  ua: string,
+  day = new Date().toISOString().slice(0, 10),
+  pepper = process.env.SAABAI_SESSION_SECRET || "",
+): string {
+  return "v:" + createHash("sha256").update(`${ip}|${ua}|${day}|${pepper}`).digest("hex").slice(0, 24);
 }
 
 export interface Usage { conversations: number; messages: number; inputTokens: number; outputTokens: number }

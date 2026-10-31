@@ -131,8 +131,10 @@ test("seeding keeps a saved skin and gives new sites their starting colours", as
 
 test("wiring: Stu installed (and OFF), remaining bespoke bots untouched, BO and LMM on the platform, admin-only content save, routes registered", () => {
   assert.match(read("app/sites/cycle-repair/layout.tsx"), /embed\/chat\.v1\.js"[^>]*data-site="cycle-repair"/);
-  for (const f of ["tributum-chat", "nico-chat", "nextinvestment-chat"]) assert.doesNotMatch(read(`app/api/${f}/route.ts`), /chatbot\//, `${f} untouched`);
-  for (const f of ["public/clients/nico-moretti/chat-widget.js", "public/clients/nextinvestment/assets/chat-widget.js"]) assert.doesNotMatch(read(f), /embed\/chat\.v1|chat-platform/, `${f} untouched`);
+  for (const f of ["tributum-chat", "nextinvestment-chat"]) assert.doesNotMatch(read(`app/api/${f}/route.ts`), /chatbot\//, `${f} untouched`);
+  assert.match(read("app/api/nico-chat/route.ts"), /chatbot\/handler/);
+  assert.doesNotMatch(read("public/clients/nextinvestment/assets/chat-widget.js"), /embed\/chat\.v1|chat-platform/);
+  assert.match(read("public/clients/nico-moretti/index.html"), /embed\/chat\.v1\.js/);
   for (const f of ["public/clients/lmm-site/assets/chat-widget.js", "app/components/BOChatWidget.tsx", "app/sites/bo-consultancy/layout.tsx"]) {
     const src = read(f);
     assert.match(src, /\/api\/chat-platform\/message/, `${f} posts to the platform`);

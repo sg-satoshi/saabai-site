@@ -1,4 +1,5 @@
 import { Redis } from "@upstash/redis";
+import { codeChatbotSites } from "./chatbot/code-sites";
 import { BO_SYSTEM_PROMPT, CHRISTINA_GREETING } from "./chatbot/platform-bot-seed";
 import { CLIENT_SITE_DIRECTORY } from "./client-site-directory";
 
@@ -163,6 +164,12 @@ const APP_ROUTER_SITE_DETAILS: Array<Omit<SiteConfig, "url" | "domains">> = [
   },
 ];
 
+/** Add a code chatbot row when Redis has no record with that slug. */
+export function withCodeChatbotSites(sites: SiteConfig[]): SiteConfig[] {
+  const seen = new Set(sites.map((s) => s.slug));
+  return [...sites, ...codeChatbotSites().filter((s) => !seen.has(s.slug))];
+}
+
 export const APP_ROUTER_SITES: SiteConfig[] = CLIENT_SITE_DIRECTORY.map((entry) => {
   const details = APP_ROUTER_SITE_DETAILS.find((site) => site.slug === entry.slug);
   if (!details) throw new Error(`APP_ROUTER_SITES is missing details for "${entry.slug}". Add them in lib/site-registry.ts.`);
@@ -212,9 +219,9 @@ export async function listSites(): Promise<SiteConfig[]> {
     const doms = new Set(redisSites.flatMap((s) => customDomains(s)));
     const merged = [...redisSites, ...APP_ROUTER_SITES.filter((s) => !seen.has(s.slug) && !names.has(nameKey(s)) && !customDomains(s).some((d) => doms.has(d)))];
 
-    return merged;
+    return withCodeChatbotSites(merged);
   } catch {
-    return APP_ROUTER_SITES;
+    return withCodeChatbotSites(APP_ROUTER_SITES);
   }
 }
 

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { generateText } from "ai";
-import { getDefaultModel } from "../chat-config";
+import { DEFAULT_MODEL_FALLBACK, getDefaultModel, modelFromSpec, parseModelSpec } from "../chat-config";
 import { getSiteBySlug } from "../site-registry";
 import { SLUG_RE, allowedHosts, callerHost, cleanMessages, hostAllowed, logOriginMiss, mappedHostsFor, originMode, slugLimited } from "../chat-origin";
 import { effectiveGoal, offMessage, promptAdditions } from "./core";
@@ -8,7 +8,7 @@ import { effectiveEngage, engagePrompt, parseReview } from "./engage";
 import { goalPrompt, parseReply, resolveButtons } from "./goal";
 import { DISCLOSURE_ONCE_RULE, NOT_SURE_RULE } from "./disclosure";
 import { isNotSureReply } from "./events";
-import { buildSystemPrompt, domainsForBot, getPersona } from "./personas";
+import { buildSystemPrompt, domainsForBot, getPersona, type BotPersona } from "./personas";
 import { NO_DASH_RULE, noDashes } from "../no-dashes";
 import { fallbackSessionId, getConfig, isEnabled, recordChatEvent, recordTokens, recordUsage } from "./store";
 import { lastUserText, logChatTurn, modelIdFrom } from "../chat-log";
@@ -40,6 +40,50 @@ const say = (content: string, status: number, h: Record<string, string>, extra: 
   Response.json({ content, text: content, error: status >= 400 ? content : undefined, ...extra }, { status, headers: h });
 
 const clientIp = (req: NextRequest) => req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "unknown";
+
+/** Model string stored on the message. The provider prefix is how we record which provider answered. */
+export function loggedModel(provider: string, model: unknown): string {
+  const id = modelIdFrom(model);
+  const p = provider.trim().toLowerCase();
+  if (!p || id === "unknown") return id;
+  if (id.toLowerCase().startsWith(`${p}:`)) return id;
+  return `${p}:${id}`;
+}
+
+/** How long the persona's own model may take before the fallback model is used. */
+export const PERSONA_PRIMARY_TIMEOUT_MS = 12_000;
+
+/**
+ * Persona model first, when one is set in code. An error or a hang uses that persona's
+ * fallbackModel, or the platform default when the persona has none.
+ * Other bots have no persona model, so they never call DeepSeek.
+ */
+async function generateReply(system: string, messages: { role: "user" | "assistant"; content: string }[], persona?: BotPersona) {
+  const primary = persona?.model?.trim();
+  if (primary) {
+    try {
+      const model = modelFromSpec(primary, `persona:${persona?.slug ?? "bot"}`, primary);
+      const result = await generateText({
+        model,
+        system,
+        messages,
+        maxOutputTokens: 600,
+        maxRetries: 0,
+        abortSignal: AbortSignal.timeout(PERSONA_PRIMARY_TIMEOUT_MS),
+      });
+      return { result, model, provider: parseModelSpec(primary, primary).provider };
+    } catch (err) {
+      console.error("persona model failed, using fallback:", err instanceof Error ? err.message : err);
+    }
+  }
+  const pinned = persona?.fallbackModel?.trim();
+  const model = pinned ? modelFromSpec(pinned, `persona-fallback:${persona?.slug ?? "bot"}`, pinned) : getDefaultModel();
+  const provider = pinned
+    ? parseModelSpec(pinned, pinned).provider
+    : parseModelSpec(process.env.DEFAULT_CHAT_MODEL, DEFAULT_MODEL_FALLBACK).provider;
+  const result = await generateText({ model, system, messages, maxOutputTokens: 600 });
+  return { result, model, provider };
+}
 
 /**
  * The one chat handler for platform bots. Order matters:
@@ -113,8 +157,7 @@ Keep responses under 120 words. End with a helpful next step when relevant.`;
     const ep = config.engage ? engagePrompt(engage, config.knowledge?.faqs.length ?? 0) : "";
     if (ep) system = `${system}\n\n${ep}`;
 
-    const model = getDefaultModel();
-    const result = await generateText({ model, system, messages: chatMessages, maxOutputTokens: 600 });
+    const { result, model, provider } = await generateReply(system, chatMessages, persona);
     const u = result.usage as { inputTokens?: number; outputTokens?: number } | undefined;
     await recordTokens(slug, u?.inputTokens ?? 0, u?.outputTokens ?? 0);
     const parsed = parseReply(noDashes(result.text), goal);
@@ -124,7 +167,7 @@ Keep responses under 120 words. End with a helpful next step when relevant.`;
       bot: slug,
       siteId: slug,
       conversationId: sid,
-      model: modelIdFrom(model),
+      model: loggedModel(provider, model),
       usage: result.totalUsage ?? result.usage,
       userText: lastUserText(chatMessages),
       assistantText: text,
