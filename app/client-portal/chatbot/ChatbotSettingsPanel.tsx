@@ -1,58 +1,70 @@
 "use client";
-/** Client portal: the client's own chatbot goal, buttons and questions. */
-import React, { useEffect, useState } from "react";
-import "../../components/billing/billing.css";
-import GoalEditor, { EMPTY_GOAL } from "../../components/chatbot/GoalEditor";
-import type { GoalConfig } from "../../../lib/chatbot/goal";
-import EngageEditor from "../../components/chatbot/EngageEditor";
-import InsightsPanel from "../../components/chatbot/InsightsPanel";
+/** Client portal chatbot settings. Same editor as admin, without plan, install or the lock control. */
+import { useEffect, useState } from "react";
+import ChatbotEditor, { type EditorRow } from "../../saabai-admin/chatbots/ChatbotEditor";
 import { DEFAULT_ENGAGE, type EngageConfig } from "../../../lib/chatbot/engage";
+import type { GoalConfig } from "../../../lib/chatbot/goal";
+import type { Faq, PublicWidgetConfig, Tone } from "../../../lib/chatbot/core";
+import "../../saabai-admin/chatbots/chatbots.css";
 
-type Data = { site: { name: string }; goal: GoalConfig | null; locked: string[]; engage: EngageConfig };
+type Payload = {
+  site: { name: string; slug?: string };
+  goal: GoalConfig | null;
+  engage: EngageConfig;
+  locked?: string[];
+  botLock?: { locked: boolean; by?: string; at?: string };
+  plan?: string;
+  skin?: { showPoweredBy?: boolean };
+  tone?: Tone;
+  knowledge?: { facts: string; faqs: Faq[] };
+  canRemovePoweredBy?: boolean;
+  resolved?: PublicWidgetConfig | null;
+  enabled?: boolean | null;
+  error?: string;
+};
+
+const fallbackResolved = (name: string): PublicWidgetConfig => ({
+  v: 1, active: true, botName: name, greeting: "", avatarUrl: "", primary: "#0b5c78", accent: "#62c5d1", bg: "#fbfbfd", text: "#13152a",
+  position: "right", poweredBy: true, placeholder: "", offMessage: "", handoff: null, goal: null,
+  engage: { endChat: true, emailCopy: false, openers: [], exitIntent: false, idleSeconds: 0, scrollPercent: 0, freeOffer: null, offer: null, returnGreeting: "", review: null, nudgeCap: 3, privacyNote: "" },
+});
 
 export function ChatbotSettingsPanel({ readOnly }: { readOnly?: boolean }) {
-  const [data, setData] = useState<Data | null>(null);
-  const [goal, setGoal] = useState<GoalConfig>(EMPTY_GOAL);
-  const [engage, setEngage] = useState<EngageConfig>(DEFAULT_ENGAGE);
+  const [row, setRow] = useState<EditorRow | null>(null);
   const [err, setErr] = useState("");
-  const [fields, setFields] = useState<Record<string, string>>({});
-  const [ok, setOk] = useState("");
-  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/portal/chatbot").then(async (r) => {
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error || "Couldn't load your chatbot");
-      setData(d); setGoal(d.goal ?? EMPTY_GOAL); setEngage(d.engage ?? DEFAULT_ENGAGE);
-    }).catch((e) => setErr((e as Error).message));
-  }, []);
-
-  async function save() {
-    setBusy(true); setErr(""); setOk(""); setFields({});
-    try {
-      const r = await fetch("/api/portal/chatbot", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ goal, engage }) });
-      const d = await r.json();
-      if (!r.ok) { setFields(d.fields ?? {}); throw new Error(d.error || "Couldn't save"); }
-      setGoal(d.goal ?? EMPTY_GOAL); setEngage(d.engage ?? DEFAULT_ENGAGE); setOk("Saved. Your chatbot picks this up within about a minute.");
-    } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
+  async function load() {
+    const r = await fetch("/api/portal/chatbot");
+    const d = (await r.json()) as Payload;
+    if (!r.ok) throw new Error(d.error || "Couldn't load your chatbot");
+    const name = d.site?.name || "Your chatbot";
+    setRow({
+      slug: d.site?.slug || "",
+      name,
+      plan: d.plan || "presence",
+      enabled: d.enabled ?? null,
+      skin: d.skin ?? {},
+      resolved: d.resolved ?? fallbackResolved(name),
+      tone: d.tone ?? "friendly",
+      knowledge: d.knowledge ?? { facts: "", faqs: [] },
+      goal: d.goal,
+      engage: d.engage ?? DEFAULT_ENGAGE,
+      canRemovePoweredBy: d.canRemovePoweredBy,
+      botLock: d.botLock,
+      lastChange: d.botLock?.at ? { at: d.botLock.at, by: d.botLock.by } : undefined,
+    });
   }
 
-  if (!data) return <div className="bl" style={{ padding: 8, color: "#5f6580" }}>{err || "Loading…"}</div>;
+  useEffect(() => {
+    load().catch((e) => setErr((e as Error).message));
+  }, []);
+
+  if (!row) return <div style={{ padding: 8, color: "var(--n-500)" }}>{err || "Loading…"}</div>;
   return (
-    <div className="bl" data-testid="portal-chatbot">
-      <div className="ph">
-        <div>
-          <h1>Chatbot</h1>
-          <div className="sub">{data.site.name} · Choose what your chatbot works towards and the buttons it shows.</div>
-        </div>
-      </div>
-      {readOnly && <div className="bl-banner">Viewing as client. Changes are disabled.</div>}
-      {ok && <div className="bl-ok" style={{ marginBottom: 12 }}>{ok}</div>}
-      {err && <div className="bl-err" style={{ marginBottom: 12 }}>{err}</div>}
-      <GoalEditor value={goal} onChange={setGoal} errors={fields} mode="client" readOnly={readOnly} />
-      <EngageEditor value={engage} onChange={setEngage} errors={fields} readOnly={readOnly} />
-      <button className="bl-btn pri" onClick={() => void save()} disabled={busy || readOnly} data-testid="portal-chatbot-save">{busy ? "Saving" : "Save chatbot settings"}</button>
-      <InsightsPanel endpoint="/api/portal/chatbot/insights" />
+    <div data-testid="portal-chatbot">
+      {err && <p role="alert">{err}</p>}
+      {readOnly && <div className="lockbanner" role="status" style={{ margin: "12px 32px" }}>Viewing as client. Changes are disabled.</div>}
+      <ChatbotEditor mode="client" row={row} readOnly={!!readOnly || !!row.botLock?.locked} onSaved={() => load().catch((e) => setErr((e as Error).message))} />
     </div>
   );
 }

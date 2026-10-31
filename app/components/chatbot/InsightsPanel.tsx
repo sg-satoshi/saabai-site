@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { formatLastChat } from "../../../lib/chatbot/leads";
 
 interface Step { key: string; label: string; count: number; rate: number | null; of: string }
 interface Msg { role: "user" | "assistant"; content: string; at: string }
@@ -19,7 +20,7 @@ const portalCard: React.CSSProperties = {
 };
 
 /** Funnel counts and rates plus transcripts. `endpoint` is already scoped by the caller's auth. */
-export default function InsightsPanel({ endpoint, variant = "portal" }: { endpoint: string; variant?: "portal" | "admin" }) {
+export default function InsightsPanel({ endpoint, variant = "portal", historyHref, transcriptsOn }: { endpoint: string; variant?: "portal" | "admin" | "summary"; historyHref?: string; transcriptsOn?: boolean }) {
   const [data, setData] = useState<Data | null>(null);
   const [err, setErr] = useState("");
   const [open, setOpen] = useState<string | null>(null);
@@ -37,6 +38,7 @@ export default function InsightsPanel({ endpoint, variant = "portal" }: { endpoi
     : open;
   if (err) return admin ? <div className="ch-card ch-card-bd" role="alert">{err}</div> : <div style={portalCard} role="alert">{err}</div>;
   if (!data) return admin ? <div className="ch-card ch-card-bd">Loading insights...</div> : <div style={portalCard}>Loading insights...</div>;
+  if (variant === "summary") return <SummaryInsights data={data} historyHref={historyHref} transcriptsOn={transcriptsOn} />;
   if (!admin) return <PortalInsights data={data} open={open} setOpen={setOpen} />;
   const current = data.transcripts.find((t) => t.id === selected) ?? null;
   return (
@@ -86,6 +88,40 @@ export default function InsightsPanel({ endpoint, variant = "portal" }: { endpoi
             )}
         </div>
       </section>
+    </div>
+  );
+}
+
+function SummaryInsights({ data, historyHref, transcriptsOn }: { data: Data; historyHref?: string; transcriptsOn?: boolean }) {
+  const recent = data.transcripts.slice(0, 5);
+  const transcripts = transcriptsOn ?? data.transcriptsEnabled;
+  return (
+    <div data-testid="insights-summary">
+      <table className="ch-funnel">
+        <tbody>
+          {data.funnel.steps.slice(0, 8).map((s) => (
+            <tr key={s.key}>
+              <td>{s.label}</td>
+              <td className="num r">{s.count.toLocaleString("en-AU")}</td>
+              <td className="ch-rate">{s.rate === null ? "" : `${s.rate}%`}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <h3 className="ch-h" style={{ marginTop: 18 }}>Recent chats</h3>
+      <p className="ch-note">Last {data.retentionDays} days. {transcripts ? "Transcripts are on for this chatbot." : "Transcripts are turned off for this chatbot."}</p>
+      {recent.length === 0 ? <p className="ch-note">No chats yet.</p> : recent.map((t) => {
+        const user = t.messages.find((m) => m.role === "user");
+        const answered = t.messages.some((m) => m.role === "assistant");
+        return (
+          <div key={t.id} className="cbed-chat">
+            {answered ? <span className="tag ok">Answered</span> : <span className="tag">Opened</span>}
+            <span>{(user?.content || "Chat").slice(0, 80)}</span>
+            <span className="muted">{formatLastChat(t.startedAt)}</span>
+          </div>
+        );
+      })}
+      {historyHref ? <a className="btn sm" href={historyHref} style={{ marginTop: 12 }}>Open chat history</a> : null}
     </div>
   );
 }

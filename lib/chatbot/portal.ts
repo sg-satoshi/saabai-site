@@ -2,6 +2,7 @@
  * Client portal chatbot settings. The bot is always the one linked to the signed-in client's
  * site. A slug in the request is never trusted: if one is sent and it is not theirs, refuse.
  */
+import { portalWriteGuard, type BotLock } from "./bot-lock";
 import { BESPOKE_SLUGS, effectiveGoal } from "./core";
 import { ENGAGE_FIELD_KEYS, effectiveEngage, mergeClientEngage, validateEngage, type EngageConfig } from "./engage";
 import { GOAL_FIELDS, GOAL_LABEL, GOAL_LIMITS, GOAL_TYPES, mergeClientGoal, validateGoal, type GoalConfig } from "./goal";
@@ -17,7 +18,9 @@ export function decidePortalBot(opts: { site: { slug: string; name: string } | n
   return { ok: true, slug: opts.site.slug, siteName: opts.site.name };
 }
 
-export function portalView(slug: string, stored: GoalConfig | undefined, engage?: Partial<EngageConfig>) {
+export { portalWriteGuard };
+
+export function portalView(slug: string, stored: GoalConfig | undefined, engage?: Partial<EngageConfig>, botLock?: BotLock) {
   const goal = effectiveGoal(slug, stored) ?? null;
   return {
     goal,
@@ -27,6 +30,7 @@ export function portalView(slug: string, stored: GoalConfig | undefined, engage?
     options: GOAL_TYPES.map((id) => ({ id, label: GOAL_LABEL[id] })),
     fields: GOAL_FIELDS,
     limits: GOAL_LIMITS,
+    botLock: botLock?.locked ? { locked: true, by: botLock.by, at: botLock.at } : { locked: false },
   };
 }
 

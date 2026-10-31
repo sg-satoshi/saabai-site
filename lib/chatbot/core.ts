@@ -1,3 +1,4 @@
+import type { BotLock } from "./bot-lock";
 import { toPublicGoal, type GoalConfig, type PublicGoal } from "./goal";
 import { effectiveEngage, toPublicEngage, type EngageConfig, type PublicEngage } from "./engage";
 import { leadCaptureEnabled } from "./lead-capture";
@@ -59,6 +60,8 @@ export interface ChatbotConfig {
   goal?: GoalConfig;
   /** Conversion playbook toggles. Missing means the tasteful defaults. */
   engage?: Partial<EngageConfig>;
+  /** Whole-bot lock. Missing means the client can still edit. Admins set this. */
+  botLock?: BotLock;
   updatedAt?: string;
   updatedBy?: string;
 }
