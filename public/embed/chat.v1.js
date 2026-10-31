@@ -70,6 +70,7 @@
     ".panel{position:absolute;bottom:76px;width:352px;max-width:calc(100vw - 40px);height:500px;max-height:calc(100vh - 110px);background:var(--bg);border-radius:16px;box-shadow:0 20px 70px rgba(0,0,0,.25);display:none;flex-direction:column;overflow:hidden}",
     ".right .panel{right:0}.left .panel{left:0}.panel.open{display:flex}",
     ".head{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--primary);color:#fff;flex:none}",
+    ".logo{height:22px;width:auto;max-width:88px;object-fit:contain;flex:none}",
     ".av{width:40px;height:40px;border-radius:50%;background:var(--accent);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex:none;overflow:hidden;border:2px solid rgba(255,255,255,.35)}",
     ".av img{width:100%;height:100%;object-fit:cover}",
     ".nm{font-weight:700;font-size:15px;line-height:1.2}.st{font-size:12px;opacity:.85;display:flex;align-items:center;gap:6px;margin-top:2px}.st:before{content:'';width:8px;height:8px;border-radius:50%;background:#4ade80}",
@@ -122,7 +123,7 @@
     var w = el("div", "w right"); els.w = w;
     var btn = el("button", "btn"); btn.type = "button"; btn.setAttribute("aria-expanded", "false"); els.btn = btn;
     var panel = el("div", "panel"); panel.setAttribute("role", "dialog"); els.panel = panel;
-    var head = el("div", "head");
+    var head = el("div", "head"); els.head = head;
     var av = el("div", "av"); els.av = av;
     var info = el("div"); els.nm = el("div", "nm"); els.st = el("div", "st", "Online now"); info.appendChild(els.nm); info.appendChild(els.st);
     var close = el("button", "close", "\u00d7"); close.type = "button"; close.setAttribute("aria-label", "Close chat"); els.close = close;
@@ -199,6 +200,10 @@
       var purl = linkUrl(c.privacyUrl || "");
       if (purl) { els.pl.href = purl; els.pl.style.display = ""; } else els.pl.style.display = "none";
     }
+    var logoUrl = safeUrl(c.logoUrl);
+    if (!els.logo && els.head && els.av) { els.logo = el("img", "logo"); els.logo.alt = ""; els.head.insertBefore(els.logo, els.av); }
+    if (logoUrl) { els.logo.src = logoUrl; els.logo.style.display = ""; }
+    else if (els.logo) els.logo.style.display = "none";
     if (eg.offer && eg.offer.text) { els.offer.textContent = eg.offer.text + " Offer ends " + auDate(eg.offer.endsOn) + "."; els.offer.style.display = ""; } else els.offer.style.display = "none";
     if (eg.freeOffer && linkUrl(eg.freeOffer.url)) {
       var lm = el("a", "", eg.freeOffer.label); lm.href = linkUrl(eg.freeOffer.url); lm.target = "_blank"; lm.rel = "noopener"; lm.style.marginLeft = "10px";

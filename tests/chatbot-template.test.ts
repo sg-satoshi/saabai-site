@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { disclosureCount, openingGreeting } from "../lib/chatbot/disclosure";
+import { disclosureCount, greetingFollowOn, openingGreeting } from "../lib/chatbot/disclosure";
 import { isNotSureReply, isWidgetEvent } from "../lib/chatbot/events";
 import { LEAD_ENDPOINTS, mockLeadPost, questionsFor, runAllEvals, spokenFactIds } from "../lib/chatbot/eval-set";
 import { lmmLicensingLine } from "../lib/lmm-legal";
@@ -16,6 +16,34 @@ test("AI disclosure is one sentence, and saying it again does not double it", ()
   assert.equal(disclosureCount(openingGreeting({ botName: "Zara", businessName: "Lifestyle Money Management (LMM)", extra: once })), 1);
   assert.match(personaGreeting(BO_PERSONA), /Hi, I'm Christina, an AI assistant for BO Consulting\./);
   assert.equal(disclosureCount(personaGreeting(BO_PERSONA)), 1);
+  assert.equal(greetingFollowOn("Hi! How can I help?", "Ava"), "How can I help?");
+  assert.equal(greetingFollowOn("Hello, how can I help?", "Ava"), "How can I help?");
+  assert.equal(greetingFollowOn("G'day! How can I help?", "Sofia"), "How can I help?");
+  assert.equal(greetingFollowOn("Good morning, how can I help?", "Christina"), "How can I help?");
+  assert.equal(openingGreeting({ botName: "Ava", businessName: "Northside Physio", extra: "Hi! How can I help with your recovery today?" }), "Hi, I'm Ava, an AI assistant for Northside Physio. How can I help with your recovery today?");
+  assert.equal(openingGreeting({ botName: "Sofia", businessName: "Nico Moretti", extra: "G'day! How can I help?" }), "Hi, I'm Sofia, an AI assistant for Nico Moretti. How can I help?");
+  assert.equal(openingGreeting({ botName: "Christina", businessName: "BO Consulting", extra: "Good morning. What can I do for you?" }), "Hi, I'm Christina, an AI assistant for BO Consulting. What can I do for you?");
+});
+
+test("a leading greeting drops an address word only when punctuation or the end follows it", () => {
+  assert.equal(greetingFollowOn("Hi there! How can I help?", "Ava"), "How can I help?");
+  assert.equal(greetingFollowOn("Hi there!", "Ava"), "");
+  assert.equal(greetingFollowOn("Hey everyone!", "Ava"), "");
+  assert.equal(greetingFollowOn("Hi all!", "Ava"), "");
+  assert.equal(greetingFollowOn("Hello everyone,", "Ava"), "");
+  assert.equal(greetingFollowOn("Hello there, welcome.", "Ava"), "Welcome.");
+  assert.equal(greetingFollowOn("G\u2019day mate!", "Sofia"), "");
+  assert.equal(greetingFollowOn("G\u2019day! How can I help?", "Sofia"), "How can I help?");
+  assert.equal(greetingFollowOn("Gday mate", "Sofia"), "");
+  assert.equal(greetingFollowOn("Gday mate, what can I do?", "Sofia"), "What can I do?");
+  assert.equal(greetingFollowOn("G'day!", "Sofia"), "");
+  assert.equal(greetingFollowOn("Good morning team.", "Christina"), "");
+  assert.equal(greetingFollowOn("Hi team, ask away", "Christina"), "Ask away");
+  assert.equal(greetingFollowOn("Hi, all our plans...", "Ava"), "All our plans...");
+  assert.equal(greetingFollowOn("Hey, mate rates apply...", "Ava"), "Mate rates apply...");
+  assert.equal(greetingFollowOn("Matt here...", "Ava"), "Matt here...");
+  assert.equal(greetingFollowOn("Allison can help", "Ava"), "Allison can help");
+  assert.equal(greetingFollowOn("The team can call you back today.", "Ava"), "The team can call you back today.");
 });
 
 test("each bot has about 20 normal and 10 trick questions, and the eval passes without a lead POST", () => {

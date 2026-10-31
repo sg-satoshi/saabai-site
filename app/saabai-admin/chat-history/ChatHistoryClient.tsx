@@ -44,7 +44,7 @@ export default function ChatHistoryClient({ bot }: { bot: string }) {
     <div data-testid="chat-history" className="ch-page">
       <PageHeader
         title="Chat history"
-        meta={row ? `${row.name} (${row.slug}). Transcripts are kept for 90 days, then deleted.` : "Funnel counts and transcripts for one chatbot. Transcripts are kept for 90 days, then deleted."}
+        meta={row ? `${row.name} (${row.slug}).` : "Funnel counts and transcripts for one chatbot."}
         back={{ href: row ? chatbotPagePath(row.slug) : "/saabai-admin/chatbots", label: row ? row.name : "All chatbots" }}
       />
       {loaded && !failed && rows.length > 0 && (

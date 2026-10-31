@@ -84,18 +84,21 @@ test("portal scoping: slug comes from the session site, other slugs refused", ()
   assert.equal(nico.ok, true);
 });
 
-test("admin locks: client cannot change locked fields or the lock list", () => {
+test("legacy per-field locks are ignored and a client can change every goal field", () => {
   const stored: GoalConfig = { ...base, locked: ["cta", "primary"] };
-  const r = clientSave("mine", stored, { ...base, primary: "quote", cta: { label: "Hacked", url: "https://evil.example" }, persona: "Warm", locked: [] });
+  const r = clientSave("mine", stored, { ...base, primary: "quote", cta: { label: "Book a visit", url: "https://example.com/book" }, persona: "Warm", locked: ["handoff"] });
   assert.ok(r.ok);
   if (r.ok) {
-    assert.equal(r.value.primary, "book_call");
-    assert.deepEqual(r.value.cta, base.cta);
+    assert.equal(r.value.primary, "quote");
+    assert.equal(r.value.cta?.label, "Book a visit");
     assert.equal(r.value.persona, "Warm");
-    assert.deepEqual(r.value.locked, ["cta", "primary"]);
+    assert.equal(r.value.locked, undefined);
   }
   const fresh = mergeClientGoal(undefined, { ...base, locked: ["cta"] });
   assert.equal(fresh.locked, undefined);
+  const kept = validateGoal({ ...base, locked: ["primary"] });
+  assert.ok(kept.ok);
+  if (kept.ok) assert.equal(kept.value.locked, undefined);
 });
 
 test("widget events: only button clicks and handoff are accepted", () => {

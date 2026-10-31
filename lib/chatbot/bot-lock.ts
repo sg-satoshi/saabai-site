@@ -1,6 +1,6 @@
 /**
- * Whole-bot lock. One flag for the bot, set by an admin.
- * Per-field lock lists on the goal and playbook stay in the saved data and are not replaced by this.
+ * Whole-bot lock. One flag for the bot, set by a full admin.
+ * Legacy per-field lock lists are ignored and dropped on save.
  * Missing flag means unlocked, so older configs keep working.
  */
 

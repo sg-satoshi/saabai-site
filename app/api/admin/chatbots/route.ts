@@ -136,7 +136,7 @@ export async function POST(req: Request) {
         return Response.json({ ok: true });
       }
       case "save_goal": {
-        // Admin can set every field and the lock list. Locked fields cannot be changed from the client portal.
+        // Admin can set every goal field. Legacy per-field locks are dropped on save.
         const g = validateGoal(b.goal);
         if (!g.ok) return Response.json({ error: "Some goal fields need fixing. Nothing was saved.", fields: g.errors }, { status: 400 });
         const cur = await getConfig(site.slug, { strict: true });

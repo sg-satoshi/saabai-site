@@ -93,13 +93,14 @@ export default function InsightsPanel({ endpoint, variant = "portal", historyHre
 }
 
 function SummaryInsights({ data, historyHref, transcriptsOn }: { data: Data; historyHref?: string; transcriptsOn?: boolean }) {
-  const recent = data.transcripts.slice(0, 5);
+  const recent = (data.transcripts ?? []).slice(0, 5);
   const transcripts = transcriptsOn ?? data.transcriptsEnabled;
+  const steps = data.funnel?.steps ?? [];
   return (
     <div data-testid="insights-summary">
       <table className="ch-funnel">
         <tbody>
-          {data.funnel.steps.slice(0, 8).map((s) => (
+          {steps.slice(0, 8).map((s) => (
             <tr key={s.key}>
               <td>{s.label}</td>
               <td className="num r">{s.count.toLocaleString("en-AU")}</td>

@@ -90,12 +90,12 @@ export default function BotDetailClient({ slug }: { slug: string }) {
       <div id="editor" hidden />
       <div id="plan" hidden />
       <header className="cbed-head">
-        <Link href="/saabai-admin/chatbots" className="au-crumb">All chatbots</Link>
+        <Link href="/saabai-admin/chatbots" className="back">All chatbots</Link>
         {kill && <div role="alert" style={{ marginTop: 8 }}><strong>Emergency switch is on (CHATBOTS_KILL).</strong> Every platform chatbot is off until it is removed in Vercel.</div>}
         {msg && <p role="alert" style={{ color: "var(--bad)" }}>{msg}</p>}
-        <div className="cbed-top">
+        <div className="ehrow">
           <div>
-            <div className="cbed-title">
+            <div className="ttl">
               <h1>{row.name}</h1>
               {!bespoke && (
                 <OnOff testId="detail-toggle" on={!!row.enabled} label={`${row.name} chatbot`} disabled={kill} disabledReason="Emergency switch is on"
@@ -104,16 +104,19 @@ export default function BotDetailClient({ slug }: { slug: string }) {
               )}
               {bespoke && <span className="own">Own route</span>}
               <span className="tag">{PLAN_LABEL[row.plan as Plan] ?? row.plan}</span>
+              {locked && <span className="tag lock"><LockIcon /> Locked for client</span>}
             </div>
-            <p className="cbed-meta">
-              Bot: {row.resolved?.botName || row.name} · <span className="num">{row.slug}</span>
-              {domain ? ` · ${domain}` : ""}
-              {row.usage ? ` · ${row.usage.conversations} of ${row.cap?.cap ?? 0} chats this month` : ""}
+            <p className="meta">
+              Bot: {row.resolved?.botName || row.name}
+              <span className="sep" />
+              <span className="num">{row.slug}</span>
+              {domain && <><span className="sep" />{domain}</>}
+              {row.usage && <><span className="sep" /><span className="num">{row.usage.conversations}</span> of <span className="num">{row.cap?.cap ?? 0}</span> chats this month</>}
             </p>
           </div>
-          <div className="cbed-actions">
+          <div className="acts">
             {canLock && !bespoke && (
-              <Button variant="sec" aria-pressed={locked} aria-label="Lock this bot for the client" onClick={() => { if (locked) void post({ action: "set_lock", locked: false }); else setLockOpen((v) => !v); }} style={locked ? { borderColor: "var(--navy-900)", boxShadow: "0 0 0 1px var(--navy-900)" } : undefined}>
+              <Button variant="sec" className={locked ? "pressed" : ""} aria-pressed={locked} aria-label={locked ? "Unlock this bot" : "Lock this bot for the client"} onClick={() => { if (locked) void post({ action: "set_lock", locked: false }); else setLockOpen((v) => !v); }}>
                 <LockIcon open={!locked} /> {locked ? "Locked" : "Lock this bot"}
               </Button>
             )}
@@ -121,7 +124,10 @@ export default function BotDetailClient({ slug }: { slug: string }) {
             {siteHref && <a className="btn sec" href={siteHref} target="_blank" rel="noreferrer">Open site</a>}
             <Button variant="gh" icon aria-label="More actions" onClick={() => setMore((v) => !v)}>···</Button>
             {more && (
-              <div className="menu" style={{ top: 48, right: 0 }} role="menu">
+              <div className="menu" role="menu">
+                {canLock && !bespoke && <button type="button" className="mi" onClick={() => { setMore(false); if (locked) void post({ action: "set_lock", locked: false }); else setLockOpen(true); }}>{locked ? "Unlock this bot" : "Lock this bot"}</button>}
+                <Link href={chatbotHistoryPath(row.slug)} className="mi" onClick={() => setMore(false)}>Chat history</Link>
+                {siteHref && <a className="mi" href={siteHref} target="_blank" rel="noreferrer" onClick={() => setMore(false)}>Open site</a>}
                 <button type="button" className="mi" onClick={() => { void navigator.clipboard?.writeText(installSnippet(row.slug)); setCopied(true); setMore(false); }}>{copied ? "Copied" : "Copy install line"}</button>
                 {!bespoke && <button type="button" className="mi" onClick={() => { void post({ action: "set_enabled", enabled: !row.enabled, reason: "" }); setMore(false); }}>{row.enabled ? "Turn off" : "Turn on"}</button>}
               </div>
@@ -129,9 +135,12 @@ export default function BotDetailClient({ slug }: { slug: string }) {
           </div>
         </div>
         {canLock && lockOpen && !locked && (
-          <div className="cbed-lockpop" role="dialog" aria-label="Lock this bot?">
-            <h6>Lock this bot?</h6>
-            <p>{"The client can view it but can't change any settings. You and the Saabai team can still edit everything here, and unlock it at any time. Saved in the change log."}</p>
+          <div className="cbed-lockpop" role="dialog" aria-label="Lock this bot for the client?">
+            <LockIcon />
+            <div>
+              <h6>Lock this bot for the client?</h6>
+              <p>The client can view it but can&apos;t change any settings. You and the Saabai team can still edit everything here, and unlock it at any time. Saved in the change log.</p>
+            </div>
             <div className="bt">
               <Button variant="sec" size="sm" onClick={() => setLockOpen(false)}>Cancel</Button>
               <Button variant="pri" size="sm" onClick={() => { setLockOpen(false); void post({ action: "set_lock", locked: true }); }}>Lock this bot</Button>

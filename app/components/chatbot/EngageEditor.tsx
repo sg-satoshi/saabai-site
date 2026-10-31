@@ -51,7 +51,7 @@ export default function EngageEditor({ value: e, onChange, errors = {}, readOnly
       <h4>Chat features</h4>
       {tog("endChat", "End chat and New chat buttons", "Visitors can finish or start fresh at any time.")}
       {tog("emailCopy", "Offer a copy of the chat at the end", "Asks for an email with a consent tick box. Only works once Saabai switches on lead capture for your account.")}
-      {tog("transcripts", "Show chat transcripts in my portal", "Chats are kept for 90 days, then deleted.")}
+      {tog("transcripts", "Show chat transcripts in my portal", "Lets the client read past chats in their portal.")}
       <h4>Gentle nudges</h4>
       <div className="hint">Shown once per page, at most 3 times a week per visitor, and always easy to close. Never opens the chat by itself.</div>
       <label>Page openers (one per line: /page-path | message){lock("openers")}

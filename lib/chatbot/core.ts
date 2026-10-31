@@ -1,5 +1,5 @@
 import type { BotLock } from "./bot-lock";
-import { toPublicGoal, type GoalConfig, type PublicGoal } from "./goal";
+import { stripGoalLocks, toPublicGoal, type GoalConfig, type PublicGoal } from "./goal";
 import { effectiveEngage, toPublicEngage, type EngageConfig, type PublicEngage } from "./engage";
 import { leadCaptureEnabled } from "./lead-capture";
 import { handoffTarget, type HandoffLink } from "./disclosure";
@@ -26,6 +26,8 @@ export interface Skin {
   botName: string;
   greeting: string;
   avatarUrl: string;
+  /** Optional mark in the chat header. Clients set this with an https link. Empty means none. */
+  logoUrl?: string;
   primary: string;
   accent: string;
   bg: string;
@@ -138,6 +140,11 @@ export function validateSkin(input: unknown): SkinResult {
     if (u === null) errors.avatarUrl = "Use an https link (or a /path on this site).";
     else out.avatarUrl = u;
   }
+  if (o.logoUrl !== undefined) {
+    const u = safeUrl(o.logoUrl);
+    if (u === null) errors.logoUrl = "Use an https link (or a /path on this site).";
+    else out.logoUrl = u;
+  }
   if (o.position !== undefined) {
     if ((POSITIONS as readonly unknown[]).includes(o.position)) out.position = o.position as Position;
     else errors.position = "Pick left or right.";
@@ -243,6 +250,7 @@ export interface PublicWidgetConfig {
   botName: string;
   greeting: string;
   avatarUrl: string;
+  logoUrl?: string;
   primary: string;
   accent: string;
   bg: string;
@@ -276,6 +284,7 @@ export function toPublicConfig(opts: { slug?: string; active: boolean; config: P
     botName: bot,
     greeting: greetingForSlug(opts.slug, bot, businessName, sk.greeting),
     avatarUrl: sk.avatarUrl,
+    ...(sk.logoUrl ? { logoUrl: sk.logoUrl } : {}),
     primary: sk.primary,
     accent: sk.accent,
     bg: sk.bg,
@@ -293,5 +302,6 @@ export function toPublicConfig(opts: { slug?: string; active: boolean; config: P
 
 /** Stored goal wins, then the persona default, else none. */
 export function effectiveGoal(slug: string | undefined, stored: GoalConfig | undefined): GoalConfig | undefined {
-  return stored ?? (slug ? getPersona(slug)?.goal : undefined);
+  const goal = stored ?? (slug ? getPersona(slug)?.goal : undefined);
+  return goal ? stripGoalLocks(goal) : undefined;
 }
