@@ -1,7 +1,9 @@
 /**
  * GET/POST /api/portal/chatbot  (portal_session; read-only while impersonating or logged in as)
  * The client's own chatbot settings. The slug always comes from the signed session's site.
- * A whole-bot lock rejects every client write. Per-field locks still apply when the bot is unlocked.
+ * A whole-bot lock rejects every client write. Legacy per-field locks are ignored.
+ * Clients may edit goal, conversation, features, knowledge, look and tone.
+ * They cannot change the Powered by line. That toggle is admin-only.
  * Saves settings only. No messages are sent and nothing is posted to a chat or lead endpoint.
  */
 import { rejectIfImpersonatingReadOnly } from "../../../../lib/impersonation";
@@ -33,7 +35,7 @@ export async function GET(req: Request) {
   const view = portalView(d.slug, cfg.goal, cfg.engage, cfg.botLock);
   const enabled = await isEnabled(d.slug, site?.chatbot?.enabled);
   return Response.json({
-    site: { name: d.siteName, slug: d.slug },
+    site: { name: d.siteName, slug: d.slug, url: site?.url ?? "" },
     enabled,
     ...view,
     plan: cfg.plan,
@@ -69,7 +71,9 @@ export async function POST(req: Request) {
   let tone = cfg.tone;
   let knowledge = cfg.knowledge;
   if (body.skin !== undefined || body.content !== undefined) {
-    const sk = validateSkin(body.skin ?? {});
+    const skinIn = body.skin && typeof body.skin === "object" ? { ...(body.skin as Record<string, unknown>) } : {};
+    delete skinIn.showPoweredBy;
+    const sk = validateSkin(skinIn);
     const ct = validateContent(body.content ?? {});
     if (!sk.ok || !ct.ok) return Response.json({ error: "Some fields need fixing. Nothing was saved.", fields: { ...(sk.ok ? {} : sk.errors), ...(ct.ok ? {} : ct.errors) } }, { status: 400 });
     if (sk.value.showPoweredBy === false && !canRemovePoweredBy(cfg.plan)) {

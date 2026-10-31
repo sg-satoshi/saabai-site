@@ -64,10 +64,18 @@ export async function loadConfigForClientWrite(slug: string): Promise<{ ok: true
  * Save a bot. Every write except an explicit lock change keeps the lock already stored.
  * A caller holding an older copy cannot clear botLock. If that stored lock cannot be read, nothing is written.
  */
+function dropFieldLocks(c: ChatbotConfig): ChatbotConfig {
+  const goal = c.goal ? { ...c.goal } : undefined;
+  const engage = c.engage ? { ...c.engage } : undefined;
+  if (goal && "locked" in goal) delete goal.locked;
+  if (engage && "locked" in engage) delete engage.locked;
+  return { ...c, ...(goal ? { goal } : {}), ...(engage ? { engage } : {}) };
+}
+
 export async function saveConfig(c: ChatbotConfig, opts?: { setLock?: boolean }): Promise<void> {
   const r = getRedis();
   if (!r) throw new Error("Redis is not configured");
-  const next: ChatbotConfig = { ...c, schema: 1 };
+  const next: ChatbotConfig = dropFieldLocks({ ...c, schema: 1 });
   if (!opts?.setLock) {
     let raw: unknown;
     try { raw = await r.get<unknown>(cfgKey(c.slug)); } catch { throw new ChatbotConfigUnavailable(); }

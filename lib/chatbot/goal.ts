@@ -46,7 +46,10 @@ export interface GoalConfig {
   handoff?: string;
   /** Opening reply buttons under the greeting. */
   quickReplies: string[];
-  /** Fields a Saabai admin has locked. Clients cannot change these. */
+  /**
+   * Legacy per-field lock list. Ignored. The whole-bot lock is the only lock.
+   * Kept on the type so older saved configs still parse. Saves drop it.
+   */
   locked?: GoalField[];
 }
 
@@ -173,23 +176,20 @@ export function validateGoal(input: unknown): GoalResult {
   if (c1) value.cta = c1;
   const c2 = cta("fallbackCta", o.fallbackCta);
   if (c2) value.fallbackCta = c2;
-  if (Array.isArray(o.locked)) value.locked = o.locked.filter((f): f is GoalField => (GOAL_FIELDS as readonly unknown[]).includes(f));
-  return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value };
+  return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value: stripGoalLocks(value) };
 }
 
-/** Client save: locked fields keep the current value, and a client can never change the lock list. */
-export function mergeClientGoal(current: GoalConfig | undefined, incoming: GoalConfig): GoalConfig {
-  const locked = current?.locked ?? [];
-  const out: GoalConfig = { ...incoming, locked: [...locked] };
-  if (!current) return { ...out, locked: undefined };
-  for (const f of locked) {
-    const key = f as keyof GoalConfig;
-    (out as unknown as Record<string, unknown>)[key] = (current as unknown as Record<string, unknown>)[key];
-    if (f === "primary") out.primaryCustom = current.primaryCustom;
-    if (f === "fallback") out.fallbackCustom = current.fallbackCustom;
-  }
-  if (!out.locked?.length) delete out.locked;
+/** Drop a legacy per-field lock list. Clients edit every goal field unless the whole bot is locked. */
+export function stripGoalLocks(goal: GoalConfig): GoalConfig {
+  if (!goal.locked) return goal;
+  const out = { ...goal };
+  delete out.locked;
   return out;
+}
+
+/** Client save: the incoming goal wins. Legacy per-field locks are not reapplied. */
+export function mergeClientGoal(_current: GoalConfig | undefined, incoming: GoalConfig): GoalConfig {
+  return stripGoalLocks(incoming);
 }
 
 export function hasGoal(g: GoalConfig | undefined | null): g is GoalConfig {

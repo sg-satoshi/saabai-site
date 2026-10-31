@@ -8,7 +8,7 @@ import type { Faq, PublicWidgetConfig, Tone } from "../../../lib/chatbot/core";
 import "../../saabai-admin/chatbots/chatbots.css";
 
 type Payload = {
-  site: { name: string; slug?: string };
+  site: { name: string; slug?: string; url?: string };
   goal: GoalConfig | null;
   engage: EngageConfig;
   locked?: string[];
@@ -45,6 +45,7 @@ export function ChatbotSettingsPanel({ readOnly }: { readOnly?: boolean }) {
       plan: d.plan || "presence",
       enabled: d.enabled ?? null,
       skin: d.skin ?? {},
+      siteUrl: d.site?.url || "",
       resolved: d.resolved ?? fallbackResolved(name),
       tone: d.tone ?? "friendly",
       knowledge: d.knowledge ?? { facts: "", faqs: [] },
@@ -62,7 +63,7 @@ export function ChatbotSettingsPanel({ readOnly }: { readOnly?: boolean }) {
 
   if (!row) return <div style={{ padding: 8, color: "var(--n-500)" }}>{err || "Loading…"}</div>;
   return (
-    <div data-testid="portal-chatbot">
+    <div className="cbed-bleed" data-testid="portal-chatbot">
       {err && <p role="alert">{err}</p>}
       {readOnly && <div className="lockbanner" role="status" style={{ margin: "12px 32px" }}>Viewing as client. Changes are disabled.</div>}
       <ChatbotEditor mode="client" row={row} readOnly={!!readOnly || !!row.botLock?.locked} onSaved={() => load().catch((e) => setErr((e as Error).message))} />

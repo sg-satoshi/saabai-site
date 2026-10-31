@@ -4,7 +4,7 @@
  */
 import { portalWriteGuard, type BotLock } from "./bot-lock";
 import { BESPOKE_SLUGS, effectiveGoal } from "./core";
-import { ENGAGE_FIELD_KEYS, effectiveEngage, mergeClientEngage, validateEngage, type EngageConfig } from "./engage";
+import { effectiveEngage, mergeClientEngage, validateEngage, type EngageConfig } from "./engage";
 import { GOAL_FIELDS, GOAL_LABEL, GOAL_LIMITS, GOAL_TYPES, mergeClientGoal, validateGoal, type GoalConfig } from "./goal";
 
 export type PortalBotDecision =
@@ -25,8 +25,8 @@ export function portalView(slug: string, stored: GoalConfig | undefined, engage?
   return {
     goal,
     engage: effectiveEngage(engage),
-    locked: goal?.locked ?? [],
-    engageLocked: effectiveEngage(engage).locked ?? [],
+    locked: [] as string[],
+    engageLocked: [] as string[],
     options: GOAL_TYPES.map((id) => ({ id, label: GOAL_LABEL[id] })),
     fields: GOAL_FIELDS,
     limits: GOAL_LIMITS,
@@ -34,22 +34,19 @@ export function portalView(slug: string, stored: GoalConfig | undefined, engage?
   };
 }
 
-/** Validate a client save and keep admin-locked fields. */
+/** Validate a client goal save. Legacy per-field locks are dropped. The whole-bot lock is checked by the caller. */
 export function clientSave(slug: string, stored: GoalConfig | undefined, input: unknown): { ok: true; value: GoalConfig } | { ok: false; errors: Record<string, string> } {
   const raw = input && typeof input === "object" ? { ...(input as Record<string, unknown>) } : {};
-  delete raw.locked; // clients never set locks
+  delete raw.locked;
   const v = validateGoal(raw);
   if (!v.ok) return v;
   return { ok: true, value: mergeClientGoal(effectiveGoal(slug, stored), v.value) };
 }
 
-/** Validate a client playbook save. Clients never set locks, and admin-locked settings keep their stored value. */
+/** Validate a client playbook save. Legacy per-field locks are dropped. */
 export function clientSaveEngage(stored: Partial<EngageConfig> | undefined, input: unknown): { ok: true; value: EngageConfig } | { ok: false; errors: Record<string, string> } {
   const raw = input && typeof input === "object" ? { ...(input as Record<string, unknown>) } : {};
   delete raw.locked;
-  // Locked settings are replaced with the stored value before validating, so a locked field can never fail or change a save.
-  const cur = effectiveEngage(stored) as unknown as Record<string, unknown>;
-  for (const f of effectiveEngage(stored).locked ?? []) for (const k of ENGAGE_FIELD_KEYS[f]) raw[k] = cur[k];
   const v = validateEngage(raw);
   if (!v.ok) return v;
   return { ok: true, value: mergeClientEngage(stored, v.value) };

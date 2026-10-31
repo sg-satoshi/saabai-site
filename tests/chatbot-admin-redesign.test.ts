@@ -209,6 +209,17 @@ test("the editor copy drops per-setting lock wording and the lock popover sits i
   }
   assert.match(read("app/components/chatbot/InsightsPanel.tsx"), /transcriptsOn \?\? data\.transcriptsEnabled/);
   assert.match(read("app/saabai-admin/chatbots/ChatbotEditor.tsx"), /transcriptsOn=\{draft\.engage\.transcripts\}/);
+  assert.doesNotMatch(editor, /kept for 90 days/);
+  assert.doesNotMatch(editor, /sensitive details/);
+  assert.match(editor, /aria-selected/);
+  assert.match(editor, /Step \$\{stepAt \+ 1\} of/);
+  assert.match(editor, /className="col"/);
+  assert.match(css, /\.cbed \.col\{display:flex;flex-direction:column;gap:24px/);
+  assert.match(css, /input:not\(\[type=checkbox\]\)/);
+  assert.match(css, /\.cbed \.seg button/);
+  assert.match(css, /\.tabs button\.tab\.on:after/);
+  assert.match(read("app/api/portal/chatbot/route.ts"), /delete skinIn\.showPoweredBy/);
+  assert.match(read("public/embed/chat.v1.js"), /els\.pv\.style\.display = note \? "" : "none"/);
 });
 
 test("only a full admin can lock or unlock; a staff save keeps the lock", async () => {
@@ -248,6 +259,14 @@ test("only a full admin can lock or unlock; a staff save keeps the lock", async 
     assert.equal((await getConfig("locked-bot")).botLock?.locked, false);
     await saveConfig({ schema: 1, slug: "locked-bot", plan: "signature", skin: kept.skin, botLock: { locked: true, by: "Admin", at: "2026-10-03T00:00:00.000Z" } }, { setLock: true });
     assert.equal((await getConfig("locked-bot")).botLock?.locked, true);
+    await saveConfig({
+      schema: 1, slug: "locked-bot", plan: "signature", skin: kept.skin,
+      goal: { primary: "quote", fallback: "none", questions: [], stages: [], quickReplies: [], locked: ["cta"] },
+    });
+    const cleaned = await getConfig("locked-bot");
+    assert.equal(cleaned.goal?.primary, "quote");
+    assert.equal(cleaned.goal?.locked, undefined, "a save drops legacy per-field locks");
+    assert.equal(cleaned.botLock?.locked, true, "dropping field locks does not clear the whole-bot lock");
 
     const realFetch = globalThis.fetch;
     globalThis.fetch = async () => new Response(JSON.stringify({ error: "down" }), { status: 500, headers: { "content-type": "application/json" } });

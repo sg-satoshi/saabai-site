@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { disclosureCount, openingGreeting } from "../lib/chatbot/disclosure";
+import { disclosureCount, greetingFollowOn, openingGreeting } from "../lib/chatbot/disclosure";
 import { isNotSureReply, isWidgetEvent } from "../lib/chatbot/events";
 import { LEAD_ENDPOINTS, mockLeadPost, questionsFor, runAllEvals, spokenFactIds } from "../lib/chatbot/eval-set";
 import { lmmLicensingLine } from "../lib/lmm-legal";
@@ -16,6 +16,9 @@ test("AI disclosure is one sentence, and saying it again does not double it", ()
   assert.equal(disclosureCount(openingGreeting({ botName: "Zara", businessName: "Lifestyle Money Management (LMM)", extra: once })), 1);
   assert.match(personaGreeting(BO_PERSONA), /Hi, I'm Christina, an AI assistant for BO Consulting\./);
   assert.equal(disclosureCount(personaGreeting(BO_PERSONA)), 1);
+  assert.equal(greetingFollowOn("Hi! How can I help?", "Ava"), "How can I help?");
+  assert.equal(greetingFollowOn("Hello, how can I help?", "Ava"), "How can I help?");
+  assert.equal(openingGreeting({ botName: "Ava", businessName: "Northside Physio", extra: "Hi! How can I help with your recovery today?" }), "Hi, I'm Ava, an AI assistant for Northside Physio. How can I help with your recovery today?");
 });
 
 test("each bot has about 20 normal and 10 trick questions, and the eval passes without a lead POST", () => {

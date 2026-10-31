@@ -22,10 +22,12 @@ export function disclosureCount(text: string): number {
   return text.toLowerCase().match(/ai assistant/g)?.length ?? 0;
 }
 
-/** Drop a saved intro that would say who the bot is a second time. */
+const LEADING_GREETING = /^\s*(hi|hello|hey|g'day|good (morning|afternoon|evening))\b[!,.]?\s*/i;
+
+/** Drop a saved intro that would say who the bot is a second time, including a leading Hi or Hello. */
 export function greetingFollowOn(extra: string, botName: string): string {
   const name = botName.trim().toLowerCase();
-  return extra
+  const joined = extra
     .replace(/\s+/g, " ")
     .trim()
     .split(/(?<=[.!?])\s+/)
@@ -38,6 +40,11 @@ export function greetingFollowOn(extra: string, botName: string): string {
       return !lower.includes(`i'm ${name}`) && !lower.includes(`i am ${name}`) && !lower.includes(`im ${name}`);
     })
     .join(" ");
+  const lead = joined.match(LEADING_GREETING);
+  if (!lead) return joined;
+  const rest = joined.slice(lead[0].length);
+  if (!rest) return "";
+  return rest.charAt(0).toUpperCase() + rest.slice(1);
 }
 
 /** First message: the disclosure sentence, then any extra line that does not repeat it. */

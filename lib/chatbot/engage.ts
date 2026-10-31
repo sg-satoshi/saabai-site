@@ -42,7 +42,10 @@ export interface EngageConfig {
   returnGreeting?: string;
   /** Review invites for existing clients. */
   reviews: { enabled: boolean; url: string };
-  /** Settings a Saabai admin has locked. Clients cannot change these. */
+  /**
+   * Legacy per-field lock list. Ignored. The whole-bot lock is the only lock.
+   * Kept on the type so older saved configs still parse. Saves drop it.
+   */
   locked?: EngageField[];
 }
 
@@ -157,31 +160,26 @@ export function validateEngage(input: unknown): { ok: true; value: EngageConfig 
     else v.reviews = { enabled: r.enabled === true && !!url, url: url || "" };
     if (r.enabled === true && !url) errors.reviewsUrl = "Add your review link to switch this on.";
   }
-  if (Array.isArray(o.locked)) {
-    const l = ENGAGE_FIELDS.filter((f) => (o.locked as unknown[]).includes(f));
-    if (l.length) v.locked = l;
-  }
-  return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value: v };
+  return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value: stripEngageLocks(v) };
 }
 
-/** Client save: locked settings keep their current value, and a client can never change the lock list. */
-export function mergeClientEngage(current: Partial<EngageConfig> | undefined, incoming: EngageConfig): EngageConfig {
-  const cur = effectiveEngage(current);
-  const locked = cur.locked ?? [];
-  const out = { ...incoming } as unknown as Record<string, unknown>;
+/** Drop a legacy per-field lock list. Clients edit every playbook field unless the whole bot is locked. */
+export function stripEngageLocks(engage: EngageConfig): EngageConfig {
+  if (!engage.locked) return engage;
+  const out = { ...engage };
   delete out.locked;
-  for (const f of locked) {
-    for (const k of ENGAGE_FIELD_KEYS[f]) {
-      const val = (cur as unknown as Record<string, unknown>)[k];
-      if (val === undefined) delete out[k]; else out[k] = val;
-    }
-  }
-  if (locked.length) out.locked = [...locked];
-  return out as unknown as EngageConfig;
+  return out;
+}
+
+/** Client save: the incoming playbook wins. Legacy per-field locks are not reapplied. */
+export function mergeClientEngage(_current: Partial<EngageConfig> | undefined, incoming: EngageConfig): EngageConfig {
+  return stripEngageLocks(incoming);
 }
 
 export function effectiveEngage(stored: Partial<EngageConfig> | undefined): EngageConfig {
-  return { ...DEFAULT_ENGAGE, ...(stored ?? {}), reviews: { ...DEFAULT_ENGAGE.reviews, ...(stored?.reviews ?? {}) } };
+  const v = { ...DEFAULT_ENGAGE, ...(stored ?? {}), reviews: { ...DEFAULT_ENGAGE.reviews, ...(stored?.reviews ?? {}) } };
+  delete v.locked;
+  return v;
 }
 
 export const REVIEW_MARKER = "[[review]]";
