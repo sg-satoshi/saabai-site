@@ -25,6 +25,17 @@ test("AI disclosure is one sentence, and saying it again does not double it", ()
   assert.equal(openingGreeting({ botName: "Christina", businessName: "BO Consulting", extra: "Good morning. What can I do for you?" }), "Hi, I'm Christina, an AI assistant for BO Consulting. What can I do for you?");
 });
 
+test("a leading greeting also drops the address word that follows it", () => {
+  assert.equal(greetingFollowOn("Hi there! How can I help?", "Ava"), "How can I help?");
+  assert.equal(greetingFollowOn("Hi there!", "Ava"), "");
+  assert.equal(greetingFollowOn("Hello everyone,", "Ava"), "");
+  assert.equal(greetingFollowOn("G\u2019day mate!", "Sofia"), "");
+  assert.equal(greetingFollowOn("Gday mate", "Sofia"), "");
+  assert.equal(greetingFollowOn("G'day!", "Sofia"), "");
+  assert.equal(greetingFollowOn("Good morning team.", "Christina"), "");
+  assert.equal(greetingFollowOn("The team can call you back today.", "Ava"), "The team can call you back today.");
+});
+
 test("each bot has about 20 normal and 10 trick questions, and the eval passes without a lead POST", () => {
   for (const slug of ["lmm-site", "bo-consultancy"]) {
     const questions = questionsFor(slug);

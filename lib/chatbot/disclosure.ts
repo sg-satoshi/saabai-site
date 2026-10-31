@@ -22,7 +22,9 @@ export function disclosureCount(text: string): number {
   return text.toLowerCase().match(/ai assistant/g)?.length ?? 0;
 }
 
-const LEADING_GREETING = /^\s*(hi|hello|hey|g'day|good (morning|afternoon|evening))\b[!,.]?\s*/i;
+/** Hi / Hello / G'day / Good morning, then an optional address (there, mate, team, …). */
+const LEADING_GREETING =
+  /^\s*(?:hi|hello|hey|g['\u2018\u2019]?day|good (?:morning|afternoon|evening))\b[!,.]?\s*(?:(?:there|everyone|all|folks|team|mate)\b[!,.]?\s*)?/i;
 
 /** Drop a saved intro that would say who the bot is a second time, including a leading Hi or Hello. */
 export function greetingFollowOn(extra: string, botName: string): string {

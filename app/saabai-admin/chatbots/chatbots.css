@@ -359,8 +359,9 @@
   .lockbanner a{margin-left:0;width:100%}
   .cbed-head .au-crumb,.cbed .back,.cbed-head .back{min-height:44px}
   .cbed .pvtg{min-height:44px}
-  .cbed-head .onoff{position:relative}
-  .cbed-head .onoff::after{content:"";position:absolute;inset:-10px 0}
+  /* 44px tap target. The pill itself stays 24px. */
+  .cbed-head button.onoff{position:relative}
+  .cbed-head button.onoff::after{content:"";position:absolute;left:50%;right:auto;top:50%;bottom:auto;width:100%;height:100%;min-width:44px;min-height:44px;transform:translate(-50%,-50%)}
   .cbed .nonegoal{min-height:44px;display:inline-flex;align-items:center}
 }
 @media (prefers-reduced-motion:reduce){.cbed .sw i{transition:none}}

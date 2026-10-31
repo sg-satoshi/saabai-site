@@ -345,3 +345,12 @@ test("a client save cannot turn off Powered by", async () => {
     await new Promise<void>((resolve) => mock.server.close(() => resolve()));
   }
 });
+
+test("the mobile header on/off toggle has a 44px tap area and the pill stays 24px", () => {
+  const css = read("app/saabai-admin/chatbots/chatbots.css");
+  const mobile = css.slice(css.indexOf("@media (max-width:760px)"));
+  assert.match(mobile, /\.cbed-head button\.onoff\{position:relative\}/);
+  assert.match(mobile, /\.cbed-head button\.onoff::after\{[^}]*min-width:44px;min-height:44px/);
+  const pill = read("app/saabai-admin/admin.css");
+  assert.match(pill, /\.onoff\{[^}]*height:24px/);
+});
