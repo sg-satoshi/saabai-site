@@ -26,7 +26,7 @@ export interface Skin {
   botName: string;
   greeting: string;
   avatarUrl: string;
-  /** Optional mark in the chat header. Clients upload this. Empty means none. */
+  /** Optional mark in the chat header. Clients set this with an https link. Empty means none. */
   logoUrl?: string;
   primary: string;
   accent: string;

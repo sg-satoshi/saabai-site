@@ -199,6 +199,7 @@ export default function ChatbotEditor({ row, onSaved, mode = "admin", readOnly =
   const [showOff, setShowOff] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [siteMenu, setSiteMenu] = useState(false);
   const [reply, setReply] = useState("");
   const [askOn, setAskOn] = useState(false);
   const [knowOn, setKnowOn] = useState(false);
@@ -408,11 +409,21 @@ export default function ChatbotEditor({ row, onSaved, mode = "admin", readOnly =
             </div>
             <div className="acts">
               {siteHref && <a className="btn sec" href={siteHref} target="_blank" rel="noreferrer">Open my site</a>}
+              {siteHref && (
+                <>
+                  <Button variant="gh" icon className="cbed-client-more" aria-label="More actions" onClick={() => setSiteMenu((v) => !v)}>···</Button>
+                  {siteMenu && (
+                    <div className="menu" role="menu">
+                      <a className="mi" href={siteHref} target="_blank" rel="noreferrer" onClick={() => setSiteMenu(false)}>Open my site</a>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
           {lockedBot && (
             <div className="lockbanner" role="status">
-              <p><strong>This chatbot is managed by Saabai.</strong> Contact us to make changes.</p>
+              <p><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2" fill="none" stroke="currentColor" strokeWidth="1.75" /><path d="M8 11V7a4 4 0 0 1 8 0v4" fill="none" stroke="currentColor" strokeWidth="1.75" /></svg><span><strong>This chatbot is managed by Saabai.</strong> Contact us to make changes.</span></p>
               <a className="btn sec sm" href="mailto:hello@saabai.ai">Contact Saabai</a>
             </div>
           )}
@@ -422,7 +433,19 @@ export default function ChatbotEditor({ row, onSaved, mode = "admin", readOnly =
 
       <div className="cbed-tabs-wrap">
         <div className="tabs-fade">
-          <div className="tabs cbed-tabs" role="tablist" ref={tablist}>
+          <div className="tabs cbed-tabs" role="tablist" aria-orientation="horizontal" ref={tablist} onKeyDown={(e) => {
+            if (e.key !== "ArrowRight" && e.key !== "ArrowLeft" && e.key !== "Home" && e.key !== "End") return;
+            const buttons = [...(tablist.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [])];
+            const current = (e.target as HTMLElement).closest<HTMLButtonElement>('[role="tab"]');
+            const i = current ? buttons.indexOf(current) : -1;
+            if (i < 0) return;
+            e.preventDefault();
+            const next = e.key === "Home" ? buttons[0] : e.key === "End" ? buttons[buttons.length - 1] : buttons[(i + (e.key === "ArrowRight" ? 1 : -1) + buttons.length) % buttons.length];
+            const id = tabs[buttons.indexOf(next)]?.id;
+            if (!id) return;
+            go(id);
+            next.focus();
+          }}>
             {tabs.map((t) => {
               const errs = tabErrors(t.id);
               const active = tab === t.id;
@@ -712,7 +735,7 @@ export default function ChatbotEditor({ row, onSaved, mode = "admin", readOnly =
                   </Advanced>
                 ) : (
                   <Advanced label="Branding" count={1} summary={draft.logoUrl ? "Logo added" : "No logo yet"} open={advBrand.open} onToggle={advBrand.toggle}>
-                    <ImageField id="f-logo" label="Logo" hint="Shown in the chat header. PNG or SVG, at least 256 px wide." button="Upload logo" logo letter="" value={draft.logoUrl} readOnly={off} error={err("logoUrl")} onChange={(v) => setLook("logoUrl", v)} />
+                    <ImageField id="f-logo" label="Logo" hint="Shown in the chat header. PNG or SVG, at least 256 px wide. Paste an https link." button="Add logo link" logo letter="" value={draft.logoUrl} readOnly={off} error={err("logoUrl")} onChange={(v) => setLook("logoUrl", v)} />
                   </Advanced>
                 )}
               </section>

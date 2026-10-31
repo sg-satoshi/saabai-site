@@ -119,7 +119,7 @@
 .cbed .ttl,.cbed-head .ttl,.cbed-title{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .cbed .meta,.cbed-head .meta,.cbed-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:4px 0 0;font-size:13px;color:var(--n-500)}
 .cbed .meta .sep,.cbed-head .meta .sep{width:3px;height:3px;border-radius:50%;background:var(--n-300);flex:none;display:inline-block}
-.cbed .acts,.cbed-actions{display:flex;gap:8px;align-items:center;position:relative;flex-wrap:wrap}
+.cbed .acts,.cbed-head .acts,.cbed-actions{display:flex;gap:8px;align-items:center;position:relative;flex-wrap:wrap}
 .cbed .pill{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:99px;font:600 12px/1 var(--font-admin-sans),system-ui,sans-serif;border:1px solid transparent}
 .cbed .pill.on{background:var(--ok-bg);color:var(--ok)}
 .cbed .pill.on:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok)}
@@ -131,8 +131,8 @@
 .cbed-lockpop p{margin:2px 0 0;font-size:13px;line-height:20px;color:var(--n-600);max-width:640px}
 .cbed-lockpop .bt{margin-left:auto;display:flex;gap:8px;flex:none}
 .cbed .menu{position:absolute;z-index:40;top:44px;right:0;width:220px;padding:6px;background:#fff;border-radius:10px;box-shadow:var(--sh-pop);text-align:left}
-.cbed .menu button.mi{display:flex;width:100%;height:34px;padding:0 8px;border:0;border-radius:6px;background:transparent;font:500 13px var(--font-admin-sans),system-ui,sans-serif;cursor:pointer;text-align:left}
-.cbed .menu button.mi:hover{background:var(--n-50)}
+.cbed .menu a.mi,.cbed .menu button.mi{display:flex;align-items:center;width:100%;height:34px;padding:0 8px;border:0;border-radius:6px;background:transparent;color:inherit;font:500 13px var(--font-admin-sans),system-ui,sans-serif;cursor:pointer;text-align:left;text-decoration:none}
+.cbed .menu a.mi:hover,.cbed .menu button.mi:hover{background:var(--n-50)}
 .cbed-tabs-wrap{position:relative;background:#fff;padding:20px 32px 0}
 .cbed .tabs.cbed-tabs{display:flex;gap:4px;margin:0;height:auto;border-bottom:1px solid var(--n-200);overflow-x:auto;overflow-y:hidden;white-space:nowrap;scrollbar-width:none;scroll-snap-type:x proximity}
 .cbed .tabs.cbed-tabs::-webkit-scrollbar{display:none}
@@ -186,7 +186,7 @@
 .cbed input:focus,.cbed textarea:focus,.cbed select:focus{outline:0;border-color:var(--teal-700);box-shadow:0 0 0 3px rgba(14,116,130,.25)}
 .cbed .f.bad input,.cbed .f.bad textarea,.cbed .f.bad select{border-color:var(--bad);box-shadow:0 0 0 1px var(--bad)}
 .cbed .f.dirty input,.cbed .f.dirty textarea,.cbed .f.dirty select{border-color:var(--warn);box-shadow:0 0 0 1px var(--warn)}
-.cbed input.ro,.cbed textarea.ro,.cbed select:disabled,.cbed .in.ro{background:var(--n-50);border-color:var(--n-200);color:#4e546c}
+.cbed input.ro:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=color]),.cbed input[readonly]:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=color]),.cbed textarea.ro,.cbed select:disabled,.cbed .in.ro{background:var(--n-50);border-color:var(--n-200);color:#4e546c}
 .cbed .hint{margin:0;color:var(--n-500);font-size:12.5px;line-height:18px}
 .cbed .err,.cbed .errm{display:flex;gap:6px;align-items:center;margin:0;color:var(--bad);font-size:12.5px;line-height:18px;font-weight:500}
 .cbed .warnm{margin:0;color:var(--warn);font-size:12.5px;line-height:18px;font-weight:500}
@@ -236,6 +236,7 @@
 .cbed .row:first-child{border-top:0}
 .cbed .row .i{font:500 12px/1 var(--font-admin-mono),ui-monospace,monospace;color:var(--n-500);width:16px}
 .cbed .row .t{flex:1;min-width:0}
+.cbed .row button.t{flex:1;min-width:0;align-self:stretch;min-height:44px;display:flex;align-items:center;text-align:left;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer}
 .cbed .row .t b,.cbed .row .t small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cbed .row .t b{font-weight:500}
 .cbed .row .t small{font-size:12.5px;color:var(--n-500);font-weight:400}
@@ -300,8 +301,10 @@
 .cbed-toast{position:fixed;bottom:84px;right:32px;background:var(--navy-900);color:#fff;border-radius:8px;padding:10px 14px;z-index:70;font-size:13px}
 .cbed-fab{display:none}
 .lockbanner{display:flex;align-items:center;gap:12px;background:#eef0f7;border:1px solid #c9cde0;border-radius:10px;padding:12px 16px;font-size:14px;color:var(--navy-900)}
-.lockbanner p{margin:0;flex:1}
+.lockbanner p{margin:0;flex:1;display:flex;gap:8px;align-items:flex-start}
+.lockbanner svg{width:18px;height:18px;flex:none;margin-top:1px}
 .lockbanner a{margin-left:auto}
+.cbed-head .cbed-client-more{display:none}
 .cbed-chat{display:flex;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--n-100);font-size:13px}
 .cbed-chat span:nth-child(2){flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cbed .search{height:36px}
@@ -333,8 +336,8 @@
   .cbed .btn,.cbed .btn.sm,.cbed-save .btn,.cbed-head .btn,.cbed-head .btn.sm{height:44px;min-height:44px}
   .cbed .btn.ic,.cbed .btn.ic.sm{width:44px}
   .cbed .seg button{height:44px;min-height:44px}
-  .cbed .chip{height:44px;padding-left:14px}
-  .cbed .chip button{width:32px;height:32px}
+  .cbed .chip{height:auto;min-height:44px;padding:0 0 0 14px;align-items:center}
+  .cbed .chip button{width:44px;height:44px;min-width:44px;min-height:44px}
   .cbed .advh{height:52px}
   .cbed .row{min-height:48px}
   .cbed .search,.cbed input.search{height:44px}
@@ -347,6 +350,14 @@
   .cbed-lockpop .bt{margin-left:0}
   .cbed .upl{flex-wrap:wrap}
   .cbed .upl .btn{width:100%}
+  .cbed-head .acts>.btn:not(.ic),.cbed-head .acts>a.btn{display:none}
+  .cbed-head .acts .btn.ic{width:44px;height:44px;border:1px solid var(--n-300)}
+  .cbed-head .cbed-client-more{display:inline-flex}
+  .cbed .menu a.mi,.cbed .menu button.mi{min-height:44px;height:44px}
   .lockbanner{flex-wrap:wrap}
+  .lockbanner p{flex-basis:100%}
+  .lockbanner a{margin-left:0;width:100%}
+  .cbed-head .au-crumb,.cbed .back{min-height:44px}
+  .cbed .pvtg{min-height:44px}
 }
 @media (prefers-reduced-motion:reduce){.cbed .sw i{transition:none}}

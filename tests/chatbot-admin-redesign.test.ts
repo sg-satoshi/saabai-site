@@ -210,6 +210,7 @@ test("the editor copy drops per-setting lock wording and the lock popover sits i
   assert.match(read("app/components/chatbot/InsightsPanel.tsx"), /transcriptsOn \?\? data\.transcriptsEnabled/);
   assert.match(read("app/saabai-admin/chatbots/ChatbotEditor.tsx"), /transcriptsOn=\{draft\.engage\.transcripts\}/);
   assert.doesNotMatch(editor, /kept for 90 days/);
+  assert.doesNotMatch(read("app/saabai-admin/chat-history/ChatHistoryClient.tsx"), /kept for 90 days/);
   assert.doesNotMatch(editor, /sensitive details/);
   assert.match(editor, /aria-selected/);
   assert.match(editor, /Step \$\{stepAt \+ 1\} of/);
@@ -218,8 +219,11 @@ test("the editor copy drops per-setting lock wording and the lock popover sits i
   assert.match(css, /input:not\(\[type=checkbox\]\)/);
   assert.match(css, /\.cbed \.seg button/);
   assert.match(css, /\.tabs button\.tab\.on:after/);
-  assert.match(read("app/api/portal/chatbot/route.ts"), /delete skinIn\.showPoweredBy/);
-  assert.match(read("public/embed/chat.v1.js"), /els\.pv\.style\.display = note \? "" : "none"/);
+  assert.match(editor, /Add logo link/);
+  assert.doesNotMatch(editor, /Upload logo/);
+  assert.match(css, /\.cbed \.chip button\{width:44px;height:44px;min-width:44px;min-height:44px\}/);
+  assert.match(editor, /ArrowRight/);
+  assert.doesNotMatch(read("public/embed/chat.v1.js"), /privacyNote/);
 });
 
 test("only a full admin can lock or unlock; a staff save keeps the lock", async () => {
@@ -285,6 +289,58 @@ test("only a full admin can lock or unlock; a staff save keeps the lock", async 
     else process.env.UPSTASH_REDIS_REST_URL = prevUrl;
     if (prevToken === undefined) delete process.env.UPSTASH_REDIS_REST_TOKEN;
     else process.env.UPSTASH_REDIS_REST_TOKEN = prevToken;
+    resetRedisForTests();
+    await new Promise<void>((resolve) => mock.server.close(() => resolve()));
+  }
+});
+
+test("a client save cannot turn off Powered by", async () => {
+  const mock = createMockUpstash();
+  const prevUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const prevToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const prevPortal = process.env.PORTAL_SESSION_SECRET;
+  await new Promise<void>((resolve) => mock.server.listen(0, "127.0.0.1", () => resolve()));
+  const { port } = mock.server.address() as AddressInfo;
+  process.env.UPSTASH_REDIS_REST_URL = `http://127.0.0.1:${port}`;
+  process.env.UPSTASH_REDIS_REST_TOKEN = "test";
+  process.env.PORTAL_SESSION_SECRET = prevPortal || "portal-unit-test-secret-0123456789";
+  resetRedisForTests();
+  try {
+    const { saveConfig, getConfig } = await import("../lib/chatbot/store");
+    const { saveSiteBilling } = await import("../lib/billing/store");
+    const { signSession } = await import("../lib/portal-session");
+    const { POST } = await import("../app/api/portal/chatbot/route");
+    await saveConfig({ schema: 1, slug: "cycle-repair", plan: "growth", skin: { showPoweredBy: true, botName: "Stu" } });
+    await saveSiteBilling({
+      siteId: "cycle-repair", siteName: "Stu's Cycle Repairs", status: "active",
+      planId: "growth", planName: "Growth", monthlyCents: 0, setupFeeCents: 0,
+      startDate: "2026-01-01", gst: true, contact: { name: "Stu", email: "stu@cycle.test" },
+      sender: "saabai", addons: [], history: [], createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z",
+    });
+    const res = await POST(new Request("http://localhost/api/portal/chatbot", {
+      method: "POST",
+      headers: { cookie: `portal_session=${signSession("stu@cycle.test")}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        poweredBy: false,
+        goal: { primary: "call_back", fallback: "none", questions: [], stages: [], quickReplies: [] },
+        skin: { botName: "Bea", showPoweredBy: false, poweredBy: false },
+        content: { tone: "friendly", facts: "Open weekdays.", faqs: [] },
+      }),
+    }));
+    const json = await res.json();
+    assert.equal(res.status, 200, JSON.stringify(json));
+    const saved = await getConfig("cycle-repair");
+    assert.equal(saved.skin.botName, "Bea", "the rest of the skin still saves");
+    assert.equal(saved.skin.showPoweredBy, true, "showPoweredBy from the client is stripped");
+    assert.equal((saved.skin as { poweredBy?: boolean }).poweredBy, undefined);
+    assert.equal(json.skin.showPoweredBy, true);
+  } finally {
+    if (prevUrl === undefined) delete process.env.UPSTASH_REDIS_REST_URL;
+    else process.env.UPSTASH_REDIS_REST_URL = prevUrl;
+    if (prevToken === undefined) delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    else process.env.UPSTASH_REDIS_REST_TOKEN = prevToken;
+    if (prevPortal === undefined) delete process.env.PORTAL_SESSION_SECRET;
+    else process.env.PORTAL_SESSION_SECRET = prevPortal;
     resetRedisForTests();
     await new Promise<void>((resolve) => mock.server.close(() => resolve()));
   }

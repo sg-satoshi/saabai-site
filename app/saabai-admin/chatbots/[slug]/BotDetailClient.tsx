@@ -125,6 +125,9 @@ export default function BotDetailClient({ slug }: { slug: string }) {
             <Button variant="gh" icon aria-label="More actions" onClick={() => setMore((v) => !v)}>···</Button>
             {more && (
               <div className="menu" role="menu">
+                {canLock && !bespoke && <button type="button" className="mi" onClick={() => { setMore(false); if (locked) void post({ action: "set_lock", locked: false }); else setLockOpen(true); }}>{locked ? "Unlock this bot" : "Lock this bot"}</button>}
+                <Link href={chatbotHistoryPath(row.slug)} className="mi" onClick={() => setMore(false)}>Chat history</Link>
+                {siteHref && <a className="mi" href={siteHref} target="_blank" rel="noreferrer" onClick={() => setMore(false)}>Open site</a>}
                 <button type="button" className="mi" onClick={() => { void navigator.clipboard?.writeText(installSnippet(row.slug)); setCopied(true); setMore(false); }}>{copied ? "Copied" : "Copy install line"}</button>
                 {!bespoke && <button type="button" className="mi" onClick={() => { void post({ action: "set_enabled", enabled: !row.enabled, reason: "" }); setMore(false); }}>{row.enabled ? "Turn off" : "Turn on"}</button>}
               </div>

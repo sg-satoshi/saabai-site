@@ -22,12 +22,12 @@ export function disclosureCount(text: string): number {
   return text.toLowerCase().match(/ai assistant/g)?.length ?? 0;
 }
 
-const LEADING_GREETING = /^\s*(hi|hello|hey|g'day|good (morning|afternoon|evening))\b[!,.]?\s*/i;
+const LEADING_GREETING = /^\s*(hi|hello|hey)\b[!,.]?\s*/i;
 
 /** Drop a saved intro that would say who the bot is a second time, including a leading Hi or Hello. */
 export function greetingFollowOn(extra: string, botName: string): string {
   const name = botName.trim().toLowerCase();
-  const joined = extra
+  const joined = noDashes(extra)
     .replace(/\s+/g, " ")
     .trim()
     .split(/(?<=[.!?])\s+/)
