@@ -107,6 +107,7 @@ export const PLATFORM_BOTS: PlatformBot[] = [
         name: "Zara",
         greeting: ZARA_GREETING,
         systemPrompt: ZARA_SYSTEM_PROMPT,
+        avatarUrl: ZARA_PERSONA.appearance?.avatarUrl,
       },
       domains: [...LMM_DOMAINS],
     },

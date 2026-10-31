@@ -5,7 +5,7 @@ import { Button } from "../ui/Button";
 import InsightsPanel from "../../components/chatbot/InsightsPanel";
 import { LIMITS, PLAN_LABEL, TONE_LABEL, TONES, canRemovePoweredBy, isHex, poweredByVisible, validateContent, validateSkin, type Faq, type Plan, type PublicWidgetConfig, type Tone } from "../../../lib/chatbot/core";
 import { appendFaqs } from "../../../lib/chatbot/faq-import";
-import { DEFAULT_ENGAGE, ENGAGE_LIMITS, validateEngage, toPublicEngage, type EngageConfig, type Opener, type Testimonial } from "../../../lib/chatbot/engage";
+import { DEFAULT_ENGAGE, ENGAGE_LIMITS, reviewsWithEnabled, reviewsWithLink, validateEngage, toPublicEngage, type EngageConfig, type Opener, type Testimonial } from "../../../lib/chatbot/engage";
 import { DEFAULT_STAGES, GOAL_LABEL, GOAL_LIMITS, validateGoal, toPublicGoal, type GoalConfig, type GoalType } from "../../../lib/chatbot/goal";
 import { aiDisclosureSentence, greetingFollowOn, openingGreeting } from "../../../lib/chatbot/disclosure";
 import { contrast } from "../../../lib/announce/core";
@@ -166,6 +166,7 @@ function tabOfError(key: string): StepId {
 const FIELD_ID: Record<string, string> = {
   ctaUrl: "f-cta-url", ctaLabel: "f-cta-label", primaryCustom: "f-primaryCustom", fallbackCustom: "f-fallbackCustom",
   greeting: "f-greeting", botName: "f-botName", avatarUrl: "f-avatar", logoUrl: "f-logo", facts: "f-facts",
+  reviewsUrl: "f-greview",
 };
 
 function Shell({ mode }: { mode: "admin" | "client" }) {
@@ -634,9 +635,9 @@ export default function ChatbotEditor({ row, onSaved, mode = "admin", readOnly =
               <section className="card">
                 <div className="ch"><Icon d="M12 3l2.2 4.6L19 8.2l-3.5 3.4.8 4.9L12 14.8 7.7 16.5l.8-4.9L5 8.2l4.8-.6z" /><div><h3>Google reviews</h3><p>Ask happy clients for a review at the end of a chat.</p></div></div>
                 <div className="cb">
-                  <SwitchRow on={draft.engage.reviews.enabled} label="Invite existing clients to leave a Google review" hint="Asked once per visitor. Every existing client is asked, happy or not. Unhappy visitors can pass a concern to the team." disabled={off} onChange={(v) => setEngage("reviews", { ...draft.engage.reviews, enabled: v })} />
+                  <SwitchRow on={draft.engage.reviews.enabled} label="Invite existing clients to leave a Google review" hint="Asked once per visitor. Every existing client is asked, happy or not. Unhappy visitors can pass a concern to the team." disabled={off} onChange={(v) => { setDraft((d) => ({ ...d, engage: { ...d.engage, reviews: reviewsWithEnabled(d.engage.reviews, v) } })); touch(); }} />
                   <Field label="Google review link" id="f-greview" error={err("reviewsUrl")} dirty={isDirty("f-greview")} hint="Paste the link from your Google Business profile.">
-                    <input id="f-greview" type="text" readOnly={off} value={draft.engage.reviews.url} onChange={(e) => setEngage("reviews", { ...draft.engage.reviews, url: e.target.value })} />
+                    <input id="f-greview" type="text" readOnly={off} value={draft.engage.reviews.url} onChange={(e) => { const raw = e.target.value; setDraft((d) => ({ ...d, engage: { ...d.engage, reviews: reviewsWithLink(d.engage.reviews, raw) } })); touch(); }} />
                   </Field>
                 </div>
               </section>

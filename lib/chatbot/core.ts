@@ -156,19 +156,27 @@ export function validateSkin(input: unknown): SkinResult {
   return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value: out };
 }
 
-/** Skin as the widget should see it: defaults, then persona look, then site values, then saved skin, with plan rules applied. */
+/**
+ * Skin as the widget should see it: defaults, then persona look, then the site
+ * chatbot avatar, then saved skin. A blank saved avatar does not wipe a photo
+ * the bot already has. A saved https (or /path) avatar still wins.
+ */
 export function resolveSkin(
   config: Pick<ChatbotConfig, "plan" | "skin">,
   site?: { botName?: string; greeting?: string; avatarUrl?: string },
   base?: Partial<Skin>,
 ): Skin & { poweredBy: boolean } {
+  const skin: Partial<Skin> = { ...(config.skin ?? {}) };
+  const savedAvatar = typeof skin.avatarUrl === "string" ? skin.avatarUrl.trim() : "";
+  if (savedAvatar) skin.avatarUrl = savedAvatar;
+  else delete skin.avatarUrl;
   const merged: Skin = {
     ...DEFAULT_SKIN,
     ...base,
     ...(site?.botName && !base?.botName ? { botName: site.botName } : {}),
     ...(site?.greeting ? { greeting: site.greeting } : {}),
     ...(site?.avatarUrl && !base?.avatarUrl ? { avatarUrl: site.avatarUrl } : {}),
-    ...config.skin,
+    ...skin,
   };
   return { ...merged, poweredBy: poweredByVisible(config.plan, merged.showPoweredBy) };
 }

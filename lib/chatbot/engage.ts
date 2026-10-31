@@ -155,10 +155,12 @@ export function validateEngage(input: unknown): { ok: true; value: EngageConfig 
   if (rg) v.returnGreeting = rg;
   if (o.reviews && typeof o.reviews === "object") {
     const r = o.reviews as Record<string, unknown>;
-    const url = ctaUrl(r.url);
-    if (url === null || (url && !url.startsWith("https:"))) errors.reviewsUrl = "Use your https Google review link.";
-    else v.reviews = { enabled: r.enabled === true && !!url, url: url || "" };
-    if (r.enabled === true && !url) errors.reviewsUrl = "Add your review link to switch this on.";
+    const link = gatedHttps(r.enabled === true, r.url, {
+      empty: "Add your review link to switch this on.",
+      bad: "Use your https Google review link.",
+    });
+    if (!link.ok) errors.reviewsUrl = link.error;
+    else v.reviews = link.value;
   }
   return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value: stripEngageLocks(v) };
 }
@@ -180,6 +182,66 @@ export function effectiveEngage(stored: Partial<EngageConfig> | undefined): Enga
   const v = { ...DEFAULT_ENGAGE, ...(stored ?? {}), reviews: { ...DEFAULT_ENGAGE.reviews, ...(stored?.reviews ?? {}) } };
   delete v.locked;
   return v;
+}
+
+const FEATURE_HTTPS_MAX = 4096;
+
+function stripPastedUrl(raw: string): string {
+  let s = raw.replace(/[\u200b\u200c\u200d\ufeff]/g, "").replace(/[\r\n\t]+/g, "").trim();
+  if (s.length >= 2) {
+    const quoted = (s.startsWith('"') || s.startsWith("'")) && s.endsWith(s[0]);
+    const bracketed = s.startsWith("<") && s.endsWith(">");
+    if (quoted || bracketed) s = s.slice(1, -1).trim();
+  }
+  return s;
+}
+
+function parseHttps(s: string): string | null {
+  try {
+    const u = new URL(s);
+    if (u.protocol !== "https:" || !u.hostname) return null;
+    return u.href;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * https link for a feature that needs one when it is switched on.
+ * Blank (after trim) is "". Anything that is not an https URL is null.
+ * A pasted host with no scheme, such as g.page/r/..., is read as https.
+ */
+export function featureHttpsUrl(v: unknown): string | null {
+  if (v === undefined || v === null) return "";
+  if (typeof v !== "string") return null;
+  let s = stripPastedUrl(v);
+  if (!s) return "";
+  if (s.length > FEATURE_HTTPS_MAX) return null;
+  if (s.startsWith("//")) s = `https:${s}`;
+  else if (!/^[a-z][a-z0-9+.-]*:/i.test(s)) {
+    if (!s.includes(".")) return null;
+    s = `https://${s}`;
+  }
+  if (s.length > FEATURE_HTTPS_MAX) return null;
+  return parseHttps(s) ?? parseHttps(s.replace(/ /g, "%20"));
+}
+
+/** Switch plus link. A blank value and a bad value stay different errors, so a pasted link is not reported as missing. */
+export function gatedHttps(enabled: boolean, raw: unknown, messages: { empty: string; bad: string }): { ok: true; value: { enabled: boolean; url: string } } | { ok: false; error: string } {
+  const url = featureHttpsUrl(raw);
+  if (url === null) return { ok: false, error: messages.bad };
+  if (enabled && !url) return { ok: false, error: messages.empty };
+  return { ok: true, value: { enabled: enabled && !!url, url: url || "" } };
+}
+
+/** Link box on the Features tab. Keeps the switch that is already on. */
+export function reviewsWithLink(current: { enabled?: boolean; url?: string } | undefined, raw: string): { enabled: boolean; url: string } {
+  return { enabled: current?.enabled === true, url: raw };
+}
+
+/** Google Reviews switch. Keeps the link already typed or pasted. */
+export function reviewsWithEnabled(current: { enabled?: boolean; url?: string } | undefined, enabled: boolean): { enabled: boolean; url: string } {
+  return { enabled, url: typeof current?.url === "string" ? current.url : "" };
 }
 
 export const REVIEW_MARKER = "[[review]]";

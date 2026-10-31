@@ -32,6 +32,10 @@
       if (typeof c.greeting === 'string') greeting = c.greeting;
       if (c.handoff && c.handoff.href && c.handoff.label) showHandoff(c.handoff);
       if (c.goal) goal = c.goal;
+      if (typeof c.avatarUrl === 'string' && c.avatarUrl.trim()) {
+        CONFIG.avatar = c.avatarUrl.trim();
+        document.querySelectorAll('.lmm-chat-button img, .lmm-chat-header img, .lmm-chat-message-avatar').forEach(function (img) { img.src = CONFIG.avatar; });
+      }
       if (c.active === false) {
         chatbotOff = true;
         offMessage = c.offMessage || "Our chat assistant is taking a break. Please call or email the team directly and they'll be happy to help.";

@@ -48,7 +48,8 @@ export interface BotPersona {
   /** https privacy policy for a small Privacy link. Absent means no link. */
   privacyUrl?: string;
   /**
-   * Look used until an admin saves a skin. Saved colours, name and avatar still win.
+   * Look used until an admin saves a skin. Saved colours, name and a non-empty
+   * avatar still win. A blank saved avatar keeps this photo.
    */
   appearance?: {
     botName?: string;
@@ -211,6 +212,9 @@ export const ZARA_PERSONA: BotPersona = {
   ],
   rules: ZARA_RULES,
   goal: LMM_GOAL,
+  appearance: {
+    avatarUrl: "/clients/lmm-site/assets/avatar-zara.png",
+  },
 };
 
 const CHRISTINA_RULES = [

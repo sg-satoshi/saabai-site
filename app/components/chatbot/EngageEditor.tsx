@@ -1,7 +1,7 @@
 "use client";
 /** Conversion playbook toggles. Shared by Saabai admin and the client portal. */
 import React from "react";
-import { ENGAGE_FIELDS, ENGAGE_LIMITS as L, type EngageConfig, type EngageField } from "../../../lib/chatbot/engage";
+import { ENGAGE_FIELDS, ENGAGE_LIMITS as L, reviewsWithEnabled, reviewsWithLink, type EngageConfig, type EngageField } from "../../../lib/chatbot/engage";
 
 const css = `
 .ee label{display:block;font-size:12px;color:#4b5068;margin:0 0 10px}
@@ -82,8 +82,8 @@ export default function EngageEditor({ value: e, onChange, errors = {}, readOnly
       <div className="hint">The offer hides itself after the end date. No countdowns or limited-spots wording.</div>
       <label>Welcome back message for returning visitors{lock("returnGreeting")}<input type="text" maxLength={L.returnGreeting} disabled={off("returnGreeting")} value={e.returnGreeting ?? ""} onChange={(x) => set("returnGreeting", x.target.value)} />{err("returnGreeting")}</label>
       <h4>Reviews</h4>
-      <label className="tg"><input type="checkbox" checked={e.reviews.enabled} disabled={off("reviews")} onChange={(x) => set("reviews", { ...e.reviews, enabled: x.target.checked })} data-testid="e-reviews" /><span>Invite existing clients to leave a Google review{lock("reviews")}<small>Asked once per visitor at the end of a chat. Every existing client is asked, happy or not, as Google and the ACCC require. Unhappy visitors are also offered to pass their concern to you.</small></span></label>
-      <label>Google review link<input type="text" disabled={off("reviews")} value={e.reviews.url} onChange={(x) => set("reviews", { ...e.reviews, url: x.target.value })} placeholder="https://g.page/r/..." />{err("reviewsUrl")}</label>
+      <label className="tg"><input type="checkbox" checked={e.reviews.enabled} disabled={off("reviews")} onChange={(x) => set("reviews", reviewsWithEnabled(e.reviews, x.target.checked))} data-testid="e-reviews" /><span>Invite existing clients to leave a Google review{lock("reviews")}<small>Asked once per visitor at the end of a chat. Every existing client is asked, happy or not, as Google and the ACCC require. Unhappy visitors are also offered to pass their concern to you.</small></span></label>
+      <label>Google review link<input type="text" disabled={off("reviews")} value={e.reviews.url} onChange={(x) => set("reviews", reviewsWithLink(e.reviews, x.target.value))} placeholder="https://g.page/r/..." />{err("reviewsUrl")}</label>
     </div>
   );
 }
