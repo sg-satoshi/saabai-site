@@ -1104,8 +1104,8 @@ Thank you for the outstanding service!</p>
       document.addEventListener("keydown", (e) => { if (e.key === "Escape") set(false); });
     })();
 
-    // Google reviews carousel. Content is server-rendered above; reviews.json (same shape the
-    // site can later be fed from an API/cron) refreshes it when available.
+    // Google reviews carousel. Content is server-rendered above. reviews.json is rewritten
+    // to the daily sync, which returns this same shape and falls back to the stored file.
     (function () {
       const track = document.getElementById("rvTrack"); if (!track) return;
       const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));

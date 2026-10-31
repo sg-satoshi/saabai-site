@@ -134,12 +134,19 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    return [
-      // Tributum Law (Mathew): friendly URL for the Site Factory site "tributum-law".
-      { source: "/sites/tributumlaw", destination: "/sites/tributum-law" },
-      { source: "/sites/tributumlaw/:path*", destination: "/sites/tributum-law/:path*" },
-      { source: "/clients/lmm-site", destination: "/clients/lmm-site/index.html" },
-    ];
+    return {
+      // Before the static file, so the carousel URL the page already fetches
+      // is the daily sync. The JSON file stays the stored list.
+      beforeFiles: [
+        { source: "/clients/lmm-site/assets/reviews.json", destination: "/api/reviews/lmm-site" },
+      ],
+      afterFiles: [
+        // Tributum Law (Mathew): friendly URL for the Site Factory site "tributum-law".
+        { source: "/sites/tributumlaw", destination: "/sites/tributum-law" },
+        { source: "/sites/tributumlaw/:path*", destination: "/sites/tributum-law/:path*" },
+        { source: "/clients/lmm-site", destination: "/clients/lmm-site/index.html" },
+      ],
+    };
   },
 };
 
