@@ -153,7 +153,10 @@ test("signup mobile is optional, validated, saved without SMS consent, new rows 
 test("page asks for optional mobile on signup and keeps SMS opt-in on thank-you", () => {
   const html = readFileSync("public/clients/sunder/index.html", "utf8");
   assert.match(html, /id="mob0"/);
-  assert.match(html, /Mobile \(optional\)/);
+  assert.match(html, /Mobile <span class="opt">\(optional\)<\/span>/);
+  assert.match(html, /<input type="tel" id="mob0" autocomplete="tel" inputmode="tel">/);
+  assert.equal(/\[(Privacy Policy|Giveaway terms)\]/.test(html), false);
+  assert.match(html, /ABN&nbsp;44&nbsp;703&nbsp;735&nbsp;264/);
   const form = html.slice(html.indexOf('<form class="form"'), html.indexOf("</form>"));
   assert.equal(/smsok|type="checkbox"/.test(form), false);
   assert.match(html, /id="smsok"/);
