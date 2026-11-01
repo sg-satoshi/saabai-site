@@ -31,7 +31,8 @@ label.f{display:block;margin-bottom:12px}label.f span{display:block;font-size:14
 input[type=text],input[type=email],input[type=tel]{width:100%;height:46px;border-radius:8px;border:1.5px solid var(--line);background:var(--field);color:var(--chalk);font:16px "Inter Tight",Archivo;padding:0 14px;outline:none}
 input:focus,input.focus{border-color:var(--volt);box-shadow:0 0 0 3px rgba(212,255,58,.45)}
 .sms{display:none;align-items:center;gap:12px;min-height:44px;margin:-2px 0 10px;cursor:pointer}.sms.show{display:flex}
-.sms input{width:22px;height:22px;accent-color:var(--volt);margin:0;flex:none}
+.sms input{appearance:none;-webkit-appearance:none;width:20px;height:20px;margin:0;flex:none;border:1px solid #8b8aa3;border-radius:4px;background:var(--field);display:grid;place-content:center;cursor:pointer}.sms input:checked{background:var(--volt);border-color:var(--volt)}.sms input:checked:after{content:"";width:5px;height:10px;border:solid var(--carbon);border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}.sms input:focus-visible{outline:2px solid var(--chalk);outline-offset:3px}
+label.f span.opt{display:inline;margin:0;font-size:inherit;font-family:"Inter Tight",Archivo;font-weight:400;color:var(--chalk);opacity:.6}
 .consent{font-size:15px;line-height:1.45;color:var(--chalk);margin:6px 0 14px}
 button,input,select,textarea{font-family:"Inter Tight",Archivo}
 button{width:100%;height:52px;border:0;border-radius:8px;background:var(--volt);color:var(--carbon);font:800 17px Archivo,"Inter Tight";font-stretch:115%;text-transform:uppercase;letter-spacing:.04em;cursor:pointer}
@@ -40,9 +41,9 @@ button:focus-visible{outline:3px solid var(--chalk);outline-offset:3px}
 a{color:var(--chalk);text-decoration:underline;text-underline-offset:2px}
 .done{display:none}.state-thanks .form{display:none}.state-thanks .thanks{display:block}
 .done h2{color:var(--volt);font-family:Archivo,"Inter Tight";font-weight:800;font-stretch:125%;font-size:32px;line-height:1.05;margin:0 0 10px;text-transform:uppercase}.done p{margin:0;font-size:17px}
-.tl{margin:0 0 18px!important;color:var(--chalk)}.share{border-top:1.5px solid #333;padding-top:16px}.sh{font-weight:600;color:var(--volt);margin:0 0 12px!important}.cap{font-size:14px!important;color:var(--chalk);margin:-4px 0 12px!important}.cap a{color:var(--chalk)}.ro{color:var(--volt)!important}.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}.b2{height:46px;font-size:15px}.ghost{background:transparent;color:var(--volt);border:1.5px solid var(--volt)}.smsb{margin-top:18px;padding:14px;border:1.5px solid #333;border-radius:10px}.sq{font-size:15px!important;font-weight:600;margin:0 0 10px!important}.b3{height:44px;font-size:14px;background:var(--chalk);color:var(--carbon)}.smsb label.f span{font-size:13px}.smsb input[type=tel]{height:44px}.sms span{font-size:14px;color:var(--chalk)}.b3:disabled{background:#262626;color:#b4b4ae;border:1.5px dashed #6a6a66;cursor:not-allowed}
+.tl{margin:0 0 18px!important;color:var(--chalk)}.share{border-top:1.5px solid #333;padding-top:16px}.sh{font-weight:600;color:var(--volt);margin:0 0 12px!important}.cap{font-size:14px!important;color:var(--chalk);margin:-4px 0 12px!important}.cap a{color:var(--chalk)}.ro{color:var(--volt)!important}.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}.b2{height:46px;font-size:15px}.ghost{background:transparent;color:var(--volt);border:1.5px solid var(--volt)}.smsb{margin-top:18px;padding:14px;border:1.5px solid #333;border-radius:10px}.sq{font-size:15px!important;font-weight:600;margin:0 0 10px!important}.b3{height:44px;font-size:14px;background:var(--volt);color:var(--carbon)}.smsb label.f span{font-size:13px}.smsb input[type=tel]{height:44px}.sms span{font-size:14px;color:var(--chalk)}.b3:disabled{background:#262626;color:#b4b4ae;border:1.5px dashed #6a6a66;cursor:not-allowed}
 .tick{width:44px;height:44px;border-radius:50%;background:var(--volt);color:var(--carbon);display:flex;align-items:center;justify-content:center;font:800 22px Archivo,"Inter Tight";margin-bottom:16px}
-footer{position:relative;padding:18px 72px;font-size:13px;color:var(--muted);border-top:1px solid #262626;background:var(--carbon)}footer a{margin-left:10px}
+footer{position:relative;padding:18px 72px;font-size:13px;color:var(--muted);border-top:1px solid #262626;background:var(--carbon)}footer{line-height:1.5}footer .ft{display:block;max-width:760px}footer .fl{display:block;font-size:12px;margin-top:6px}footer a{display:inline-block;padding:6px 0;margin-right:16px;color:var(--muted);text-decoration-color:rgba(214,214,208,.4)}
 .band{display:none}
 .dq{margin-top:18px;padding-top:14px;border-top:1px solid #2a2a2a}.dq .dl{font-size:13px!important;line-height:1.4;color:var(--muted);margin:0 0 10px!important}.dq .opts{display:grid;gap:8px}.dq .o{height:auto;min-height:44px;padding:10px 12px;background:transparent;color:var(--chalk);border:1px solid #6a6a66;border-radius:8px;font:500 14px/1.3 "Inter Tight",Archivo;text-transform:none;letter-spacing:0;text-align:left}.dq .o:hover{border-color:var(--chalk)}.dq .dt{display:none;font-size:14px!important;color:var(--chalk)}.dq.ans .opts{display:none}.dq.ans .dt{display:block}
 .mk{position:fixed;top:10px;right:12px;font:600 11px "Inter Tight",Archivo;background:#eef0f4;color:#3d4357;padding:5px 10px;border-radius:12px;z-index:9}
@@ -57,7 +58,7 @@ footer{position:relative;padding:18px 72px;font-size:13px;color:var(--muted);bor
  input[type=text],input[type=email],input[type=tel]{height:46px}button{height:52px}.consent{font-size:14px;line-height:1.4;margin:4px 0 12px}
  .mk{position:absolute;top:232px;right:18px}
  html[data-headline="2"] h1{font-stretch:108%;font-size:36px}.below{font-size:13px;line-height:1.4;margin-top:10px}
- footer{padding:16px 18px}footer a{margin-left:0;margin-right:10px;display:inline-block;min-height:44px;line-height:44px}}
+ footer{padding:16px 18px 8px}footer .fl{margin-top:2px}footer a{padding:12px 0;margin-right:20px}}
 </style></head><body>
 <section class="hero"><div class="wrap">
 <img class="logo" src="/clients/sunder/img/sunder-wordmark-colour-dark.svg" alt="SUNDER">
@@ -68,11 +69,10 @@ footer{position:relative;padding:18px 72px;font-size:13px;color:var(--muted);bor
 <form class="form" id="f" novalidate>
 <label class="f"><span data-c="lFirst"></span><input type="text" id="first" autocomplete="given-name"></label>
 <label class="f"><span data-c="lEmail"></span><input type="email" id="email" autocomplete="email"></label>
-<p class="consent" data-c="consent"></p>
-<button type="submit" data-c="cta"></button>
+<label class="f"><span data-c="lMob0" data-h="1"></span><input type="tel" id="mob0" autocomplete="tel" inputmode="tel"></label>
+<button type="submit" data-c="cta" style="margin-top:6px"></button>
 <input type="text" id="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
 <p class="below" id="wn" role="status" aria-live="polite" hidden style="color:#d4ff3a;font-weight:600"></p>
-<p class="below" data-c="privacy" data-h="1"></p>
 </form>
 <div class="done thanks">
 <h2 data-c="thanksH"></h2><p class="tl" data-c="thanksL"></p>
@@ -101,21 +101,19 @@ const COPY={
  eyebrow:"Split the game open.",
  headline:"Get first hit.", /* set from HEADLINES below */
  sub:"A new paddle with power, spin and control. Join for 20% off at launch, early access and a giveaway.",
- lFirst:"First name", lEmail:"Email",
- consent:"By joining, you agree to receive emails from Saabai Pty Ltd (ABN 44 703 735 264) trading as SUNDER about our launch, offers and giveaways. Unsubscribe any time.",
+ lFirst:"First name", lEmail:"Email", lMob0:'Mobile <span class="opt">(optional)</span>',
  cta:"Get first hit",
- privacy:'No spam, just launch news. Unsubscribe any time. See our <a href="#privacy">[Privacy Policy]</a> for how we handle your details.',
  thanksH:"You're in.",
  thanksL:"Your 20% off and early access are saved to this email.",
  shareL:"Get more chances to win. Share your link: every mate who joins gets you an extra giveaway entry.",
- shareCap:'Up to 10 extra entries. <a href="#giveaway-terms">[Giveaway terms]</a>',
+ shareCap:'Up to 10 extra entries.',
  lLink:"Your link", copyB:"Copy link", shareB:"Share",
  smsQ:"Want a text the day we launch?", lMobile:"Mobile", sms:"Text me launch news and offers. Reply STOP to opt out.", addB:"Add",
  /* Demand question (copy v4, "Thank-you state: optional demand question", not locked). Last block, one tap, no price. */
  dqL:"Quick one, totally optional. When SUNDER launches, would you rather:",
  dq1:"Buy a paddle outright", dq2:"Get a fresh paddle every 6 months for a monthly fee", dq3:"Not sure yet",
  dqT:"Thanks, noted. It helps us shape the launch.",
- footer:'SUNDER is a trading name of Saabai Pty Ltd, ABN 44 703 735 264. <a href="#privacy">[Privacy Policy]</a> <a href="#giveaway-terms">[Giveaway terms]</a>'
+ footer:'<span class="ft">By joining, you agree to receive emails from Saabai Pty Ltd (ABN&nbsp;44&nbsp;703&nbsp;735&nbsp;264) trading as SUNDER about our launch, offers and giveaways. Unsubscribe any time.</span><span class="fl"><a href="/clients/sunder/privacy.html">Privacy</a><a href="/clients/sunder/giveaway-terms.html">Giveaway terms</a></span>'
 };
 /* ===== END COPY BLOCK ===== */
 {const hv=HEADLINES.find(x=>String(x.id)===new URLSearchParams(location.search).get('h'))||HEADLINES[0];COPY.headline=hv.headline;COPY.cta=hv.cta;document.documentElement.dataset.headline=hv.id;}
@@ -141,13 +139,13 @@ document.querySelectorAll('#dq .o').forEach(b=>b.addEventListener('click',()=>{c
 document.querySelector('[data-c="copyB"]').addEventListener('click',e=>{navigator.clipboard&&navigator.clipboard.writeText($('ref').value).then(()=>{e.target.textContent='Copied'})});
 document.querySelector('[data-c="shareB"]').addEventListener('click',()=>{const u=$('ref').value;if(navigator.share)navigator.share({title:'SUNDER',url:u}).catch(()=>{});else navigator.clipboard&&navigator.clipboard.writeText(u)});
 $('f').addEventListener('submit',async e=>{e.preventDefault();say('');
- const first=$('first').value.trim(),email=$('email').value.trim();
+ const first=$('first').value.trim(),email=$('email').value.trim(),mob0=$('mob0').value.trim();
  if(!first){say('Please enter your first name.');return}
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){say('Please enter a valid email.');return}
  const btn=document.querySelector('#f button[type=submit]');btn.disabled=true;
  const utm={};['source','medium','campaign','content','term'].forEach(k=>{const v=q.get('utm_'+k);if(v)utm[k]=v});
- try{const r=await post('/api/sunder-waitlist',{firstName:first,email,h:Number(document.documentElement.dataset.headline)||1,ref:q.get('r')||'',utm,source:document.referrer?document.referrer.slice(0,200):'',website:$('hp').value});
-  if(r.ok&&r.j.ok)thanks(first,r.j.ref,r.j.token);else{say(r.j.error||'Something went wrong. Please try again.');btn.disabled=false}
+ try{const r=await post('/api/sunder-waitlist',{firstName:first,email,mobile:mob0,h:Number(document.documentElement.dataset.headline)||1,ref:q.get('r')||'',utm,source:document.referrer?document.referrer.slice(0,200):'',website:$('hp').value});
+  if(r.ok&&r.j.ok){if(mob0)$('mobile').value=mob0;thanks(first,r.j.ref,r.j.token)}else{say(r.j.error||'Something went wrong. Please try again.');btn.disabled=false}
  }catch{say('Something went wrong. Please try again.');btn.disabled=false}
 });
 </script></body></html>

@@ -132,3 +132,47 @@ test("sunder ships its own favicons and the host serves them", async () => {
   const res = await proxy(new NextRequest("https://sunder.com.au/favicon.ico", { headers: { host: "sunder.com.au" } }));
   assert.match(res.headers.get("x-middleware-rewrite") ?? "", /\/clients\/sunder\/favicon\.ico$/);
 });
+
+test("signup mobile is optional, validated, saved without SMS consent, new rows only", async () => {
+  assert.equal(ok({ firstName: "Sam", email: "a@b.co" }).mobile, null);
+  assert.equal(ok({ firstName: "Sam", email: "a@b.co", mobile: "  " }).mobile, null);
+  assert.equal(ok({ firstName: "Sam", email: "a@b.co", mobile: "0412 345 678" }).mobile, "0412345678");
+  assert.equal(validateSignup({ firstName: "Sam", email: "a@b.co", mobile: "12ab" }).ok, false);
+  const patches: Record<string, unknown>[] = [];
+  const { store } = memStore();
+  const s: WaitlistStore = { signup: store.signup, async update(h, p) { patches.push(p); return store.update(h, p); } };
+  await signup(s, ok({ firstName: "M", email: "m@x.co", mobile: "+61412345678" }), meta);
+  assert.equal(patches.length, 1);
+  assert.equal(patches[0].mobile, "+61412345678");
+  assert.equal("sms_consent" in patches[0], false);
+  await signup(s, ok({ firstName: "M", email: "m@x.co", mobile: "0499999999" }), meta); // repeat email
+  await signup(s, ok({ firstName: "N", email: "n@x.co" }), meta); // no mobile
+  assert.equal(patches.length, 1);
+});
+
+test("page asks for optional mobile on signup and keeps SMS opt-in on thank-you", () => {
+  const html = readFileSync("public/clients/sunder/index.html", "utf8");
+  assert.match(html, /id="mob0"/);
+  assert.match(html, /Mobile <span class="opt">\(optional\)<\/span>/);
+  assert.match(html, /<input type="tel" id="mob0" autocomplete="tel" inputmode="tel">/);
+  assert.equal(/\[(Privacy Policy|Giveaway terms)\]/.test(html), false);
+  assert.match(html, /ABN&nbsp;44&nbsp;703&nbsp;735&nbsp;264/);
+  const form = html.slice(html.indexOf('<form class="form"'), html.indexOf("</form>"));
+  assert.equal(/smsok|type="checkbox"/.test(form), false);
+  assert.match(html, /id="smsok"/);
+  assert.equal(/href="#privacy"|href="#giveaway-terms"/.test(html), false);
+  const thanks = html.slice(html.indexOf('<div class="done thanks">'), html.indexOf("</section>"));
+  assert.equal(/privacy|giveaway-terms/i.test(form + thanks), false);
+  assert.equal(/By joining|Unsubscribe|ABN/.test(form), false);
+  const footer = html.slice(html.indexOf("footer:'"));
+  assert.match(footer, /By joining, you agree to receive emails from Saabai Pty Ltd \(ABN&nbsp;44&nbsp;703&nbsp;735&nbsp;264\)/);
+  assert.equal(/ABN 44/.test(html), false);
+  assert.match(html, /href="\/clients\/sunder\/privacy\.html">Privacy</);
+  assert.match(html, /href="\/clients\/sunder\/giveaway-terms\.html">Giveaway terms</);
+  for (const f of ["privacy", "giveaway-terms"]) {
+    const page = readFileSync(`public/clients/sunder/${f}.html`, "utf8");
+    assert.match(page, /<meta name="robots" content="noindex">/);
+    assert.match(page, /hello@sunder\.com\.au/);
+    assert.equal(/\[[A-Z][A-Z ]+\]/.test(page), false);
+  }
+});

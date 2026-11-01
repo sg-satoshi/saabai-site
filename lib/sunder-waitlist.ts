@@ -25,7 +25,19 @@ export type SignupInput = {
   referredBy: string | null;
   utm: Record<"source" | "medium" | "campaign" | "content" | "term", string | null>;
   source: string | null;
+  /** Optional mobile from the signup form. Stored without SMS consent. */
+  mobile: string | null;
 };
+
+const MOBILE = /^\+?\d{8,15}$/;
+/** Strip spaces, brackets and dashes; null when empty. */
+export function cleanMobile(v: unknown): string | null | false {
+  if (v === undefined || v === null) return null;
+  if (typeof v !== "string") return false;
+  const raw = v.replace(/[\s()-]/g, "");
+  if (!raw) return null;
+  return MOBILE.test(raw) ? raw : false;
+}
 
 const clip = (v: unknown, n: number): string | null => {
   if (typeof v !== "string") return null;
@@ -42,6 +54,8 @@ export function validateSignup(body: unknown): { ok: true; input: SignupInput } 
   if (!firstName || firstName.length > 60) return { ok: false, error: "Please enter your first name." };
   const email = typeof b.email === "string" ? b.email.trim().toLowerCase() : "";
   if (!email || email.length > 254 || !EMAIL.test(email)) return { ok: false, error: "Please enter a valid email." };
+  const mobile = cleanMobile(b.mobile);
+  if (mobile === false) return { ok: false, error: "Please enter a valid mobile number." };
   const h = Number(b.h);
   const ref = typeof b.ref === "string" ? b.ref.trim().toLowerCase() : "";
   const u = (b.utm && typeof b.utm === "object" ? b.utm : {}) as Record<string, unknown>;
@@ -54,6 +68,7 @@ export function validateSignup(body: unknown): { ok: true; input: SignupInput } 
       referredBy: REF.test(ref) ? ref : null,
       utm: { source: clip(u.source, 100), medium: clip(u.medium, 100), campaign: clip(u.campaign, 100), content: clip(u.content, 100), term: clip(u.term, 100) },
       source: clip(b.source, 200),
+      mobile,
     },
   };
 }
@@ -68,8 +83,8 @@ export function validateUpdate(body: unknown): { ok: true; input: UpdateInput } 
   if (!TOKEN.test(token)) return { ok: false, error: "Invalid request" };
   const out: UpdateInput = { token };
   if (b.mobile !== undefined) {
-    const raw = typeof b.mobile === "string" ? b.mobile.replace(/[\s()-]/g, "") : "";
-    if (!/^\+?\d{8,15}$/.test(raw)) return { ok: false, error: "Please enter a valid mobile number." };
+    const raw = cleanMobile(b.mobile);
+    if (!raw) return { ok: false, error: "Please enter a valid mobile number." };
     if (b.smsConsent !== true) return { ok: false, error: "Tick the box to get texts." };
     out.mobile = raw;
     out.smsConsent = true;
@@ -147,7 +162,17 @@ export async function signup(store: WaitlistStore, input: SignupInput, meta: { i
         p_ip_hash: meta.ipHash, p_user_agent: meta.userAgent ? meta.userAgent.slice(0, 300) : null,
         p_referral_code: code, p_referred_by: input.referredBy, p_update_token_hash: hashToken(token),
       });
-      return r.created ? { ref: r.referral_code, token } : { ref: r.referral_code, token: null };
+      if (!r.created) return { ref: r.referral_code, token: null };
+      // Optional signup mobile: new rows only (never overwrite an existing
+      // subscriber's data), and never opted into SMS here. Best effort.
+      if (input.mobile) {
+        try {
+          await store.update(hashToken(token), { mobile: input.mobile, updated_at: new Date().toISOString() });
+        } catch (e) {
+          console.error("sunder waitlist mobile save failed:", e instanceof Error ? e.message : "error");
+        }
+      }
+      return { ref: r.referral_code, token };
     } catch (e) {
       // Retry only on a referral-code collision.
       if (!/referral|ref_key/i.test(String((e as Error).message))) throw e;
