@@ -19,7 +19,6 @@ import {
 import {
   SUNDER_FACTORY_SEED,
   SUNDER_HEADLINE,
-  SUNDER_PLACEHOLDER,
   sunderGeoProfile,
   sunderRobotsHeaders,
 } from "../lib/sunder-factory-seed";
@@ -78,7 +77,8 @@ test("factory seed is the record Site Factory writes, with no origin or approval
   assert.equal(SUNDER_FACTORY_SEED.chatbot.enabled, false);
   assert.equal(SUNDER_HEADLINE.control, "Get first hit.");
   assert.equal(SUNDER_HEADLINE.variant, "Feel the power. Keep the control.");
-  assert.equal(sunderGeoProfile().summary, SUNDER_PLACEHOLDER);
+  assert.match(sunderGeoProfile().summary, /pickleball paddle/);
+  assert.equal(/\$\d|launch(es)? (on|in) [A-Z]|made in/i.test(JSON.stringify(sunderGeoProfile())), false);
   const blob = JSON.stringify(SUNDER_FACTORY_SEED) + JSON.stringify(sunderGeoProfile()) + html;
   assert.equal(/made in australia/i.test(blob), false);
   assert.equal(/usa pickleball/i.test(blob), false);

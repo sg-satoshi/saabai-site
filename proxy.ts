@@ -13,7 +13,7 @@ import { isSiteEnabled } from "./lib/exp/sites";
 import { SLOTS } from "./lib/exp/seed";
 import { CHIEF_COOKIE, chiefAllowed, chiefAudit, chiefHostOk, verifyChiefToken } from "./lib/chief";
 import { OV_COOKIE, encodeOverlay, liveOverlays, overlayPathOk } from "./lib/exp/overlay";
-import { SUNDER_ROBOTS, SUNDER_SLUG } from "./lib/sunder-factory-seed";
+import { SUNDER_ROBOTS, SUNDER_SLUG, sunderLegalRoute } from "./lib/sunder-factory-seed";
 import {
   NOINDEX_ROBOTS,
   ROBOTS_REQUEST_HEADER,
@@ -333,6 +333,18 @@ export async function proxy(req: NextRequest) {
         url.hostname = "www.saabai.ai";
         url.pathname = pathname === "/favicon.ico" ? "/clients/sunder/favicon.ico" : "/clients/sunder/apple-touch-icon-180.png";
         return NextResponse.rewrite(url);
+      }
+      // SUNDER legal pages live at /privacy and /giveaway-terms; the old /clients/sunder/*.html paths 301 there.
+      if (slug === SUNDER_SLUG) {
+        const legal = sunderLegalRoute(pathname);
+        if (legal && "redirect" in legal) return NextResponse.redirect(new URL(legal.redirect + url.search, `https://${hostname}`), 301);
+        if (legal) {
+          url.hostname = "www.saabai.ai";
+          url.pathname = legal.rewrite;
+          const res = NextResponse.rewrite(url);
+          res.headers.set("X-Robots-Tag", "noindex");
+          return res;
+        }
       }
       // Custom-domain favicon: the site's own Site Factory favicon, else Saabai's.
       if (pathname === "/favicon.ico") {

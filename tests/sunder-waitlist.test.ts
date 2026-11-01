@@ -171,8 +171,8 @@ test("page asks for optional mobile on signup and keeps SMS opt-in on thank-you"
   const footer = html.slice(html.indexOf("footer:'"));
   assert.match(footer, /By joining, you agree to receive emails from Saabai Pty Ltd \(ABN&nbsp;44&nbsp;703&nbsp;735&nbsp;264\)/);
   assert.equal(/ABN 44/.test(html), false);
-  assert.match(html, /href="\/clients\/sunder\/privacy\.html">Privacy</);
-  assert.match(html, /href="\/clients\/sunder\/giveaway-terms\.html">Giveaway terms</);
+  assert.match(html, /href="\/privacy">Privacy</);
+  assert.match(html, /href="\/giveaway-terms">Giveaway terms</);
   for (const f of ["privacy", "giveaway-terms"]) {
     const page = readFileSync(`public/clients/sunder/${f}.html`, "utf8");
     assert.match(page, /<meta name="robots" content="noindex">/);

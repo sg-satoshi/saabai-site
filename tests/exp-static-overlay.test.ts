@@ -112,7 +112,7 @@ test("an OFF site's served HTML is byte-identical to the pre-change output", asy
   assert.equal(Buffer.byteLength(body), Buffer.byteLength(before));
   assert.doesNotMatch(body, /data-sb-exp/);
   assert.equal(res.headers.get("cache-control"), "no-store");
-  // An sb_ov cookie on an off site changes nothing: same bytes, same shared-cache headers.
+  // An sb_ov cookie on an off site changes nothing: same bytes, same no-store header.
   const withOv = await GET(new NextRequest("https://sunder.com.au/", { headers: { cookie: "sb_ov=x" } }), { params: Promise.resolve({ slug: "sunder" }) });
   assert.equal(await withOv.text(), before);
   assert.equal(withOv.headers.get("cache-control"), "no-store");
