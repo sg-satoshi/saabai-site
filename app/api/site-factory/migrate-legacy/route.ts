@@ -3,6 +3,7 @@ import { put, list } from "@vercel/blob";
 import { readFileSync, existsSync } from "fs";
 import path from "path";
 import { createSite, getSiteBySlug } from "../../../../lib/site-registry";
+import { SUNDER_FACTORY_SEED, SUNDER_LEGACY_META, SUNDER_SLUG } from "../../../../lib/sunder-factory-seed";
 
 export const runtime = "nodejs";
 
@@ -10,6 +11,7 @@ const LEGACY_META: Record<string, { name: string; niche: string; description?: s
   nextinvestment: { name: "Next Investment", niche: "finance" },
   "lmm-site":     { name: "Lifestyle Money Management", niche: "finance" },
   "nico-moretti": { name: "Nico Moretti", niche: "professional-services", description: "Bespoke companionship for discerning executive women." },
+  ...SUNDER_LEGACY_META,
 };
 
 export async function POST(req: NextRequest) {
@@ -36,9 +38,10 @@ export async function POST(req: NextRequest) {
     await put(`sites/${slug}/index.html`, html, { access: "public", contentType: "text/html" });
   }
 
-  // Register in Redis
+  // Register in Redis. SUNDER uses the seed (draft, no chatbot, canonical host).
+  // Other legacy slugs keep the previous record shape.
   const meta = LEGACY_META[slug] ?? { name: slug, niche: "professional-services" };
-  const site = await createSite({
+  const site = await createSite(slug === SUNDER_SLUG ? SUNDER_FACTORY_SEED : {
     slug,
     name: meta.name,
     niche: meta.niche,

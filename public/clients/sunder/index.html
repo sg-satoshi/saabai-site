@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>SUNDER. Coming soon.</title>
+<meta name="description" content="SUNDER. Coming soon."/>
+<meta name="robots" content="noindex, nofollow"/>
+<link rel="canonical" href="https://sunder.com.au/"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="SUNDER"/>
+<meta property="og:title" content="SUNDER. Coming soon."/>
+<meta property="og:description" content="SUNDER. Coming soon."/>
+<meta property="og:url" content="https://sunder.com.au/"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,800&amp;family=Outfit:wght@400;500;600&amp;display=swap"/>
+<style>
+  :root { --carbon: #0d0d0d; --volt: #d4ff3a; --chalk: #f2f2ee; }
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; max-width: 100%; }
+  body {
+    min-height: 100vh;
+    background: var(--carbon);
+    color: var(--chalk);
+    font-family: Outfit, sans-serif;
+    font-weight: 400;
+  }
+  main { width: 100%; max-width: 32rem; margin: 0 auto; padding: 48px 20px 32px; }
+  [data-slot="hero"]:empty { display: none; }
+  [data-slot="hero"] img { display: block; width: 100%; height: auto; }
+  [data-slot="eyebrow"], h1 {
+    font-family: Archivo, sans-serif;
+    font-weight: 800;
+    font-stretch: expanded;
+    letter-spacing: 0.01em;
+  }
+  [data-slot="eyebrow"] {
+    margin: 0 0 12px;
+    color: var(--volt);
+    font-size: 14px;
+    text-transform: uppercase;
+  }
+  h1 { margin: 0 0 12px; font-size: clamp(40px, 12vw, 64px); line-height: 0.95; }
+  [data-slot="subline"], [data-slot="status"] { margin: 0 0 28px; font-size: 18px; line-height: 1.4; }
+  form, [data-slot="thanks"] { display: grid; gap: 12px; }
+  label { display: grid; gap: 6px; font-size: 14px; }
+  input[type="text"], input[type="email"], input[type="tel"] {
+    width: 100%;
+    max-width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--chalk);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--chalk);
+    font: 16px/1.3 Outfit, sans-serif;
+  }
+  button {
+    width: 100%;
+    max-width: 100%;
+    margin-top: 4px;
+    padding: 14px 16px;
+    border: 0;
+    border-radius: 4px;
+    background: var(--volt);
+    color: var(--carbon);
+    font: 600 16px/1.2 Outfit, sans-serif;
+    cursor: pointer;
+  }
+  .check { display: flex; gap: 10px; align-items: flex-start; }
+  .check input { margin-top: 3px; }
+  fieldset { margin: 0; padding: 0; border: 0; display: grid; gap: 8px; }
+  legend { padding: 0; font-size: 14px; }
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":"SUNDER","url":"https://sunder.com.au/","description":"SUNDER. Coming soon."}
+</script>
+</head>
+<body>
+<main>
+  <p data-slot="status">SUNDER. Coming soon.</p>
+  <!-- Hero image slot. Empty until the approved design drops in. -->
+  <figure data-slot="hero"></figure>
+  <p data-slot="eyebrow">SUNDER</p>
+  <!-- TODO: headline variants are in lib/sunder-factory-seed.ts. The split tester does not assign variants on this host yet. Visible text is the control. -->
+  <h1 data-slot="headline" data-headline-control="Get first hit." data-headline-variant="Feel the power. Keep the control.">Get first hit.</h1>
+  <p data-slot="subline">Coming soon.</p>
+  <!-- TODO: Supabase storage, consent logging, and server-side validation. This form does not submit anywhere. -->
+  <form data-slot="form" id="sunder-waitlist" action="" method="get" novalidate>
+    <label>First name
+      <input type="text" name="firstName" autocomplete="given-name" required/>
+    </label>
+    <label>Email
+      <input type="email" name="email" autocomplete="email" required/>
+    </label>
+    <button type="submit">Join the waitlist</button>
+  </form>
+  <section data-slot="thanks" id="sunder-thanks" hidden>
+    <h2>You're on the list.</h2>
+    <label>Mobile (optional)
+      <input type="tel" name="mobile" autocomplete="tel" inputmode="tel"/>
+    </label>
+    <label class="check">
+      <input type="checkbox" name="sms-consent"/>
+      <span>Send me SMS updates. Leave this unticked if you do not want texts.</span>
+    </label>
+    <fieldset>
+      <legend>Would you rather buy or subscribe?</legend>
+      <label class="check"><input type="radio" name="offer" value="buy"/> <span>Buy</span></label>
+      <label class="check"><input type="radio" name="offer" value="subscribe"/> <span>Subscribe</span></label>
+    </fieldset>
+    <p>Placeholder only. Nothing on this screen is saved yet.</p>
+  </section>
+</main>
+<script>
+  (function () {
+    var form = document.getElementById("sunder-waitlist");
+    var thanks = document.getElementById("sunder-thanks");
+    if (!form || !thanks) return;
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var name = form.querySelector("[name=firstName]");
+      var email = form.querySelector("[name=email]");
+      if (!name || !email || !name.value.trim() || !email.value.trim()) return;
+      form.hidden = true;
+      thanks.hidden = false;
+    });
+  })();
+</script>
+</body>
+</html>

@@ -7,6 +7,7 @@ import { readRepoClientHtml } from "@/lib/repo-client-html";
 import { prepareLmmHomeHtml } from "@/lib/lmm-legal";
 import { ensureFavicon } from "@/lib/site-favicon";
 import { ensureSchema } from "@/lib/site-schema";
+import { sunderRobotsHeaders } from "@/lib/sunder-factory-seed";
 
 export const runtime = "nodejs";
 
@@ -27,6 +28,10 @@ function prepareStoredHtml(slug: string, html: string): string {
   return slug === "lmm-site" ? prepareLmmHomeHtml(html) : html;
 }
 
+function siteResponse(slug: string, body: string, status: number, headers: Record<string, string>) {
+  return new Response(body, { status, headers: sunderRobotsHeaders(slug, headers) });
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -39,12 +44,9 @@ export async function GET(
     const repoHtml = readRepoClientHtml(slug, "index.html");
     if (repoHtml !== null) {
       const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, repoHtml))));
-      return new Response(html, {
-        status: 200,
-        headers: {
-          "Content-Type": "text/html; charset=utf-8",
-          "Cache-Control": "no-store",
-        },
+      return siteResponse(slug, html, 200, {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store",
       });
     }
 
@@ -64,12 +66,9 @@ export async function GET(
 
     if (blobHtml !== null) {
       const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, applyCssPatch(slug, prepareStoredHtml(slug, blobHtml)))));
-      return new Response(html, {
-        status: 200,
-        headers: {
-          "Content-Type": "text/html; charset=utf-8",
-          "Cache-Control": "no-store",
-        },
+      return siteResponse(slug, html, 200, {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store",
       });
     }
 
@@ -77,26 +76,27 @@ export async function GET(
     try {
       const filePath = path.join(process.cwd(), "public", "clients", slug, "index.html");
       const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, readFileSync(filePath, "utf-8")))));
-      return new Response(html, {
-        status: 200,
-        headers: {
-          "Content-Type": "text/html; charset=utf-8",
-          "Cache-Control": "public, s-maxage=3600",
-        },
+      return siteResponse(slug, html, 200, {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "public, s-maxage=3600",
       });
     } catch {
       // not a legacy site either
     }
 
-    return new Response(
+    return siteResponse(
+      slug,
       `<!DOCTYPE html><html><head><title>Site not found</title></head><body style="font-family:sans-serif;text-align:center;padding:80px 20px"><h1>Site not found</h1><p>The site <strong>${slug}</strong> doesn't exist yet.</p></body></html>`,
-      { status: 404, headers: { "Content-Type": "text/html; charset=utf-8" } }
+      404,
+      { "Content-Type": "text/html; charset=utf-8" },
     );
   } catch (e) {
     console.error("Site serve error:", e);
-    return new Response(
+    return siteResponse(
+      slug,
       `<!DOCTYPE html><html><body style="font-family:sans-serif;text-align:center;padding:80px"><h1>Error loading site</h1></body></html>`,
-      { status: 500, headers: { "Content-Type": "text/html; charset=utf-8" } }
+      500,
+      { "Content-Type": "text/html; charset=utf-8" },
     );
   }
 }
