@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 export type MobileNavLink = { href: string; label: string };
 
 export function MobileMenu({ links }: { links: MobileNavLink[] }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -20,11 +23,17 @@ export function MobileMenu({ links }: { links: MobileNavLink[] }) {
     const onResize = () => {
       if (window.innerWidth >= 768) setOpen(false);
     };
+    const body = document.body;
+    const prevOverflow = body.style.overflow;
+    body.style.overflow = "hidden";
+    body.setAttribute("data-cr-menu-open", "");
     document.addEventListener("keydown", onKey);
     window.addEventListener("resize", onResize);
     return () => {
       document.removeEventListener("keydown", onKey);
       window.removeEventListener("resize", onResize);
+      body.style.overflow = prevOverflow;
+      body.removeAttribute("data-cr-menu-open");
     };
   }, [open]);
 
@@ -56,10 +65,27 @@ export function MobileMenu({ links }: { links: MobileNavLink[] }) {
           )}
         </svg>
       </button>
+      <style>{`body[data-cr-menu-open] .cr-sticky-cta{display:none}`}</style>
+      {mounted &&
+        createPortal(
+          <div
+            aria-hidden="true"
+            onClick={close}
+            data-testid="cr-menu-scrim"
+            style={{ backgroundColor: "rgba(13,11,10,.7)" }}
+            className={`md:hidden fixed inset-x-0 bottom-0 top-20 z-30 transition-opacity duration-200 motion-reduce:transition-none ${
+              open ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
+          />,
+          document.body,
+        )}
       <div
         id="cr-mobile-menu"
-        hidden={!open}
-        className="absolute left-0 right-0 top-20 bg-bg border-b border-muted-line shadow-lg"
+        inert={!open}
+        aria-hidden={!open}
+        className={`absolute left-0 right-0 top-20 bg-bg border-b border-muted-line shadow-lg transition-[opacity,transform,visibility] duration-200 motion-reduce:transition-none ${
+          open ? "opacity-100 translate-y-0 visible" : "opacity-0 -translate-y-2 invisible pointer-events-none"
+        }`}
       >
         <ul className="max-w-7xl mx-auto px-6 py-4 flex flex-col text-base font-medium text-muted-foreground">
           {links.map((l) => (
