@@ -32,6 +32,8 @@ export const SUNDER_ALIAS_HOSTS = [
 ] as const;
 
 export const SUNDER_PLACEHOLDER = "SUNDER. Coming soon.";
+/** llms.txt summary: only what the live page already says. No specs, price, warranty, launch date or origin claim. */
+export const SUNDER_GEO_SUMMARY = "SUNDER is a new pickleball paddle with power, spin and control, with a 12-month warranty on core and edge. It has not launched yet. Join the waitlist for 20% off at launch, early access and a giveaway.";
 
 /**
  * Headline copy for the waitlist shell.
@@ -93,7 +95,26 @@ export function sunderGeoProfile(): GeoProfile {
   return {
     name: "SUNDER",
     url: SUNDER_CANONICAL_ORIGIN,
-    summary: SUNDER_PLACEHOLDER,
+    summary: SUNDER_GEO_SUMMARY,
+    email: "hello@sunder.com.au",
+    serviceAreas: ["Australia"],
+    facts: [
+      "Status: pre-launch. The waitlist is open at https://sunder.com.au/",
+      "Joining the waitlist gets 20% off at launch, early access and a giveaway entry",
+      "Each mate who joins with your share link gives you an extra giveaway entry, up to 10 extra entries",
+      "Operated by Saabai Pty Ltd (ABN 44 703 735 264), trading as SUNDER, Queensland",
+      "Giveaway terms: https://sunder.com.au/giveaway-terms",
+      "Privacy policy: https://sunder.com.au/privacy",
+    ],
     pages: [{ path: "/", title: "Home" }],
   };
+}
+
+/** Clean legal URLs on sunder.com.au. Old /clients/sunder/*.html paths 301 to them; the clean paths serve the repo files. */
+export const SUNDER_LEGAL_PAGES: Record<string, string> = { "/privacy": "privacy.html", "/giveaway-terms": "giveaway-terms.html" };
+export function sunderLegalRoute(pathname: string): { redirect: string } | { rewrite: string } | null {
+  const p = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  if (SUNDER_LEGAL_PAGES[p]) return { rewrite: `/clients/sunder/${SUNDER_LEGAL_PAGES[p]}` };
+  for (const [clean, file] of Object.entries(SUNDER_LEGAL_PAGES)) if (p === `/clients/sunder/${file}`) return { redirect: clean };
+  return null;
 }
