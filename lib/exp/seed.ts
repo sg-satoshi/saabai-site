@@ -95,6 +95,8 @@ export function qualifyHoursClaim(text: string, emphasis?: string): { text: stri
  * Site Factory overlay tests that ship defined but idle. Status is draft, and the site's split testing switch defaults
  * off, so visitors see nothing until Shane starts the test and turns the site on in /saabai-admin/experiments.
  * They are registered (Redis + Supabase) the first time the site is opened there. Not in SLOTS: no code wraps them.
+ * SUNDER: the page reads its sb_ov variant itself (b = approved headline 2, with its button and styling, before first
+ * paint), so this overlay only tags the h1 for impressions. Variant copy must stay equal to SUNDER_HEADLINE.
  */
 export const CLIENT_SEEDS: Experiment[] = [
   {

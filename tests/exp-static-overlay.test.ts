@@ -7,8 +7,8 @@ import { validateExperiment } from "../lib/exp/core";
 import { SUNDER_HEADLINE } from "../lib/sunder-factory-seed";
 
 /** Minimal DOM stand-in: one h1, enough for the static overlay runtime. */
-function runScript(cookie: string, path = "/") {
-  const text: { nodeType: number; nodeValue: string } = { nodeType: 3, nodeValue: SUNDER_HEADLINE.control };
+function runScript(cookie: string, path = "/", start: string = SUNDER_HEADLINE.control) {
+  const text: { nodeType: number; nodeValue: string } = { nodeType: 3, nodeValue: start };
   const attrs: Record<string, string> = {};
   const h1 = {
     tagName: "H1", childNodes: [text],
@@ -37,7 +37,7 @@ const ov = (x?: string) => `sb_ov=${encodeURIComponent(JSON.stringify({ p: "/", 
 
 test("static overlay swaps the SUNDER headline for the assigned variant and fires goal once", () => {
   const r = runScript(ov(SUNDER_HEADLINE.variant));
-  assert.equal(r.h1.nodeValue.trim(), SUNDER_HEADLINE.variant);
+  assert.equal(r.h1.nodeValue, SUNDER_HEADLINE.variant);
   assert.equal(r.attrs["data-exp-variant"], "b");
   assert.equal(r.cls.has("sb-af"), false);
   r.listeners["sb:goal"](); r.listeners["sb:goal"]();
@@ -62,7 +62,7 @@ test("injectStaticExp adds one head script and is idempotent", () => {
 
 test("every static serve path injects the runtime", () => {
   const src = readFileSync("app/sites/[slug]/route.ts", "utf8");
-  assert.equal((src.match(/injectStaticExp\(ensurePoweredBy\(/g) ?? []).length, 3);
+  assert.equal((src.match(/injectStaticExp\(ensurePoweredBy\(.*\), exp\);/g) ?? []).length, 3);
 });
 
 test("SUNDER page sends goal only after a successful signup, endpoint unchanged", () => {
@@ -80,4 +80,38 @@ test("SUNDER headline test ships as an idle draft overlay test with both headlin
   assert.deepEqual(s.variants.map((v) => v.text), [SUNDER_HEADLINE.control, SUNDER_HEADLINE.variant]);
   assert.ok(SEED_EXPERIMENTS.some((e) => e.id === s.id));
   assert.ok(!SLOTS.some((x) => x.id === s.id), "not a native slot, so the overlay is never treated as wrapped");
+});
+
+test("the page's own variant render still gets tagged for impressions", () => {
+  const r = runScript(ov(SUNDER_HEADLINE.variant), "/", SUNDER_HEADLINE.variant);
+  assert.equal(r.h1.nodeValue, SUNDER_HEADLINE.variant);
+  assert.equal(r.attrs["data-exp-id"], "sunder-home-hero-headline");
+});
+
+test("SUNDER picks approved headline 2 (button, styling, h=2) from sb_ov variant b before filling the page", () => {
+  const html = readFileSync("public/clients/sunder/index.html", "utf8");
+  const i = html.indexOf("const ovB="), fill = html.indexOf("document.querySelectorAll('[data-c]')");
+  assert.ok(i > 0 && i < fill);
+  assert.match(html, /t\.i==='sunder-home-hero-headline'&&t\.a==='b'/);
+  assert.match(html, /const hv=\(ovB&&HEADLINES\[1\]\)\|\|/);
+  assert.match(html, /h:Number\(document\.documentElement\.dataset\.headline\)\|\|1/, "waitlist payload code unchanged");
+});
+
+test("an OFF site's served HTML is byte-identical to the pre-change output", async () => {
+  delete process.env.UPSTASH_REDIS_REST_URL; delete process.env.KV_REST_API_URL;
+  const { GET } = await import("../app/sites/[slug]/route");
+  const { NextRequest } = await import("next/server");
+  const { ensurePoweredBy } = await import("../lib/client-site");
+  const { ensureSchema } = await import("../lib/site-schema");
+  const { ensureFavicon } = await import("../lib/site-favicon");
+  // SUNDER is served from public/clients/sunder (no repo HTML, no Blob in tests): the pre-change pipeline exactly.
+  const before = ensurePoweredBy("sunder", ensureSchema("sunder", await ensureFavicon("sunder", readFileSync("public/clients/sunder/index.html", "utf8"))));
+  const res = await GET(new NextRequest("https://sunder.com.au/"), { params: Promise.resolve({ slug: "sunder" }) });
+  const body = await res.text();
+  assert.equal(body, before);
+  assert.equal(Buffer.byteLength(body), Buffer.byteLength(before));
+  assert.doesNotMatch(body, /data-sb-exp/);
+  const withOv = await GET(new NextRequest("https://sunder.com.au/", { headers: { cookie: "sb_ov=x" } }), { params: Promise.resolve({ slug: "sunder" }) });
+  assert.match(await withOv.text(), /data-sb-exp/);
+  console.log(`off-site bytes: ${Buffer.byteLength(body)} (pre-change ${Buffer.byteLength(before)})`);
 });
