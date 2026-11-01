@@ -9,7 +9,6 @@ import { ensureFavicon } from "@/lib/site-favicon";
 import { ensureSchema } from "@/lib/site-schema";
 import { sunderRobotsHeaders } from "@/lib/sunder-factory-seed";
 import { injectStaticExp } from "@/lib/exp/static-overlay";
-import { OV_COOKIE } from "@/lib/exp/overlay";
 import { isSiteEnabled } from "@/lib/exp/sites";
 
 export const runtime = "nodejs";
@@ -36,13 +35,14 @@ function siteResponse(slug: string, body: string, status: number, headers: Recor
 }
 
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  // Split-testing runtime only when this site is switched on, or the visitor already holds an overlay cookie.
-  // Off sites get byte-identical HTML.
-  const exp = !!req.cookies.get(OV_COOKIE)?.value || (await isSiteEnabled(slug).catch(() => false));
+  // Split-testing runtime only when this site is switched on. Off sites get byte-identical HTML and headers.
+  // Pages carrying the runtime are never shared-cached.
+  const exp = await isSiteEnabled(slug).catch(() => false);
+  const cc = (normal: string) => (exp ? "private, no-store" : normal);
 
   try {
     // Nico's HTML in this repo is the copy visitors should see. Blob is only
@@ -52,7 +52,7 @@ export async function GET(
       const html = injectStaticExp(ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, repoHtml)))), exp);
       return siteResponse(slug, html, 200, {
         "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "no-store",
+        "Cache-Control": cc("no-store"),
       });
     }
 
@@ -74,7 +74,7 @@ export async function GET(
       const html = injectStaticExp(ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, applyCssPatch(slug, prepareStoredHtml(slug, blobHtml))))), exp);
       return siteResponse(slug, html, 200, {
         "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "no-store",
+        "Cache-Control": cc("no-store"),
       });
     }
 
@@ -84,7 +84,7 @@ export async function GET(
       const html = injectStaticExp(ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, readFileSync(filePath, "utf-8"))))), exp);
       return siteResponse(slug, html, 200, {
         "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "public, s-maxage=3600",
+        "Cache-Control": cc("public, s-maxage=3600"),
       });
     } catch {
       // not a legacy site either

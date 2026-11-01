@@ -111,7 +111,17 @@ test("an OFF site's served HTML is byte-identical to the pre-change output", asy
   assert.equal(body, before);
   assert.equal(Buffer.byteLength(body), Buffer.byteLength(before));
   assert.doesNotMatch(body, /data-sb-exp/);
+  assert.equal(res.headers.get("cache-control"), "public, s-maxage=3600");
+  // An sb_ov cookie on an off site changes nothing: same bytes, same shared-cache headers.
   const withOv = await GET(new NextRequest("https://sunder.com.au/", { headers: { cookie: "sb_ov=x" } }), { params: Promise.resolve({ slug: "sunder" }) });
-  assert.match(await withOv.text(), /data-sb-exp/);
+  assert.equal(await withOv.text(), before);
+  assert.equal(withOv.headers.get("cache-control"), "public, s-maxage=3600");
   console.log(`off-site bytes: ${Buffer.byteLength(body)} (pre-change ${Buffer.byteLength(before)})`);
+});
+
+test("whenever the runtime is injected the page is private, no-store", () => {
+  const src = readFileSync("app/sites/[slug]/route.ts", "utf8");
+  assert.match(src, /const cc = \(normal: string\) => \(exp \? "private, no-store" : normal\);/);
+  assert.equal((src.match(/"Cache-Control": cc\(/g) ?? []).length, 3);
+  assert.doesNotMatch(src, /sb_ov|OV_COOKIE/, "the cookie never turns the runtime on");
 });
