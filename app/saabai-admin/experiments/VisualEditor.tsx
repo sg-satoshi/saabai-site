@@ -175,7 +175,7 @@ export default function VisualEditor() {
     <div className="xp xp-wide">
       <div className="ph">
         <div><h1>Visual editor</h1><p className="sub">See the live page, click a test element to edit its variants. Nothing here changes what visitors see unless you save a change, and you only ever see the original copy.</p></div>
-        <a className="xp-editlink" href={`/saabai-admin/experiments${siteParam(site)}`}>All tests</a>
+        <a className="xp-editlink" href={"/saabai-admin/experiments" + siteParam(site)}>All tests</a>
       </div>
       {sites.length > 0 && <SitePicker sites={sites} site={site} onPick={pickSite} />}
       {cur?.kind === "client" && !cur.enabled && <div className="xp-siteoff" role="status">Split testing is off for {cur.label}, so visitors see the normal page. Tests you set up here only show once you turn it on in the test list.</div>}
