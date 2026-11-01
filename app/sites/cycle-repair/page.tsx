@@ -65,7 +65,7 @@ export default function Index() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       {/* Sticky mobile CTA */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md md:hidden">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md md:hidden cr-sticky-cta">
         <a
           href="tel:0405225721"
           className="flex items-center justify-between bg-brand text-brand-foreground px-4 py-3 rounded-xl shadow-2xl ring-1 ring-brand font-semibold text-sm tracking-tight"
