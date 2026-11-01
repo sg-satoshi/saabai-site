@@ -160,4 +160,15 @@ test("page asks for optional mobile on signup and keeps SMS opt-in on thank-you"
   const form = html.slice(html.indexOf('<form class="form"'), html.indexOf("</form>"));
   assert.equal(/smsok|type="checkbox"/.test(form), false);
   assert.match(html, /id="smsok"/);
+  assert.equal(/href="#privacy"|href="#giveaway-terms"/.test(html), false);
+  const thanks = html.slice(html.indexOf('<div class="done thanks">'), html.indexOf("</section>"));
+  assert.equal(/privacy|giveaway-terms/i.test(form + thanks), false);
+  assert.match(html, /href="\/clients\/sunder\/privacy\.html">Privacy</);
+  assert.match(html, /href="\/clients\/sunder\/giveaway-terms\.html">Giveaway terms</);
+  for (const f of ["privacy", "giveaway-terms"]) {
+    const page = readFileSync(`public/clients/sunder/${f}.html`, "utf8");
+    assert.match(page, /<meta name="robots" content="noindex">/);
+    assert.match(page, /hello@sunder\.com\.au/);
+    assert.equal(/\[[A-Z][A-Z ]+\]/.test(page), false);
+  }
 });
