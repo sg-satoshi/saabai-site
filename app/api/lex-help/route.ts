@@ -26,6 +26,7 @@ import { helpContextText, helpFirmContext } from "@/lib/lex-help-context";
 import { HELP_LABEL, helpSystemPrompt, isLegalQuestion, latestQuestion, normaliseHelpMessages, type HelpOffer } from "@/lib/lex-help";
 import { HELP_GREETING, isGreeting, HELP_CAP_REPLY, HELP_DAILY_CAP, HELP_DECLINE, helpDayKey, runHelp } from "@/lib/lex-help-flow";
 import { PRICE_ANSWER, isPriceQuestion } from "@/lib/lex-help-knowledge";
+import { LEX_HAIKU } from "../../../lib/lex-models";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -79,7 +80,7 @@ export async function POST(req: Request) {
     if (n > HELP_DAILY_CAP) return Response.json({ reply: HELP_CAP_REPLY, offer: null, label: HELP_LABEL, routed: "cap" });
   }
 
-  const gw = await LexGateway.open({ route: "lex-help", firm, model: { kind: "saabai", modelId: "claude-haiku-4-5-20251001" }, thread: threadSeed(conversationId, messages) });
+  const gw = await LexGateway.open({ route: "lex-help", firm, model: { kind: "saabai", modelId: LEX_HAIKU }, thread: threadSeed(conversationId, messages) });
   if (!gw) { console.error("[lex-help] model unavailable"); return privacyFailResponse(); }
   try {
     const masked = gw.maskMessages(messages);

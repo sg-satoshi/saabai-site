@@ -3,6 +3,7 @@ import { notify } from "../ui/Feedback";
 
 import { useState, useEffect } from "react";
 import AdminShell from "../AdminSidebar";
+import { LEX_PICKER_MODELS, LEX_COMING_SOON_MODELS } from "@/lib/lex-models";
 
 // ── Provider registry ──────────────────────────────────────────────────────────
 
@@ -18,11 +19,7 @@ const PROVIDERS = [
     apiKeyUrl: "https://console.anthropic.com/settings/keys",
     keyPrefix: "sk-ant-",
     available: true,
-    models: [
-      { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5", cost: "~$0.80/M tokens", badge: "Fastest · cheapest", context: "200K" },
-      { id: "claude-sonnet-4-6",         name: "Claude Sonnet 4.6", cost: "~$3/M tokens",   badge: "Recommended",      context: "200K" },
-      { id: "claude-opus-4-6",           name: "Claude Opus 4.6",   cost: "~$15/M tokens",  badge: "Most capable",     context: "200K" },
-    ],
+    models: LEX_PICKER_MODELS.anthropic,
     pricing: "Est. $5–40/mo for most firms",
   },
   {
@@ -36,10 +33,7 @@ const PROVIDERS = [
     apiKeyUrl: "https://platform.openai.com/api-keys",
     keyPrefix: "sk-",
     available: true,
-    models: [
-      { id: "gpt-4o-mini", name: "GPT-4o Mini", cost: "~$0.15/M tokens", badge: "Best value",  context: "128K" },
-      { id: "gpt-4o",      name: "GPT-4o",      cost: "~$2.50/M tokens", badge: "Recommended", context: "128K" },
-    ],
+    models: LEX_PICKER_MODELS.openai,
     pricing: "Est. $2–20/mo for most firms",
   },
   {
@@ -54,11 +48,7 @@ const PROVIDERS = [
     keyPrefix: "AIza",
     available: true,
     hasFree: true,
-    models: [
-      { id: "gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite", cost: "Free tier + very low", badge: "Free tier",    context: "1M" },
-      { id: "gemini-2.0-flash",      name: "Gemini 2.0 Flash",      cost: "~$0.10/M tokens",       badge: "Recommended", context: "1M" },
-      { id: "gemini-1.5-pro",        name: "Gemini 1.5 Pro",        cost: "~$1.25/M tokens",       badge: "",            context: "2M" },
-    ],
+    models: LEX_PICKER_MODELS.google,
     pricing: "Est. $0–10/mo · Free tier available",
   },
   {
@@ -72,10 +62,7 @@ const PROVIDERS = [
     apiKeyUrl: "https://console.x.ai",
     keyPrefix: "xai-",
     available: true,
-    models: [
-      { id: "grok-3-mini", name: "Grok 3 Mini", cost: "Competitive", badge: "Recommended",  context: "131K" },
-      { id: "grok-3",      name: "Grok 3",      cost: "Competitive", badge: "Most capable", context: "131K" },
-    ],
+    models: LEX_PICKER_MODELS.xai,
     pricing: "See console.x.ai for pricing",
   },
   {
@@ -90,10 +77,7 @@ const PROVIDERS = [
     keyPrefix: "gsk_",
     available: false,
     hasFree: true,
-    models: [
-      { id: "llama-3.1-8b-instant",    name: "Llama 3.1 8B",  cost: "Free tier", badge: "Free",         context: "128K" },
-      { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", cost: "Very low",  badge: "More capable", context: "128K" },
-    ],
+    models: LEX_COMING_SOON_MODELS.groq,
     pricing: "Free tier · very low cost",
     comingSoon: true,
   },
@@ -108,9 +92,7 @@ const PROVIDERS = [
     apiKeyUrl: "https://platform.moonshot.cn",
     keyPrefix: "sk-",
     available: false,
-    models: [
-      { id: "kimi-k2", name: "Kimi K2", cost: "Competitive", badge: "Recommended", context: "128K" },
-    ],
+    models: LEX_COMING_SOON_MODELS.moonshot,
     pricing: "Competitive pricing",
     comingSoon: true,
   },
@@ -154,14 +136,14 @@ const LEGAL_FIT: Record<string, LegalFit> = {
     ratingColor: "#16a34a",
     scores: { toolCalling: 4, accuracy: 4, instructions: 4 },
     summary:
-      "A proven, enterprise-grade option. GPT-4o is reliable for legal research workflows and handles tool calling well — though it can occasionally be more confident than its accuracy warrants on Australian-specific law and ATO rulings.",
+      "A proven, enterprise-grade option. OpenAI's GPT models are reliable for legal research workflows and handles tool calling well — though it can occasionally be more confident than its accuracy warrants on Australian-specific law and ATO rulings.",
     strengths: [
-      "Battle-tested reliability — GPT-4o is widely deployed in legal tech globally",
+      "Battle-tested reliability — OpenAI models are widely deployed in legal tech globally",
       "Consistent tool calling across most query types and jurisdictions",
       "Strong comprehension of structured legal documents, contracts, and agreements",
     ],
     watchOut:
-      "GPT-4o Mini may skip tool steps on complex multi-jurisdiction queries — only suitable for intake and simple Q&A, not for research chains. Use GPT-4o as the minimum for anything touching case law, ATO guidance, or section citations.",
+      "The lower-cost OpenAI model may skip tool steps on complex multi-jurisdiction queries — only suitable for intake and simple Q&A, not for research chains. Use the Recommended OpenAI model as the minimum for anything touching case law, ATO guidance, or section citations.",
   },
   google: {
     rating: "caution",
@@ -176,7 +158,7 @@ const LEGAL_FIT: Record<string, LegalFit> = {
       "Fast and cost-effective for document summarisation and intake tasks",
     ],
     watchOut:
-      "Gemini can be confidently wrong on Australian-specific legislation, state law nuances, and ATO interpretations — areas where Claude and GPT-4o are more carefully calibrated. It may also over-call tools, generating excessive searches that slow responses. Test thoroughly on your practice areas before using for client-facing research.",
+      "Gemini can be confidently wrong on Australian-specific legislation, state law nuances, and ATO interpretations — areas where Claude and OpenAI's models are more carefully calibrated. It may also over-call tools, generating excessive searches that slow responses. Test thoroughly on your practice areas before using for client-facing research.",
     restriction:
       "Not recommended as the primary research model without thorough testing. Better suited for document summarisation or intake chat than for legislative citation work or advice memos.",
   },

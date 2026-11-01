@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { LEX_PICKER_MODELS, LEX_PICKER_DEFAULT, type LexPickerProvider } from "../../lib/lex-models";
 
 const C = {
   bg:      "#0d1b2a",
@@ -2458,7 +2459,7 @@ export function LexWorkspace({ embedded = false }: { embedded?: boolean } = {}) 
                         key={p.id}
                         onClick={() => {
                           setLlmProvider(p.id);
-                          setLlmModel(p.id === "anthropic" ? "claude-sonnet-4-6" : p.id === "openai" ? "gpt-4o" : p.id === "google" ? "gemini-2.0-flash" : "grok-3-mini");
+                          setLlmModel(LEX_PICKER_DEFAULT[p.id]);
                           setLlmTestStatus("idle"); setLlmTestMsg("");
                         }}
                         style={{
@@ -2483,24 +2484,9 @@ export function LexWorkspace({ embedded = false }: { embedded?: boolean } = {}) 
                   onChange={e => setLlmModel(e.target.value)}
                   style={{ width: "100%", background: C.raised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px", color: C.text, fontSize: 13, outline: "none" }}
                 >
-                  {llmProvider === "anthropic" && (<>
-                    <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — fastest, lowest cost</option>
-                    <option value="claude-sonnet-4-6">Claude Sonnet 4.6 — recommended for legal research</option>
-                    <option value="claude-opus-4-6">Claude Opus 4.6 — most capable</option>
-                  </>)}
-                  {llmProvider === "openai" && (<>
-                    <option value="gpt-4o-mini">GPT-4o Mini — best value</option>
-                    <option value="gpt-4o">GPT-4o — recommended</option>
-                  </>)}
-                  {llmProvider === "google" && (<>
-                    <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite — free tier</option>
-                    <option value="gemini-2.0-flash">Gemini 2.0 Flash — recommended</option>
-                    <option value="gemini-1.5-pro">Gemini 1.5 Pro — 2M context</option>
-                  </>)}
-                  {llmProvider === "xai" && (<>
-                    <option value="grok-3-mini">Grok 3 Mini</option>
-                    <option value="grok-3">Grok 3</option>
-                  </>)}
+                  {LEX_PICKER_MODELS[llmProvider as LexPickerProvider]?.map(m => (
+                    <option key={m.id} value={m.id}>{m.name} — {m.hint}</option>
+                  ))}
                 </select>
               </div>
 

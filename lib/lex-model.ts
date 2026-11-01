@@ -10,6 +10,7 @@
 import type { LanguageModel } from "ai";
 import { getPremiumModel, modelFromSpec, parseModelSpec } from "./chat-config";
 import { getClientLLMConfig, buildModelFromConfig } from "./client-config";
+import { LEX_RESEARCH_FALLBACK } from "./lex-models";
 
 export const LEX_MODEL_ENV = "LEX_RESEARCH_MODEL";
 
@@ -24,7 +25,7 @@ export function getLexResearchModel(): LanguageModel {
 export function lexResearchModelSpec(): string {
   const raw = (process.env[LEX_MODEL_ENV] ?? "").trim();
   if (raw) return parseModelSpec(raw, raw).value;
-  return parseModelSpec(process.env.PREMIUM_CHAT_MODEL, "anthropic:claude-sonnet-4-6").value;
+  return parseModelSpec(process.env.PREMIUM_CHAT_MODEL, LEX_RESEARCH_FALLBACK).value;
 }
 
 /** The firm's own model when saved, otherwise Lex's research model. Never throws on a bad firm config. */
