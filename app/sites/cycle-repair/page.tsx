@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { tiers, additionalServiceWork, specialist } from "./services";
 import { Logo } from "./Logo";
+import { MobileMenu } from "./MobileMenu";
 import { ReviewsCarousel } from "./ReviewsCarousel";
 import PoweredBySaabai from "../../components/PoweredBySaabai";
 import { googleBusinessUrl, googleRating, googleReviewCount } from "./reviews";
@@ -100,6 +101,18 @@ export default function Index() {
               0405 225 721
             </a>
           </div>
+          <MobileMenu
+            links={[
+              { href: "#services", label: "Services" },
+              { href: "#how", label: "How it Works" },
+              { href: "#about", label: "About" },
+              { href: "/sites/cycle-repair/gold-coast", label: "Gold Coast" },
+              { href: "/sites/cycle-repair/e-bike-repair-gold-coast", label: "E-bikes" },
+              { href: "/sites/cycle-repair/puncture-repair-gold-coast", label: "Punctures" },
+              { href: "/sites/cycle-repair/faq", label: "FAQ" },
+              { href: "/sites/cycle-repair/contact", label: "Contact" },
+            ]}
+          />
         </nav>
       </header>
 
