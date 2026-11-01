@@ -64,6 +64,14 @@ function copyOf(el: HTMLElement, kind: SlotKind): { text: string; emphasis: stri
   return { text: flat(clone.textContent ?? ""), emphasis };
 }
 
+function loadSaabaiPaths(setPaths: (p: string[]) => void) {
+  fetch("/sitemap.xml").then((r) => r.text()).then((x) => {
+    const list = [...x.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => { try { const u = new URL(m[1]); return u.pathname || "/"; } catch { return ""; } }).filter((s) => s.startsWith("/"));
+    const uniq = Array.from(new Set(["/", ...list])).slice(0, 80);
+    if (uniq.length) setPaths(uniq);
+  }).catch(() => { /* keep "/" */ });
+}
+
 export default function VisualEditor() {
   const [site, setSite] = useState<string | null>(null);
   const [sites, setSites] = useState<ExpSite[]>([]);
@@ -89,12 +97,7 @@ export default function VisualEditor() {
     const s = readSite(); setSite(s);
     fetch(`/api/admin/experiments?site=${encodeURIComponent(s)}`).then((r) => r.json()).then((d: { sites?: ExpSite[] }) => { if (Array.isArray(d.sites)) setSites(d.sites); }).catch(() => { /* picker hidden */ });
     // Site Factory pages are single static pages, so only saabai.ai lists its sitemap.
-    if (s !== SAABAI) return;
-    fetch("/sitemap.xml").then((r) => r.text()).then((x) => {
-      const list = [...x.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => { try { const u = new URL(m[1]); return u.pathname || "/"; } catch { return ""; } }).filter((s) => s.startsWith("/"));
-      const uniq = Array.from(new Set(["/", ...list])).slice(0, 80);
-      if (uniq.length) setPaths(uniq);
-    }).catch(() => { /* keep "/" */ });
+    if (s === SAABAI) loadSaabaiPaths(setPaths);
   }, []);
 
   const clearSel = useCallback(() => {
@@ -167,7 +170,7 @@ export default function VisualEditor() {
   // Client sites preview through saabai.ai's own /sites/<slug> route (same origin, so the editor can read the page).
   const src = !site || site === SAABAI ? safe : `/sites/${site}${safe === "/" ? "" : safe}`;
   const qs = (s: string, page: string) => `?view=editor${siteParam(s, "&")}&page=${encodeURIComponent(page)}`;
-  const pickSite = (s: string) => { if (s === site) return; clearSel(); setPicked(null); setSite(s); setPath("/"); if (s !== SAABAI) setPaths(["/"]); history.replaceState(null, "", qs(s, "/")); if (s === SAABAI) window.location.reload(); };
+  const pickSite = (s: string) => { if (s === site) return; clearSel(); setPicked(null); setSite(s); setPath("/"); setPaths(["/"]); if (s === SAABAI) loadSaabaiPaths(setPaths); history.replaceState(null, "", qs(s, "/")); };
   if (!site) return <div className="xp"><p className="muted">Loading…</p></div>;
   const cur = sites.find((x) => x.key === site);
 

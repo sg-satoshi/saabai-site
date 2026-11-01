@@ -32,15 +32,15 @@ export function SitePicker({ sites, site, onPick }: { sites: ExpSite[]; site: st
         <span>Site</span>
         <input className="xp-in" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${sites.length} sites`} aria-label="Search sites" />
       </label>
-      <div className="xp-sites-list" role="listbox" aria-label="Sites">
+      <div className="xp-sites-list" aria-label="Sites">
         {shown.map((s) => (
-          <button key={s.key} type="button" role="option" aria-selected={s.key === site} className={`xp-site${s.key === site ? " on" : ""}`} onClick={() => onPick(s.key)}>
+          <button key={s.key} type="button" aria-pressed={s.key === site} className={`xp-site${s.key === site ? " on" : ""}`} onClick={() => onPick(s.key)}>
             <span className="t">{s.label}</span>
             <span className="s">{host(s.url) || s.key}</span>
             <Badge tone={s.enabled ? "ok" : "neutral"}>{s.enabled ? "On" : "Off"}</Badge>
           </button>
         ))}
-        {!shown.length && <p className="xp-note" style={{ padding: "8px 10px" }}>No site matches “{q}”.</p>}
+        {!shown.length && <p className="xp-note xp-sites-none">No site matches “{q}”.</p>}
       </div>
     </div>
   );

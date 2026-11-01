@@ -56,7 +56,7 @@ export default function ExperimentsClient() {
   async function toggle() {
     if (!cur || cur.kind !== "client") return;
     const on = !cur.enabled;
-    if (!(await confirmDialog(on ? `Turn split testing on for ${cur.label}? Running tests start showing to its visitors within about a minute.` : `Turn split testing off for ${cur.label}? Every visitor sees the normal page again. Tests and results are kept.`, { confirmLabel: on ? "Turn on" : "Turn off" }))) return;
+    if (!(await confirmDialog(on ? `Turn split testing on for ${cur.label}? Running tests start showing to its visitors within about a minute.` : `Turn split testing off for ${cur.label}? Every visitor sees the normal page again. Tests and results are kept.`, { confirmLabel: on ? "Turn on" : "Turn off", danger: !on }))) return;
     setSwitching(true);
     try {
       const r = await api("/api/admin/experiments/site-switch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: cur.key, enabled: on }) });
