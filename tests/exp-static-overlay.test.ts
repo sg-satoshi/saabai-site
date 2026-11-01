@@ -104,18 +104,18 @@ test("an OFF site's served HTML is byte-identical to the pre-change output", asy
   const { ensurePoweredBy } = await import("../lib/client-site");
   const { ensureSchema } = await import("../lib/site-schema");
   const { ensureFavicon } = await import("../lib/site-favicon");
-  // SUNDER is served from public/clients/sunder (no repo HTML, no Blob in tests): the pre-change pipeline exactly.
+  // SUNDER is served repo-first from public/clients/sunder: the pre-change pipeline exactly.
   const before = ensurePoweredBy("sunder", ensureSchema("sunder", await ensureFavicon("sunder", readFileSync("public/clients/sunder/index.html", "utf8"))));
   const res = await GET(new NextRequest("https://sunder.com.au/"), { params: Promise.resolve({ slug: "sunder" }) });
   const body = await res.text();
   assert.equal(body, before);
   assert.equal(Buffer.byteLength(body), Buffer.byteLength(before));
   assert.doesNotMatch(body, /data-sb-exp/);
-  assert.equal(res.headers.get("cache-control"), "public, s-maxage=3600");
+  assert.equal(res.headers.get("cache-control"), "no-store");
   // An sb_ov cookie on an off site changes nothing: same bytes, same shared-cache headers.
   const withOv = await GET(new NextRequest("https://sunder.com.au/", { headers: { cookie: "sb_ov=x" } }), { params: Promise.resolve({ slug: "sunder" }) });
   assert.equal(await withOv.text(), before);
-  assert.equal(withOv.headers.get("cache-control"), "public, s-maxage=3600");
+  assert.equal(withOv.headers.get("cache-control"), "no-store");
   console.log(`off-site bytes: ${Buffer.byteLength(body)} (pre-change ${Buffer.byteLength(before)})`);
 });
 
