@@ -28,7 +28,8 @@ async function storedFlags(fresh = false): Promise<Set<string>> {
   if (!fresh && flagCache && Date.now() - flagCache.at < TTL_MS) return flagCache.on;
   const on = new Set<string>();
   try {
-    const raw = await redis()?.hgetall<Record<string, unknown>>(SITE_FLAGS_KEY);
+    // Short timeout: a hung Redis read must never stall a page. Timeout means off (fail closed).
+    const raw = await Promise.race([redis()?.hgetall<Record<string, unknown>>(SITE_FLAGS_KEY), new Promise<null>((r) => setTimeout(() => r(null), 400))]);
     for (const [k, v] of Object.entries(raw ?? {})) if (String(v) === "1") on.add(k);
   } catch { /* fail closed for client sites: no flag means off */ }
   flagCache = { at: Date.now(), on };

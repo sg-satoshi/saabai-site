@@ -4,7 +4,7 @@ import { type Experiment } from "./core";
 import { applyAction, variantRows, type Action, type MutationResult } from "./mutate";
 import { analyse, daysSince, type Analysis, type VariantCounts } from "./stats";
 import { serviceDb } from "./track";
-import { SEED_EXPERIMENTS } from "./seed";
+import { SEED_EXPERIMENTS, SLOTS } from "./seed";
 import { SAABAI_SITE, SITE_KEY_RE, isSiteEnabled } from "./sites";
 import { listFactorySites } from "../factory-sites";
 
@@ -55,7 +55,7 @@ export async function listExperiments(siteKey: string): Promise<Experiment[]> {
   await ensureSeeded(siteKey);
   const list = await getExperiments(siteKey, { fresh: true });
   const wraps = list.some((e) => e.overlay) ? await getWrapInfos(siteKey) : {};
-  return list.map((e) => ({ ...e, name: e.name ?? SEED_EXPERIMENTS.find((s) => s.id === e.id)?.name ?? e.id, ...(e.overlay ? { wrapPr: SEED_EXPERIMENTS.some((s) => s.id === e.id) ? { state: "open" as const, note: "Wrapped in code. The overlay has stepped aside." } : wraps[e.id] } : {}) }));
+  return list.map((e) => ({ ...e, name: e.name ?? SEED_EXPERIMENTS.find((s) => s.id === e.id)?.name ?? e.id, ...(e.overlay ? { wrapPr: SLOTS.some((s) => s.id === e.id) ? { state: "open" as const, note: "Wrapped in code. The overlay has stepped aside." } : wraps[e.id] } : {}) }));
 }
 
 export async function loadView(exp: Experiment): Promise<ExperimentView> {

@@ -35,11 +35,9 @@ export const SUNDER_PLACEHOLDER = "SUNDER. Coming soon.";
 
 /**
  * Headline copy for the waitlist shell.
- * lib/exp assigns variants only when siteKeyForHost() returns a key.
- * That function returns "saabai" for saabai.ai and *.vercel.app, and null
- * for every other host. EXPERIMENTS_ENABLED_SITES defaults to saabai.
- * Factory hosts therefore never receive a variant. Leave this slot out of
- * lib/exp/seed.ts until those hosts are included. The page shows `control`.
+ * lib/exp/seed.ts (CLIENT_SEEDS) defines both as a draft overlay test on site "sunder". Visitors only get a
+ * variant once Shane starts that test AND switches split testing on for SUNDER in /saabai-admin/experiments
+ * (off by default). Until then the page shows `control`.
  */
 export const SUNDER_HEADLINE = {
   control: "Get first hit.",

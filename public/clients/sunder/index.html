@@ -116,7 +116,8 @@ const COPY={
  footer:'<span class="ft">By joining, you agree to receive emails from Saabai Pty Ltd (ABN&nbsp;44&nbsp;703&nbsp;735&nbsp;264) trading as SUNDER about our launch, offers and giveaways. Unsubscribe any time.</span><span class="fl"><a href="/clients/sunder/privacy.html">Privacy</a><a href="/clients/sunder/giveaway-terms.html">Giveaway terms</a></span>'
 };
 /* ===== END COPY BLOCK ===== */
-{const hv=HEADLINES.find(x=>String(x.id)===new URLSearchParams(location.search).get('h'))||HEADLINES[0];COPY.headline=hv.headline;COPY.cta=hv.cta;document.documentElement.dataset.headline=hv.id;}
+{const ovB=(()=>{try{const m=document.cookie.match(/(?:^|; )sb_ov=([^;]+)/);const o=m&&JSON.parse(decodeURIComponent(m[1]));return !!o&&o.p===location.pathname&&o.o.some(t=>t.i==='sunder-home-hero-headline'&&t.a==='b')}catch{return false}})();
+ const hv=(ovB&&HEADLINES[1])||HEADLINES.find(x=>String(x.id)===new URLSearchParams(location.search).get('h'))||HEADLINES[0];COPY.headline=hv.headline;COPY.cta=hv.cta;document.documentElement.dataset.headline=hv.id;}
 document.querySelectorAll('[data-c]').forEach(e=>{const v=COPY[e.dataset.c];e.dataset.h?e.innerHTML=v:e.textContent=v});
 const q=new URLSearchParams(location.search),$=id=>document.getElementById(id);
 /* Waitlist API (same origin): /api/sunder-waitlist signup, /api/sunder-waitlist/update for the thank-you extras. Single opt-in. */
@@ -146,7 +147,7 @@ $('f').addEventListener('submit',async e=>{e.preventDefault();say('');
  const btn=document.querySelector('#f button[type=submit]');btn.disabled=true;
  const utm={};['source','medium','campaign','content','term'].forEach(k=>{const v=q.get('utm_'+k);if(v)utm[k]=v});
  try{const r=await post('/api/sunder-waitlist',{firstName:first,email,mobile:mob0,h:Number(document.documentElement.dataset.headline)||1,ref:q.get('r')||'',utm,source:document.referrer?document.referrer.slice(0,200):'',website:$('hp').value});
-  if(r.ok&&r.j.ok){if(mob0)$('mobile').value=mob0;thanks(first,r.j.ref,r.j.token)}else{say(r.j.error||'Something went wrong. Please try again.');btn.disabled=false}
+  if(r.ok&&r.j.ok){if(mob0)$('mobile').value=mob0;thanks(first,r.j.ref,r.j.token);try{window.dispatchEvent(new Event('sb:goal'))}catch{}}else{say(r.j.error||'Something went wrong. Please try again.');btn.disabled=false}
  }catch{say('Something went wrong. Please try again.');btn.disabled=false}
 });
 </script></body></html>

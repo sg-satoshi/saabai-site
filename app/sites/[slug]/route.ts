@@ -8,6 +8,8 @@ import { prepareLmmHomeHtml } from "@/lib/lmm-legal";
 import { ensureFavicon } from "@/lib/site-favicon";
 import { ensureSchema } from "@/lib/site-schema";
 import { sunderRobotsHeaders } from "@/lib/sunder-factory-seed";
+import { injectStaticExp } from "@/lib/exp/static-overlay";
+import { isSiteEnabled } from "@/lib/exp/sites";
 
 export const runtime = "nodejs";
 
@@ -37,16 +39,20 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
+  // Split-testing runtime only when this site is switched on. Off sites get byte-identical HTML and headers.
+  // Pages carrying the runtime are never shared-cached.
+  const exp = await isSiteEnabled(slug).catch(() => false);
+  const cc = (normal: string) => (exp ? "private, no-store" : normal);
 
   try {
     // Nico's HTML in this repo is the copy visitors should see. Blob is only
     // the fallback, so the privacy policy ships with the deploy.
     const repoHtml = readRepoClientHtml(slug, "index.html");
     if (repoHtml !== null) {
-      const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, repoHtml))));
+      const html = injectStaticExp(ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, repoHtml)))), exp);
       return siteResponse(slug, html, 200, {
         "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "no-store",
+        "Cache-Control": cc("no-store"),
       });
     }
 
@@ -65,20 +71,20 @@ export async function GET(
     }
 
     if (blobHtml !== null) {
-      const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, applyCssPatch(slug, prepareStoredHtml(slug, blobHtml)))));
+      const html = injectStaticExp(ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, applyCssPatch(slug, prepareStoredHtml(slug, blobHtml))))), exp);
       return siteResponse(slug, html, 200, {
         "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "no-store",
+        "Cache-Control": cc("no-store"),
       });
     }
 
     // 2. Fall back to legacy static sites in public/clients/
     try {
       const filePath = path.join(process.cwd(), "public", "clients", slug, "index.html");
-      const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, readFileSync(filePath, "utf-8")))));
+      const html = injectStaticExp(ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, readFileSync(filePath, "utf-8"))))), exp);
       return siteResponse(slug, html, 200, {
         "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "public, s-maxage=3600",
+        "Cache-Control": cc("public, s-maxage=3600"),
       });
     } catch {
       // not a legacy site either
