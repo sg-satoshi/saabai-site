@@ -159,7 +159,11 @@ test("page asks for optional mobile on signup and keeps SMS opt-in on thank-you"
   assert.match(html, /ABN&nbsp;44&nbsp;703&nbsp;735&nbsp;264/);
   const form = html.slice(html.indexOf('<form class="form"'), html.indexOf("</form>"));
   assert.equal(/smsok|type="checkbox"/.test(form), false);
-  assert.match(html, /id="smsok"/);
+  assert.match(html, /<input type="checkbox" id="smsok" checked>/);
+  assert.match(html, /<button type="button" class="b3" id="addb" disabled data-c="addB">/);
+  assert.match(html, /syncAdd=\(\)=>\{\$\('addb'\)\.disabled=!\(\$\('smsok'\)\.checked&&\$\('mobile'\)\.value\.trim\(\)\)\}/);
+  assert.match(html, /\$\('mobile'\)\.addEventListener\('input',syncAdd\)/);
+  assert.match(html, /smsConsent:\$\('smsok'\)\.checked/);
   assert.equal(/href="#privacy"|href="#giveaway-terms"/.test(html), false);
   const thanks = html.slice(html.indexOf('<div class="done thanks">'), html.indexOf("</section>"));
   assert.equal(/privacy|giveaway-terms/i.test(form + thanks), false);
