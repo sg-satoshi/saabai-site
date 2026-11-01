@@ -4,6 +4,7 @@ import { validateWrapRequest } from "@/lib/exp/editor";
 import { slotEntrySource } from "@/lib/exp/editor";
 import { openWrapPr } from "@/lib/exp/wrap-pr";
 import { SLOTS } from "@/lib/exp/seed";
+import { SAABAI_SITE } from "@/lib/exp/sites";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,7 +18,9 @@ export async function POST(req: Request) {
   if (!(await adminActor())) return Response.json({ error: "Forbidden" }, { status: 403 });
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   const site = typeof body?.site === "string" ? body.site : "saabai";
-  if (!isKnownSite(site)) return Response.json({ error: "Unknown site" }, { status: 400 });
+  if (!(await isKnownSite(site))) return Response.json({ error: "Unknown site" }, { status: 400 });
+  // Code slot requests edit saabai.ai pages. Client sites use the visual editor overlay instead.
+  if (site !== SAABAI_SITE) return Response.json({ error: "Client sites can't request a code slot. Pick a different element in the editor." }, { status: 400 });
   const chk = validateWrapRequest(body, SLOTS.map((s) => s.slot), site);
   if (!chk.ok) return Response.json({ error: chk.error }, { status: 400 });
   const r = chk.req;

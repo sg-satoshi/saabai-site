@@ -8,6 +8,7 @@ import { SELECTOR_RE, fingerprint, overlayPathOk } from "@/lib/exp/overlay";
 import { SLOTS } from "@/lib/exp/seed";
 import { variantRows } from "@/lib/exp/mutate";
 import { serviceDb } from "@/lib/exp/track";
+import { SAABAI_SITE, scopedSlot } from "@/lib/exp/sites";
 import { openWrapPr } from "@/lib/exp/wrap-pr";
 
 export const runtime = "nodejs";
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
   if (!actor) return Response.json({ error: "Forbidden" }, { status: 403 });
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   const site = typeof body?.site === "string" ? body.site : "saabai";
-  if (!isKnownSite(site)) return Response.json({ error: "Unknown site" }, { status: 400 });
+  if (!(await isKnownSite(site))) return Response.json({ error: "Unknown site" }, { status: 400 });
   const db = serviceDb();
   if (!db) return Response.json({ error: "The split testing database isn't configured." }, { status: 503 });
 
@@ -33,7 +34,8 @@ export async function POST(req: Request) {
   if (!SELECTOR_RE.test(sel)) return Response.json({ error: "Couldn't pin down that element reliably. Use Request test slot instead.", fallback: true }, { status: 422 });
   const existing = await listExperiments(site);
   const taken = [...SLOTS.map((s) => s.slot), ...existing.map((e) => e.slot)];
-  const rawSlot = typeof body?.slot === "string" ? body.slot : "";
+  // Client sites: slot (and so the experiment id) always starts with the site key, so ids never clash across sites.
+  const rawSlot = scopedSlot(site, typeof body?.slot === "string" ? body.slot : "");
   const chk = validateWrapRequest({ ...body, slot: uniqueSlot(rawSlot, taken) }, [], site);
   if (!chk.ok) return Response.json({ error: chk.error }, { status: 400 });
   const r = chk.req;
@@ -73,7 +75,8 @@ export async function POST(req: Request) {
   try { await writeExperiment(ok); } catch { return Response.json({ error: "Saved to the log but couldn't publish to the live site. Please try again." }, { status: 502 }); }
 
   // Background: open the draft wrap PR (de-duplicated per slot). Never blocks or fails the test, never merges.
-  const token = process.env.GITHUB_EXP_PR_TOKEN;
+  // Client sites run on the overlay only: the wrap PR edits saabai.ai code, so it is never opened for them.
+  const token = site === SAABAI_SITE ? process.env.GITHUB_EXP_PR_TOKEN : undefined;
   let wrap: "pending" | "manual" = "manual";
   if (token) {
     wrap = "pending";
@@ -82,6 +85,6 @@ export async function POST(req: Request) {
       const res = await openWrapPr(token, r, { hybrid: true });
       await setWrapInfo(site, ok.id, res.ok ? { state: "open", url: res.prUrl, number: res.prNumber, ...(res.wrapNote ? { note: res.wrapNote } : {}) } : { state: "failed", note: res.error });
     });
-  } else await setWrapInfo(site, ok.id, { state: "manual", note: "No GitHub access, so no native wrap request was opened. The test still works." });
+  } else await setWrapInfo(site, ok.id, { state: "manual", note: site === SAABAI_SITE ? "No GitHub access, so no native wrap request was opened. The test still works." : "Client site test. It runs as an overlay, no code change needed." });
   return Response.json({ ok: true, expId: ok.id, slot: ok.slot, status: ok.status, wrap });
 }

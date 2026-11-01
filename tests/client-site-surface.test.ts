@@ -283,7 +283,6 @@ test("chrome, middleware and site metadata use the shared helper", () => {
     "app/components/AnnouncementBar.tsx",
     "app/components/ConditionalWidgets.tsx",
     "app/components/EmailCapturePopup.tsx",
-    "app/components/exp/ExpOverlay.tsx",
   ]) {
     const src = read(file);
     assert.match(src, /showsSaabaiChrome\(/, file);
@@ -291,6 +290,10 @@ test("chrome, middleware and site metadata use the shared helper", () => {
     assert.ok(!src.includes("boconsulting.com.au"), file);
     assert.ok(!src.includes("wholesalehomes.com.au"), file);
   }
+  // Split testing runs on client domains once Shane switches a site on (the proxy only sets sb_ov then),
+  // but never on /sites/<slug> previews on saabai.ai.
+  const ov = read("app/components/exp/ExpOverlay.tsx");
+  assert.match(ov, /isClientSitePath\(here\)/);
   const proxy = read("proxy.ts");
   assert.match(proxy, /clientSiteRequestDecision\(/);
   assert.match(proxy, /X-Robots-Tag/);
