@@ -10,6 +10,7 @@
 
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 import { getRedis } from "./redis";
+import { LEX_RETIRED_MODELS } from "./lex-models";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createOpenAI }    from "@ai-sdk/openai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
@@ -61,11 +62,21 @@ export interface ClientLLMConfig {
 
 const redisKey = (clientId: string) => `lex:llm:${clientId}`;
 
+/**
+ * A saved model the provider has retired is read as its replacement (lib/lex-models).
+ * Read-time only: the stored record is not rewritten.
+ */
+export function resolveRetiredModel<T extends { model: string } | null>(config: T): T {
+  if (!config) return config;
+  const next = LEX_RETIRED_MODELS[(config.model ?? "").trim()];
+  return next ? { ...config, model: next } : config;
+}
+
 export async function getClientLLMConfig(clientId: string): Promise<ClientLLMConfig | null> {
   try {
     const redis = getRedis();
     if (!redis) return null;
-    return await redis.get<ClientLLMConfig>(redisKey(clientId));
+    return resolveRetiredModel(await redis.get<ClientLLMConfig>(redisKey(clientId)));
   } catch {
     return null;
   }
@@ -92,17 +103,18 @@ export async function saveClientLLMConfig(
  * Returns null if the provider is unsupported or decryption fails.
  */
 export function buildModelFromConfig(config: ClientLLMConfig): LanguageModel | null {
+  const model = resolveRetiredModel(config).model;
   try {
     const apiKey = decryptKey(config.encryptedKey);
     switch (config.provider) {
       case "anthropic":
-        return createAnthropic({ apiKey })(config.model);
+        return createAnthropic({ apiKey })(model);
       case "openai":
-        return createOpenAI({ apiKey })(config.model);
+        return createOpenAI({ apiKey })(model);
       case "google":
-        return createGoogleGenerativeAI({ apiKey })(config.model);
+        return createGoogleGenerativeAI({ apiKey })(model);
       case "xai":
-        return createXai({ apiKey })(config.model);
+        return createXai({ apiKey })(model);
       default:
         console.warn(`[client-config] Unknown provider: ${config.provider}`);
         return null;
