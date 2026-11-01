@@ -68,6 +68,7 @@ footer{position:relative;padding:18px 72px;font-size:13px;color:var(--muted);bor
 <form class="form" id="f" novalidate>
 <label class="f"><span data-c="lFirst"></span><input type="text" id="first" autocomplete="given-name"></label>
 <label class="f"><span data-c="lEmail"></span><input type="email" id="email" autocomplete="email"></label>
+<label class="f"><span data-c="lMob0"></span><input type="tel" id="mob0" autocomplete="tel" inputmode="tel"></label>
 <p class="consent" data-c="consent"></p>
 <button type="submit" data-c="cta"></button>
 <input type="text" id="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
@@ -101,7 +102,7 @@ const COPY={
  eyebrow:"Split the game open.",
  headline:"Get first hit.", /* set from HEADLINES below */
  sub:"A new paddle with power, spin and control. Join for 20% off at launch, early access and a giveaway.",
- lFirst:"First name", lEmail:"Email",
+ lFirst:"First name", lEmail:"Email", lMob0:"Mobile (optional)",
  consent:"By joining, you agree to receive emails from Saabai Pty Ltd (ABN 44 703 735 264) trading as SUNDER about our launch, offers and giveaways. Unsubscribe any time.",
  cta:"Get first hit",
  privacy:'No spam, just launch news. Unsubscribe any time. See our <a href="#privacy">[Privacy Policy]</a> for how we handle your details.',
@@ -141,13 +142,13 @@ document.querySelectorAll('#dq .o').forEach(b=>b.addEventListener('click',()=>{c
 document.querySelector('[data-c="copyB"]').addEventListener('click',e=>{navigator.clipboard&&navigator.clipboard.writeText($('ref').value).then(()=>{e.target.textContent='Copied'})});
 document.querySelector('[data-c="shareB"]').addEventListener('click',()=>{const u=$('ref').value;if(navigator.share)navigator.share({title:'SUNDER',url:u}).catch(()=>{});else navigator.clipboard&&navigator.clipboard.writeText(u)});
 $('f').addEventListener('submit',async e=>{e.preventDefault();say('');
- const first=$('first').value.trim(),email=$('email').value.trim();
+ const first=$('first').value.trim(),email=$('email').value.trim(),mob0=$('mob0').value.trim();
  if(!first){say('Please enter your first name.');return}
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){say('Please enter a valid email.');return}
  const btn=document.querySelector('#f button[type=submit]');btn.disabled=true;
  const utm={};['source','medium','campaign','content','term'].forEach(k=>{const v=q.get('utm_'+k);if(v)utm[k]=v});
- try{const r=await post('/api/sunder-waitlist',{firstName:first,email,h:Number(document.documentElement.dataset.headline)||1,ref:q.get('r')||'',utm,source:document.referrer?document.referrer.slice(0,200):'',website:$('hp').value});
-  if(r.ok&&r.j.ok)thanks(first,r.j.ref,r.j.token);else{say(r.j.error||'Something went wrong. Please try again.');btn.disabled=false}
+ try{const r=await post('/api/sunder-waitlist',{firstName:first,email,mobile:mob0,h:Number(document.documentElement.dataset.headline)||1,ref:q.get('r')||'',utm,source:document.referrer?document.referrer.slice(0,200):'',website:$('hp').value});
+  if(r.ok&&r.j.ok){if(mob0)$('mobile').value=mob0;thanks(first,r.j.ref,r.j.token)}else{say(r.j.error||'Something went wrong. Please try again.');btn.disabled=false}
  }catch{say('Something went wrong. Please try again.');btn.disabled=false}
 });
 </script></body></html>

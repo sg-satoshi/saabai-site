@@ -132,3 +132,29 @@ test("sunder ships its own favicons and the host serves them", async () => {
   const res = await proxy(new NextRequest("https://sunder.com.au/favicon.ico", { headers: { host: "sunder.com.au" } }));
   assert.match(res.headers.get("x-middleware-rewrite") ?? "", /\/clients\/sunder\/favicon\.ico$/);
 });
+
+test("signup mobile is optional, validated, saved without SMS consent, new rows only", async () => {
+  assert.equal(ok({ firstName: "Sam", email: "a@b.co" }).mobile, null);
+  assert.equal(ok({ firstName: "Sam", email: "a@b.co", mobile: "  " }).mobile, null);
+  assert.equal(ok({ firstName: "Sam", email: "a@b.co", mobile: "0412 345 678" }).mobile, "0412345678");
+  assert.equal(validateSignup({ firstName: "Sam", email: "a@b.co", mobile: "12ab" }).ok, false);
+  const patches: Record<string, unknown>[] = [];
+  const { store } = memStore();
+  const s: WaitlistStore = { signup: store.signup, async update(h, p) { patches.push(p); return store.update(h, p); } };
+  await signup(s, ok({ firstName: "M", email: "m@x.co", mobile: "+61412345678" }), meta);
+  assert.equal(patches.length, 1);
+  assert.equal(patches[0].mobile, "+61412345678");
+  assert.equal("sms_consent" in patches[0], false);
+  await signup(s, ok({ firstName: "M", email: "m@x.co", mobile: "0499999999" }), meta); // repeat email
+  await signup(s, ok({ firstName: "N", email: "n@x.co" }), meta); // no mobile
+  assert.equal(patches.length, 1);
+});
+
+test("page asks for optional mobile on signup and keeps SMS opt-in on thank-you", () => {
+  const html = readFileSync("public/clients/sunder/index.html", "utf8");
+  assert.match(html, /id="mob0"/);
+  assert.match(html, /Mobile \(optional\)/);
+  const form = html.slice(html.indexOf('<form class="form"'), html.indexOf("</form>"));
+  assert.equal(/smsok|type="checkbox"/.test(form), false);
+  assert.match(html, /id="smsok"/);
+});
