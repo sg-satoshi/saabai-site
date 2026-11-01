@@ -114,9 +114,13 @@ test("page posts only to the waitlist API and keeps noindex", () => {
 
 test("sunder ships its own favicons and the host serves them", async () => {
   const html = readFileSync("public/clients/sunder/index.html", "utf8");
+  for (const f of ["icon-192-maskable.png", "icon-512-maskable.png"]) {
+    assert.ok(readFileSync(`public/clients/sunder/${f}`).length > 0, f);
+  }
+  assert.equal(/favicon\.svg/.test(html), false);
   for (const f of ["favicon.ico", "favicon-16.png", "favicon-48.png", "apple-touch-icon-180.png", "site.webmanifest"]) {
     assert.ok(readFileSync(`public/clients/sunder/${f}`).length > 0, f);
-    assert.match(html, new RegExp(`href="/clients/sunder/${f.replace(".", "\\.")}"`));
+    assert.match(html, new RegExp(`href="/clients/sunder/${f.replace(".", "\\.")}(\\?v=[\\w-]+)?"`));
   }
   process.env.UPSTASH_REDIS_REST_URL ||= "http://127.0.0.1:9";
   process.env.UPSTASH_REDIS_REST_TOKEN ||= "test";
