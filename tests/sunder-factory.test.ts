@@ -19,7 +19,6 @@ import {
 import {
   SUNDER_FACTORY_SEED,
   SUNDER_HEADLINE,
-  SUNDER_PLACEHOLDER,
   sunderGeoProfile,
   sunderRobotsHeaders,
 } from "../lib/sunder-factory-seed";
