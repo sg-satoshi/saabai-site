@@ -11,10 +11,10 @@
  *
  * Removed or retiring IDs and what replaced them in the pickers:
  *   gemini-2.0-flash       shut down 1 Jun 2026       -> gemini-3.6-flash (Google's named replacement)
- *   gemini-1.5-pro         shut down                  -> gemini-3.8-flash
- *   gemini-2.5-flash-lite  closed to new projects     -> gemini-3.5-flash-lite
- *   gpt-4o, gpt-4o-mini    retire 14 Jan 2027         -> gpt-6-sol, gpt-6-luna (OpenAI's named replacements)
- *   grok-3, grok-3-mini    no longer listed by xAI    -> grok-4.7, grok-4.3
+ *   gemini-1.5-pro         shut down, no named replacement -> gemini-3.8-flash (our pick)
+ *   gemini-2.5-flash-lite  closed to new projects (not retired; saved firms keep it) -> picker offers gemini-3.5-flash-lite
+ *   gpt-4o, gpt-4o-mini    retire 14 Jan 2027         -> gpt-6-luna (OpenAI's named replacement for both)
+ *   grok-3, grok-3-mini    no longer listed by xAI, no named replacement -> grok-4.7, grok-4.3 (our pick)
  */
 
 /** Lex's own Saabai-paid models (used when a firm has not saved its own key). */
@@ -37,17 +37,17 @@ export type LexPickerModel = {
 export const LEX_PICKER_MODELS = {
   anthropic: [
     { id: LEX_HAIKU, name: "Claude Haiku 4.5", cost: "~$1/M tokens", badge: "Fastest · cheapest", context: "200K", hint: "fastest, lowest cost" },
-    { id: LEX_SONNET, name: "Claude Sonnet 4.6", cost: "~$3/M tokens", badge: "Recommended", context: "200K", hint: "recommended for legal research" },
-    { id: "claude-opus-4-6", name: "Claude Opus 4.6", cost: "~$5/M tokens", badge: "Most capable", context: "200K", hint: "most capable" },
+    { id: LEX_SONNET, name: "Claude Sonnet 4.6", cost: "~$3/M tokens", badge: "Recommended", context: "1M", hint: "recommended for legal research" },
+    { id: "claude-opus-4-6", name: "Claude Opus 4.6", cost: "~$5/M tokens", badge: "Most capable", context: "1M", hint: "most capable" },
   ],
   openai: [
-    { id: "gpt-6-luna", name: "GPT-6 Luna", cost: "~$0.10/M tokens", badge: "Best value", context: "272K", hint: "best value" },
-    { id: "gpt-6-sol", name: "GPT-6 Sol", cost: "~$2/M tokens", badge: "Recommended", context: "272K", hint: "recommended" },
+    { id: "gpt-6-luna", name: "GPT-6 Luna", cost: "~$0.10/M tokens", badge: "Best value", context: "1.05M", hint: "best value" },
+    { id: "gpt-6-sol", name: "GPT-6 Sol", cost: "~$2/M tokens", badge: "Recommended", context: "1.05M", hint: "recommended" },
   ],
   google: [
     { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash Lite", cost: "Free tier + ~$0.30/M", badge: "Free tier", context: "1M", hint: "free tier" },
-    { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash", cost: "~$0.75/M tokens", badge: "Recommended", context: "1M", hint: "recommended" },
-    { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", cost: "~$0.75/M tokens", badge: "Most capable", context: "1M", hint: "most capable" },
+    { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash", cost: "Paid tier", badge: "Recommended", context: "1M", hint: "recommended" },
+    { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", cost: "Paid tier", badge: "Most capable", context: "1M", hint: "most capable" },
   ],
   xai: [
     { id: "grok-4.3", name: "Grok 4.3", cost: "~$1.25/M tokens", badge: "Recommended", context: "1M", hint: "lower cost" },
@@ -76,12 +76,14 @@ export const LEX_COMING_SOON_MODELS = {
   ],
 } as const;
 
-/** IDs that providers have shut down or are retiring, mapped to the picker replacement. */
+/**
+ * IDs that providers have shut down or are retiring, mapped to a current picker ID.
+ * Applied at read time to saved firm configs (lib/client-config resolveRetiredModel). No chains.
+ */
 export const LEX_RETIRED_MODELS: Record<string, string> = {
   "gemini-2.0-flash": "gemini-3.6-flash",
   "gemini-1.5-pro": "gemini-3.8-flash",
-  "gemini-2.5-flash-lite": "gemini-3.5-flash-lite",
-  "gpt-4o": "gpt-6-sol",
+  "gpt-4o": "gpt-6-luna",
   "gpt-4o-mini": "gpt-6-luna",
   "grok-3": "grok-4.7",
   "grok-3-mini": "grok-4.3",

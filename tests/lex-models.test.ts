@@ -48,3 +48,55 @@ test("pickers read from the config, not hardcoded IDs", () => {
     for (const id of retired) assert.ok(!src.includes(`"${id}"`), `${f} hardcodes ${id}`);
   }
 });
+
+test("saved firm configs on retired models resolve to the replacement at read time", async () => {
+  const { resolveRetiredModel } = await import("../lib/client-config");
+  for (const [old, next] of Object.entries(LEX_RETIRED_MODELS)) {
+    const saved = { provider: "x", model: old, encryptedKey: "k", keyHint: "1234", updatedAt: 1 };
+    const out = resolveRetiredModel(saved);
+    assert.equal(out.model, next);
+    assert.equal(saved.model, old, "stored record not mutated");
+  }
+  const live = { provider: "anthropic", model: "claude-sonnet-4-6" };
+  assert.equal(resolveRetiredModel(live), live);
+  assert.equal(resolveRetiredModel(null), null);
+});
+
+test("getClientLLMConfig and buildModelFromConfig use the resolver", () => {
+  const src = readFileSync("lib/client-config.ts", "utf8");
+  assert.match(src, /return resolveRetiredModel\(await redis\.get/);
+  assert.match(src, /const model = resolveRetiredModel\(config\)\.model;/);
+  assert.ok(!/\(config\.model\)/.test(src), "a provider still builds from the raw saved model");
+});
+
+test("retired map has no chains and every target is a current picker ID", () => {
+  const offered: string[] = Object.values(LEX_PICKER_MODELS).flat().map(m => m.id);
+  for (const [old, next] of Object.entries(LEX_RETIRED_MODELS)) {
+    assert.ok(!(next in LEX_RETIRED_MODELS), `${old} -> ${next} chains`);
+    assert.ok(offered.includes(next), `${next} not offered`);
+  }
+  assert.equal(LEX_RETIRED_MODELS["gpt-4o"], "gpt-6-luna");
+  assert.equal(LEX_RETIRED_MODELS["gpt-4o-mini"], "gpt-6-luna");
+  assert.equal(LEX_RETIRED_MODELS["gemini-2.0-flash"], "gemini-3.6-flash");
+});
+
+test("buildModelFromConfig builds the replacement for a retired saved model", async () => {
+  process.env.ENCRYPTION_KEY ??= "0".repeat(64); // test-only dummy key
+  const { buildModelFromConfig, encryptKey } = await import("../lib/client-config");
+  let enc: string;
+  enc = encryptKey("sk-test");
+  const m = buildModelFromConfig({ provider: "google", model: "gemini-2.0-flash", encryptedKey: enc, keyHint: "test", updatedAt: 1 }) as unknown as { modelId: string } | null;
+  assert.equal(m?.modelId, "gemini-3.6-flash");
+  const bad = buildModelFromConfig({ provider: "nope", model: "whatever", encryptedKey: enc, keyHint: "test", updatedAt: 1 });
+  assert.equal(bad, null, "unbuildable config returns null so Lex falls back");
+});
+
+test("both the Lex model lookup and the gateway chat path read through the resolver", () => {
+  for (const f of ["lib/lex-model.ts", "lib/lex-privacy/gateway.ts"]) {
+    const src = readFileSync(f, "utf8");
+    assert.match(src, /getClientLLMConfig\(/, f);
+    assert.match(src, /buildModelFromConfig\(/, f);
+  }
+  const lm = readFileSync("lib/lex-model.ts", "utf8");
+  assert.match(lm, /if \(built\) return built;[\s\S]*return getLexResearchModel\(\);/, "falls back to Lex research model (Sonnet 4.6)");
+});

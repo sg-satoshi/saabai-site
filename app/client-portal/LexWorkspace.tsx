@@ -2485,7 +2485,7 @@ export function LexWorkspace({ embedded = false }: { embedded?: boolean } = {}) 
                   style={{ width: "100%", background: C.raised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px", color: C.text, fontSize: 13, outline: "none" }}
                 >
                   {LEX_PICKER_MODELS[llmProvider as LexPickerProvider]?.map(m => (
-                    <option key={m.id} value={m.id}>{m.name} — {m.hint}</option>
+                    <option key={m.id} value={m.id}>{m.name}, {m.hint}</option>
                   ))}
                 </select>
               </div>
