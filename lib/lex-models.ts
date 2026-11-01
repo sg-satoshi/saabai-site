@@ -45,7 +45,7 @@ export const LEX_PICKER_MODELS = {
     { id: "gpt-6-sol", name: "GPT-6 Sol", cost: "~$2/M tokens", badge: "Recommended", context: "1.05M", hint: "recommended" },
   ],
   google: [
-    { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash Lite", cost: "Free tier + ~$0.30/M", badge: "Free tier", context: "1M", hint: "free tier" },
+    { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash Lite", cost: "Free tier", badge: "Free tier", context: "1M", hint: "free tier" },
     { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash", cost: "Paid tier", badge: "Recommended", context: "1M", hint: "recommended" },
     { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", cost: "Paid tier", badge: "Most capable", context: "1M", hint: "most capable" },
   ],

@@ -124,7 +124,7 @@ const LEGAL_FIT: Record<string, LegalFit> = {
     strengths: [
       "Most reliable multi-step tool chains, rarely skips checkCitation or verifySection calls",
       "Follows the 'never fabricate citations' rule more tightly than any other provider",
-      "200K context window handles even the longest contracts or transcripts without truncation",
+      "Sonnet and Opus 4.6 have a 1M token context window, so even the longest contracts or transcripts fit without truncation",
       "Prompt caching reduces cost on long system prompts, a Lex-specific optimisation built in",
     ],
     watchOut:
@@ -136,7 +136,7 @@ const LEGAL_FIT: Record<string, LegalFit> = {
     ratingColor: "#16a34a",
     scores: { toolCalling: 4, accuracy: 4, instructions: 4 },
     summary:
-      "A proven, enterprise-grade option. OpenAI's GPT models are reliable for legal research workflows and handle tool calling well, though they can occasionally be more confident than its accuracy warrants on Australian-specific law and ATO rulings.",
+      "A proven, enterprise-grade option. OpenAI's GPT models are reliable for legal research workflows and handle tool calling well, though they can occasionally be more confident than their accuracy warrants on Australian-specific law and ATO rulings.",
     strengths: [
       "Battle-tested reliability. OpenAI models are widely deployed in legal tech globally",
       "Consistent tool calling across most query types and jurisdictions",
