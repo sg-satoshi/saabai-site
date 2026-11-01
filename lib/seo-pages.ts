@@ -9,9 +9,9 @@ import { NAP } from "./seo-entity";
 export const publicPageMeta = {
   home: pageMeta({
     path: "/",
-    title: "Know exactly where AI will save your business hours | Saabai",
+    title: "Custom AI Chatbots for Australian Small Business Websites | Saabai",
     description:
-      "Custom AI chatbots and websites for Australian small businesses and law firms. Saabai is based in Merrimac on the Gold Coast, and the chatbot answers visitors and keeps a log of each chat.",
+      "Saabai builds custom AI chatbots that turn your website visitors into qualified leads, connect with your existing systems and reduce customer service costs. Gold Coast based.",
   }),
   contact: pageMeta({
     path: "/contact",
