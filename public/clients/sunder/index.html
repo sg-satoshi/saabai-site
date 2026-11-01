@@ -1,5 +1,11 @@
 <!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SUNDER | Split the game open.</title>
+<link rel="icon" href="/clients/sunder/favicon.ico" sizes="32x32">
+<link rel="icon" href="/clients/sunder/favicon-16.png" type="image/png" sizes="16x16">
+<link rel="icon" href="/clients/sunder/favicon-48.png" type="image/png" sizes="48x48">
+<link rel="apple-touch-icon" href="/clients/sunder/apple-touch-icon-180.png">
+<link rel="manifest" href="/clients/sunder/site.webmanifest">
+<meta name="theme-color" content="#0d0d0d">
 <meta name="robots" content="noindex, nofollow">
 <meta name="description" content="SUNDER. A new pickleball paddle with power, spin and control. Join the waitlist for 20% off at launch.">
 <link rel="canonical" href="https://sunder.com.au/">
@@ -64,6 +70,7 @@ footer{position:relative;padding:18px 72px;font-size:13px;color:var(--muted);bor
 <label class="f"><span data-c="lEmail"></span><input type="email" id="email" autocomplete="email"></label>
 <p class="consent" data-c="consent"></p>
 <button type="submit" data-c="cta"></button>
+<input type="text" id="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
 <p class="below" id="wn" role="status" aria-live="polite" hidden style="color:#d4ff3a;font-weight:600"></p>
 <p class="below" data-c="privacy" data-h="1"></p>
 </form>
@@ -98,11 +105,11 @@ const COPY={
  consent:"By joining, you agree to receive emails from Saabai Pty Ltd (ABN 44 703 735 264) trading as SUNDER about our launch, offers and giveaways. Unsubscribe any time.",
  cta:"Get first hit",
  privacy:'No spam, just launch news. Unsubscribe any time. See our <a href="#privacy">[Privacy Policy]</a> for how we handle your details.',
- thanksH:"You're in, [First name].",
+ thanksH:"You're in.",
  thanksL:"Your 20% off and early access are saved to this email.",
  shareL:"Get more chances to win. Share your link: every mate who joins gets you an extra giveaway entry.",
  shareCap:'Up to 10 extra entries. <a href="#giveaway-terms">[Giveaway terms]</a>',
- lLink:"Your link", refSample:"sunder.com.au/?r=ab12cd", copyB:"Copy link", shareB:"Share",
+ lLink:"Your link", copyB:"Copy link", shareB:"Share",
  smsQ:"Want a text the day we launch?", lMobile:"Mobile", sms:"Text me launch news and offers. Reply STOP to opt out.", addB:"Add",
  /* Demand question (copy v4, "Thank-you state: optional demand question", not locked). Last block, one tap, no price. */
  dqL:"Quick one, totally optional. When SUNDER launches, would you rather:",
@@ -113,13 +120,34 @@ const COPY={
 /* ===== END COPY BLOCK ===== */
 {const hv=HEADLINES.find(x=>String(x.id)===new URLSearchParams(location.search).get('h'))||HEADLINES[0];COPY.headline=hv.headline;COPY.cta=hv.cta;document.documentElement.dataset.headline=hv.id;}
 document.querySelectorAll('[data-c]').forEach(e=>{const v=COPY[e.dataset.c];e.dataset.h?e.innerHTML=v:e.textContent=v});
-document.getElementById('smsok').addEventListener('change',e=>{document.getElementById('addb').disabled=!e.target.checked});
-/* Mockup only: the real build must also require the SMS box server-side before saving a mobile. */
-/* Mockup only: a tap would store launch_pref (outright | subscription | unsure) + timestamp against the signup. Nothing is sent here. */
-document.querySelectorAll('#dq .o').forEach(b=>b.addEventListener('click',()=>{const d=document.getElementById('dq');d.dataset.pref=b.dataset.v;d.classList.add('ans')}));
-document.getElementById('ref').value=COPY.refSample;
-/* No backend yet: nothing is sent or saved. Submit only shows an honest notice. Wire storage + consent logging before sending traffic. */
-document.getElementById('f').addEventListener('submit',e=>{e.preventDefault();const n=document.getElementById('wn');n.hidden=false;n.textContent='Waitlist opens shortly. Nothing was sent or saved, so please check back soon.'});
-
-if(q.get('notext'))document.head.insertAdjacentHTML('beforeend','<style>.col *,footer,.logo,.mk{color:transparent!important;visibility:hidden}.hero:before{visibility:visible}</style>');
+const q=new URLSearchParams(location.search),$=id=>document.getElementById(id);
+/* Waitlist API (same origin): /api/sunder-waitlist signup, /api/sunder-waitlist/update for the thank-you extras. Single opt-in. */
+const post=(u,d)=>fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(r=>r.json().then(j=>({ok:r.ok,j})));
+let TOKEN=null;
+const say=(t)=>{const n=$('wn');n.hidden=!t;n.textContent=t||''};
+const refLink=c=>'https://sunder.com.au/?r='+encodeURIComponent(c);
+function thanks(first,ref,token){
+ TOKEN=token;
+ const h=document.querySelector('[data-c="thanksH"]');h.textContent=first?"You're in, "+first+".":"You're in.";
+ $('ref').value=ref?refLink(ref):'';
+ if(!ref)document.querySelector('.share').style.display='none';
+ if(!token){document.querySelector('.smsb').style.display='none';$('dq').style.display='none'}
+ document.body.className='state-thanks';
+}
+$('smsok').addEventListener('change',e=>{$('addb').disabled=!e.target.checked});
+$('addb').addEventListener('click',async()=>{const b=$('addb');b.disabled=true;try{const r=await post('/api/sunder-waitlist/update',{token:TOKEN,mobile:$('mobile').value,smsConsent:$('smsok').checked});
+ if(r.ok){b.textContent='Added';$('mobile').readOnly=true;$('smsok').disabled=true}else{b.disabled=false;alert(r.j.error||'Please try again.')}}catch{b.disabled=false;alert('Please try again.')}});
+document.querySelectorAll('#dq .o').forEach(b=>b.addEventListener('click',()=>{const d=$('dq');d.dataset.pref=b.dataset.v;d.classList.add('ans');if(TOKEN)post('/api/sunder-waitlist/update',{token:TOKEN,launchPref:b.dataset.v}).catch(()=>{})}));
+document.querySelector('[data-c="copyB"]').addEventListener('click',e=>{navigator.clipboard&&navigator.clipboard.writeText($('ref').value).then(()=>{e.target.textContent='Copied'})});
+document.querySelector('[data-c="shareB"]').addEventListener('click',()=>{const u=$('ref').value;if(navigator.share)navigator.share({title:'SUNDER',url:u}).catch(()=>{});else navigator.clipboard&&navigator.clipboard.writeText(u)});
+$('f').addEventListener('submit',async e=>{e.preventDefault();say('');
+ const first=$('first').value.trim(),email=$('email').value.trim();
+ if(!first){say('Please enter your first name.');return}
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){say('Please enter a valid email.');return}
+ const btn=document.querySelector('#f button[type=submit]');btn.disabled=true;
+ const utm={};['source','medium','campaign','content','term'].forEach(k=>{const v=q.get('utm_'+k);if(v)utm[k]=v});
+ try{const r=await post('/api/sunder-waitlist',{firstName:first,email,h:Number(document.documentElement.dataset.headline)||1,ref:q.get('r')||'',utm,source:document.referrer?document.referrer.slice(0,200):'',website:$('hp').value});
+  if(r.ok&&r.j.ok)thanks(first,r.j.ref,r.j.token);else{say(r.j.error||'Something went wrong. Please try again.');btn.disabled=false}
+ }catch{say('Something went wrong. Please try again.');btn.disabled=false}
+});
 </script></body></html>

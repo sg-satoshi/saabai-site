@@ -89,22 +89,18 @@ test("factory seed is the record Site Factory writes, with no origin or approval
   assert.ok(cfg.includes("sunderpickleball\\\\.com"));
 });
 
-test("r3b waitlist page is live-safe: noindex, honest submit, no network", () => {
+test("r3b waitlist page is live-safe: noindex, wired submit", () => {
   assert.match(html, /Get first hit\./);
   assert.match(html, /Feel the power\. Keep the control\./);
   assert.match(html, /Split the game open\./);
   assert.match(html, /id="first"/);
   assert.match(html, /id="email"/);
-  assert.match(html, /Waitlist opens shortly/);
+  assert.match(html, /\/api\/sunder-waitlist/);
   assert.equal(/<form[^>]*action=/.test(html), false);
-  assert.equal(/state-thanks'\}\);/.test(html), false);
   assert.match(html, /\/clients\/sunder\/img\/hero-paddle-strike-desktop-2560x1440\.jpg/);
   assert.equal(/(src|href)="(img|fonts)\//.test(html), false);
   assert.match(html, /content="noindex, nofollow"/);
   assert.match(html, /application\/ld\+json/);
-  assert.equal(/fetch\s*\(/.test(html), false);
-  assert.equal(/XMLHttpRequest/.test(html), false);
-  assert.equal(/\/api\//.test(html), false);
   assert.equal(/[—–]/.test(html), false);
   assert.equal(sunderRobotsHeaders("sunder", { "Content-Type": "text/html" })["X-Robots-Tag"], "noindex, nofollow");
   assert.equal("X-Robots-Tag" in sunderRobotsHeaders("cycle-repair", { "Content-Type": "text/html" }), false);

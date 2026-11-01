@@ -54,6 +54,7 @@ const PROTECTED_PAGES = [
 // Anonymous, unauthenticated endpoints: embedded widgets, public lead/contact
 // forms, payment flows, auth, content, and cron (cron self-checks CRON_SECRET).
 const PUBLIC_API = [
+  "/api/sunder-waitlist",    // SUNDER waitlist signup + /update (validates, honeypot, rate limited in form-guard)
   "/api/auth/login",
   "/api/chief-auth",         // Chief read-only QA login (own env password, rate limited, master host only)
   "/api/auth/logout",
@@ -189,6 +190,7 @@ const CUSTOM_DOMAIN_PUBLIC_API = [
   "/api/chat-platform/message",
   "/api/chat-platform/config",
   "/api/chat-platform/event",
+  "/api/sunder-waitlist",
 ];
 
 
@@ -325,6 +327,12 @@ export async function proxy(req: NextRequest) {
         url.search = "";
         return NextResponse.rewrite(url);
       }
+      // SUNDER ships its own icons beside its static page (not the Saabai fallback).
+      if (slug === SUNDER_SLUG && /^\/(favicon\.ico|apple-touch-icon(-precomposed)?\.png)$/.test(pathname)) {
+        url.hostname = "www.saabai.ai";
+        url.pathname = pathname === "/favicon.ico" ? "/clients/sunder/favicon.ico" : "/clients/sunder/apple-touch-icon-180.png";
+        return NextResponse.rewrite(url);
+      }
       // Custom-domain favicon: the site's own Site Factory favicon, else Saabai's.
       if (pathname === "/favicon.ico") {
         url.hostname = "www.saabai.ai";
@@ -342,6 +350,8 @@ export async function proxy(req: NextRequest) {
       if (pathname.startsWith("/api/")) {
         if (matches(pathname, CUSTOM_DOMAIN_PUBLIC_API)) {
           // Public here, but still size- and rate-limited like every other chat endpoint.
+          const limited = await formGuard(req, redis);
+          if (limited) return limited;
           if (matches(pathname, CHAT_API)) {
             const blocked = await chatGuard(req, redis);
             if (blocked) return blocked;
