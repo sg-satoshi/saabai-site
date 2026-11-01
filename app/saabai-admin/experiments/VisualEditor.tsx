@@ -9,6 +9,7 @@ import { isLegalPath, isProtectedText, kindForElement, suggestSlot, type Element
 import { captureOrig, imagePathOf, previewInto, sectionOf } from "../../../lib/exp/editor-dom";
 import { KIND_RULES, type SlotKind } from "../../../lib/exp/core";
 import { findTarget, stableSelector } from "../../../lib/exp/overlay-dom";
+import { SAABAI, SitePicker, readSite, siteParam, type ExpSite } from "./SitePicker";
 import "./experiments.css";
 
 type Picked =
@@ -63,7 +64,17 @@ function copyOf(el: HTMLElement, kind: SlotKind): { text: string; emphasis: stri
   return { text: flat(clone.textContent ?? ""), emphasis };
 }
 
+function loadSaabaiPaths(setPaths: (p: string[]) => void) {
+  fetch("/sitemap.xml").then((r) => r.text()).then((x) => {
+    const list = [...x.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => { try { const u = new URL(m[1]); return u.pathname || "/"; } catch { return ""; } }).filter((s) => s.startsWith("/"));
+    const uniq = Array.from(new Set(["/", ...list])).slice(0, 80);
+    if (uniq.length) setPaths(uniq);
+  }).catch(() => { /* keep "/" */ });
+}
+
 export default function VisualEditor() {
+  const [site, setSite] = useState<string | null>(null);
+  const [sites, setSites] = useState<ExpSite[]>([]);
   const [paths, setPaths] = useState<string[]>(["/"]);
   const [path, setPath] = useState("/");
   const [mobile, setMobile] = useState(false);
@@ -74,6 +85,8 @@ export default function VisualEditor() {
   const orig = useRef<string>("");
   const selKind = useRef<SlotKind>("headline");
   const pathRef = useRef("/");
+  const siteRef = useRef(SAABAI);
+  siteRef.current = site ?? SAABAI;
   const editRef = useRef(editing);
   editRef.current = editing;
   pathRef.current = path;
@@ -81,11 +94,10 @@ export default function VisualEditor() {
   useEffect(() => {
     const p = new URLSearchParams(window.location.search).get("page");
     if (p && p.startsWith("/") && !p.startsWith("//")) setPath(p);
-    fetch("/sitemap.xml").then((r) => r.text()).then((x) => {
-      const list = [...x.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => { try { const u = new URL(m[1]); return u.pathname || "/"; } catch { return ""; } }).filter((s) => s.startsWith("/"));
-      const uniq = Array.from(new Set(["/", ...list])).slice(0, 80);
-      if (uniq.length) setPaths(uniq);
-    }).catch(() => { /* keep "/" */ });
+    const s = readSite(); setSite(s);
+    fetch(`/api/admin/experiments?site=${encodeURIComponent(s)}`).then((r) => r.json()).then((d: { sites?: ExpSite[] }) => { if (Array.isArray(d.sites)) setSites(d.sites); }).catch(() => { /* picker hidden */ });
+    // Site Factory pages are single static pages, so only saabai.ai lists its sitemap.
+    if (s === SAABAI) loadSaabaiPaths(setPaths);
   }, []);
 
   const clearSel = useCallback(() => {
@@ -146,7 +158,7 @@ export default function VisualEditor() {
     // Show overlay tests (no code wrapper) as test elements too, so clicking one opens its variants.
     const doc = frame.current?.contentDocument; const here = pathRef.current;
     if (!doc) return;
-    fetch("/api/admin/experiments").then((r) => r.json()).then((d: { items?: { id: string; slot: string; path: string; kind?: string; overlay?: { sel: string; fp: string; tag: string } }[] }) => {
+    fetch(`/api/admin/experiments?site=${encodeURIComponent(siteRef.current)}`).then((r) => r.json()).then((d: { items?: { id: string; slot: string; path: string; kind?: string; overlay?: { sel: string; fp: string; tag: string } }[] }) => {
       for (const it of d.items ?? []) {
         if (!it.overlay || it.path !== here || doc.querySelector(`[data-exp-id="${it.id}"]`)) continue;
         const el = findTarget(doc, { s: it.overlay.sel, f: it.overlay.fp, t: it.overlay.tag });
@@ -154,17 +166,25 @@ export default function VisualEditor() {
       }
     }).catch(() => { /* editor still works without the highlights */ });
   };
-  const src = path.startsWith("/") && !path.startsWith("//") ? path : "/";
+  const safe = path.startsWith("/") && !path.startsWith("//") ? path : "/";
+  // Client sites preview through saabai.ai's own /sites/<slug> route (same origin, so the editor can read the page).
+  const src = !site || site === SAABAI ? safe : `/sites/${site}${safe === "/" ? "" : safe}`;
+  const qs = (s: string, page: string) => `?view=editor${siteParam(s, "&")}&page=${encodeURIComponent(page)}`;
+  const pickSite = (s: string) => { if (s === site) return; clearSel(); setPicked(null); setSite(s); setPath("/"); setPaths(["/"]); if (s === SAABAI) loadSaabaiPaths(setPaths); history.replaceState(null, "", qs(s, "/")); };
+  if (!site) return <div className="xp"><p className="muted">Loading…</p></div>;
+  const cur = sites.find((x) => x.key === site);
 
   return (
     <div className="xp xp-wide">
       <div className="ph">
         <div><h1>Visual editor</h1><p className="sub">See the live page, click a test element to edit its variants. Nothing here changes what visitors see unless you save a change, and you only ever see the original copy.</p></div>
-        <a className="xp-editlink" href="/saabai-admin/experiments">All tests</a>
+        <a className="xp-editlink" href={"/saabai-admin/experiments" + siteParam(site)}>All tests</a>
       </div>
+      {sites.length > 0 && <SitePicker sites={sites} site={site} onPick={pickSite} />}
+      {cur?.kind === "client" && !cur.enabled && <div className="xp-siteoff" role="status">Split testing is off for {cur.label}, so visitors see the normal page. Tests you set up here only show once you turn it on in the test list.</div>}
       <div className="xp-ve-bar">
         <label>Page
-          <select className="xp-in" value={path} onChange={(e) => { setPath(e.target.value); history.replaceState(null, "", `?view=editor&page=${encodeURIComponent(e.target.value)}`); }}>
+          <select className="xp-in" value={path} onChange={(e) => { setPath(e.target.value); history.replaceState(null, "", qs(site, e.target.value)); }}>
             {paths.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
         </label>
@@ -181,27 +201,27 @@ export default function VisualEditor() {
         </div>
         <aside className="xp-ve-panel">
           {!picked && <Card><CardBody><p className="xp-note">{editing ? "Hover the page. Teal dashed outlines are existing test elements, grey dotted ones are headings, text, buttons, links, prices, images and form hints you could turn into a test. Click one." : "Edit mode is off, so the page behaves normally. Turn it on to pick an element."}</p></CardBody></Card>}
-          {picked?.type === "slot" && <SlotPanel key={picked.expId} expId={picked.expId} onPreview={preview} onClose={() => { preview("headline", null); clearSel(); setPicked(null); }} />}
-          {picked?.type === "candidate" && <CandidatePanel key={picked.text} p={picked} path={path} onClose={() => { clearSel(); setPicked(null); }} onStarted={(expId, slotName) => setPicked({ type: "slot", slotName, expId })} />}
+          {picked?.type === "slot" && <SlotPanel key={picked.expId} site={site} expId={picked.expId} onPreview={preview} onClose={() => { preview("headline", null); clearSel(); setPicked(null); }} />}
+          {picked?.type === "candidate" && <CandidatePanel key={picked.text} site={site} p={picked} path={path} onClose={() => { clearSel(); setPicked(null); }} onStarted={(expId, slotName) => setPicked({ type: "slot", slotName, expId })} />}
         </aside>
       </div>
     </div>
   );
 }
 
-function SlotPanel({ expId, onPreview, onClose }: { expId: string; onPreview: (k: SlotKind, v: { text: string; emphasis?: string } | null) => void; onClose: () => void }) {
+function SlotPanel({ site, expId, onPreview, onClose }: { site: string; expId: string; onPreview: (k: SlotKind, v: { text: string; emphasis?: string } | null) => void; onClose: () => void }) {
   const [d, setD] = useState<Detail | null>(null);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const load = useCallback(async () => { try { setD(await api(`/api/admin/experiments/${expId}`)); setErr(""); } catch (e) { setErr((e as Error).message); } }, [expId]);
+  const load = useCallback(async () => { try { setD(await api(`/api/admin/experiments/${expId}?site=${encodeURIComponent(site)}`)); setErr(""); } catch (e) { setErr((e as Error).message); } }, [expId, site]);
   useEffect(() => { load(); }, [load]);
 
   async function act(action: Record<string, unknown>, ok: string): Promise<boolean> {
     if (!d) return false;
     setBusy(true);
-    try { setD(await api(`/api/admin/experiments/${expId}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, rev: d.experiment.rev ?? 0 }) })); notify.success(ok); return true; }
+    try { setD(await api(`/api/admin/experiments/${expId}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site, action, rev: d.experiment.rev ?? 0 }) })); notify.success(ok); return true; }
     catch (e) { notify.error((e as Error).message); if (/changed this test/.test((e as Error).message)) load(); return false; }
     finally { setBusy(false); }
   }
@@ -226,7 +246,7 @@ function SlotPanel({ expId, onPreview, onClose }: { expId: string; onPreview: (k
           {e.status === "draft" && <Button size="sm" variant="acc" disabled={busy || e.variants.filter((x) => x.active).length < 2} onClick={() => act({ type: "set_status", status: "running" }, "Test started.")}>Start test</Button>}
           {e.status === "paused" && <Button size="sm" variant="acc" disabled={busy} onClick={() => act({ type: "set_status", status: "running" }, "Test resumed.")}>Resume test</Button>}
           <Button size="sm" variant="gh" onClick={() => onPreview(kind, null)}>Show control in page</Button>
-          <a className="xp-editlink" href={`/saabai-admin/experiments?id=${e.id}`}>Full results</a>
+          <a className="xp-editlink" href={`/saabai-admin/experiments?id=${e.id}${siteParam(site, "&")}`}>Full results</a>
         </div>
         <div className="xp-ve-vars">
           {e.variants.map((x) => {
@@ -257,7 +277,7 @@ function SlotPanel({ expId, onPreview, onClose }: { expId: string; onPreview: (k
   );
 }
 
-function CandidatePanel({ p, path, onClose, onStarted }: { p: Extract<Picked, { type: "candidate" }>; path: string; onClose: () => void; onStarted: (expId: string, slot: string) => void }) {
+function CandidatePanel({ site, p, path, onClose, onStarted }: { site: string; p: Extract<Picked, { type: "candidate" }>; path: string; onClose: () => void; onStarted: (expId: string, slot: string) => void }) {
   const [name, setName] = useState(`${KIND_LABEL[p.kind].charAt(0).toUpperCase() + KIND_LABEL[p.kind].slice(1)}: ${p.text.split("/").pop()!.slice(0, 40)}`.slice(0, 80));
   const [slot] = useState(suggestSlot(path, p.section, p.kind));
   const [busy, setBusy] = useState(false);
@@ -270,7 +290,7 @@ function CandidatePanel({ p, path, onClose, onStarted }: { p: Extract<Picked, { 
     if (busy) return;
     setBusy(true); setFail("");
     try {
-      const r = await api("/api/admin/experiments/overlay", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ path, slot, kind: p.kind, name, tag: p.tag, section: p.section, selector: p.selector, control: { text: p.text, emphasis: p.emphasis }, variant: { text, emphasis } }) });
+      const r = await api("/api/admin/experiments/overlay", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site, path, slot, kind: p.kind, name, tag: p.tag, section: p.section, selector: p.selector, control: { text: p.text, emphasis: p.emphasis }, variant: { text, emphasis } }) });
       notify.success("Test started. Visitors start seeing it within about a minute.");
       onStarted(r.expId, r.slot);
     } catch (e) {
@@ -282,7 +302,7 @@ function CandidatePanel({ p, path, onClose, onStarted }: { p: Extract<Picked, { 
     if (busy || res) return;
     setBusy(true); setFail("");
     try {
-      const r = await api("/api/admin/experiments/wrap-request", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ path, slot, kind: p.kind, name, tag: p.tag, section: p.section, control: { text: p.text, emphasis: p.emphasis } }) });
+      const r = await api("/api/admin/experiments/wrap-request", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site, path, slot, kind: p.kind, name, tag: p.tag, section: p.section, control: { text: p.text, emphasis: p.emphasis } }) });
       setRes(r); notify.success(r.mode === "pr" ? "Draft pull request opened. Nothing is live." : "Request ready.");
     } catch (e) { setFail((e as Error).message); notify.error((e as Error).message); } finally { setBusy(false); }
   }
@@ -297,12 +317,13 @@ function CandidatePanel({ p, path, onClose, onStarted }: { p: Extract<Picked, { 
             <label>Test name<input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} /></label>
             {bad && <p className="xp-note" style={{ color: "var(--bad)" }}>Please avoid long dashes.</p>}
             <EditForm noun={p.kind === "image" ? "variant image path" : p.kind === "button" ? "variant button label" : "variant copy"} hasEmph={p.kind === "headline"} maxLen={p.kind === "image" ? 190 : KIND_RULES[p.kind].maxText} v={{ text: "" }} hasData={false} busy={busy || bad || !name.trim()} saveLabel="Start split test" image={p.kind === "image"} onSave={start} />
-            <p className="xp-note">Starts straight away with no pull request. A draft code change is also opened in the background so the element gets wrapped natively. It never merges by itself.</p>
+            <p className="xp-note">{site === SAABAI ? "Starts straight away with no pull request. A draft code change is also opened in the background so the element gets wrapped natively. It never merges by itself." : "Starts straight away with no code change. Visitors only see it while split testing is on for this site."}</p>
             {fail && <div className="xp-err" role="alert">{fail}</div>}
-            <button className="xp-back" style={{ margin: 0 }} onClick={() => setManual(true)}>This element won't start? Use a code request instead</button>
+            {site === SAABAI && <button className="xp-back" style={{ margin: 0 }} onClick={() => setManual(true)}>This element won't start? Use a code request instead</button>}
           </div>
         )}
-        {manual && !res && (
+        {manual && !res && site !== SAABAI && <p className="xp-note">This element could not be pinned down reliably. Pick the nearest heading or text block instead.</p>}
+        {manual && !res && site === SAABAI && (
           <div className="xp-form">
             <p className="xp-note">{p.selector ? "" : "This element couldn't be pinned down reliably, so it needs wrapping in code first. "}This opens a draft pull request for you to look at. It never merges and never starts a test.</p>
             <label>Test name<input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} /></label>

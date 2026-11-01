@@ -5,6 +5,7 @@ import { Button } from "../ui/Button";
 import { Card, CardBody, CardHeader } from "../ui/Card";
 import { confirmDialog, notify } from "../ui/Feedback";
 import { KIND_RULES, kindOf, type SlotKind } from "../../../lib/exp/core";
+import { SAABAI, SitePicker, readSite, siteParam, type ExpSite } from "./SitePicker";
 import "./experiments.css";
 
 export type Variant = { id: string; text: string; emphasis?: string; active: boolean; source?: string };
@@ -36,22 +37,47 @@ export async function api(url: string, init?: RequestInit) {
 }
 
 export default function ExperimentsClient() {
+  const [site, setSite] = useState<string | null>(null);
+  const [sites, setSites] = useState<ExpSite[]>([]);
   const [items, setItems] = useState<Item[] | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [err, setErr] = useState("");
+  const [switching, setSwitching] = useState(false);
 
-  const loadList = useCallback(async () => {
-    try { setItems((await api("/api/admin/experiments")).items); setErr(""); } catch (e) { setErr((e as Error).message); }
+  const loadList = useCallback(async (s: string) => {
+    try { const d = await api(`/api/admin/experiments?site=${encodeURIComponent(s)}`); setItems(d.items); if (Array.isArray(d.sites)) setSites(d.sites); setErr(""); } catch (e) { setErr((e as Error).message); }
   }, []);
-  useEffect(() => { loadList(); }, [loadList]);
-  useEffect(() => { const id = new URLSearchParams(window.location.search).get("id"); if (id) setOpenId(id); }, []);
-  const open = (id: string | null) => { setOpenId(id); history.replaceState(null, "", id ? `?id=${id}` : window.location.pathname); if (!id) loadList(); };
+  useEffect(() => { const s = readSite(); setSite(s); const id = new URLSearchParams(window.location.search).get("id"); if (id) setOpenId(id); loadList(s); }, [loadList]);
+  const url = (s: string, id: string | null) => { const q = [s === SAABAI ? "" : `site=${encodeURIComponent(s)}`, id ? `id=${id}` : ""].filter(Boolean).join("&"); return q ? `?${q}` : window.location.pathname; };
+  const open = (id: string | null) => { if (!site) return; setOpenId(id); history.replaceState(null, "", url(site, id)); if (!id) loadList(site); };
+  const pickSite = (s: string) => { if (s === site) return; setSite(s); setOpenId(null); setItems(null); history.replaceState(null, "", url(s, null)); loadList(s); };
+  const cur = sites.find((s) => s.key === site);
 
+  async function toggle() {
+    if (!cur || cur.kind !== "client") return;
+    const on = !cur.enabled;
+    if (!(await confirmDialog(on ? `Turn split testing on for ${cur.label}? Running tests start showing to its visitors within about a minute.` : `Turn split testing off for ${cur.label}? Every visitor sees the normal page again. Tests and results are kept.`, { confirmLabel: on ? "Turn on" : "Turn off", danger: !on }))) return;
+    setSwitching(true);
+    try {
+      const r = await api("/api/admin/experiments/site-switch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: cur.key, enabled: on }) });
+      setSites((all) => all.map((s) => (s.key === cur.key ? { ...s, enabled: !!r.enabled } : s)));
+      notify.success(r.enabled ? `Split testing is on for ${cur.label}.` : `Split testing is off for ${cur.label}.`);
+    } catch (e) { notify.error((e as Error).message); } finally { setSwitching(false); }
+  }
+
+  if (!site) return <div className="xp"><p className="muted">Loading…</p></div>;
   return (
     <div className="xp">
-      {openId ? <DetailView id={openId} onBack={() => open(null)} /> : (
+      {openId ? <DetailView id={openId} site={site} onBack={() => open(null)} /> : (
         <>
-          <div className="ph"><div><h1>Split testing</h1><p className="sub">Split tests on saabai.ai. Pick a test to edit copy, see results and choose a winner.</p></div><a className="xp-editlink" href="?view=editor">Visual editor</a></div>
+          <div className="ph"><div><h1>Split testing</h1><p className="sub">Pick a site, then a test to edit copy, see results and choose a winner.</p></div><a className="xp-editlink" href={`?view=editor${siteParam(site, "&")}`}>Visual editor</a></div>
+          {sites.length > 0 && <SitePicker sites={sites} site={site} onPick={pickSite} />}
+          {cur?.kind === "client" && (
+            <div className="xp-siteoff" role="status">
+              <span>{cur.enabled ? <>Split testing is <b>on</b> for {cur.label}. Running tests show to its visitors.</> : <>Split testing is <b>off</b> for {cur.label}. Visitors see the normal page. You can set up tests now, nothing shows until you turn it on.</>}</span>
+              <Button size="sm" variant={cur.enabled ? "sec" : "pri"} disabled={switching} loading={switching} onClick={toggle}>{cur.enabled ? "Turn off" : "Turn on"}</Button>
+            </div>
+          )}
           {err && <div className="xp-err">{err}</div>}
           {!items && !err && <p className="muted">Loading…</p>}
           <div className="xp-list">
@@ -65,7 +91,7 @@ export default function ExperimentsClient() {
                 <div className="m"><span>Views <b>{nf(i.views)}</b></span><span>Conversions <b>{nf(i.conversions)}</b></span><span>Rate <b>{pct(i.rate)}</b></span></div>
               </button>
             ))}
-            {items?.length === 0 && <p className="muted">No split tests yet.</p>}
+            {items?.length === 0 && <p className="muted">No split tests on {cur?.label ?? "this site"} yet. Open the <a href={`?view=editor${siteParam(site, "&")}`}>visual editor</a> and click any heading, text or button to start one.</p>}
           </div>
         </>
       )}
@@ -78,7 +104,7 @@ export function CopyView({ v, kind }: { v: { text: string; emphasis?: string }; 
   return <div className="xp-copy">{v.text} {v.emphasis && <span className="g">{v.emphasis}</span>}</div>;
 }
 
-function DetailView({ id, onBack }: { id: string; onBack: () => void }) {
+function DetailView({ id, site, onBack }: { id: string; site: string; onBack: () => void }) {
   const [d, setD] = useState<Detail | null>(null);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
@@ -95,7 +121,7 @@ function DetailView({ id, onBack }: { id: string; onBack: () => void }) {
   async function suggest(body: Record<string, unknown>, okMsg: string): Promise<boolean> {
     setGenBusy(true);
     try {
-      const x = await api(`/api/admin/experiments/${id}/suggestions`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      const x = await api(`/api/admin/experiments/${id}/suggestions`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...body, site }) });
       if (x.suggestions) setSugg(x.suggestions);
       if (x.experiment) { setD(x); }
       notify.success(okMsg); return true;
@@ -104,15 +130,15 @@ function DetailView({ id, onBack }: { id: string; onBack: () => void }) {
   }
 
   const load = useCallback(async () => {
-    try { const x = await api(`/api/admin/experiments/${id}`); setD(x); setLead(x.experiment.leadValueAUD != null ? String(x.experiment.leadValueAUD) : ""); setErr(""); } catch (e) { setErr((e as Error).message); }
-  }, [id]);
+    try { const x = await api(`/api/admin/experiments/${id}?site=${encodeURIComponent(site)}`); setD(x); setLead(x.experiment.leadValueAUD != null ? String(x.experiment.leadValueAUD) : ""); setErr(""); } catch (e) { setErr((e as Error).message); }
+  }, [id, site]);
   useEffect(() => { load(); }, [load]);
 
   async function act(action: Record<string, unknown>, okMsg: string): Promise<boolean> {
     if (!d) return false;
     setBusy(true);
     try {
-      const x = await api(`/api/admin/experiments/${id}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, rev: d.experiment.rev ?? 0 }) });
+      const x = await api(`/api/admin/experiments/${id}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site, action, rev: d.experiment.rev ?? 0 }) });
       setD(x); setLead(x.experiment.leadValueAUD != null ? String(x.experiment.leadValueAUD) : ""); notify.success(okMsg); return true;
     } catch (e) { notify.error((e as Error).message); if (/changed this test/.test((e as Error).message)) load(); return false; }
     finally { setBusy(false); }
