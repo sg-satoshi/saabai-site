@@ -146,7 +146,7 @@ $('f').addEventListener('submit',async e=>{e.preventDefault();say('');
  const btn=document.querySelector('#f button[type=submit]');btn.disabled=true;
  const utm={};['source','medium','campaign','content','term'].forEach(k=>{const v=q.get('utm_'+k);if(v)utm[k]=v});
  try{const r=await post('/api/sunder-waitlist',{firstName:first,email,mobile:mob0,h:Number(document.documentElement.dataset.headline)||1,ref:q.get('r')||'',utm,source:document.referrer?document.referrer.slice(0,200):'',website:$('hp').value});
-  if(r.ok&&r.j.ok){if(mob0)$('mobile').value=mob0;thanks(first,r.j.ref,r.j.token)}else{say(r.j.error||'Something went wrong. Please try again.');btn.disabled=false}
+  if(r.ok&&r.j.ok){if(mob0)$('mobile').value=mob0;thanks(first,r.j.ref,r.j.token);try{window.dispatchEvent(new Event('sb:goal'))}catch{}}else{say(r.j.error||'Something went wrong. Please try again.');btn.disabled=false}
  }catch{say('Something went wrong. Please try again.');btn.disabled=false}
 });
 </script></body></html>

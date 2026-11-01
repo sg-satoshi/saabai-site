@@ -8,6 +8,7 @@ import { prepareLmmHomeHtml } from "@/lib/lmm-legal";
 import { ensureFavicon } from "@/lib/site-favicon";
 import { ensureSchema } from "@/lib/site-schema";
 import { sunderRobotsHeaders } from "@/lib/sunder-factory-seed";
+import { injectStaticExp } from "@/lib/exp/static-overlay";
 
 export const runtime = "nodejs";
 
@@ -43,7 +44,7 @@ export async function GET(
     // the fallback, so the privacy policy ships with the deploy.
     const repoHtml = readRepoClientHtml(slug, "index.html");
     if (repoHtml !== null) {
-      const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, repoHtml))));
+      const html = injectStaticExp(ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, repoHtml)))));
       return siteResponse(slug, html, 200, {
         "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": "no-store",
@@ -65,7 +66,7 @@ export async function GET(
     }
 
     if (blobHtml !== null) {
-      const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, applyCssPatch(slug, prepareStoredHtml(slug, blobHtml)))));
+      const html = injectStaticExp(ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, applyCssPatch(slug, prepareStoredHtml(slug, blobHtml))))));
       return siteResponse(slug, html, 200, {
         "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": "no-store",
@@ -75,7 +76,7 @@ export async function GET(
     // 2. Fall back to legacy static sites in public/clients/
     try {
       const filePath = path.join(process.cwd(), "public", "clients", slug, "index.html");
-      const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, readFileSync(filePath, "utf-8")))));
+      const html = injectStaticExp(ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, readFileSync(filePath, "utf-8"))))));
       return siteResponse(slug, html, 200, {
         "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": "public, s-maxage=3600",

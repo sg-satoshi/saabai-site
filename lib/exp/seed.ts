@@ -1,4 +1,5 @@
 import type { Experiment, SlotKind, SlotType } from "./core";
+import { SUNDER_HEADLINE, SUNDER_SLUG } from "../sunder-factory-seed";
 
 /**
  * SLOT REGISTRY. To add a new test slot, add one entry to SLOTS below (id, slot name, page path, kind,
@@ -90,4 +91,28 @@ export function qualifyHoursClaim(text: string, emphasis?: string): { text: stri
 }
 
 /** Built-in config, used when Redis has nothing for a slot (and lazily written to Redis on first render). */
-export const SEED_EXPERIMENTS: Experiment[] = SLOTS.map(slotToExperiment);
+/**
+ * Site Factory overlay tests that ship defined but idle. Status is draft, and the site's split testing switch defaults
+ * off, so visitors see nothing until Shane starts the test and turns the site on in /saabai-admin/experiments.
+ * They are registered (Redis + Supabase) the first time the site is opened there. Not in SLOTS: no code wraps them.
+ */
+export const CLIENT_SEEDS: Experiment[] = [
+  {
+    id: "sunder-home-hero-headline",
+    siteKey: SUNDER_SLUG,
+    slot: "sunder-home.hero.headline",
+    slotType: "text",
+    kind: "headline",
+    name: "SUNDER waitlist headline",
+    path: "/",
+    status: "draft",
+    defaultVariantId: "a",
+    overlay: { sel: "h1", fp: SUNDER_HEADLINE.control.toLowerCase(), tag: "h1" },
+    variants: [
+      { id: "a", text: SUNDER_HEADLINE.control, active: true },
+      { id: "b", text: SUNDER_HEADLINE.variant, active: true },
+    ],
+  },
+];
+
+export const SEED_EXPERIMENTS: Experiment[] = [...SLOTS.map(slotToExperiment), ...CLIENT_SEEDS];
