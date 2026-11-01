@@ -24,7 +24,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const { id } = await ctx.params;
   const body = (await req.json().catch(() => null)) as { site?: string; op?: string; suggestionId?: string; text?: string; emphasis?: string } | null;
   const site = body?.site || "saabai";
-  if (!isKnownSite(site)) return Response.json({ error: "Unknown site" }, { status: 400 });
+  if (!(await isKnownSite(site))) return Response.json({ error: "Unknown site" }, { status: 400 });
   if (!(await listExperiments(site)).some((e) => e.id === id)) return Response.json({ error: "Not found" }, { status: 404 });
 
   if (body?.op === "generate") {

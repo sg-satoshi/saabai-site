@@ -5,10 +5,32 @@ import { applyAction, variantRows, type Action, type MutationResult } from "./mu
 import { analyse, daysSince, type Analysis, type VariantCounts } from "./stats";
 import { serviceDb } from "./track";
 import { SEED_EXPERIMENTS } from "./seed";
+import { SAABAI_SITE, SITE_KEY_RE, isSiteEnabled } from "./sites";
+import { listFactorySites } from "../factory-sites";
 
-/** Sites the dashboard manages. Add a row when a client site joins split testing. */
-export const EXP_SITES = [{ key: "saabai", label: "saabai.ai" }] as const;
-export const isKnownSite = (k: string) => EXP_SITES.some((s) => s.key === k);
+export type ExpSite = { key: string; label: string; url?: string; enabled: boolean; kind: "saabai" | "client" };
+
+/** Every site the dashboard can manage: saabai.ai first, then every Site Factory site (from the factory registry). */
+export async function listExpSites(): Promise<ExpSite[]> {
+  const all = await listFactorySites();
+  const seen = new Set<string>([SAABAI_SITE]);
+  const out: ExpSite[] = [{ key: SAABAI_SITE, label: "saabai.ai", url: "https://www.saabai.ai", enabled: await isSiteEnabled(SAABAI_SITE), kind: "saabai" }];
+  for (const s of all) {
+    if (!s?.slug || seen.has(s.slug) || !SITE_KEY_RE.test(s.slug) || s.status === "archived") continue;
+    seen.add(s.slug);
+    const doms = "domains" in s && Array.isArray(s.domains) ? (s.domains as string[]) : [];
+    const domain = doms.find((d) => !d.startsWith("www.")) ?? doms[0];
+    out.push({ key: s.slug, label: s.name || s.slug, url: domain ? `https://${domain}` : s.url, enabled: await isSiteEnabled(s.slug), kind: "client" });
+  }
+  return out;
+}
+
+/** True for saabai.ai and any site in the factory registry. */
+export async function isKnownSite(k: string): Promise<boolean> {
+  if (k === SAABAI_SITE) return true;
+  if (!SITE_KEY_RE.test(k)) return false;
+  return (await listFactorySites()).some((s) => s?.slug === k && s.status !== "archived");
+}
 export { expKey };
 
 type StatRow = { variant_key: string; impressions: number; cta_clicks: number; enquiries: number; calls: number; converters: number };

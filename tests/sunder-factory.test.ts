@@ -83,7 +83,7 @@ test("factory seed is the record Site Factory writes, with no origin or approval
   assert.equal(/made in australia/i.test(blob), false);
   assert.equal(/usa pickleball/i.test(blob), false);
   assert.match(readFileSync("app/api/site-factory/migrate-legacy/route.ts", "utf8"), /SUNDER_FACTORY_SEED/);
-  assert.match(readFileSync("app/api/site-factory/list/route.ts", "utf8"), /SUNDER_LEGACY_META/);
+  assert.match(readFileSync("lib/factory-sites.ts", "utf8"), /SUNDER_LEGACY_META/);
   const cfg = readFileSync("next.config.ts", "utf8");
   assert.ok(cfg.includes("sunder\\\\.com\\\\.au"));
   assert.ok(cfg.includes("sunderpickleball\\\\.com"));

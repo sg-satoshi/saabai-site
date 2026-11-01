@@ -98,7 +98,23 @@ Hard rules:
 - Each option must be meaningfully different from the others and from the existing ones.
 Reply with JSON only, no markdown fence: an array of exactly 3 objects {"text": string, "why": string}. "why" is one plain sentence on the angle being tested.`;
 
-export const suggestSystem = (kind: SlotKind) => (kind === "button" ? SUGGEST_SYSTEM_BUTTON : kind === "headline" ? SUGGEST_SYSTEM : suggestSystemGeneric(KIND_RULES[kind].noun, KIND_RULES[kind].maxText));
+/** A Site Factory client site's own brand, so its suggestions never borrow Saabai's offer or voice. */
+export type SiteBrand = { name: string; about?: string };
+
+export const suggestSystemForClient = (kind: SlotKind, brand: SiteBrand) => {
+  const r = KIND_RULES[kind];
+  const about = (brand.about ?? "").replace(/[\r\n]+/g, " ").replace(/[\u2013\u2014]/g, ",").slice(0, 300);
+  return `You write ${r.noun} variants for a page on the website of ${brand.name.slice(0, 80)}${about ? `. About the business: ${about}` : ""}.
+Voice: match the current copy's tone. Plain, clear English. No emoji. No hype or urgency tricks.
+Hard rules:
+- Never use em dashes or en dashes.
+- ${r.maxText} characters or fewer${r.emphasis ? ` for "text", and ${r.maxEmphasis} or fewer for "emphasis", ${r.maxCombined} together` : ""}. Keep the same job as the current copy (same meaning and same facts), only change the angle or wording.
+- Do not invent prices, discounts, savings, percentages, customer numbers, awards, guarantees, reviews, results, origins or endorsements. Only reuse facts and numbers already in the current copy.
+- Each option must be meaningfully different from the others and from the existing ones.
+Reply with JSON only, no markdown fence: an array of exactly 3 objects {"text": string,${r.emphasis ? ` "emphasis": string,` : ""} "why": string}.${r.emphasis ? ` "emphasis" is an optional second part that finishes the sentence (use "" if not needed).` : ""} "why" is one plain sentence on the angle being tested.`;
+};
+
+export const suggestSystem = (kind: SlotKind, brand?: SiteBrand) => (brand ? suggestSystemForClient(kind, brand) : kind === "button" ? SUGGEST_SYSTEM_BUTTON : kind === "headline" ? SUGGEST_SYSTEM : suggestSystemGeneric(KIND_RULES[kind].noun, KIND_RULES[kind].maxText));
 
 export const SUGGEST_SYSTEM = `You write headline variants for saabai.ai, an Australian business that gives small businesses a clear plan for where AI will save them time. Do not write "in 48 hours" or any 48 hours delivery promise. Starter delivery stays on the Blueprint page.
 Voice: plain, direct, Australian English, like a sensible tradie explaining things. Short words. No hype, no buzzwords, no emoji, no exclamation marks, no question marks needed.

@@ -4,7 +4,9 @@ import { getDefaultModel } from "../chat-config";
 import { kindOf } from "./core";
 import { applyDashboardAction, listExperiments, loadView, type ApplyOutcome } from "./admin";
 import { serviceDb } from "./track";
-import { AI_KINDS, SUGGEST_COOLDOWN_MS, MAX_PENDING, SUGGEST_COUNT, suggestSystem, buildSuggestPrompt, cleanSuggestions, combined, parseModelJson } from "./suggest";
+import { SAABAI_SITE } from "./sites";
+import { listFactorySites } from "../factory-sites";
+import { AI_KINDS, SUGGEST_COOLDOWN_MS, MAX_PENDING, SUGGEST_COUNT, suggestSystem, buildSuggestPrompt, type SiteBrand, cleanSuggestions, combined, parseModelJson } from "./suggest";
 
 export type SuggestionRow = { id: string; text: string; emphasis: string; rationale: string; status: "pending" | "approving" | "approved" | "rejected"; created_at: string; decided_at: string | null; variant_key: string | null };
 type Fail = { ok: false; error: string; status: number };
@@ -37,6 +39,12 @@ export async function generateSuggestions(siteKey: string, expId: string, actor:
   const live = exp.variants.map((v) => combined(v.text, v.emphasis ?? ""));
   const waiting = pending.map((s) => combined(s.text, s.emphasis));
   const avoid = [...live, ...waiting, ...rejected];
+  // Client sites: the model writes for that business, never in Saabai's voice or about Saabai's offer.
+  let brand: SiteBrand | undefined;
+  if (siteKey !== SAABAI_SITE) {
+    const s = (await listFactorySites()).find((x) => x?.slug === siteKey);
+    brand = { name: s?.business?.name || s?.name || siteKey, about: s?.description };
+  }
   const prompt = buildSuggestPrompt(exp, view.analysis, view.daysRunning, rejected.slice(0, 8));
 
   let good: ReturnType<typeof cleanSuggestions>["ok"] = [];
@@ -44,7 +52,7 @@ export async function generateSuggestions(siteKey: string, expId: string, actor:
   try {
     modelName = process.env.DEFAULT_CHAT_MODEL || "anthropic:claude-haiku-4-5";
     for (let attempt = 0; attempt < 2 && good.length < SUGGEST_COUNT; attempt++) {
-      const r = await generateText({ model: getDefaultModel(), system: suggestSystem(kindOf(exp)), prompt: attempt ? `${prompt}\nYour last answer broke a rule or repeated something. Follow every hard rule.` : prompt, maxOutputTokens: 700, temperature: 0.9 });
+      const r = await generateText({ model: getDefaultModel(), system: suggestSystem(kindOf(exp), brand), prompt: attempt ? `${prompt}\nYour last answer broke a rule or repeated something. Follow every hard rule.` : prompt, maxOutputTokens: 700, temperature: 0.9 });
       const c = cleanSuggestions(parseModelJson(r.text), [...avoid, ...good.map((g) => combined(g.text, g.emphasis))], SUGGEST_COUNT - good.length, kindOf(exp));
       good = [...good, ...c.ok];
     }

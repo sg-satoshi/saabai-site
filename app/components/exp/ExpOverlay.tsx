@@ -6,7 +6,7 @@ import { OV_COOKIE, decodeOverlay, fingerprint, pageKey, type OvItem } from "@/l
 import { findTarget, sigOf } from "@/lib/exp/overlay-dom";
 import { captureOrig, previewInto } from "@/lib/exp/editor-dom";
 import { qualifyHoursClaim } from "@/lib/exp/seed";
-import { showsSaabaiChrome } from "@/lib/client-site-surface";
+import { isClientSitePath } from "@/lib/client-site-surface";
 import ExpBeacon from "./ExpBeacon";
 
 /**
@@ -20,10 +20,13 @@ export default function ExpOverlay() {
 
   useEffect(() => {
     const done = () => document.documentElement.classList.remove("sb-af");
-    if (!showsSaabaiChrome(window.location.hostname, pathname)) { done(); setLive([]); return; }
+    // The address bar path, not the rewritten /sites/<slug> route a client domain is served from.
+    const here = window.location.pathname;
+    // Never on /sites/<slug> previews. Client domains only get an sb_ov cookie when their site is switched on.
+    if (isClientSitePath(here)) { done(); setLive([]); return; }
     const m = document.cookie.match(new RegExp(`(?:^|; )${OV_COOKIE}=([^;]+)`));
     const payload = decodeOverlay(m?.[1]);
-    if (!payload || payload.p !== pageKey(pathname)) { done(); setLive([]); return; }
+    if (!payload || payload.p !== pageKey(here)) { done(); setLive([]); return; }
     const cleanups: Array<() => void> = [];
     const applied: OvItem[] = [];
     for (const it of payload.o) {
