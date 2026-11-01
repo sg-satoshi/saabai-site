@@ -89,25 +89,17 @@ test("factory seed is the record Site Factory writes, with no origin or approval
   assert.ok(cfg.includes("sunderpickleball\\\\.com"));
 });
 
-test("waitlist shell has drop-in slots and does not submit", () => {
-  for (const slot of ["hero", "eyebrow", "headline", "subline", "form", "thanks"]) {
-    assert.match(html, new RegExp(`data-slot="${slot}"`));
-  }
-  assert.match(html, /SUNDER\. Coming soon\./);
-  assert.match(html, />Get first hit\.</);
-  assert.match(html, /data-headline-variant="Feel the power\. Keep the control\."/);
-  assert.match(html, /name="firstName"/);
-  assert.match(html, /name="email"/);
-  assert.match(html, /name="mobile"/);
-  assert.match(html, /name="sms-consent"/);
-  assert.equal(/name="sms-consent"[^>]*checked/.test(html), false);
-  assert.equal(/name="offer"[^>]*checked/.test(html), false);
-  assert.match(html, /Would you rather buy or subscribe\?/);
-  assert.match(html, /Supabase storage, consent logging, and server-side validation/);
-  assert.match(html, /fonts\.googleapis\.com\/css2\?family=Archivo:wdth,wght@125,800&amp;family=Outfit/);
-  assert.match(html, /#0d0d0d/);
-  assert.match(html, /#d4ff3a/);
-  assert.match(html, /#f2f2ee/);
+test("r3b waitlist page is live-safe: noindex, honest submit, no network", () => {
+  assert.match(html, /Get first hit\./);
+  assert.match(html, /Feel the power\. Keep the control\./);
+  assert.match(html, /Split the game open\./);
+  assert.match(html, /id="first"/);
+  assert.match(html, /id="email"/);
+  assert.match(html, /Waitlist opens shortly/);
+  assert.equal(/<form[^>]*action=/.test(html), false);
+  assert.equal(/state-thanks'\}\);/.test(html), false);
+  assert.match(html, /\/clients\/sunder\/img\/hero-paddle-strike-desktop-2560x1440\.jpg/);
+  assert.equal(/(src|href)="(img|fonts)\//.test(html), false);
   assert.match(html, /content="noindex, nofollow"/);
   assert.match(html, /application\/ld\+json/);
   assert.equal(/fetch\s*\(/.test(html), false);

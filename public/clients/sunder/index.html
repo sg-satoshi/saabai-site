@@ -1,130 +1,125 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>SUNDER. Coming soon.</title>
-<meta name="description" content="SUNDER. Coming soon."/>
-<meta name="robots" content="noindex, nofollow"/>
-<link rel="canonical" href="https://sunder.com.au/"/>
-<meta property="og:type" content="website"/>
-<meta property="og:site_name" content="SUNDER"/>
-<meta property="og:title" content="SUNDER. Coming soon."/>
-<meta property="og:description" content="SUNDER. Coming soon."/>
-<meta property="og:url" content="https://sunder.com.au/"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,800&amp;family=Outfit:wght@400;500;600&amp;display=swap"/>
+<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SUNDER | Split the game open.</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="SUNDER. A new pickleball paddle with power, spin and control. Join the waitlist for 20% off at launch.">
+<link rel="canonical" href="https://sunder.com.au/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="SUNDER"><meta property="og:title" content="SUNDER | Split the game open."><meta property="og:url" content="https://sunder.com.au/">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"SUNDER","url":"https://sunder.com.au/","legalName":"Saabai Pty Ltd"}</script>
+<link rel="preload" href="/clients/sunder/fonts/Archivo.ttf" as="font" type="font/ttf" crossorigin><link rel="preload" href="/clients/sunder/fonts/InterTight.ttf" as="font" type="font/ttf" crossorigin>
 <style>
-  :root { --carbon: #0d0d0d; --volt: #d4ff3a; --chalk: #f2f2ee; }
-  *, *::before, *::after { box-sizing: border-box; }
-  [hidden] { display: none !important; }
-  html, body { margin: 0; max-width: 100%; }
-  body {
-    min-height: 100vh;
-    background: var(--carbon);
-    color: var(--chalk);
-    font-family: Outfit, sans-serif;
-    font-weight: 400;
-  }
-  main { width: 100%; max-width: 32rem; margin: 0 auto; padding: 48px 20px 32px; }
-  [data-slot="hero"]:empty { display: none; }
-  [data-slot="hero"] img { display: block; width: 100%; height: auto; }
-  [data-slot="eyebrow"], h1 {
-    font-family: Archivo, sans-serif;
-    font-weight: 800;
-    font-stretch: expanded;
-    letter-spacing: 0.01em;
-  }
-  [data-slot="eyebrow"] {
-    margin: 0 0 12px;
-    color: var(--volt);
-    font-size: 14px;
-    text-transform: uppercase;
-  }
-  h1 { margin: 0 0 12px; font-size: clamp(40px, 12vw, 64px); line-height: 0.95; }
-  [data-slot="subline"], [data-slot="status"] { margin: 0 0 28px; font-size: 18px; line-height: 1.4; }
-  form, [data-slot="thanks"] { display: grid; gap: 12px; }
-  label { display: grid; gap: 6px; font-size: 14px; }
-  input[type="text"], input[type="email"], input[type="tel"] {
-    width: 100%;
-    max-width: 100%;
-    padding: 12px 14px;
-    border: 1px solid var(--chalk);
-    border-radius: 4px;
-    background: transparent;
-    color: var(--chalk);
-    font: 16px/1.3 Outfit, sans-serif;
-  }
-  button {
-    width: 100%;
-    max-width: 100%;
-    margin-top: 4px;
-    padding: 14px 16px;
-    border: 0;
-    border-radius: 4px;
-    background: var(--volt);
-    color: var(--carbon);
-    font: 600 16px/1.2 Outfit, sans-serif;
-    cursor: pointer;
-  }
-  .check { display: flex; gap: 10px; align-items: flex-start; }
-  .check input { margin-top: 3px; }
-  fieldset { margin: 0; padding: 0; border: 0; display: grid; gap: 8px; }
-  legend { padding: 0; font-size: 14px; }
-</style>
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebSite","name":"SUNDER","url":"https://sunder.com.au/","description":"SUNDER. Coming soon."}
-</script>
-</head>
-<body>
-<main>
-  <p data-slot="status">SUNDER. Coming soon.</p>
-  <!-- Hero image slot. Empty until the approved design drops in. -->
-  <figure data-slot="hero"></figure>
-  <p data-slot="eyebrow">SUNDER</p>
-  <!-- TODO: headline variants are in lib/sunder-factory-seed.ts. The split tester does not assign variants on this host yet. Visible text is the control. -->
-  <h1 data-slot="headline" data-headline-control="Get first hit." data-headline-variant="Feel the power. Keep the control.">Get first hit.</h1>
-  <p data-slot="subline">Coming soon.</p>
-  <!-- TODO: Supabase storage, consent logging, and server-side validation. This form does not submit anywhere. -->
-  <form data-slot="form" id="sunder-waitlist" action="" method="get" novalidate>
-    <label>First name
-      <input type="text" name="firstName" autocomplete="given-name" required/>
-    </label>
-    <label>Email
-      <input type="email" name="email" autocomplete="email" required/>
-    </label>
-    <button type="submit">Join the waitlist</button>
-  </form>
-  <section data-slot="thanks" id="sunder-thanks" hidden>
-    <h2>You're on the list.</h2>
-    <label>Mobile (optional)
-      <input type="tel" name="mobile" autocomplete="tel" inputmode="tel"/>
-    </label>
-    <label class="check">
-      <input type="checkbox" name="sms-consent"/>
-      <span>Send me SMS updates. Leave this unticked if you do not want texts.</span>
-    </label>
-    <fieldset>
-      <legend>Would you rather buy or subscribe?</legend>
-      <label class="check"><input type="radio" name="offer" value="buy"/> <span>Buy</span></label>
-      <label class="check"><input type="radio" name="offer" value="subscribe"/> <span>Subscribe</span></label>
-    </fieldset>
-    <p>Placeholder only. Nothing on this screen is saved yet.</p>
-  </section>
-</main>
+@font-face{font-family:Archivo;src:url(/clients/sunder/fonts/Archivo.ttf);font-weight:100 900;font-stretch:62% 125%;font-display:block}
+@font-face{font-family:"Inter Tight";src:url(/clients/sunder/fonts/InterTight.ttf);font-weight:100 900;font-display:block}
+:root{--carbon:#0d0d0d;--volt:#d4ff3a;--chalk:#f2f2ee;--muted:#d6d6d0;--field:#161616;--line:#8a8a84}
+*{box-sizing:border-box}html,body{margin:0;background:var(--carbon);color:var(--chalk);font:400 16px/1.5 "Inter Tight",Archivo}
+.hero{position:relative;min-height:100vh;background:var(--carbon) url(/clients/sunder/img/hero-paddle-strike-desktop-2560x1440.jpg) left center/cover no-repeat}
+.hero:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,.96) 0%,rgba(13,13,13,.9) 36%,rgba(13,13,13,.45) 44%,rgba(13,13,13,0) 50%)}
+.wrap{position:relative;max-width:1440px;margin:0 auto;padding:28px 72px 40px}
+.logo{display:block;width:150px;height:auto}
+.col{width:540px;margin-top:40px}
+.eyebrow{font:600 13px/1 "Inter Tight",Archivo;letter-spacing:.16em;text-transform:uppercase;color:var(--volt);margin:0 0 12px}
+h1{font-family:Archivo,"Inter Tight";font-weight:800;font-stretch:125%;font-size:60px;line-height:1;letter-spacing:-.01em;margin:0 0 14px;text-transform:uppercase}
+.sub{font-size:18px;line-height:1.45;color:var(--chalk);margin:0 0 22px;max-width:480px}
+.card{background:rgba(13,13,13,.94);border:1.5px solid #3a3a38;border-radius:14px;padding:22px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label.f{display:block;margin-bottom:12px}label.f span{display:block;font-size:14px;font-weight:600;margin-bottom:6px;color:var(--chalk)}
+input[type=text],input[type=email],input[type=tel]{width:100%;height:46px;border-radius:8px;border:1.5px solid var(--line);background:var(--field);color:var(--chalk);font:16px "Inter Tight",Archivo;padding:0 14px;outline:none}
+input:focus,input.focus{border-color:var(--volt);box-shadow:0 0 0 3px rgba(212,255,58,.45)}
+.sms{display:none;align-items:center;gap:12px;min-height:44px;margin:-2px 0 10px;cursor:pointer}.sms.show{display:flex}
+.sms input{width:22px;height:22px;accent-color:var(--volt);margin:0;flex:none}
+.consent{font-size:15px;line-height:1.45;color:var(--chalk);margin:6px 0 14px}
+button,input,select,textarea{font-family:"Inter Tight",Archivo}
+button{width:100%;height:52px;border:0;border-radius:8px;background:var(--volt);color:var(--carbon);font:800 17px Archivo,"Inter Tight";font-stretch:115%;text-transform:uppercase;letter-spacing:.04em;cursor:pointer}
+button:focus-visible{outline:3px solid var(--chalk);outline-offset:3px}
+.below{font-size:14px;line-height:1.45;color:var(--muted);margin:14px 0 0}.below+.below{margin-top:8px}
+a{color:var(--chalk);text-decoration:underline;text-underline-offset:2px}
+.done{display:none}.state-thanks .form{display:none}.state-thanks .thanks{display:block}
+.done h2{color:var(--volt);font-family:Archivo,"Inter Tight";font-weight:800;font-stretch:125%;font-size:32px;line-height:1.05;margin:0 0 10px;text-transform:uppercase}.done p{margin:0;font-size:17px}
+.tl{margin:0 0 18px!important;color:var(--chalk)}.share{border-top:1.5px solid #333;padding-top:16px}.sh{font-weight:600;color:var(--volt);margin:0 0 12px!important}.cap{font-size:14px!important;color:var(--chalk);margin:-4px 0 12px!important}.cap a{color:var(--chalk)}.ro{color:var(--volt)!important}.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}.b2{height:46px;font-size:15px}.ghost{background:transparent;color:var(--volt);border:1.5px solid var(--volt)}.smsb{margin-top:18px;padding:14px;border:1.5px solid #333;border-radius:10px}.sq{font-size:15px!important;font-weight:600;margin:0 0 10px!important}.b3{height:44px;font-size:14px;background:var(--chalk);color:var(--carbon)}.smsb label.f span{font-size:13px}.smsb input[type=tel]{height:44px}.sms span{font-size:14px;color:var(--chalk)}.b3:disabled{background:#262626;color:#b4b4ae;border:1.5px dashed #6a6a66;cursor:not-allowed}
+.tick{width:44px;height:44px;border-radius:50%;background:var(--volt);color:var(--carbon);display:flex;align-items:center;justify-content:center;font:800 22px Archivo,"Inter Tight";margin-bottom:16px}
+footer{position:relative;padding:18px 72px;font-size:13px;color:var(--muted);border-top:1px solid #262626;background:var(--carbon)}footer a{margin-left:10px}
+.band{display:none}
+.dq{margin-top:18px;padding-top:14px;border-top:1px solid #2a2a2a}.dq .dl{font-size:13px!important;line-height:1.4;color:var(--muted);margin:0 0 10px!important}.dq .opts{display:grid;gap:8px}.dq .o{height:auto;min-height:44px;padding:10px 12px;background:transparent;color:var(--chalk);border:1px solid #6a6a66;border-radius:8px;font:500 14px/1.3 "Inter Tight",Archivo;text-transform:none;letter-spacing:0;text-align:left}.dq .o:hover{border-color:var(--chalk)}.dq .dt{display:none;font-size:14px!important;color:var(--chalk)}.dq.ans .opts{display:none}.dq.ans .dt{display:block}
+.mk{position:fixed;top:10px;right:12px;font:600 11px "Inter Tight",Archivo;background:#eef0f4;color:#3d4357;padding:5px 10px;border-radius:12px;z-index:9}
+@media (max-width:600px){
+ .hero{min-height:0;background-image:none}
+ .hero:before{display:none}
+ /* Product band: unscrimmed crop of the page hero (paddle strike), paddle fills over 70% of the band width */
+ .band{display:block;position:relative;margin:0 -18px 12px;height:224px;background:#0d0d0d url(/clients/sunder/img/hero-paddle-strike-band-1170x708.jpg) center/cover no-repeat}
+ .wrap{padding:0 18px 24px}.logo{width:120px;position:absolute;top:14px;left:18px;z-index:2}.col{width:auto;margin-top:0}
+ .eyebrow{margin-bottom:10px}h1{font-size:38px;margin-bottom:10px}.sub{font-size:16px;line-height:1.4;margin-bottom:14px}.card{padding:14px 16px;border-radius:12px}.row{grid-template-columns:1fr;gap:0}
+ label.f{margin-bottom:10px}label.f span{margin-bottom:4px}
+ input[type=text],input[type=email],input[type=tel]{height:46px}button{height:52px}.consent{font-size:14px;line-height:1.4;margin:4px 0 12px}
+ .mk{position:absolute;top:232px;right:18px}
+ html[data-headline="2"] h1{font-stretch:108%;font-size:36px}.below{font-size:13px;line-height:1.4;margin-top:10px}
+ footer{padding:16px 18px}footer a{margin-left:0;margin-right:10px;display:inline-block;min-height:44px;line-height:44px}}
+</style></head><body>
+<section class="hero"><div class="wrap">
+<img class="logo" src="/clients/sunder/img/sunder-wordmark-colour-dark.svg" alt="SUNDER">
+<div class="col" id="col">
+<div class="band" role="img" aria-label="SUNDER paddle striking a ball"></div>
+<p class="eyebrow" data-c="eyebrow"></p><h1 data-c="headline"></h1><p class="sub" data-c="sub"></p>
+<div class="card">
+<form class="form" id="f" novalidate>
+<label class="f"><span data-c="lFirst"></span><input type="text" id="first" autocomplete="given-name"></label>
+<label class="f"><span data-c="lEmail"></span><input type="email" id="email" autocomplete="email"></label>
+<p class="consent" data-c="consent"></p>
+<button type="submit" data-c="cta"></button>
+<p class="below" id="wn" role="status" aria-live="polite" hidden style="color:#d4ff3a;font-weight:600"></p>
+<p class="below" data-c="privacy" data-h="1"></p>
+</form>
+<div class="done thanks">
+<h2 data-c="thanksH"></h2><p class="tl" data-c="thanksL"></p>
+<div class="share"><p class="sh" data-c="shareL"></p><p class="cap" data-c="shareCap" data-h="1"></p>
+<label class="f"><span data-c="lLink"></span><input type="text" readonly id="ref" class="ro"></label>
+<div class="btns"><button type="button" class="b2" data-c="copyB"></button><button type="button" class="b2 ghost" data-c="shareB"></button></div></div>
+<div class="smsb"><p class="sq" data-c="smsQ"></p>
+<label class="f"><span data-c="lMobile"></span><input type="tel" id="mobile" autocomplete="tel"></label>
+<label class="sms show"><input type="checkbox" id="smsok"><span data-c="sms"></span></label>
+<button type="button" class="b3" id="addb" disabled data-c="addB"></button></div>
+<div class="dq" id="dq"><p class="dl" data-c="dqL"></p>
+<div class="opts"><button type="button" class="o" data-v="outright" data-c="dq1"></button><button type="button" class="o" data-v="subscription" data-c="dq2"></button><button type="button" class="o" data-v="unsure" data-c="dq3"></button></div>
+<p class="dt" data-c="dqT" aria-live="polite"></p></div>
+</div>
+</div></div></div></section>
+<footer data-c="footer" data-h="1"></footer>
 <script>
-  (function () {
-    var form = document.getElementById("sunder-waitlist");
-    var thanks = document.getElementById("sunder-thanks");
-    if (!form || !thanks) return;
-    form.addEventListener("submit", function (event) {
-      event.preventDefault();
-      var name = form.querySelector("[name=firstName]");
-      var email = form.querySelector("[name=email]");
-      if (!name || !email || !name.value.trim() || !email.value.trim()) return;
-      form.hidden = true;
-      thanks.hidden = false;
-    });
-  })();
-</script>
-</body>
-</html>
+/* ===== COPY BLOCK: copy v4 FINAL (/workspace/sunder/waitlist-copy-v4.md, 1 Nov 2026). Swap text here only. [BRACKETS] are unfilled placeholders. ===== */
+/* HEADLINE TEST (copy v4 FINAL, /workspace/sunder/waitlist-copy-v4.md): ?h=1|2 picks headline + button together.
+   Both APPROVED by Shane (1 Nov 2026). Missing or unknown h falls back to 1. Only headline and button differ. */
+const HEADLINES=[
+ {id:1,headline:"Get first hit.",cta:"Get first hit"},
+ {id:2,headline:"Feel the power. Keep the control.",cta:"Be first to hit it"}
+];
+const COPY={
+ eyebrow:"Split the game open.",
+ headline:"Get first hit.", /* set from HEADLINES below */
+ sub:"A new paddle with power, spin and control. Join for 20% off at launch, early access and a giveaway.",
+ lFirst:"First name", lEmail:"Email",
+ consent:"By joining, you agree to receive emails from Saabai Pty Ltd (ABN 44 703 735 264) trading as SUNDER about our launch, offers and giveaways. Unsubscribe any time.",
+ cta:"Get first hit",
+ privacy:'No spam, just launch news. Unsubscribe any time. See our <a href="#privacy">[Privacy Policy]</a> for how we handle your details.',
+ thanksH:"You're in, [First name].",
+ thanksL:"Your 20% off and early access are saved to this email.",
+ shareL:"Get more chances to win. Share your link: every mate who joins gets you an extra giveaway entry.",
+ shareCap:'Up to 10 extra entries. <a href="#giveaway-terms">[Giveaway terms]</a>',
+ lLink:"Your link", refSample:"sunder.com.au/?r=ab12cd", copyB:"Copy link", shareB:"Share",
+ smsQ:"Want a text the day we launch?", lMobile:"Mobile", sms:"Text me launch news and offers. Reply STOP to opt out.", addB:"Add",
+ /* Demand question (copy v4, "Thank-you state: optional demand question", not locked). Last block, one tap, no price. */
+ dqL:"Quick one, totally optional. When SUNDER launches, would you rather:",
+ dq1:"Buy a paddle outright", dq2:"Get a fresh paddle every 6 months for a monthly fee", dq3:"Not sure yet",
+ dqT:"Thanks, noted. It helps us shape the launch.",
+ footer:'SUNDER is a trading name of Saabai Pty Ltd, ABN 44 703 735 264. <a href="#privacy">[Privacy Policy]</a> <a href="#giveaway-terms">[Giveaway terms]</a>'
+};
+/* ===== END COPY BLOCK ===== */
+{const hv=HEADLINES.find(x=>String(x.id)===new URLSearchParams(location.search).get('h'))||HEADLINES[0];COPY.headline=hv.headline;COPY.cta=hv.cta;document.documentElement.dataset.headline=hv.id;}
+document.querySelectorAll('[data-c]').forEach(e=>{const v=COPY[e.dataset.c];e.dataset.h?e.innerHTML=v:e.textContent=v});
+document.getElementById('smsok').addEventListener('change',e=>{document.getElementById('addb').disabled=!e.target.checked});
+/* Mockup only: the real build must also require the SMS box server-side before saving a mobile. */
+/* Mockup only: a tap would store launch_pref (outright | subscription | unsure) + timestamp against the signup. Nothing is sent here. */
+document.querySelectorAll('#dq .o').forEach(b=>b.addEventListener('click',()=>{const d=document.getElementById('dq');d.dataset.pref=b.dataset.v;d.classList.add('ans')}));
+document.getElementById('ref').value=COPY.refSample;
+/* No backend yet: nothing is sent or saved. Submit only shows an honest notice. Wire storage + consent logging before sending traffic. */
+document.getElementById('f').addEventListener('submit',e=>{e.preventDefault();const n=document.getElementById('wn');n.hidden=false;n.textContent='Waitlist opens shortly. Nothing was sent or saved, so please check back soon.'});
+
+if(q.get('notext'))document.head.insertAdjacentHTML('beforeend','<style>.col *,footer,.logo,.mk{color:transparent!important;visibility:hidden}.hero:before{visibility:visible}</style>');
+</script></body></html>
