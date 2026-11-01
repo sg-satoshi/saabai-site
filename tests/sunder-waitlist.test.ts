@@ -163,6 +163,10 @@ test("page asks for optional mobile on signup and keeps SMS opt-in on thank-you"
   assert.equal(/href="#privacy"|href="#giveaway-terms"/.test(html), false);
   const thanks = html.slice(html.indexOf('<div class="done thanks">'), html.indexOf("</section>"));
   assert.equal(/privacy|giveaway-terms/i.test(form + thanks), false);
+  assert.equal(/By joining|Unsubscribe|ABN/.test(form), false);
+  const footer = html.slice(html.indexOf("footer:'"));
+  assert.match(footer, /By joining, you agree to receive emails from Saabai Pty Ltd \(ABN&nbsp;44&nbsp;703&nbsp;735&nbsp;264\)/);
+  assert.equal(/ABN 44/.test(html), false);
   assert.match(html, /href="\/clients\/sunder\/privacy\.html">Privacy</);
   assert.match(html, /href="\/clients\/sunder\/giveaway-terms\.html">Giveaway terms</);
   for (const f of ["privacy", "giveaway-terms"]) {
