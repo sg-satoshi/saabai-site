@@ -18,7 +18,7 @@ export function buildSunderHtml(rawBody: string, extraHtml = ""): string {
 <tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:16px;overflow:hidden;">
   <tr><td style="background:#111111;padding:22px 32px;">
-    <img src="${SUNDER_LOGO_URL}" alt="Sunder Pickleball" width="150" style="display:block;width:150px;max-width:150px;height:auto;border:0;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="vertical-align:middle;padding:0;"><img src="${SUNDER_LOGO_URL}" alt="SUNDER" width="150" style="display:block;width:150px;max-width:150px;height:auto;border:0;"></td><td style="vertical-align:middle;padding:0 0 0 10px;"><span style="font-family:Arial,Helvetica,sans-serif;font-size:22px;line-height:22px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:#d4ff3a;">PICKLEBALL</span></td></tr></table>
   </td></tr>
   <tr><td style="padding:28px 32px 8px;">${paragraphs}${extraHtml}</td></tr>
   <tr><td style="background:#0d0d0d;padding-top:8px;"><!--EMAIL_FOOTER--></td></tr>
