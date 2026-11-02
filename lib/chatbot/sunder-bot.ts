@@ -106,6 +106,6 @@ export const SUNDER_PERSONA: BotPersona = {
   // Tighter than the shared 60 a minute / 2,000 a day per slug. Same Upstash Redis, no new env.
   chatLimits: { perIpMinute: 6, perIpDay: 40, botDay: 400 },
   fallbackModel: "anthropic:claude-haiku-4-5",
-  privacyUrl: "https://sunder.com.au/privacy",
+  // No in-chat privacy link for SUNDER (Shane 2 Nov 2026). The chat clause lives in privacy.html.
   appearance: { botName: SUNDER_BOT_NAME, avatarUrl: SUNDER_AVATAR_URL || undefined, primary: "#0d0d0d", accent: "#d4ff3a", bg: "#f2f2ee", text: "#0d0d0d", position: "right" },
 };
