@@ -8,7 +8,7 @@ import { effectiveEngage, engagePrompt, parseReview } from "./engage";
 import { goalPrompt, parseReply, resolveButtons } from "./goal";
 import { DISCLOSURE_ONCE_RULE, NOT_SURE_RULE } from "./disclosure";
 import { isNotSureReply } from "./events";
-import { buildSystemPrompt, domainsForBot, getPersona, type BotPersona } from "./personas";
+import { buildSystemPrompt, domainsForBot, getPersona, noSpacedHyphen, type BotPersona } from "./personas";
 import { NO_DASH_RULE, noDashes } from "../no-dashes";
 import { fallbackSessionId, getConfig, isEnabled, recordChatEvent, recordTokens, recordUsage } from "./store";
 import { lastUserText, logChatTurn, modelIdFrom } from "../chat-log";
@@ -161,6 +161,7 @@ Keep responses under 120 words. End with a helpful next step when relevant.`;
     const u = result.usage as { inputTokens?: number; outputTokens?: number } | undefined;
     await recordTokens(slug, u?.inputTokens ?? 0, u?.outputTokens ?? 0);
     const parsed = parseReply(noDashes(result.text), goal);
+    if (persona?.noSpacedHyphen) parsed.content = noSpacedHyphen(parsed.content);
     const rv = parseReview(parsed.content, engage);
     const text = rv.content;
     logChatTurn({

@@ -46,6 +46,8 @@ export interface BotPersona {
    * Absent means the platform default (getDefaultModel). Not editable in admin or the portal.
    */
   fallbackModel?: string;
+  /** Also rewrite a spaced hyphen used as a dash (" - ") to a comma. Off by default. */
+  noSpacedHyphen?: boolean;
   /** https privacy policy for a small Privacy link. Absent means no link. */
   privacyUrl?: string;
   /**
@@ -83,6 +85,11 @@ export function buildSystemPrompt(persona: BotPersona): string {
     "Rules:",
     ...rules.map((rule) => `- ${rule}`),
   ].join("\n");
+}
+
+/** " - " between words becomes ", ". Line-start bullets ("- item") are kept. */
+export function noSpacedHyphen(text: string): string {
+  return text.replace(/(\S)[ \t]+-[ \t]+(?=\S)/g, "$1, ").replace(/,\s*([.!?])/g, "$1");
 }
 
 export function personaGreeting(persona: BotPersona): string {

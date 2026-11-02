@@ -37,3 +37,11 @@ test("stored SUNDER factory row (chatbot off) gets the code chatbot, other field
   const nico = withCodeChatbotSites([{ id: "nico-moretti", slug: "nico-moretti", name: "x", chatbot: { enabled: false } } as never]).find((s) => s.slug === "nico-moretti");
   assert.equal(nico?.chatbot?.enabled, false);
 });
+
+test("spaced hyphen dashes are rewritten, bullets kept", async () => {
+  const { noSpacedHyphen } = await import("../lib/chatbot/personas");
+  assert.equal(noSpacedHyphen("built for power - we split it"), "built for power, we split it");
+  assert.equal(noSpacedHyphen("- one\n- two"), "- one\n- two");
+  assert.equal(noSpacedHyphen("12-month warranty"), "12-month warranty");
+  assert.equal(SUNDER_PERSONA.noSpacedHyphen, true);
+});
