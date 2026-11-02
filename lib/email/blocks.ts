@@ -5,6 +5,7 @@
 import { escapeHtml } from "../html-escape";
 
 export const SUNDER_LOGO_URL = "https://sunder.com.au/clients/sunder/img/sunder-lockup-colour-dark-1000w.png";
+export const SUNDER_LOGO_BLACK_URL = "https://sunder.com.au/clients/sunder/img/sunder-logo-black.png";
 
 const HEAD = "Archivo, Arial Black, Arial, sans-serif";
 const BODY = "Inter Tight, Arial, sans-serif";
