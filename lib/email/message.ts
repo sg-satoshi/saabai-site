@@ -21,6 +21,7 @@ export function buildSunderHtml(rawBody: string, extraHtml = ""): string {
     <img src="${SUNDER_LOGO_URL}" alt="Sunder Pickleball" width="150" style="display:block;width:150px;max-width:150px;height:auto;border:0;">
   </td></tr>
   <tr><td style="padding:28px 32px 8px;">${paragraphs}${extraHtml}</td></tr>
+  <tr><td style="background:#0d0d0d;padding-top:8px;"><!--EMAIL_FOOTER--></td></tr>
 </table></td></tr></table></body></html>`;
 }
 
