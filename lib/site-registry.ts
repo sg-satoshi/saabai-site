@@ -1,5 +1,5 @@
 import { Redis } from "@upstash/redis";
-import { codeChatbotSites } from "./chatbot/code-sites";
+import { CODE_CHATBOT_OVERRIDES, codeChatbotSites } from "./chatbot/code-sites";
 import { BO_SYSTEM_PROMPT, CHRISTINA_GREETING } from "./chatbot/platform-bot-seed";
 import { CLIENT_SITE_DIRECTORY } from "./client-site-directory";
 
@@ -166,8 +166,15 @@ const APP_ROUTER_SITE_DETAILS: Array<Omit<SiteConfig, "url" | "domains">> = [
 
 /** Add a code chatbot row when Redis has no record with that slug. */
 export function withCodeChatbotSites(sites: SiteConfig[]): SiteConfig[] {
+  const code = codeChatbotSites();
   const seen = new Set(sites.map((s) => s.slug));
-  return [...sites, ...codeChatbotSites().filter((s) => !seen.has(s.slug))];
+  // A stored row for a slug in CODE_CHATBOT_OVERRIDES keeps everything except its chatbot, which comes from code.
+  // SUNDER's stored factory row has chatbot.enabled false from the seed. The admin on/off flag still wins.
+  const merged = sites.map((s) => {
+    const c = CODE_CHATBOT_OVERRIDES.includes(s.slug) ? code.find((row) => row.slug === s.slug) : undefined;
+    return c ? { ...s, chatbot: c.chatbot } : s;
+  });
+  return [...merged, ...code.filter((s) => !seen.has(s.slug))];
 }
 
 export const APP_ROUTER_SITES: SiteConfig[] = CLIENT_SITE_DIRECTORY.map((entry) => {

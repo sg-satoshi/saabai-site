@@ -1,5 +1,6 @@
 import { lmmLicensingLine } from "../lmm-legal";
 import type { GoalConfig } from "./goal";
+import { SUNDER_PERSONA } from "./sunder-bot";
 import { DISCLOSURE_ONCE_RULE, NOT_SURE_RULE, openingGreeting } from "./disclosure";
 
 /**
@@ -45,6 +46,19 @@ export interface BotPersona {
    * Absent means the platform default (getDefaultModel). Not editable in admin or the portal.
    */
   fallbackModel?: string;
+  /** Also rewrite a spaced hyphen used as a dash (" - ") to a comma. Off by default. */
+  noSpacedHyphen?: boolean;
+  /** Code-side reply word cap (trim at a sentence end). SUNDER only for now. */
+  maxReplyWords?: number;
+  /**
+   * Opt-in widget fixes (privacy link shown, focus rings, mobile safe areas, contrast).
+   * Code-only. Other bots keep the current widget look until they opt in.
+   */
+  widgetA11y?: boolean;
+  /** Code-only link text after "Powered by". Absent keeps "Saabai AI". */
+  poweredByLabel?: string;
+  /** Code-only extra limits for this bot, on top of the shared per-slug limits. */
+  chatLimits?: { perIpMinute: number; perIpDay: number; botDay: number };
   /** https privacy policy for a small Privacy link. Absent means no link. */
   privacyUrl?: string;
   /**
@@ -82,6 +96,41 @@ export function buildSystemPrompt(persona: BotPersona): string {
     "Rules:",
     ...rules.map((rule) => `- ${rule}`),
   ].join("\n");
+}
+
+/** " - " between words becomes ", ". Line-start bullets ("- item") are kept. */
+const countWords = (t: string) => (t.match(/\S+/g) || []).length;
+
+/**
+ * Trim a reply over `max` words at the last sentence end at or before `max` words.
+ * Keeps the closing question when one fits: the kept text plus that question stays within `max`.
+ * A reply with no usable sentence end is returned unchanged rather than cut mid-sentence.
+ */
+export function capReplyWords(text: string, max = 90): string {
+  if (countWords(text) <= max) return text;
+  const ends: number[] = [];
+  const re = /[.!?]+["')\]]*(?=\s|$)/g;
+  for (let m; (m = re.exec(text)); ) ends.push(m.index + m[0].length);
+  if (!ends.length) return text;
+  const lastStart = ends.length > 1 ? ends[ends.length - 2] : 0;
+  const lastSentence = text.slice(lastStart).trim();
+  const question = /\?["')\]]*$/.test(lastSentence) && ends[ends.length - 1] >= text.trimEnd().length ? lastSentence : "";
+  const pick = (budget: number, limit: number) => {
+    let best = -1;
+    for (const e of ends) if (e <= limit && countWords(text.slice(0, e)) <= budget) best = e;
+    return best;
+  };
+  if (question) {
+    const qw = countWords(question);
+    const cut = pick(max - qw, lastStart);
+    if (cut > 0) return text.slice(0, cut).trimEnd() + "\n\n" + question;
+  }
+  const cut = pick(max, text.length);
+  return cut > 0 ? text.slice(0, cut).trimEnd() : text;
+}
+
+export function noSpacedHyphen(text: string): string {
+  return text.replace(/(\S)[ \t]+-[ \t]+(?=\S)/g, "$1, ").replace(/,\s*([.!?])/g, "$1");
 }
 
 export function personaGreeting(persona: BotPersona): string {
@@ -417,7 +466,7 @@ export const SOFIA_PERSONA: BotPersona = {
   },
 };
 
-export const PERSONAS: readonly BotPersona[] = [ZARA_PERSONA, BO_PERSONA, SOFIA_PERSONA];
+export const PERSONAS: readonly BotPersona[] = [ZARA_PERSONA, BO_PERSONA, SOFIA_PERSONA, SUNDER_PERSONA];
 
 /** Greeting for a slug that has a persona. Other sites use openingGreeting on the saved line. */
 export function greetingForSlug(slug: string | undefined, botName: string, businessName: string, storedGreeting?: string): string {

@@ -8,9 +8,10 @@ import { effectiveEngage, engagePrompt, parseReview } from "./engage";
 import { goalPrompt, parseReply, resolveButtons } from "./goal";
 import { DISCLOSURE_ONCE_RULE, NOT_SURE_RULE } from "./disclosure";
 import { isNotSureReply } from "./events";
-import { buildSystemPrompt, domainsForBot, getPersona, type BotPersona } from "./personas";
+import { buildSystemPrompt, domainsForBot, getPersona, noSpacedHyphen, capReplyWords, type BotPersona } from "./personas";
 import { NO_DASH_RULE, noDashes } from "../no-dashes";
 import { fallbackSessionId, getConfig, isEnabled, recordChatEvent, recordTokens, recordUsage } from "./store";
+import { chatLimited } from "./ratelimit";
 import { lastUserText, logChatTurn, modelIdFrom } from "../chat-log";
 
 export function cors(origin: string | null): Record<string, string> {
@@ -113,6 +114,12 @@ export async function handleChat(req: NextRequest): Promise<Response> {
       return say("This chat is very busy right now. Please try again shortly, or contact the team directly.", 429, { ...h, "Retry-After": limited === "minute" ? "60" : "3600" });
     }
 
+    const botLimits = getPersona(slug)?.chatLimits;
+    if (botLimits) {
+      const hit = await chatLimited(req, slug, botLimits);
+      if (hit) return say("This chat is very busy right now. Please try again later.", 429, { ...h, "Retry-After": hit === "ip-minute" ? "60" : "3600" });
+    }
+
     const chatMessages = cleanMessages(body?.messages);
     if (!chatMessages.length) return say("Please type a message.", 400, h);
 
@@ -161,6 +168,8 @@ Keep responses under 120 words. End with a helpful next step when relevant.`;
     const u = result.usage as { inputTokens?: number; outputTokens?: number } | undefined;
     await recordTokens(slug, u?.inputTokens ?? 0, u?.outputTokens ?? 0);
     const parsed = parseReply(noDashes(result.text), goal);
+    if (persona?.noSpacedHyphen) parsed.content = noSpacedHyphen(parsed.content);
+    if (persona?.maxReplyWords) parsed.content = capReplyWords(parsed.content, persona.maxReplyWords);
     const rv = parseReview(parsed.content, engage);
     const text = rv.content;
     logChatTurn({

@@ -38,3 +38,26 @@ export async function eventRateLimited(req: Request, slug: string, redis?: Count
     return false;
   }
 }
+
+/** Per-IP minute and day counts plus a per-bot day cap, for bots that set chatLimits in code. Fails open. */
+export async function chatLimited(
+  req: Request,
+  slug: string,
+  limits: { perIpMinute: number; perIpDay: number; botDay: number },
+  redis?: Counter,
+  now = Date.now(),
+): Promise<"ip-minute" | "ip-day" | "bot-day" | null> {
+  try {
+    const r: Counter = redis ?? (Redis.fromEnv() as unknown as Counter);
+    const ipH = ipHash(req);
+    const m = Math.floor(now / 60000);
+    const day = new Date(now).toISOString().slice(0, 10);
+    const bump = async (k: string, ttl: number) => { const n = await r.incr(k); if (n === 1) await r.expire(k, ttl); return n; };
+    if ((await bump(`saabai:chat:rl:msg:ip:${slug}:${ipH}:${m}`, 90)) > limits.perIpMinute) return "ip-minute";
+    if ((await bump(`saabai:chat:rl:msg:ipday:${slug}:${ipH}:${day}`, 26 * 3600)) > limits.perIpDay) return "ip-day";
+    if ((await bump(`saabai:chat:rl:msg:botday:${slug}:${day}`, 26 * 3600)) > limits.botDay) return "bot-day";
+    return null;
+  } catch {
+    return null;
+  }
+}
