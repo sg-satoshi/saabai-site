@@ -339,6 +339,7 @@ test("a campaign can be queued once, from the server, and events verify before t
   assert.match(ops, /idempotency_key: `broadcast:\$\{row\.id\}:\$\{c\.id\}`/);
   assert.doesNotMatch(ops, /input\.requestKey/);
   assert.match(ops, /\.in\("status", \["draft", "scheduled"\]\)/);
+  assert.match(ops, /update\(\{ status: "draft" \}\)\.eq\("id", row\.id\)\.eq\("status", "sending"\)/);
   const composer = readFileSync("app/saabai-admin/email/Composer.tsx", "utf8");
   assert.doesNotMatch(composer, /amazonses|simulator|requestKey/);
   assert.match(composer, /useState\(""\)/);
@@ -369,6 +370,7 @@ test("a campaign can be queued once, from the server, and events verify before t
   const events = providerEventsFromSns(msg.Message);
   assert.deepEqual(events, [{ email: "a@b.co", reason: "bounce", tenant: "sunder", campaignId: null }]);
   assert.deepEqual(providerEventsFromSns(JSON.stringify({ eventType: "Bounce", bounce: { bounceType: "Transient", bouncedRecipients: [{ emailAddress: "a@b.co" }] } })), []);
+  assert.deepEqual(providerEventsFromSns(JSON.stringify({ eventType: "Bounce", bounce: { bouncedRecipients: [{ emailAddress: "a@b.co" }] } })), []);
   assert.equal(providerEventsFromSns(JSON.stringify({ eventType: "Complaint", complaint: { complainedRecipients: [{ emailAddress: "c@d.co" }] } }))[0].reason, "complaint");
 });
 

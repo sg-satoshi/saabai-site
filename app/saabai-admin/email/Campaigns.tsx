@@ -91,13 +91,13 @@ export default function Campaigns() {
       </div>
 
       <div className="card">
-        <div className="fbar">
-          <div className="tabs" role="tablist" aria-label="Campaign status" style={{ margin: 0, border: 0, flex: 1 }}>
+        <div className="em-filters">
+          <div className="tabs" role="tablist" aria-label="Campaign status">
             {[["all", "All", counts.all], ["draft", "Draft", counts.draft], ["scheduled", "Scheduled", counts.scheduled], ["sending", "Sending", counts.sending], ["sent", "Sent", counts.sent], ["paused", "Paused", counts.paused]].map(([id, label, n]) => (
               <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? "on" : ""} onClick={() => setTab(String(id))}>{label} <span className="num">{n}</span></button>
             ))}
           </div>
-          <label className="inp" style={{ width: "min(100%, 280px)" }}>
+          <label className="inp em-filter-search" style={{ width: "min(100%, 280px)" }}>
             <input aria-label="Search campaigns" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search campaigns" style={{ border: 0, outline: 0, width: "100%", font: "inherit", background: "transparent" }} />
           </label>
         </div>

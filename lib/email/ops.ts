@@ -384,7 +384,12 @@ export async function queueBroadcast(input: { campaignId: string; confirm?: stri
   if (claim.error) return { ok: false, error: claim.error.message };
   if (!claim.data?.length) return { ok: false, error: ALREADY };
   const cap = ready.tenant.daily_cap ?? DEFAULT_DAILY_CAP;
-  const used = await usedToday(ready.db, ready.tenant.id);
+  let used = 0;
+  try { used = await usedToday(ready.db, ready.tenant.id); }
+  catch (e) {
+    await ready.db.from("email_campaigns").update({ status: "draft" }).eq("id", row.id).eq("status", "sending");
+    return { ok: false, error: e instanceof Error ? e.message : "Could not read today's cap." };
+  }
   const split = splitByDailyCap(audience.gate.recipients.length, used, cap);
   const laterAt = (() => { const p = brisbaneParts(new Date()); return brisbaneAt(p.year, p.month, p.day + 1, 7).toISOString(); })();
   const html = documentHtml({ preheader: content.preheader, blocks: content.blocks });
@@ -404,7 +409,10 @@ export async function queueBroadcast(input: { campaignId: string; confirm?: stri
   }));
   for (let i = 0; i < rows.length; i += 200) {
     const { error } = await ready.db.from("email_sends").upsert(rows.slice(i, i + 200), { onConflict: "idempotency_key", ignoreDuplicates: true });
-    if (error && error.code !== "23505") return { ok: false, error: error.message };
+    if (error && error.code !== "23505") {
+      await ready.db.from("email_campaigns").update({ status: "draft" }).eq("id", row.id).eq("status", "sending");
+      return { ok: false, error: error.message };
+    }
   }
   await ready.db.from("email_campaigns").update({
     counts: { queued: rows.length, today: split.today, later: split.later, suppressed: audience.suppressed },

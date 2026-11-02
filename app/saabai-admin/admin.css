@@ -317,7 +317,16 @@ a.btn{text-decoration:none}
 .em-meter i.review{background:var(--n-900)}
 .em-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,460px);gap:16px;align-items:start}
 .em-health{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.em-page .tabs{flex-wrap:wrap}
+.em-filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--n-100)}
+.em-filters .tabs{flex:1;margin:0;border:0;min-width:0}
+.em-filters .em-filter-search{order:1}
+@media (max-width:700px){
+  .em-filters{flex-direction:column;align-items:stretch}
+  .em-filters .em-filter-search{order:0;width:100%}
+  .em-filters .tabs{order:1;width:100%;flex:none;flex-wrap:nowrap;overflow-x:auto}
+  .em-page .em-filters .tabs button{position:relative;min-height:44px;flex:none}
+  .em-page .em-filters .tabs button:after{content:"";position:absolute;inset:-4px}
+}
 .em-page .seg button{position:relative;min-height:44px;min-width:44px;border:0;background:transparent;font:inherit;padding:8px 14px;border-radius:6px;cursor:pointer}
 .em-page .seg button.on{background:#fff;color:var(--n-900);box-shadow:var(--sh-1)}
 .em-page .seg button:after{content:"";position:absolute;inset:-4px}

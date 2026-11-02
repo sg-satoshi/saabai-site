@@ -93,7 +93,8 @@ export function providerEventsFromSns(message: string): ProviderEvent[] {
   const campaignId = tags.campaign?.[0] || null;
   if (kind === "Bounce") {
     const bounce = (body.bounce && typeof body.bounce === "object" ? body.bounce : {}) as { bounceType?: string; bouncedRecipients?: { emailAddress?: string }[] };
-    if (bounce.bounceType && bounce.bounceType !== "Permanent") return [];
+    // A missing type is not a hard bounce. Only Permanent suppresses.
+    if (bounce.bounceType !== "Permanent") return [];
     return (bounce.bouncedRecipients || []).map((r) => r.emailAddress).filter((e): e is string => !!e).map((email) => ({ email, reason: "bounce" as const, tenant, campaignId }));
   }
   if (kind === "Complaint") {
