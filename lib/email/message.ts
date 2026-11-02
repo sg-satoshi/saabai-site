@@ -23,12 +23,14 @@ export function buildSunderHtml(rawBody: string, extraHtml = ""): string {
 </table></td></tr></table></body></html>`;
 }
 
-export function footerHtml(identity: SenderIdentity, unsubUrl: string): string {
-  return `<p style="font-size:12px;color:#5f6580;margin:8px 32px 28px;border-top:1px solid #eceef4;padding-top:14px;line-height:1.6;">You're getting this because ${escapeHtml(identity.whyText)}. Sent by ${escapeHtml(identity.legalName)}, ABN ${escapeHtml(identity.abn)}, ${escapeHtml(identity.postalAddress)} (${escapeHtml(identity.domain)}, ${escapeHtml(identity.fromEmail)}). <a href="${escapeHtml(unsubUrl)}" style="color:#111;">Unsubscribe</a>.</p>`;
+export function footerHtml(identity: SenderIdentity, unsubUrl: string, viewUrl?: string): string {
+  const view = viewUrl ? ` &nbsp;·&nbsp; <a href="${escapeHtml(viewUrl)}" style="color:#f2f2ee;">View in browser</a>` : "";
+  return `<p style="margin:8px 40px 28px;padding-top:16px;border-top:1px solid #2a2a2a;font-family:Inter Tight, Arial, sans-serif;font-size:12.5px;line-height:1.55;color:#b5b5ae;">You are getting this because ${escapeHtml(identity.whyText)}. Sent by ${escapeHtml(identity.legalName)} for SUNDER, ABN ${escapeHtml(identity.abn)}, ${escapeHtml(identity.postalAddress)}. Contact: <a href="mailto:${escapeHtml(identity.replyTo)}" style="color:#f2f2ee;">${escapeHtml(identity.replyTo)}</a>.<br><a href="${escapeHtml(unsubUrl)}" style="color:#f2f2ee;">Unsubscribe</a> in one click${view}</p>`;
 }
 
-export function footerText(identity: SenderIdentity, unsubUrl: string): string {
-  return `You're getting this because ${identity.whyText}. Sent by ${identity.legalName}, ABN ${identity.abn}, ${identity.postalAddress} (${identity.domain}, ${identity.fromEmail}). Unsubscribe: ${unsubUrl}`;
+export function footerText(identity: SenderIdentity, unsubUrl: string, viewUrl?: string): string {
+  const view = viewUrl ? `\nView in browser: ${viewUrl}` : "";
+  return `You are getting this because ${identity.whyText}. Sent by ${identity.legalName} for SUNDER, ABN ${identity.abn}, ${identity.postalAddress}. Contact: ${identity.replyTo}. Unsubscribe in one click: ${unsubUrl}${view}`;
 }
 
 function htmlToText(html: string): string {
@@ -56,6 +58,7 @@ function htmlToText(html: string): string {
 
 /** Put the footer inside the body when there is one, else append it. */
 export function withFooter(html: string, footer: string): string {
+  if (html.includes("<!--EMAIL_FOOTER-->")) return html.replace("<!--EMAIL_FOOTER-->", footer);
   const i = html.toLowerCase().lastIndexOf("</body>");
   return i >= 0 ? html.slice(0, i) + footer + html.slice(i) : html + footer;
 }
@@ -77,13 +80,14 @@ export function renderMarketingEmail(input: {
   fromName: string;
   identity: SenderIdentity;
   unsubUrl: string;
+  viewUrl?: string;
   values?: MergeValues;
   confirmUrl?: string;
 }): RenderedEmail {
   const values = input.values ?? {};
   const withLink = input.confirmUrl ? applyConfirmUrl(input.html, input.confirmUrl) : input.html;
   const body = personaliseHtml(withLink, values);
-  const footer = footerHtml(input.identity, input.unsubUrl);
+  const footer = footerHtml(input.identity, input.unsubUrl, input.viewUrl);
   const subject = personaliseText(input.subject, values).slice(0, 200);
   const textBody = htmlToText(input.confirmUrl ? applyConfirmUrl(input.html, input.confirmUrl) : input.html)
     .split("\n")
@@ -93,7 +97,7 @@ export function renderMarketingEmail(input: {
     from: formatFrom(cleanFromName(input.fromName, input.identity.fromName), input.identity.fromEmail),
     subject,
     html: withFooter(body, footer),
-    text: `${textBody}\n\n${footerText(input.identity, input.unsubUrl)}\n`,
+    text: `${textBody}\n\n${footerText(input.identity, input.unsubUrl, input.viewUrl)}\n`,
   };
 }
 

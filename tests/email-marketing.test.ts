@@ -14,6 +14,8 @@ import {
   shouldQueueConfirmation, validateSeriesSteps,
 } from "../lib/email/rules";
 import { SUNDER_IDENTITY } from "../lib/email/constants";
+import { SUNDER_LOGO_URL, documentHtml, textToBlocks } from "../lib/email/blocks";
+import { MIN_SENDS_FOR_RATES, rateDecision, sendBlocked, splitByDailyCap } from "../lib/email/gates";
 import { readEmailToken, signEmailToken } from "../lib/email/tokens";
 import { drainOutbox, type Outbox, type OutboxRow } from "../lib/email/worker";
 
@@ -73,11 +75,12 @@ test("marketing mail names the sender and carries one-click unsubscribe", () => 
   assert.equal(rendered.from, "SUNDER <hello@sunder.com.au>");
   assert.equal(rendered.subject, "Hello Sam");
   assert.match(rendered.html, /ABN 44 703 735 264/);
-  assert.match(rendered.html, /Merrimac QLD 4226/);
-  assert.match(rendered.html, /Saabai Pty Ltd trading as SUNDER/);
-  assert.match(rendered.html, /you joined the SUNDER waitlist/);
+  assert.match(rendered.html, /31 Bourton Road, Merrimac QLD 4226 Australia/);
+  assert.match(rendered.html, /Saabai Pty Ltd for SUNDER/);
+  assert.match(rendered.html, /hello@sunder.com.au/);
+  assert.match(rendered.html, /you joined the SUNDER waitlist and agreed to hear from us/);
   assert.match(rendered.html, new RegExp(page.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-  assert.match(rendered.text, /Unsubscribe:/);
+  assert.match(rendered.text, /Unsubscribe in one click/);
   const headers = listUnsubscribeHeader(api, "mailto:hello@sunder.com.au?subject=unsubscribe");
   assert.equal(headers["List-Unsubscribe-Post"], "List-Unsubscribe=One-Click");
   assert.match(headers["List-Unsubscribe"], /<https:\/\/saabai\.ai\/api\/email\/unsubscribe/);
@@ -290,6 +293,39 @@ test("migration keeps existing consent, defaults new rows to pending, and sends 
   assert.match(sql, /grant execute on function email_claim_sends\(int, boolean\) to service_role/);
   assert.match(sql, /Apply by hand/);
   assert.doesNotMatch(sql, /create configuration set|CreateConfigurationSet/i);
+});
+
+test("send stays locked without a matching test, and over 500 needs typed SEND", () => {
+  const hash = "abc";
+  assert.match(sendBlocked({ paused: false, audience: 10, testHash: null, contentHash: hash }) || "", /test/);
+  assert.match(sendBlocked({ paused: false, audience: 10, testHash: "old", contentHash: hash }) || "", /test/);
+  assert.equal(sendBlocked({ paused: false, audience: 10, testHash: hash, contentHash: hash }), null);
+  assert.equal(sendBlocked({ paused: false, audience: 500, testHash: hash, contentHash: hash }), null);
+  assert.match(sendBlocked({ paused: false, audience: 501, testHash: hash, contentHash: hash }) || "", /SEND/);
+  assert.equal(sendBlocked({ paused: false, audience: 501, testHash: hash, contentHash: hash, confirm: "SEND" }), null);
+  assert.match(sendBlocked({ paused: false, audience: 0, testHash: hash, contentHash: hash }) || "", /Nobody/);
+  assert.match(sendBlocked({ paused: true, audience: 10, testHash: hash, contentHash: hash }) || "", /paused/);
+  assert.deepEqual(splitByDailyCap(4100, 0, 2000), { today: 2000, later: 2100 });
+  assert.deepEqual(splitByDailyCap(320, 1240, 2000), { today: 320, later: 0 });
+});
+
+test("health rates stay hidden under 500 sends in 7 days", () => {
+  assert.equal(MIN_SENDS_FOR_RATES, 500);
+  assert.equal(rateDecision(499, 40, 1).rates, null);
+  assert.equal(rateDecision(499, 40, 1).pause, null);
+  const over = rateDecision(500, 25, 0);
+  assert.ok(over.rates);
+  assert.match(over.pause || "", /Bounce/);
+  assert.equal(rateDecision(1000, 10, 0).pause, null);
+});
+
+test("the SUNDER document uses the hosted logo and fallback fonts", () => {
+  const html = documentHtml({ preheader: "First look", blocks: textToBlocks("Hello {{firstName|there}}") });
+  assert.match(html, new RegExp(SUNDER_LOGO_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(html, /Archivo, Arial Black, Arial/);
+  assert.match(html, /Inter Tight, Arial/);
+  assert.match(html, /EMAIL_FOOTER/);
+  assert.doesNotMatch(html, /@font-face/);
 });
 
 test("routes, cron and the public proxy list match the module", () => {

@@ -16,6 +16,7 @@ export type TenantRow = {
   why_text: string;
   config_set: string | null;
   ses_tenant_name: string | null;
+  daily_cap: number;
   status: string;
 };
 
@@ -45,7 +46,7 @@ export function identityFrom(row: TenantRow, env: NodeJS.ProcessEnv = process.en
 }
 
 export async function loadTenant(db: SupabaseClient, slug = SUNDER_SLUG): Promise<TenantRow | null> {
-  const { data, error } = await db.from("email_tenants").select("id,slug,from_name,from_email,reply_to,postal_address,abn,legal_name,domain,why_text,config_set,ses_tenant_name,status").eq("slug", slug).maybeSingle();
+  const { data, error } = await db.from("email_tenants").select("id,slug,from_name,from_email,reply_to,postal_address,abn,legal_name,domain,why_text,config_set,ses_tenant_name,daily_cap,status").eq("slug", slug).maybeSingle();
   if (error) {
     if (isMissingSchema(error)) return null;
     throw new Error(error.message);

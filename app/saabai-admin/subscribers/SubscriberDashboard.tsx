@@ -11,9 +11,9 @@ import "./subscribers.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { audienceCounts, SEGMENTS, type EmailStatus } from "../../../lib/subscriber-rules";
 import type { AdminSubscriber } from "../../../lib/subscriber-admin";
+import Link from "next/link";
 import { notify } from "../ui/Feedback";
 import AdminShell from "../AdminSidebar";
-import Composer from "./Composer";
 import { Avatar, Icon, Industry, StatusBadge, csvCell, fmtDateTime, fmtDay, useDrag, useIsMobile, useLayer, useStoredNumber } from "./ui";
 
 const DAY = 86_400_000;
@@ -41,7 +41,6 @@ export default function SubscriberDashboard() {
   const [markTarget, setMarkTarget] = useState<string[] | null>(null);
   const [marking, setMarking] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const [composer, setComposer] = useState<string | null>(null);
   const [split, setSplit] = useStoredNumber("saabai-admin:subscribers:split", 61, 35, 75);
   const [tblH, setTblH] = useStoredNumber("saabai-admin:subscribers:table-h", 0, 0, 2400);
   const splitRef = useRef<HTMLDivElement>(null);
@@ -197,10 +196,10 @@ export default function SubscriberDashboard() {
         </div>
         <div className="s-actions">
           <button type="button" className={`btn ${mobile ? "sm" : "lg"}`} onClick={() => exportCSV(filtered)} disabled={!filtered.length}><Icon name="dl" />{mobile ? "CSV" : "Export CSV"}</button>
-          {!mobile && <button type="button" className="btn pri lg" onClick={() => setComposer("all")}><Icon name="mail" />New broadcast</button>}
+          {!mobile && <Link href="/saabai-admin/email/new" className="btn pri lg"><Icon name="mail" />New broadcast</Link>}
         </div>
       </div>
-      {mobile && <button type="button" className="btn pri lg" style={{ width: "100%", marginBottom: 16 }} onClick={() => setComposer("all")}><Icon name="mail" />New broadcast</button>}
+      {mobile && <Link href="/saabai-admin/email/new" className="btn pri lg" style={{ width: "100%", marginBottom: 16 }}><Icon name="mail" />New broadcast</Link>}
 
       {loadError && <div className="s-warn" role="alert"><span>{loadError}</span><button type="button" className="btn sm" onClick={load} style={{ marginLeft: "auto" }}>Try again</button></div>}
       {suppressionError && <div className="s-warn" role="alert">The unsubscribe list could not be read, so some people may show as Can email when they are not. Broadcasts still check it before sending.</div>}
@@ -272,7 +271,7 @@ export default function SubscriberDashboard() {
                   <td style={{ paddingLeft: mobile ? 14 : 20, fontWeight: 500, whiteSpace: "normal" }}>{seg.label}</td>
                   <td className="num" style={{ textAlign: "right" }}><b style={{ color: "var(--head)" }}>{c.canEmail}</b><span style={{ color: "var(--muted)" }}> / {c.total}</span></td>
                   <td style={{ textAlign: "right", paddingRight: mobile ? 14 : 20 }}>
-                    {c.canEmail ? <button type="button" className="btn sm" onClick={() => setComposer(seg.id)} aria-label={`Email ${seg.label}, ${c.canEmail} can be emailed`}>{!mobile && <Icon name="mail" />}Email</button> : <span className="s-note">None to email</span>}
+                    {c.canEmail ? <Link href="/saabai-admin/email/new" className="btn sm" aria-label={`Email ${seg.label}, ${c.canEmail} can be emailed`}>{!mobile && <Icon name="mail" />}Email</Link> : <span className="s-note">None to email</span>}
                   </td>
                 </tr>
               ))}
@@ -405,7 +404,7 @@ export default function SubscriberDashboard() {
               )}
             </div>
           )}
-          <button type="button" className="btn pri md" onClick={() => setComposer("selected")} disabled={!selCounts.canEmail} title={selCounts.canEmail ? undefined : "Nobody selected can be emailed."}><Icon name="mail" />Email {selCounts.canEmail}</button>
+          <Link href="/saabai-admin/email/new" className="btn pri md" aria-disabled={!selCounts.canEmail} title={selCounts.canEmail ? undefined : "Nobody selected can be emailed."}><Icon name="mail" />Email {selCounts.canEmail}</Link>
         </div>
       )}
 
@@ -435,7 +434,7 @@ export default function SubscriberDashboard() {
             </dl>
             <div style={{ marginTop: "auto", padding: "16px 24px", borderTop: "1px solid var(--line2)", display: "flex", gap: 10, justifyContent: "space-between", flexWrap: "wrap" }}>
               {detailSub.emailStatus !== "unsubscribed" ? <button type="button" className="btn dq md" onClick={() => setMarkTarget([detailSub.email])}><Icon name="off" />Mark unsubscribed</button> : <span className="s-note">Unsubscribed. Broadcasts never reach them.</span>}
-              {detailSub.emailStatus === "can_email" && <button type="button" className="btn pri md" onClick={() => { setSelected(new Set([detailSub.email])); setDetail(null); setComposer("selected"); }}><Icon name="mail" />Email</button>}
+              {detailSub.emailStatus === "can_email" && <Link href="/saabai-admin/email/new" className="btn pri md"><Icon name="mail" />Email</Link>}
             </div>
           </aside>
         </div>
@@ -459,10 +458,6 @@ export default function SubscriberDashboard() {
         </div>
       )}
 
-      {composer && (
-        <Composer subs={subs} selectedEmails={[...selected]} initialAudience={composer} now={now}
-          onClose={() => setComposer(null)} onSent={() => { setComposer(null); setSelected(new Set()); }} />
-      )}
     </div>
     </AdminShell>
   );

@@ -2,7 +2,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { CONFIRM_TTL_SECONDS } from "./constants";
 
-export type TokenKind = "unsub" | "confirm";
+export type TokenKind = "unsub" | "confirm" | "view";
 
 export type EmailToken = {
   k: TokenKind;
@@ -11,6 +11,8 @@ export type EmailToken = {
   /** Lower-case email. */
   e: string;
   iat: number;
+  /** Send id for a view-in-browser link. */
+  id?: string;
 };
 
 const EMAIL = /^[^\s@,;<>"]+@[^\s@,;<>"]+\.[^\s@,;<>"]{2,}$/;
@@ -22,6 +24,7 @@ export function signEmailToken(payload: EmailToken, secret: string): string {
     t: payload.t,
     e: payload.e.trim().toLowerCase(),
     iat: payload.iat,
+    ...(payload.id ? { id: payload.id } : {}),
   })).toString("base64url");
   const sig = createHmac("sha256", secret).update(body).digest("base64url");
   return `${body}.${sig}`;
@@ -50,5 +53,7 @@ export function readEmailToken(token: string, secret: string, kind: TokenKind, n
   const iat = Number(parsed.iat);
   if (!Number.isFinite(iat)) return null;
   if (kind === "confirm" && (nowSec < iat - 120 || nowSec - iat > CONFIRM_TTL_SECONDS)) return null;
-  return { k: kind, t: parsed.t, e: email, iat };
+  const id = typeof (parsed as { id?: unknown }).id === "string" ? (parsed as { id: string }).id : undefined;
+  if (kind === "view" && (!id || !/^[0-9a-f-]{36}$/i.test(id))) return null;
+  return { k: kind, t: parsed.t, e: email, iat, id };
 }

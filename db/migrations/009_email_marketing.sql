@@ -39,6 +39,7 @@ create table if not exists email_tenants (
   why_text text not null,
   config_set text,
   ses_tenant_name text,
+  daily_cap int not null default 2000 check (daily_cap >= 0 and daily_cap <= 100000),
   status text not null default 'ready' check (status in ('pending', 'ready', 'paused')),
   timezone text not null default 'Australia/Brisbane',
   created_at timestamptz not null default now()
@@ -46,7 +47,8 @@ create table if not exists email_tenants (
 
 create table if not exists email_settings (
   id text primary key,
-  paused boolean not null default false
+  paused boolean not null default false,
+  pause_reason text
 );
 
 create table if not exists email_contacts (
@@ -86,6 +88,14 @@ create table if not exists email_campaigns (
   kind text not null check (kind in ('broadcast', 'series_step', 'confirm', 'test')),
   name text not null default '',
   subject text not null,
+  preheader text not null default '',
+  blocks jsonb not null default '[]',
+  from_name text,
+  content_hash text,
+  test_hash text,
+  test_sent_at timestamptz,
+  scheduled_at timestamptz,
+  send_confirmed boolean not null default false,
   status text not null default 'draft' check (status in ('draft', 'scheduled', 'sending', 'sent', 'cancelled')),
   request_key text unique,
   counts jsonb not null default '{}',
@@ -134,6 +144,7 @@ create table if not exists email_sends (
   html text not null,
   from_name text not null,
   respect_quiet boolean not null default false,
+  not_before timestamptz,
   ses_message_id text,
   error text,
   claimed_at timestamptz,
@@ -179,8 +190,8 @@ insert into email_tenants (
   config_set, ses_tenant_name, status
 ) values (
   'sunder', 'SUNDER', 'sunder.com.au', 'SUNDER', 'hello@sunder.com.au', 'hello@sunder.com.au',
-  'Merrimac QLD 4226, Australia', '44 703 735 264', 'Saabai Pty Ltd trading as SUNDER',
-  'you joined the SUNDER waitlist at sunder.com.au',
+  '31 Bourton Road, Merrimac QLD 4226 Australia', '44 703 735 264', 'Saabai Pty Ltd',
+  'you joined the SUNDER waitlist and agreed to hear from us',
   null, 'sunder', 'ready'
 ) on conflict (slug) do nothing;
 
@@ -339,6 +350,7 @@ begin
       where status = 'pending'
         and tenant_id in (select id from email_tenants where status <> 'paused')
         and (respect_quiet = false or p_quiet = false)
+        and (not_before is null or not_before <= now())
       order by created_at
       for update skip locked
       limit greatest(1, least(coalesce(p_limit, 1), 40))

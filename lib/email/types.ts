@@ -25,6 +25,8 @@ export type EmailAdminSnapshot = {
   configSet: string | null;
   sesTenantName: string | null;
   counts: { subscribed: number; pending: number; unsubscribed: number; suppressed: number };
-  series: { status: "active" | "paused"; steps: SeriesStepView[] };
+  sent30: number;
+  unsub30: number;
+  series: { status: "active" | "paused"; steps: SeriesStepView[]; enrolled: number; active: number; completed: number; exited: number };
   campaigns: CampaignView[];
 };

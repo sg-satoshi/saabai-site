@@ -1,5 +1,8 @@
 import { requireAdminSession } from "../../../../lib/admin-guard";
-import { adminSnapshot, queueBroadcast, saveFromName, saveSeries, sendTest, setSendingPaused } from "../../../../lib/email/ops";
+import {
+  adminSnapshot, campaignDetail, healthReport, importContacts, listContacts, queueBroadcast,
+  saveCampaign, saveDailyCap, saveFromName, saveSeries, scheduleBroadcast, sendTest, setSendingPaused,
+} from "../../../../lib/email/ops";
 import type { SeriesStepInput } from "../../../../lib/email/rules";
 
 export const runtime = "nodejs";
@@ -10,14 +13,21 @@ async function denied() {
   return null;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const block = await denied();
   if (block) return block;
+  const view = new URL(req.url).searchParams.get("view") || "home";
   try {
+    if (view === "campaign") return Response.json(await campaignDetail(new URL(req.url).searchParams.get("id") || ""));
+    if (view === "health") return Response.json(await healthReport());
+    if (view === "subscribers") {
+      const url = new URL(req.url);
+      return Response.json(await listContacts({ q: url.searchParams.get("q") || "", status: url.searchParams.get("status") || "all" }));
+    }
     return Response.json(await adminSnapshot());
   } catch (e) {
     console.error("email admin read failed:", e instanceof Error ? e.message : "error");
-    return Response.json({ error: "Couldn't load SUNDER email. Try again shortly." }, { status: 500 });
+    return Response.json({ error: "Could not load this page. Nothing was sent or changed." }, { status: 500 });
   }
 }
 
@@ -30,30 +40,41 @@ export async function POST(req: Request) {
   try {
     if (action === "pause") return Response.json(await setSendingPaused(body.paused === true));
     if (action === "fromName") return Response.json(await saveFromName(String(body.fromName || "")));
+    if (action === "cap") return Response.json(await saveDailyCap(Number(body.cap)));
     if (action === "series") {
       const steps = Array.isArray(body.steps) ? body.steps as SeriesStepInput[] : [];
       const status = body.status === "paused" ? "paused" : "active";
       return Response.json(await saveSeries(steps, status));
     }
-    if (action === "test") {
-      return Response.json(await sendTest({
-        to: String(body.to || ""),
+    if (action === "save") {
+      return Response.json(await saveCampaign({
+        id: typeof body.id === "string" ? body.id : undefined,
+        name: String(body.name || ""),
         subject: String(body.subject || ""),
-        body: String(body.body || ""),
+        preheader: String(body.preheader || ""),
+        blocks: body.blocks,
         fromName: typeof body.fromName === "string" ? body.fromName : undefined,
       }));
     }
-    if (action === "broadcast") {
+    if (action === "test") return Response.json(await sendTest({ campaignId: String(body.campaignId || ""), to: String(body.to || "") }));
+    if (action === "send") {
       return Response.json(await queueBroadcast({
-        subject: String(body.subject || ""),
-        body: String(body.body || ""),
-        fromName: typeof body.fromName === "string" ? body.fromName : undefined,
+        campaignId: String(body.campaignId || ""),
+        confirm: typeof body.confirm === "string" ? body.confirm : undefined,
         requestKey: String(body.requestKey || ""),
       }));
     }
+    if (action === "schedule") {
+      return Response.json(await scheduleBroadcast({
+        campaignId: String(body.campaignId || ""),
+        when: String(body.when || ""),
+        confirm: typeof body.confirm === "string" ? body.confirm : undefined,
+      }));
+    }
+    if (action === "import") return Response.json(await importContacts(String(body.csv || "")));
     return Response.json({ error: "Unknown action" }, { status: 400 });
   } catch (e) {
     console.error("email admin write failed:", e instanceof Error ? e.message : "error");
-    return Response.json({ error: "That didn't save. Try again shortly." }, { status: 500 });
+    return Response.json({ error: "That did not save. Nothing was sent." }, { status: 500 });
   }
 }
