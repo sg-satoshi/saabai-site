@@ -79,7 +79,7 @@ test("marketing mail names the sender and carries one-click unsubscribe", () => 
   assert.match(rendered.html, /ABN 44 703 735 264/);
   assert.match(rendered.html, /Merrimac QLD 4226 Australia/);
   assert.doesNotMatch(rendered.html, /Bourton/);
-  assert.match(rendered.html, /Saabai Pty Ltd for SUNDER/);
+  assert.match(rendered.html, /Saabai Pty Ltd for Sunder Pickleball/);
   assert.match(rendered.html, /hello@sunder.com.au/);
   assert.match(rendered.html, /you joined the SUNDER waitlist and agreed to hear from us/);
   assert.match(rendered.html, new RegExp(page.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
