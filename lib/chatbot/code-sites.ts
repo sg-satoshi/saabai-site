@@ -41,6 +41,9 @@ export function sunderSite(now = 1762041600000): SiteConfig {
   };
 }
 
+/** Slugs whose chatbot settings come from code even when a stored site row exists. */
+export const CODE_CHATBOT_OVERRIDES: readonly string[] = ["sunder"];
+
 /** Code registry rows merged in when that slug is not already stored. */
 export function codeChatbotSites(): SiteConfig[] {
   return [nicoMorettiSite(), sunderSite()];

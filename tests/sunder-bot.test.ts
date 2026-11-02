@@ -25,3 +25,15 @@ test("CTA uses Pre-Launch List and points at the page form, never the API", () =
   assert.equal(SUNDER_GOAL.cta?.url, "https://sunder.com.au/#f");
   assert.equal(SUNDER_PERSONA.model, undefined);
 });
+
+test("stored SUNDER factory row (chatbot off) gets the code chatbot, other fields kept", async () => {
+  const { withCodeChatbotSites } = await import("../lib/site-registry");
+  const { SUNDER_FACTORY_SEED } = await import("../lib/sunder-factory-seed");
+  const stored = { ...SUNDER_FACTORY_SEED, id: "sunder", createdAt: 1, updatedAt: 1 } as never;
+  const out = withCodeChatbotSites([stored]).filter((s) => s.slug === "sunder");
+  assert.equal(out.length, 1);
+  assert.equal(out[0].chatbot?.enabled, true);
+  assert.equal(out[0].status, "draft");
+  const nico = withCodeChatbotSites([{ id: "nico-moretti", slug: "nico-moretti", name: "x", chatbot: { enabled: false } } as never]).find((s) => s.slug === "nico-moretti");
+  assert.equal(nico?.chatbot?.enabled, false);
+});
