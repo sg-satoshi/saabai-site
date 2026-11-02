@@ -80,14 +80,14 @@ export default function Subscribers() {
       </div>
       {note && <div className="em-alert info" style={{ marginBottom: 12 }}>{note}</div>}
       <div className="kpis">
-        <div className="card kpi"><div className="l">Confirmed</div><div className="v">{data?.counts.confirmed ?? "..."}</div></div>
-        <div className="card kpi"><div className="l">Pending confirm</div><div className="v">{data?.counts.pending ?? "..."}</div></div>
-        <div className="card kpi"><div className="l">Unsubscribed</div><div className="v">{data?.counts.unsubscribed ?? "..."}</div></div>
-        <div className="card kpi"><div className="l">Suppressed</div><div className="v">{data?.counts.suppressed ?? "..."}</div><div className="d">Bounce or complaint</div></div>
+        <div className="card kpi"><div className="l">Confirmed</div><div className="v">{data ? data.counts.confirmed.toLocaleString("en-AU") : "..."}</div></div>
+        <div className="card kpi"><div className="l">Pending confirm</div><div className="v">{data ? data.counts.pending.toLocaleString("en-AU") : "..."}</div></div>
+        <div className="card kpi"><div className="l">Unsubscribed</div><div className="v">{data ? data.counts.unsubscribed.toLocaleString("en-AU") : "..."}</div></div>
+        <div className="card kpi"><div className="l">Suppressed</div><div className="v">{data ? data.counts.suppressed.toLocaleString("en-AU") : "..."}</div><div className="d">Bounce or complaint</div></div>
       </div>
       <div className="card">
         <div className="fbar">
-          <label className="inp" style={{ width: 240 }}><input aria-label="Search email" value={q} placeholder="Search email" onChange={(e) => setQ(e.target.value)} style={{ border: 0, width: "100%", font: "inherit" }} /></label>
+          <label className="inp" style={{ width: "min(100%, 360px)", flex: "1 1 220px" }}><input aria-label="Search email" value={q} placeholder="Search email" onChange={(e) => setQ(e.target.value)} style={{ border: 0, width: "100%", font: "inherit", background: "transparent" }} /></label>
           <label className="em-help">Status
             <select aria-label="Status" value={status} onChange={(e) => { setStatus(e.target.value); load(e.target.value, q); }} style={{ marginLeft: 8, height: 36 }}>
               <option value="all">All</option>
@@ -105,7 +105,16 @@ export default function Subscribers() {
           <div className="em-empty"><h2>No subscribers match these filters</h2><p>Try another status or clear the filters.</p></div>
         )}
         {!!data?.people.length && (
-          <table>
+          <>
+          <div className="em-mob">
+            {data.people.map((p) => (
+              <button key={p.id} type="button" className="oc" onClick={() => setOpen(p)} style={{ width: "100%", textAlign: "left", background: "transparent", border: 0, font: "inherit" }}>
+                <b>{p.email}</b>
+                <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6 }}>{statusChip(p)}<span className="em-help">{p.consent_at ? new Date(p.consent_at).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "short" }) : ""}</span></div>
+              </button>
+            ))}
+          </div>
+          <table className="em-desk">
             <thead><tr><th>Email</th><th>Status</th><th>Consent source</th><th>Consent time</th><th></th></tr></thead>
             <tbody>
               {data.people.map((p) => (
@@ -119,6 +128,7 @@ export default function Subscribers() {
               ))}
             </tbody>
           </table>
+          </>
         )}
       </div>
       <div className="em-alert warn" style={{ marginTop: 12 }}>Suppressed and unsubscribed people are never mailed and cannot be re-added from here. They can only rejoin by signing up again.</div>

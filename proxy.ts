@@ -145,6 +145,7 @@ const PUBLIC_API = [
   "/api/unsubscribe",       // one-click marketing unsubscribe (signed token)
   "/api/email/unsubscribe", // SUNDER RFC 8058 one-click (signed token, POST only)
   "/api/email/confirm",     // SUNDER double opt-in confirm (signed token)
+  "/api/email/ses-events",  // sending-provider bounce/complaint webhook (SNS signature inside)
   "/api/testimonial",       // client testimonial form (unguessable token)
   "/api/instagram/cron",
   // MCP gateway — self-authenticated. The route enforces Authorization: Bearer

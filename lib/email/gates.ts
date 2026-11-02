@@ -14,10 +14,11 @@ export const SUBJECT_MAX = 60;
 export const PREHEADER_MAX = 110;
 export const DEFAULT_DAILY_CAP = 2000;
 
-export function contentHash(input: { subject: string; preheader: string; blocks: Block[] }): string {
+export function contentHash(input: { subject: string; preheader: string; blocks: Block[]; fromName?: string }): string {
   const body = JSON.stringify({
     subject: input.subject.trim(),
     preheader: input.preheader.trim(),
+    fromName: (input.fromName || "").trim(),
     blocks: input.blocks,
   });
   let h = 5381;

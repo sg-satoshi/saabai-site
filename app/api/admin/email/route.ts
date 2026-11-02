@@ -61,7 +61,6 @@ export async function POST(req: Request) {
       return Response.json(await queueBroadcast({
         campaignId: String(body.campaignId || ""),
         confirm: typeof body.confirm === "string" ? body.confirm : undefined,
-        requestKey: String(body.requestKey || ""),
       }));
     }
     if (action === "schedule") {

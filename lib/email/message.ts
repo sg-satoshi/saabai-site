@@ -111,6 +111,10 @@ export function confirmMessage(): { subject: string; html: string } {
   return { subject: "Confirm your SUNDER email", html: buildSunderHtml(lines.join("\n"), button) };
 }
 
+/**
+ * mailto is only a fallback address for mail clients. Nothing reads that inbox automatically.
+ * The HTTPS one-click POST is what unsubscribes immediately.
+ */
 export function listUnsubscribeHeader(httpsUrl: string, mailto: string): Record<string, string> {
   return {
     "List-Unsubscribe": `<${httpsUrl}>, <${mailto}>`,

@@ -101,7 +101,10 @@ export async function drainOutbox(opts: {
         continue;
       }
       if (slot.waitMs > 0) await sleep(slot.waitMs);
-      const unsubToken = signEmailToken({ k: "unsub", t: row.identity.slug, e: row.toEmail, iat: nowSec }, opts.secret);
+      const unsubToken = signEmailToken({
+        k: "unsub", t: row.identity.slug, e: row.toEmail, iat: nowSec,
+        c: row.campaignId && /^[0-9a-f-]{36}$/i.test(row.campaignId) ? row.campaignId : undefined,
+      }, opts.secret);
       const unsubHttps = `${origin}/api/email/unsubscribe?t=${encodeURIComponent(unsubToken)}`;
       const unsubPage = `${origin}/email/u?t=${encodeURIComponent(unsubToken)}`;
       let confirmUrl: string | undefined;

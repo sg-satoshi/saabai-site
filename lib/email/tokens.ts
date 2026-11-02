@@ -13,6 +13,8 @@ export type EmailToken = {
   iat: number;
   /** Send id for a view-in-browser link. */
   id?: string;
+  /** Campaign id, so an unsubscribe can be counted on that campaign. */
+  c?: string;
 };
 
 const EMAIL = /^[^\s@,;<>"]+@[^\s@,;<>"]+\.[^\s@,;<>"]{2,}$/;
@@ -25,6 +27,7 @@ export function signEmailToken(payload: EmailToken, secret: string): string {
     e: payload.e.trim().toLowerCase(),
     iat: payload.iat,
     ...(payload.id ? { id: payload.id } : {}),
+    ...(payload.c ? { c: payload.c } : {}),
   })).toString("base64url");
   const sig = createHmac("sha256", secret).update(body).digest("base64url");
   return `${body}.${sig}`;
@@ -54,6 +57,7 @@ export function readEmailToken(token: string, secret: string, kind: TokenKind, n
   if (!Number.isFinite(iat)) return null;
   if (kind === "confirm" && (nowSec < iat - 120 || nowSec - iat > CONFIRM_TTL_SECONDS)) return null;
   const id = typeof (parsed as { id?: unknown }).id === "string" ? (parsed as { id: string }).id : undefined;
+  const campaign = typeof (parsed as { c?: unknown }).c === "string" ? (parsed as { c: string }).c : undefined;
   if (kind === "view" && (!id || !/^[0-9a-f-]{36}$/i.test(id))) return null;
-  return { k: kind, t: parsed.t, e: email, iat, id };
+  return { k: kind, t: parsed.t, e: email, iat, id, c: campaign && /^[0-9a-f-]{36}$/i.test(campaign) ? campaign : undefined };
 }

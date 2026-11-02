@@ -2,9 +2,10 @@
  * Thin SESv2 SendEmail wrapper.
  *
  * ConfigurationSetName is set only when the tenant or AWS_SES_CONFIGURATION_SET
- * has a name. The send-only key cannot create config sets or SNS topics, so the
- * MVP sends without event destinations. Bounce and complaint automation is a
- * follow-up once an admin key can create cs-sunder and the saabai-ses-events topic.
+ * has a name. The send-only key cannot create that set or the event topic.
+ * Wire them by hand, set AWS_SES_SNS_TOPIC_ARN, and events arrive at
+ * POST /api/email/ses-events. Until that env var is set the route refuses
+ * every message. Sends still go out without it.
  *
  * TenantName is the SES tenant (sunder). Omit it when ses_tenant_name is empty.
  */

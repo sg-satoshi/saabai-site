@@ -7,9 +7,8 @@ export const maxDuration = 60;
 /**
  * Drains the SES outbox and queues due welcome-series steps.
  * Schedule is every minute in vercel.json. This repo already runs a 15-minute
- * cron, which needs Vercel Pro, and Pro allows a one-minute cron. If a deploy
- * rejects a one-minute schedule, use every 15 minutes instead. The outbox is idempotent.
- * the outbox is idempotent and will catch up.
+ * cron, which needs a plan that allows it, so a one-minute cron is available.
+ * If a deploy rejects that schedule, use every 15 minutes instead. The outbox is idempotent.
  */
 export async function GET(req: Request) {
   if (req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {

@@ -28,7 +28,9 @@ import { drainOutbox, tokenEmail, type Outbox, type OutboxRow } from "./worker";
 const MIGRATION = "Apply db/migrations/009_email_marketing.sql in the Supabase SQL editor, then refresh.";
 
 function secret(): string {
-  return process.env.SAABAI_SESSION_SECRET || "";
+  // Prefer a dedicated secret so an unsubscribe token cannot be reused as a session.
+  // Falls back to the session secret when EMAIL_TOKEN_SECRET is not set.
+  return process.env.EMAIL_TOKEN_SECRET || process.env.SAABAI_SESSION_SECRET || "";
 }
 
 function rateCounter(): RateCounter | null {
@@ -146,16 +148,18 @@ async function loadSeries(db: SupabaseClient, tenantId: string): Promise<EmailAd
 async function loadCampaigns(db: SupabaseClient): Promise<CampaignView[]> {
   const { data, error } = await db.rpc("email_recent_campaigns", { p_tenant: SUNDER_SLUG });
   if (error) throw new Error(error.message);
-  return ((data || []) as { id: string; name: string; status: string; created_at: string; queued: number; sent: number; failed: number; skipped: number; pending: number }[]).map((c) => ({
+  return ((data || []) as { id: string; name: string; status: string; created_at: string; scheduled_at: string | null; queued: number; sent: number; failed: number; skipped: number; pending: number; unsubscribed: number }[]).map((c) => ({
     id: c.id,
     name: c.name,
     status: c.status,
     createdAt: c.created_at,
+    scheduledAt: c.scheduled_at,
     queued: c.queued,
     sent: c.sent,
     failed: c.failed,
     skipped: c.skipped,
     pending: c.pending,
+    unsubscribed: c.unsubscribed || 0,
   }));
 }
 
@@ -230,6 +234,7 @@ type CampaignRow = {
   test_sent_at: string | null;
   scheduled_at: string | null;
   send_confirmed: boolean | null;
+  typed_confirm?: boolean | null;
 };
 
 function campaignContent(row: CampaignRow): { subject: string; preheader: string; blocks: Block[] } | { error: string } {
@@ -256,7 +261,7 @@ export async function sendTest(input: { campaignId: string; to: string }): Promi
   if ("error" in content) return { ok: false, error: content.error };
   const fromName = cleanFromName(row.from_name || ready.tenant.from_name);
   const html = documentHtml({ preheader: content.preheader, blocks: content.blocks });
-  const hash = contentHash(content);
+  const hash = contentHash({ ...content, fromName });
   const sent = await deliverOne(ready.db, ready.tenant.id, {
     id: "test",
     toEmail: to,
@@ -325,11 +330,8 @@ async function deliverOne(db: SupabaseClient, tenantId: string, row: OutboxRow):
     limit: 1,
     deadlineMs: 20_000,
   });
-  if (result.sent === 1 && messageId) {
-    await db.from("email_campaigns").update({ status: "sent" }).eq("id", row.campaignId);
-    return { ok: true, subject, messageId };
-  }
-  return { ok: false, error: result.failed ? "SES rejected the test. The send row is marked failed." : "The test did not send." };
+  if (result.sent === 1 && messageId) return { ok: true, subject, messageId };
+  return { ok: false, error: result.failed ? "The sending provider rejected the test. The send row is marked failed." : "The test did not send." };
 }
 
 async function audienceNow(db: SupabaseClient, tenantId: string) {
@@ -353,27 +355,38 @@ async function usedToday(db: SupabaseClient, tenantId: string, now = new Date())
   return (sent.count ?? 0) + (queued.count ?? 0);
 }
 
-export async function queueBroadcast(input: { campaignId: string; confirm?: string; requestKey: string }): Promise<{ ok: true; queued: number; today: number; later: number; suppressed: number; campaignId: string } | { ok: false; error: string }> {
-  if (!/^[A-Za-z0-9_:-]{8,80}$/.test(input.requestKey)) return { ok: false, error: "Missing send key." };
+const ALREADY = "This campaign is already sending or has been sent.";
+
+export async function queueBroadcast(input: { campaignId: string; confirm?: string }): Promise<{ ok: true; queued: number; today: number; later: number; suppressed: number; campaignId: string } | { ok: false; error: string }> {
   const ready = await requireReady();
   if ("error" in ready) return { ok: false, error: ready.error };
   const paused = await sendingPaused(ready.db, ready.tenant);
-  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed").eq("id", input.campaignId).eq("tenant_id", ready.tenant.id).maybeSingle();
+  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed,typed_confirm").eq("id", input.campaignId).eq("tenant_id", ready.tenant.id).maybeSingle();
   if (loaded.error || !loaded.data) return { ok: false, error: loaded.error?.message || "Campaign not found." };
   const row = loaded.data as CampaignRow;
+  if (row.status !== "draft" && row.status !== "scheduled") return { ok: false, error: ALREADY };
   const content = campaignContent(row);
   if ("error" in content) return { ok: false, error: content.error };
   let audience;
   try { audience = await audienceNow(ready.db, ready.tenant.id); }
   catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Could not read the list." }; }
-  const hash = contentHash(content);
+  const fromName = cleanFromName(row.from_name || ready.tenant.from_name);
+  const hash = contentHash({ ...content, fromName });
   const blocked = sendBlocked({ paused, audience: audience.gate.recipients.length, testHash: row.test_hash, contentHash: hash, confirm: input.confirm });
   if (blocked) return { ok: false, error: blocked };
+  // One winner. A second click finds the row already sending and inserts nothing.
+  const claim = await ready.db.from("email_campaigns").update({
+    status: "sending",
+    content_hash: hash,
+    send_confirmed: true,
+    typed_confirm: input.confirm === "SEND",
+  }).eq("id", row.id).in("status", ["draft", "scheduled"]).select("id");
+  if (claim.error) return { ok: false, error: claim.error.message };
+  if (!claim.data?.length) return { ok: false, error: ALREADY };
   const cap = ready.tenant.daily_cap ?? DEFAULT_DAILY_CAP;
   const used = await usedToday(ready.db, ready.tenant.id);
   const split = splitByDailyCap(audience.gate.recipients.length, used, cap);
   const laterAt = (() => { const p = brisbaneParts(new Date()); return brisbaneAt(p.year, p.month, p.day + 1, 7).toISOString(); })();
-  const fromName = cleanFromName(row.from_name || ready.tenant.from_name);
   const html = documentHtml({ preheader: content.preheader, blocks: content.blocks });
   const rows = audience.gate.recipients.map((c, i) => ({
     tenant_id: ready.tenant.id,
@@ -381,7 +394,7 @@ export async function queueBroadcast(input: { campaignId: string; confirm?: stri
     contact_id: c.id,
     to_email: c.email,
     kind: "marketing" as const,
-    idempotency_key: `broadcast:${input.requestKey}:${c.id}`,
+    idempotency_key: `broadcast:${row.id}:${c.id}`,
     status: "pending",
     subject: content.subject,
     html,
@@ -391,12 +404,9 @@ export async function queueBroadcast(input: { campaignId: string; confirm?: stri
   }));
   for (let i = 0; i < rows.length; i += 200) {
     const { error } = await ready.db.from("email_sends").upsert(rows.slice(i, i + 200), { onConflict: "idempotency_key", ignoreDuplicates: true });
-    if (error) return { ok: false, error: error.message };
+    if (error && error.code !== "23505") return { ok: false, error: error.message };
   }
   await ready.db.from("email_campaigns").update({
-    status: "sending",
-    content_hash: hash,
-    send_confirmed: true,
     counts: { queued: rows.length, today: split.today, later: split.later, suppressed: audience.suppressed },
   }).eq("id", row.id);
   return { ok: true, queued: rows.length, today: split.today, later: split.later, suppressed: audience.suppressed, campaignId: row.id };
@@ -721,7 +731,7 @@ export async function saveCampaign(input: { id?: string; name: string; subject: 
   const ready = await requireReady();
   if ("error" in ready) return { ok: false, error: ready.error };
   const fromName = cleanFromName(input.fromName || ready.tenant.from_name);
-  const hash = contentHash(content);
+  const hash = contentHash({ ...content, fromName });
   const patch = {
     name: (input.name || content.subject || "Untitled").trim().slice(0, 120),
     subject: content.subject.trim().slice(0, 200),
@@ -755,27 +765,32 @@ export async function scheduleBroadcast(input: { campaignId: string; when: strin
   let audience;
   try { audience = await audienceNow(ready.db, ready.tenant.id); }
   catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Could not read the list." }; }
-  const hash = contentHash(content);
+  const fromName = cleanFromName(row.from_name || ready.tenant.from_name);
+  const hash = contentHash({ ...content, fromName });
   const blocked = sendBlocked({ paused, audience: audience.gate.recipients.length, testHash: row.test_hash, contentHash: hash, confirm: input.confirm });
   if (blocked) return { ok: false, error: blocked };
-  const { error } = await ready.db.from("email_campaigns").update({
+  const { data, error } = await ready.db.from("email_campaigns").update({
     status: "scheduled",
     scheduled_at: when.toISOString(),
     content_hash: hash,
     send_confirmed: true,
-  }).eq("id", row.id);
+    typed_confirm: input.confirm === "SEND",
+  }).eq("id", row.id).in("status", ["draft", "scheduled"]).select("id");
   if (error) return { ok: false, error: error.message };
+  if (!data?.length) return { ok: false, error: ALREADY };
   return { ok: true };
 }
 
 async function promoteScheduled(db: SupabaseClient, tenant: TenantRow): Promise<number> {
-  const { data, error } = await db.from("email_campaigns").select("id").eq("tenant_id", tenant.id).eq("status", "scheduled").lte("scheduled_at", new Date().toISOString()).limit(5);
+  const { data, error } = await db.from("email_campaigns").select("id,typed_confirm").eq("tenant_id", tenant.id).eq("status", "scheduled").lte("scheduled_at", new Date().toISOString()).limit(5);
   if (error || !data?.length) return 0;
   let n = 0;
-  for (const row of data as { id: string }[]) {
-    const result = await queueBroadcast({ campaignId: row.id, confirm: "SEND", requestKey: `sched${row.id.replace(/-/g, "").slice(0, 24)}` });
+  for (const row of data as { id: string; typed_confirm: boolean | null }[]) {
+    const result = await queueBroadcast({ campaignId: row.id, confirm: row.typed_confirm ? "SEND" : undefined });
     if (result.ok) n++;
-    else await db.from("email_campaigns").update({ status: "draft", counts: { error: result.error } }).eq("id", row.id).eq("status", "scheduled");
+    else if (!/already sending or has been sent/i.test(result.error)) {
+      await db.from("email_campaigns").update({ status: "draft", counts: { error: result.error } }).eq("id", row.id).eq("status", "scheduled");
+    }
   }
   return n;
 }
@@ -926,14 +941,38 @@ export async function confirmByToken(token: string): Promise<{ status: "confirme
 }
 
 export async function unsubscribeByToken(token: string): Promise<{ ok: true } | { ok: false; error: string }> {
-  const parsed = tokenEmail(token, secret(), "unsub");
+  const parsed = readEmailToken(token, secret(), "unsub");
   if (!parsed) return { ok: false, error: "This link isn't valid" };
   const db = emailDb();
-  const { error } = await db.rpc("email_unsubscribe", { p_tenant: parsed.tenant, p_email: parsed.email, p_reason: "one_click" });
+  const { error } = await db.rpc("email_unsubscribe", { p_tenant: parsed.t, p_email: parsed.e, p_reason: "unsubscribe" });
   if (error) {
     if (isMissingSchema(error)) return { ok: false, error: "Unsubscribe is not available yet." };
     throw new Error(error.message);
   }
+  if (parsed.c) {
+    const tenant = await loadTenant(db, parsed.t);
+    if (tenant) await db.from("email_suppressions").update({ campaign_id: parsed.c }).eq("tenant_id", tenant.id).eq("email", parsed.e);
+  }
+  return { ok: true };
+}
+
+/** Hard bounce or complaint from the sending provider. Feeds suppression, series exit, and auto-pause. */
+export async function recordProviderEvent(input: { email: string; reason: "bounce" | "complaint"; tenant?: string; campaignId?: string | null }): Promise<{ ok: true } | { ok: false; error: string }> {
+  const email = input.email.trim().toLowerCase();
+  if (!email.includes("@")) return { ok: false, error: "Missing address" };
+  let db: SupabaseClient;
+  try { db = emailDb(); } catch { return { ok: false, error: "no database" }; }
+  const slug = input.tenant && /^[a-z0-9][a-z0-9-]{0,30}$/.test(input.tenant) ? input.tenant : SUNDER_SLUG;
+  const { error } = await db.rpc("email_unsubscribe", { p_tenant: slug, p_email: email, p_reason: input.reason });
+  if (error) return { ok: false, error: error.message };
+  const tenant = await loadTenant(db, slug);
+  if (!tenant) return { ok: true };
+  const status = input.reason === "complaint" ? "complained" : "bounced";
+  await db.from("email_contacts").update({ status, updated_at: new Date().toISOString() }).eq("tenant_id", tenant.id).eq("email", email);
+  if (input.campaignId && /^[0-9a-f-]{36}$/i.test(input.campaignId)) {
+    await db.from("email_suppressions").update({ campaign_id: input.campaignId }).eq("tenant_id", tenant.id).eq("email", email);
+  }
+  await maybeAutoPause(db, tenant);
   return { ok: true };
 }
 

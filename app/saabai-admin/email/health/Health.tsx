@@ -91,7 +91,7 @@ export default function Health() {
       )}
 
       {data?.rates && (
-        <div className="kpis" style={{ gridTemplateColumns: "1fr 1fr" }}>
+        <div className="em-health">
           <div className="card"><div className="hd"><h2>Bounce rate, rolling 7 days</h2><span className="badge b-ok">Healthy</span></div>
             <div className="bd">
               <div className="v" style={{ fontFamily: "var(--font-admin-mono), var(--mono)", fontSize: 28 }}>{(data.rates.bounce * 100).toFixed(1)}%</div>
@@ -109,7 +109,7 @@ export default function Health() {
         </div>
       )}
 
-      <div className="kpis" style={{ gridTemplateColumns: "1fr 1fr" }}>
+      <div className="em-health">
         <div className="card"><div className="hd"><h2>Daily cap</h2>{editing ? <button type="button" className="btn sm pri" disabled={busy} onClick={saveCap}>Save</button> : <button type="button" className="btn sm" onClick={() => setEditing(true)}>Edit</button>}</div>
           <div className="bd">
             {editing ? <label className="em-field">Cap<input value={cap} onChange={(e) => setCap(e.target.value)} inputMode="numeric" /></label> : <div style={{ fontFamily: "var(--font-admin-mono), var(--mono)", fontSize: 28 }}>{(data?.sentToday ?? 0).toLocaleString("en-AU")} of {(data?.dailyCap ?? 0).toLocaleString("en-AU")} today</div>}
@@ -122,7 +122,7 @@ export default function Health() {
             <span>Return path</span><span className="badge b-n">Not checked here</span>
             <span>Policy record</span><span className="badge b-warn">{data?.configSet ? "Events on" : "Monitor only"}</span>
           </div>
-          <p className="em-help" style={{ padding: "0 20px 16px" }}>Bounce and complaint events need a configuration set. Until that is connected, rates only count suppressions recorded in this app.</p>
+          <p className="em-help" style={{ padding: "0 20px 16px" }}>Bounce and complaint events need the sending provider event feed. Until that is connected, rates only count suppressions recorded in this app. Wiring that feed is a manual step.</p>
         </div>
       </div>
     </div>

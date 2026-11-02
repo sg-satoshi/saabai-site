@@ -39,7 +39,7 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
   const [width, setWidth] = useState<620 | 375>(620);
   const [mobilePreview, setMobilePreview] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
-  const [testTo, setTestTo] = useState("success@simulator.amazonses.com");
+  const [testTo, setTestTo] = useState("");
   const [confirm, setConfirm] = useState<null | "send" | "schedule">(null);
   const [typed, setTyped] = useState("");
   const [when, setWhen] = useState("");
@@ -67,7 +67,7 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
       .catch(() => setBanner("Could not open this campaign."));
   }, [campaignId]);
 
-  const hash = contentHash({ subject, preheader, blocks });
+  const hash = contentHash({ subject, preheader, blocks, fromName });
   const unlocked = !!testHash && testHash === hash && (detail?.audience || 0) > 0 && !detail?.paused;
   const audience = detail?.audience || 0;
   const needsTyped = audience > SEND_CONFIRM_OVER;
@@ -110,7 +110,7 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
     const { json } = await post({ action: "test", campaignId: current, to: testTo });
     setBusy("");
     if (!json.ok) { setBanner(json.error || "The test did not send."); return; }
-    setTestHash(contentHash({ subject, preheader, blocks }));
+    setTestHash(contentHash({ subject, preheader, blocks, fromName }));
     setTestedAt(json.testedAt);
     setTestOpen(false);
     setBanner(`Test sent to ${testTo}.`);
@@ -119,7 +119,7 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
   async function doSend() {
     if (needsTyped && typed !== "SEND") return;
     setBusy("send");
-    const { json } = await post({ action: "send", campaignId: idRef.current, confirm: needsTyped ? typed : undefined, requestKey: `b${crypto.randomUUID().replace(/-/g, "")}` });
+    const { json } = await post({ action: "send", campaignId: idRef.current, confirm: needsTyped ? typed : undefined });
     setBusy("");
     if (!json.ok) { setBanner(json.error || "Nothing was sent."); return; }
     setConfirm(null);
@@ -148,7 +148,22 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
     values: { firstName: "Sam" },
   }), [subject, preheader, blocks, fromName]);
 
-  function patch(blockId: string, next: Partial<Block>) {
+  function statusChip(status: string) {
+  const label = status ? status.charAt(0).toUpperCase() + status.slice(1) : "Draft";
+  const cls = status === "scheduled" ? "b-sched" : status === "sending" ? "b-sending" : status === "sent" ? "b-ok" : status === "cancelled" ? "b-n" : "b-n";
+  return <span className={`badge ${cls}`}>{label === "Cancelled" ? "Cancelled" : label}</span>;
+}
+
+function summary(b: Block): string {
+  if (b.kind === "heading" || b.kind === "text") return b.text.trim() || "Empty";
+  if (b.kind === "image") return b.alt.trim() || b.src.trim() || "Image";
+  if (b.kind === "button") return b.label.trim() || "Button";
+  if (b.kind === "divider") return "Line";
+  if (b.kind === "columns") return "Two columns";
+  return b.title.trim() || "Product";
+}
+
+function patch(blockId: string, next: Partial<Block>) {
     setBlocks((list) => list.map((b) => b.id === blockId ? { ...b, ...next } as Block : b));
   }
   function move(blockId: string, dir: -1 | 1) {
@@ -172,16 +187,18 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
     <div className="em-page">
       <div className="ph">
         <div>
-          <h1>{name || "New broadcast"} <span className="badge b-n">{detail?.campaign.status || "Draft"}</span></h1>
+          <h1>{name || "New broadcast"} {statusChip(detail?.campaign.status || "draft")}</h1>
           <p className="sub">{savedAt ? `Autosaved ${savedAt.toLocaleTimeString("en-AU", { timeZone: "Australia/Brisbane", hour: "numeric", minute: "2-digit" })}` : "Autosaves as you type."}</p>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <button type="button" className="btn" onClick={() => setTestOpen(true)} disabled={!!busy || !!detail?.paused}>Send test</button>
-          <button type="button" className="btn" disabled={!unlocked || !!busy} aria-describedby="send-lock" onClick={() => { setTyped(""); setConfirm("schedule"); }}>Schedule</button>
-          <button type="button" className="btn pri" disabled={!unlocked || !!busy} aria-describedby="send-lock" onClick={() => { setTyped(""); setConfirm("send"); }}>Send now</button>
+        <div className="em-actions">
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
+            <button type="button" className="btn" onClick={() => setTestOpen(true)} disabled={!!busy || !!detail?.paused}>Send test</button>
+            <button type="button" className="btn" disabled={!unlocked || !!busy} aria-describedby="send-lock" onClick={() => { setTyped(""); setConfirm("schedule"); }}>Schedule</button>
+            <button type="button" className="btn pri" disabled={!unlocked || !!busy} aria-describedby="send-lock" onClick={() => { setTyped(""); setConfirm("send"); }}>Send now</button>
+          </div>
+          <p id="send-lock" className="em-help" style={{ textAlign: "right" }}>{unlocked ? "A test of this version was sent." : "Send a test first to unlock Send now and Schedule."}</p>
         </div>
       </div>
-      <p id="send-lock" className="em-help">{unlocked ? "A test of this version was sent." : "Send a test first to unlock Send now and Schedule."}</p>
       {banner && <div className="em-alert info" role="status" style={{ margin: "12px 0" }}>{banner}</div>}
       {detail?.paused && <div className="em-alert warn" style={{ marginBottom: 12 }}>Sending is paused. Tests and sends stay locked.</div>}
 
@@ -206,23 +223,46 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
           <div className="card"><div className="hd"><h2>Body</h2><span className="em-help">Drag is Move up and Move down</span></div>
             <div className="bd" style={{ display: "grid", gap: 10 }}>
               {blocks.map((b) => (
-                <div key={b.id} className={`em-block${pick === b.id ? " on" : ""}`} onClick={() => setPick(b.id)}>
+                <div key={b.id} className={`em-block${pick === b.id ? " on" : ""}`}>
+                  <div aria-hidden="true" style={{ color: "var(--n-400)", paddingTop: 8 }}>::</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="em-help" style={{ letterSpacing: ".08em", textTransform: "uppercase" }}>{b.kind}</div>
-                    {b.kind === "heading" || b.kind === "text" ? <textarea rows={b.kind === "heading" ? 2 : 4} value={b.text} onChange={(e) => patch(b.id, { text: e.target.value })} /> : null}
-                    {b.kind === "image" && <div style={{ display: "grid", gap: 6 }}><input placeholder="Image address" value={b.src} onChange={(e) => patch(b.id, { src: e.target.value })} aria-label="Image address" /><input placeholder="Alt text" value={b.alt} onChange={(e) => patch(b.id, { alt: e.target.value })} aria-label="Alt text" /></div>}
-                    {b.kind === "button" && <div style={{ display: "grid", gap: 6 }}><input placeholder="Label" value={b.label} onChange={(e) => patch(b.id, { label: e.target.value })} aria-label="Button label" /><input placeholder="Link" value={b.href} onChange={(e) => patch(b.id, { href: e.target.value })} aria-label="Button link" /></div>}
-                    {b.kind === "columns" && <div style={{ display: "grid", gap: 6 }}><textarea rows={3} value={b.left} onChange={(e) => patch(b.id, { left: e.target.value })} aria-label="Left column" /><textarea rows={3} value={b.right} onChange={(e) => patch(b.id, { right: e.target.value })} aria-label="Right column" /></div>}
-                    {b.kind === "product" && <div style={{ display: "grid", gap: 6 }}><input placeholder="Title" value={b.title} onChange={(e) => patch(b.id, { title: e.target.value })} aria-label="Product title" /><input placeholder="Link" value={b.href} onChange={(e) => patch(b.id, { href: e.target.value })} aria-label="Product link" /><textarea rows={2} value={b.text} onChange={(e) => patch(b.id, { text: e.target.value })} aria-label="Product text" /></div>}
+                    <div>{summary(b)}</div>
+                    {pick === b.id && (
+                      <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
+                        {(b.kind === "heading" || b.kind === "text") && <label className="em-field">Text<textarea rows={b.kind === "heading" ? 2 : 4} value={b.text} onChange={(e) => patch(b.id, { text: e.target.value })} /></label>}
+                        {b.kind === "image" && <>
+                          <label className="em-field">Image address<input value={b.src} onChange={(e) => patch(b.id, { src: e.target.value })} /></label>
+                          <label className="em-field">Alt text<input value={b.alt} onChange={(e) => patch(b.id, { alt: e.target.value })} /></label>
+                        </>}
+                        {b.kind === "button" && <>
+                          <label className="em-field">Label<input value={b.label} onChange={(e) => patch(b.id, { label: e.target.value })} /></label>
+                          <label className="em-field">Link<input value={b.href} onChange={(e) => patch(b.id, { href: e.target.value })} /></label>
+                        </>}
+                        {b.kind === "columns" && <>
+                          <label className="em-field">Left<textarea rows={3} value={b.left} onChange={(e) => patch(b.id, { left: e.target.value })} /></label>
+                          <label className="em-field">Right<textarea rows={3} value={b.right} onChange={(e) => patch(b.id, { right: e.target.value })} /></label>
+                        </>}
+                        {b.kind === "product" && <>
+                          <label className="em-field">Title<input value={b.title} onChange={(e) => patch(b.id, { title: e.target.value })} /></label>
+                          <label className="em-field">Link<input value={b.href} onChange={(e) => patch(b.id, { href: e.target.value })} /></label>
+                          <label className="em-field">Text<textarea rows={2} value={b.text} onChange={(e) => patch(b.id, { text: e.target.value })} /></label>
+                        </>}
+                      </div>
+                    )}
                   </div>
-                  <div style={{ display: "grid", gap: 4 }}>
-                    <button type="button" className="btn sm" onClick={() => move(b.id, -1)} aria-label="Move up">Up</button>
-                    <button type="button" className="btn sm" onClick={() => move(b.id, 1)} aria-label="Move down">Down</button>
-                    <button type="button" className="btn sm dg" onClick={() => setBlocks((list) => list.filter((x) => x.id !== b.id))} aria-label="Remove block">Remove</button>
-                  </div>
+                  <details>
+                    <summary className="btn sm" style={{ listStyle: "none" }} aria-label={`Actions for ${b.kind}`}>...</summary>
+                    <div style={{ display: "grid", gap: 4, marginTop: 4 }}>
+                      <button type="button" className="btn sm" onClick={() => setPick(pick === b.id ? null : b.id)}>{pick === b.id ? "Close" : "Edit"}</button>
+                      <button type="button" className="btn sm" onClick={() => move(b.id, -1)}>Move up</button>
+                      <button type="button" className="btn sm" onClick={() => move(b.id, 1)}>Move down</button>
+                      <button type="button" className="btn sm dg" onClick={() => setBlocks((list) => list.filter((x) => x.id !== b.id))}>Remove</button>
+                    </div>
+                  </details>
                 </div>
               ))}
-              <div className="em-add">Add block: {KINDS.map((k) => <button key={k} type="button" className="btn sm" style={{ margin: 4 }} onClick={() => setBlocks((list) => [...list, newBlock(k)])}>{k}</button>)}</div>
+              <div className="em-add" style={{ minHeight: 44 }}>Add block {KINDS.map((k) => <button key={k} type="button" className="btn" style={{ margin: 4, minHeight: 44 }} onClick={() => { const block = newBlock(k); setBlocks((list) => [...list, block]); setPick(block.id); }}>{k}</button>)}</div>
               <div className="em-lock"><b>Footer, locked.</b> Sender name, ABN, postal address, why you got this, and the unsubscribe link. Cannot be removed.</div>
             </div>
           </div>
@@ -231,13 +271,13 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
         <div className="card">
           <div className="hd"><h2>Live preview</h2>
             <div className="seg" role="group" aria-label="Preview width">
-              <button type="button" className={width === 620 ? "on" : ""} onClick={() => { setWidth(620); setMobilePreview(false); }} style={{ border: 0, background: "transparent", font: "inherit", padding: "5px 12px", borderRadius: 6 }}>Desktop</button>
-              <button type="button" className={width === 375 ? "on" : ""} onClick={() => { setWidth(375); setMobilePreview(true); }} style={{ border: 0, background: "transparent", font: "inherit", padding: "5px 12px", borderRadius: 6 }}>Mobile</button>
+              <button type="button" className={width === 620 ? "on" : ""} onClick={() => { setWidth(620); setMobilePreview(false); }}>Desktop</button>
+              <button type="button" className={width === 375 ? "on" : ""} onClick={() => { setWidth(375); setMobilePreview(true); }}>Mobile</button>
             </div>
           </div>
           <div className="bd em-prev">
             <p className="em-help" style={{ marginTop: 0 }}><b>{preview.subject}</b> · {preview.from}</p>
-            <iframe title="Email preview" sandbox="" srcDoc={preview.html} style={{ width: mobilePreview ? 375 : "100%", maxWidth: width, height: 640, border: 0, background: "#fff", display: "block", margin: "0 auto" }} />
+            <iframe title="Email preview" sandbox="" srcDoc={preview.html} className="em-frame" style={{ maxWidth: mobilePreview ? 375 : 620 }} />
           </div>
         </div>
       </div>
@@ -246,7 +286,7 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
         <div className="em-modal" role="presentation">
           <div className="em-dialog" role="dialog" aria-modal="true" aria-labelledby="test-h">
             <h2 id="test-h">Send a test</h2>
-            <p className="em-help">One address. The mailbox simulator is success@simulator.amazonses.com. The sample name is Sam.</p>
+            <p className="em-help">One address. Use a mailbox you can open. The sample name in the message is Sam.</p>
             <label className="em-field">Address<input value={testTo} onChange={(e) => setTestTo(e.target.value)} /></label>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
               <button type="button" className="btn" onClick={() => setTestOpen(false)}>Cancel</button>
@@ -285,7 +325,7 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
           </div>
         </div>
       )}
-      <p className="em-help" style={{ marginTop: 16 }}><Link href="/saabai-admin/email">Back to campaigns</Link></p>
+      <p style={{ marginTop: 16 }}><Link href="/saabai-admin/email" className="btn">Back to campaigns</Link></p>
     </div>
   );
 }

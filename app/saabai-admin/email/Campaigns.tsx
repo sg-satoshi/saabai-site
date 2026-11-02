@@ -16,12 +16,17 @@ function chip(c: CampaignView, paused: boolean) {
 }
 
 function when(c: CampaignView, paused: boolean) {
-  const at = new Date(c.createdAt).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+  const stamp = c.status === "scheduled" && c.scheduledAt ? c.scheduledAt : c.createdAt;
+  const at = new Date(stamp).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
   if (paused && c.status === "sending") return "Paused";
   if (c.status === "sending") return `Started ${at}`;
   if (c.status === "scheduled") return at;
   if (c.status === "sent") return at;
   return `Edited ${at}`;
+}
+
+function num(n: number) {
+  return n ? n.toLocaleString("en-AU") : "-";
 }
 
 export default function Campaigns() {
@@ -92,8 +97,8 @@ export default function Campaigns() {
               <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? "on" : ""} onClick={() => setTab(String(id))}>{label} <span className="num">{n}</span></button>
             ))}
           </div>
-          <label className="inp" style={{ width: 220 }}>
-            <input aria-label="Search campaigns" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search campaigns" style={{ border: 0, outline: 0, width: "100%", font: "inherit" }} />
+          <label className="inp" style={{ width: "min(100%, 280px)" }}>
+            <input aria-label="Search campaigns" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search campaigns" style={{ border: 0, outline: 0, width: "100%", font: "inherit", background: "transparent" }} />
           </label>
         </div>
         {!data && <div className="bd">{[1, 2, 3, 4].map((i) => <div key={i} className="em-skel" style={{ width: `${80 - i * 10}%` }} />)}</div>}
@@ -111,22 +116,33 @@ export default function Campaigns() {
           </div>
         )}
         {!!shown.length && (
-          <table>
-            <thead><tr><th>Campaign</th><th>Status</th><th>Sent</th><th>Open</th><th>Click</th><th>Unsub</th><th>When</th></tr></thead>
-            <tbody>
+          <>
+            <div className="em-mob">
               {shown.map((c) => (
-                <tr key={c.id}>
-                  <td style={{ whiteSpace: "normal" }}><Link href={`/saabai-admin/email/${c.id}`} style={{ color: "inherit", fontWeight: 600 }}>{c.name}</Link><div className="em-help">Waitlist, confirmed only</div></td>
-                  <td>{chip(c, !!(snap && snap.paused))}</td>
-                  <td className="num">{c.status === "sending" ? `${c.sent.toLocaleString("en-AU")} of ${c.queued.toLocaleString("en-AU")}` : c.sent ? c.sent.toLocaleString("en-AU") : "none"}</td>
-                  <td>no data</td>
-                  <td>no data</td>
-                  <td className="num">{c.skipped ? c.skipped.toLocaleString("en-AU") : "none"}</td>
-                  <td>{when(c, !!(snap && snap.paused))}</td>
-                </tr>
+                <Link key={c.id} className="oc" href={`/saabai-admin/email/${c.id}`}>
+                  <b>{c.name}</b>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6 }}>{chip(c, !!(snap && snap.paused))}<span className="em-help">{when(c, !!(snap && snap.paused))}</span></div>
+                </Link>
               ))}
-            </tbody>
-          </table>
+            </div>
+            <table className="em-desk">
+              <thead><tr><th>Campaign</th><th>Status</th><th className="r">Sent</th><th className="r">Open</th><th className="r">Click</th><th className="r">Unsub</th><th>When</th><th></th></tr></thead>
+              <tbody>
+                {shown.map((c) => (
+                  <tr key={c.id}>
+                    <td style={{ whiteSpace: "normal" }}><Link href={`/saabai-admin/email/${c.id}`} className="btn gh" style={{ height: "auto", minHeight: 44, paddingLeft: 0 }}>{c.name}</Link><div className="em-help">Waitlist, confirmed only</div></td>
+                    <td>{chip(c, !!(snap && snap.paused))}</td>
+                    <td className="num r">{c.status === "sending" ? `${c.sent.toLocaleString("en-AU")} of ${c.queued.toLocaleString("en-AU")}` : num(c.sent)}</td>
+                    <td className="r">no data</td>
+                    <td className="r">no data</td>
+                    <td className="num r">{num(c.unsubscribed)}</td>
+                    <td>{when(c, !!(snap && snap.paused))}</td>
+                    <td><Link href={`/saabai-admin/email/${c.id}`} className="btn sm" aria-label={`Open ${c.name}`}>Open</Link></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
         )}
       </div>
     </div>

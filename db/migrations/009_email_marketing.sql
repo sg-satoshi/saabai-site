@@ -96,6 +96,7 @@ create table if not exists email_campaigns (
   test_sent_at timestamptz,
   scheduled_at timestamptz,
   send_confirmed boolean not null default false,
+  typed_confirm boolean not null default false,
   status text not null default 'draft' check (status in ('draft', 'scheduled', 'sending', 'sent', 'cancelled')),
   request_key text unique,
   counts jsonb not null default '{}',
@@ -155,6 +156,7 @@ create table if not exists email_sends (
 create table if not exists email_suppressions (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid references email_tenants(id),
+  campaign_id uuid references email_campaigns(id),
   email text not null check (email = lower(email)),
   reason text not null,
   created_at timestamptz not null default now()
@@ -164,6 +166,10 @@ create unique index if not exists email_suppressions_tenant_email
   on email_suppressions (tenant_id, email) where tenant_id is not null;
 create unique index if not exists email_suppressions_global_email
   on email_suppressions (email) where tenant_id is null;
+-- One marketing row per person per campaign. A second send of the same campaign cannot insert another copy.
+create unique index if not exists email_sends_campaign_contact_key
+  on email_sends (campaign_id, contact_id)
+  where campaign_id is not null and contact_id is not null and kind = 'marketing';
 create index if not exists email_sends_pending_idx on email_sends (created_at) where status = 'pending';
 create index if not exists email_series_due_idx on email_series_enrolments (next_run_at) where status = 'active';
 create index if not exists email_contacts_tenant_status_idx on email_contacts (tenant_id, status);
@@ -405,16 +411,17 @@ $$;
 
 create or replace function email_recent_campaigns(p_tenant text)
 returns table (
-  id uuid, name text, status text, created_at timestamptz,
-  queued int, sent int, failed int, skipped int, pending int
+  id uuid, name text, status text, created_at timestamptz, scheduled_at timestamptz,
+  queued int, sent int, failed int, skipped int, pending int, unsubscribed int
 )
 language sql security definer set search_path = public as $$
-  select c.id, c.name, c.status, c.created_at,
+  select c.id, c.name, c.status, c.created_at, c.scheduled_at,
     count(s.id)::int,
     count(s.id) filter (where s.status = 'sent')::int,
     count(s.id) filter (where s.status = 'failed')::int,
     count(s.id) filter (where s.status = 'skipped')::int,
-    count(s.id) filter (where s.status in ('pending', 'sending'))::int
+    count(s.id) filter (where s.status in ('pending', 'sending'))::int,
+    (select count(*)::int from email_suppressions u where u.campaign_id = c.id and u.reason ilike '%unsub%')
   from email_campaigns c
   join email_tenants t on t.id = c.tenant_id and t.slug = p_tenant
   left join email_sends s on s.campaign_id = c.id
@@ -422,6 +429,11 @@ language sql security definer set search_path = public as $$
   order by c.created_at desc
   limit 20;
 $$;
+
+-- Rollback is manual, in the SQL editor, and only if this module has not been used:
+-- drop function if exists email_recent_campaigns(text);
+-- drop table if exists email_suppressions, email_sends, email_series_enrolments, email_series_steps, email_series, email_campaigns, email_templates, email_contacts, email_settings, email_tenants;
+-- alter table sunder_subscribers drop column if exists marketing_status, drop column if exists confirmed_at;
 
 revoke all on function email_after_quiet(timestamptz) from public, anon, authenticated;
 revoke all on function email_sync_sunder() from public, anon, authenticated;

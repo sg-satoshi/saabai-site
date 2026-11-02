@@ -10,11 +10,13 @@ export type CampaignView = {
   name: string;
   status: string;
   createdAt: string;
+  scheduledAt: string | null;
   queued: number;
   sent: number;
   failed: number;
   skipped: number;
   pending: number;
+  unsubscribed: number;
 };
 
 export type EmailAdminSnapshot = {

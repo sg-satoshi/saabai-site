@@ -16,6 +16,8 @@ import {
 import { SUNDER_IDENTITY } from "../lib/email/constants";
 import { SUNDER_LOGO_URL, documentHtml, textToBlocks } from "../lib/email/blocks";
 import { MIN_SENDS_FOR_RATES, rateDecision, sendBlocked, splitByDailyCap } from "../lib/email/gates";
+import { certUrlAllowed, providerEventsFromSns, snsSigningString, subscribeUrlAllowed, verifySnsSignature } from "../lib/email/sns";
+import { createSign, generateKeyPairSync } from "node:crypto";
 import { readEmailToken, signEmailToken } from "../lib/email/tokens";
 import { drainOutbox, type Outbox, type OutboxRow } from "../lib/email/worker";
 
@@ -328,11 +330,53 @@ test("the SUNDER document uses the hosted logo and fallback fonts", () => {
   assert.doesNotMatch(html, /@font-face/);
 });
 
+test("a campaign can be queued once, from the server, and events verify before they suppress", () => {
+  const sql = readFileSync("db/migrations/009_email_marketing.sql", "utf8");
+  assert.match(sql, /email_sends_campaign_contact_key/);
+  assert.match(sql, /where campaign_id is not null and contact_id is not null and kind = 'marketing'/);
+  const ops = readFileSync("lib/email/ops.ts", "utf8");
+  assert.match(ops, /idempotency_key: `broadcast:\$\{row\.id\}:\$\{c\.id\}`/);
+  assert.doesNotMatch(ops, /input\.requestKey/);
+  assert.match(ops, /\.in\("status", \["draft", "scheduled"\]\)/);
+  const composer = readFileSync("app/saabai-admin/email/Composer.tsx", "utf8");
+  assert.doesNotMatch(composer, /amazonses|simulator|requestKey/);
+  assert.match(composer, /useState\(""\)/);
+  assert.doesNotMatch(readFileSync("app/saabai-admin/email/health/Health.tsx", "utf8"), /configuration set/i);
+
+  const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
+  const msg = {
+    Type: "Notification",
+    MessageId: "mid",
+    TopicArn: "arn:aws:sns:ap-southeast-2:1:topic",
+    Message: JSON.stringify({ eventType: "Bounce", bounce: { bounceType: "Permanent", bouncedRecipients: [{ emailAddress: "a@b.co" }] }, mail: { tags: { tenant: ["sunder"] } } }),
+    Timestamp: "2026-11-02T00:00:00.000Z",
+    SignatureVersion: "1",
+  };
+  const signing = snsSigningString(msg);
+  assert.ok(signing);
+  const sign = createSign("RSA-SHA1");
+  sign.update(signing, "utf8");
+  const signature = sign.sign(privateKey).toString("base64");
+  const pem = publicKey.export({ type: "spki", format: "pem" }).toString();
+  assert.equal(verifySnsSignature({ ...msg, Signature: signature }, pem), true);
+  assert.equal(verifySnsSignature({ ...msg, Signature: signature, Message: "tampered" }, pem), false);
+  assert.equal(certUrlAllowed("https://sns.ap-southeast-2.amazonaws.com/SimpleNotificationService-abc.pem"), true);
+  assert.equal(certUrlAllowed("http://sns.ap-southeast-2.amazonaws.com/SimpleNotificationService-abc.pem"), false);
+  assert.equal(certUrlAllowed("https://evil.example/SimpleNotificationService-abc.pem"), false);
+  assert.equal(subscribeUrlAllowed("https://sns.ap-southeast-2.amazonaws.com/?Action=ConfirmSubscription"), true);
+  assert.equal(subscribeUrlAllowed("https://evil.example/confirm"), false);
+  const events = providerEventsFromSns(msg.Message);
+  assert.deepEqual(events, [{ email: "a@b.co", reason: "bounce", tenant: "sunder", campaignId: null }]);
+  assert.deepEqual(providerEventsFromSns(JSON.stringify({ eventType: "Bounce", bounce: { bounceType: "Transient", bouncedRecipients: [{ emailAddress: "a@b.co" }] } })), []);
+  assert.equal(providerEventsFromSns(JSON.stringify({ eventType: "Complaint", complaint: { complainedRecipients: [{ emailAddress: "c@d.co" }] } }))[0].reason, "complaint");
+});
+
 test("routes, cron and the public proxy list match the module", () => {
   const proxy = readFileSync("proxy.ts", "utf8");
   const pub = proxy.slice(proxy.indexOf("const PUBLIC_API"), proxy.indexOf("const ADMIN_API"));
   assert.match(pub, /\/api\/email\/unsubscribe/);
   assert.match(pub, /\/api\/email\/confirm/);
+  assert.match(pub, /\/api\/email\/ses-events/);
   assert.doesNotMatch(pub, /\/api\/admin\/email/);
   const cron = readFileSync("app/api/cron/email-send/route.ts", "utf8");
   assert.match(cron, /Bearer \$\{process\.env\.CRON_SECRET\}/);
