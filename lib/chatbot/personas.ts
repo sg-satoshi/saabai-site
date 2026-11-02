@@ -1,5 +1,6 @@
 import { lmmLicensingLine } from "../lmm-legal";
 import type { GoalConfig } from "./goal";
+import { SUNDER_PERSONA } from "./sunder-bot";
 import { DISCLOSURE_ONCE_RULE, NOT_SURE_RULE, openingGreeting } from "./disclosure";
 
 /**
@@ -417,7 +418,7 @@ export const SOFIA_PERSONA: BotPersona = {
   },
 };
 
-export const PERSONAS: readonly BotPersona[] = [ZARA_PERSONA, BO_PERSONA, SOFIA_PERSONA];
+export const PERSONAS: readonly BotPersona[] = [ZARA_PERSONA, BO_PERSONA, SOFIA_PERSONA, SUNDER_PERSONA];
 
 /** Greeting for a slug that has a persona. Other sites use openingGreeting on the saved line. */
 export function greetingForSlug(slug: string | undefined, botName: string, businessName: string, storedGreeting?: string): string {

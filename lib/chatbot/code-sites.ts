@@ -3,6 +3,7 @@
  * Static HTML sites are not in APP_ROUTER_SITES. This does not change redirects.
  */
 import type { SiteConfig } from "../site-registry";
+import { SUNDER_DOMAINS, SUNDER_PERSONA } from "./sunder-bot";
 import { NICO_DOMAINS, SOFIA_SYSTEM_PROMPT, personaGreeting, SOFIA_PERSONA } from "./personas";
 
 export function nicoMorettiSite(now = 1745000000000): SiteConfig {
@@ -30,7 +31,17 @@ export function nicoMorettiSite(now = 1745000000000): SiteConfig {
   };
 }
 
+export function sunderSite(now = 1762041600000): SiteConfig {
+  return {
+    id: "sunder", slug: "sunder", name: "SUNDER", niche: "retail", description: "Static client site",
+    status: "live", source: "external", url: "https://sunder.com.au", externalUrl: "https://sunder.com.au",
+    business: { name: "SUNDER", email: "hello@sunder.com.au" },
+    chatbot: { enabled: true, name: SUNDER_PERSONA.botName, greeting: personaGreeting(SUNDER_PERSONA), systemPrompt: "" },
+    domains: [...SUNDER_DOMAINS], createdAt: now, updatedAt: now,
+  };
+}
+
 /** Code registry rows merged in when that slug is not already stored. */
 export function codeChatbotSites(): SiteConfig[] {
-  return [nicoMorettiSite()];
+  return [nicoMorettiSite(), sunderSite()];
 }
