@@ -79,3 +79,15 @@ test("chatLimited: per-IP minute, per-IP day, bot day, and fails open", async ()
   assert.equal(await chatLimited(req, "sunder", lim, broken, t), null);
   assert.deepEqual(SUNDER_PERSONA.chatLimits, { perIpMinute: 6, perIpDay: 40, botDay: 400 });
 });
+
+test("sunder: rules and fun section is in the prompt, sparing and SUNDER-safe", async () => {
+  const m = await import("../lib/chatbot/sunder-bot");
+  const { buildSystemPrompt } = await import("../lib/chatbot/personas");
+  const p = buildSystemPrompt(m.SUNDER_PERSONA);
+  assert.match(p, /Two bounce rule/); assert.match(p, /Kitchen \(non volley zone\)/); assert.match(p, /Padel/);
+  assert.match(p, /Bainbridge Island/); assert.match(p, /Erne Perry/); assert.match(p, /disputed/);
+  assert.match(p, /never in every reply/); assert.match(p, /Never invent stats or facts about SUNDER/);
+  assert.ok(m.SUNDER_FUN_FACTS.length >= 15 && m.SUNDER_FUN_FACTS.length <= 20);
+  assert.ok(m.SUNDER_JOKES.length >= 10);
+  assert.doesNotMatch(p, / - |[\u2013\u2014]/);
+});
