@@ -143,6 +143,8 @@ const PUBLIC_API = [
   // Scheduled jobs (each route checks Authorization: Bearer ${CRON_SECRET}
   "/api/cron",
   "/api/unsubscribe",       // one-click marketing unsubscribe (signed token)
+  "/api/email/unsubscribe", // SUNDER RFC 8058 one-click (signed token, POST only)
+  "/api/email/confirm",     // SUNDER double opt-in confirm (signed token)
   "/api/testimonial",       // client testimonial form (unguessable token)
   "/api/instagram/cron",
   // MCP gateway — self-authenticated. The route enforces Authorization: Bearer

@@ -90,6 +90,7 @@ const NAV: NavGroup[] = [
     section: "Marketing",
     items: [
       { label: "Drafts", href: "/saabai-admin/marketing", icon: "mail" },
+      { label: "SUNDER email", href: "/saabai-admin/email", icon: "mail" },
       { label: "Announcements", href: "/saabai-admin/announcements", icon: "bell" },
       { label: "Website scanner", href: "/saabai-admin/website-scan", icon: "search" },
       { label: "Pulse", href: "/saabai-admin/marketing/pulse", icon: "bell" },

@@ -20,6 +20,13 @@ export async function POST(req: NextRequest) {
   }
   try {
     const r = await signup(await supabaseStore(), v.input, { ipHash: ipHash(req), userAgent: req.headers.get("user-agent") });
+    // Double opt-in for marketing. A failure here must not fail the waitlist signup.
+    try {
+      const { afterSunderSignup } = await import("../../../lib/email/ops");
+      await afterSunderSignup({ email: v.input.email, firstName: v.input.firstName, created: r.token !== null });
+    } catch (confirmError) {
+      console.error("sunder confirmation queue failed:", confirmError instanceof Error ? confirmError.message : "error");
+    }
     return Response.json({ ok: true, ref: r.ref, token: r.token }, { headers: NO_STORE });
   } catch (e) {
     console.error("sunder waitlist signup failed:", e instanceof Error ? e.message : "error");
