@@ -110,6 +110,13 @@
     ".fu button{border:0;background:var(--primary);color:#fff;border-radius:8px;padding:7px 12px;font:inherit;font-weight:600;cursor:pointer;margin-right:6px}",
     ".fu button.ln{background:none;color:var(--primary);text-decoration:underline;padding:7px 0}",
     ".sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}",
+    /* Opt-in fixes (config a11y). Other bots are unchanged. */
+    ".w.a11y :focus-visible{outline:3px solid var(--primary)!important;outline-offset:2px}",
+    ".w.a11y .btn:focus-visible,.w.a11y .head :focus-visible,.w.a11y .m.user :focus-visible{outline-color:var(--accent)!important}",
+    ".w.a11y .send{border:2px solid var(--primary);width:44px;height:44px}.w.a11y .send:disabled{opacity:.7}",
+    ".w.a11y .cta{border-color:var(--primary)}.w.a11y .close{min-width:44px;min-height:44px}.w.a11y .st{white-space:nowrap}",
+    ".w.a11y .qr button{min-height:44px}.w.a11y .pw,.w.a11y .pl{color:rgba(0,0,0,.75);font-size:12px}.w.a11y .pl{display:block;align-self:center}",
+    "@media (max-width:480px){.w.a11y{bottom:calc(12px + env(safe-area-inset-bottom))}.w.a11y.right{right:calc(12px + env(safe-area-inset-right))}.w.a11y.left{left:calc(12px + env(safe-area-inset-left))}.w.a11y .panel{left:calc(8px + env(safe-area-inset-left));right:calc(8px + env(safe-area-inset-right));bottom:calc(84px + env(safe-area-inset-bottom));height:min(560px,calc(100vh - 100px));height:min(560px,calc(100dvh - 100px));max-height:calc(100dvh - 100px)}}",
     "@media (max-width:480px){.w{bottom:12px}.w.right{right:12px}.w.left{left:12px}.panel{position:fixed;left:8px;right:8px;bottom:84px;width:auto;max-width:none;height:min(560px,calc(100vh - 100px))}}"
   ].join("");
 
@@ -171,7 +178,7 @@
     var s = els.w;
     var set = function (k, v, d) { s.style.setProperty(k, HEX.test(v || "") ? v : d); };
     set("--primary", c.primary, "#0f2a4a"); set("--accent", c.accent, "#c9a227"); set("--bg", c.bg, "#f6f7f9"); set("--text", c.text, "#1c2430");
-    els.w.className = "w " + (c.position === "left" ? "left" : "right");
+    els.w.className = "w " + (c.position === "left" ? "left" : "right") + (c.a11y === true ? " a11y" : "");
     els.panel.setAttribute("aria-label", "Chat with " + c.botName);
     els.btn.setAttribute("aria-label", "Chat with " + c.botName);
     els.nm.textContent = c.botName;
@@ -198,7 +205,7 @@
     var eg = c.engage || {};
     if (els.pl) {
       var purl = linkUrl(c.privacyUrl || "");
-      if (purl) { els.pl.href = purl; els.pl.style.display = ""; } else els.pl.style.display = "none";
+      if (purl) { els.pl.href = purl; els.pl.style.display = c.a11y === true ? "block" : ""; } else els.pl.style.display = "none";
     }
     var logoUrl = safeUrl(c.logoUrl);
     if (!els.logo && els.head && els.av) { els.logo = el("img", "logo"); els.logo.alt = ""; els.head.insertBefore(els.logo, els.av); }

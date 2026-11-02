@@ -275,6 +275,8 @@ export interface PublicWidgetConfig {
   engage: PublicEngage;
   /** Small Privacy link. Empty unless this bot sets one in code. */
   privacyUrl: string;
+  /** Opt-in widget accessibility fixes, set in code per bot. */
+  a11y?: true;
 }
 
 export function toPublicConfig(opts: { slug?: string; active: boolean; config: Pick<ChatbotConfig, "plan" | "skin" | "goal" | "engage">; site: { name: string; business?: { name?: string; phone?: string; email?: string }; chatbot?: { name?: string; greeting?: string; avatarUrl?: string } } }): PublicWidgetConfig {
@@ -305,6 +307,7 @@ export function toPublicConfig(opts: { slug?: string; active: boolean; config: P
     goal: toPublicGoal(effectiveGoal(opts.slug, opts.config.goal)),
     engage: toPublicEngage(effectiveEngage(opts.config.engage), { leadCapture: leadCaptureEnabled() }),
     privacyUrl: privacyUrlFor(opts.slug),
+    ...(persona?.widgetA11y ? { a11y: true as const } : {}),
   };
 }
 

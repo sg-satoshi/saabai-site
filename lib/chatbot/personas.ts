@@ -48,6 +48,13 @@ export interface BotPersona {
   fallbackModel?: string;
   /** Also rewrite a spaced hyphen used as a dash (" - ") to a comma. Off by default. */
   noSpacedHyphen?: boolean;
+  /**
+   * Opt-in widget fixes (privacy link shown, focus rings, mobile safe areas, contrast).
+   * Code-only. Other bots keep the current widget look until they opt in.
+   */
+  widgetA11y?: boolean;
+  /** Code-only extra limits for this bot, on top of the shared per-slug limits. */
+  chatLimits?: { perIpMinute: number; perIpDay: number; botDay: number };
   /** https privacy policy for a small Privacy link. Absent means no link. */
   privacyUrl?: string;
   /**

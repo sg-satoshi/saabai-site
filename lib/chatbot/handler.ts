@@ -11,6 +11,7 @@ import { isNotSureReply } from "./events";
 import { buildSystemPrompt, domainsForBot, getPersona, noSpacedHyphen, type BotPersona } from "./personas";
 import { NO_DASH_RULE, noDashes } from "../no-dashes";
 import { fallbackSessionId, getConfig, isEnabled, recordChatEvent, recordTokens, recordUsage } from "./store";
+import { chatLimited } from "./ratelimit";
 import { lastUserText, logChatTurn, modelIdFrom } from "../chat-log";
 
 export function cors(origin: string | null): Record<string, string> {
@@ -111,6 +112,12 @@ export async function handleChat(req: NextRequest): Promise<Response> {
     const limited = await slugLimited(slug);
     if (limited) {
       return say("This chat is very busy right now. Please try again shortly, or contact the team directly.", 429, { ...h, "Retry-After": limited === "minute" ? "60" : "3600" });
+    }
+
+    const botLimits = getPersona(slug)?.chatLimits;
+    if (botLimits) {
+      const hit = await chatLimited(req, slug, botLimits);
+      if (hit) return say("This chat is very busy right now. Please try again later.", 429, { ...h, "Retry-After": hit === "ip-minute" ? "60" : "3600" });
     }
 
     const chatMessages = cleanMessages(body?.messages);

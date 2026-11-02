@@ -45,3 +45,35 @@ test("spaced hyphen dashes are rewritten, bullets kept", async () => {
   assert.equal(noSpacedHyphen("12-month warranty"), "12-month warranty");
   assert.equal(SUNDER_PERSONA.noSpacedHyphen, true);
 });
+
+test("a11y widget fixes are opt-in: only SUNDER's public config sets a11y", async () => {
+  const { toPublicConfig } = await import("../lib/chatbot/core");
+  const cfg = { plan: "presence" as const, skin: undefined, goal: undefined, engage: undefined } as never;
+  const site = { name: "x" };
+  assert.equal(toPublicConfig({ slug: "sunder", active: true, config: cfg, site }).a11y, true);
+  assert.equal(toPublicConfig({ slug: "nico-moretti", active: true, config: cfg, site }).a11y, undefined);
+  const { readFileSync } = await import("node:fs");
+  const js = readFileSync("public/embed/chat.v1.js", "utf8");
+  assert.match(js, /c\.a11y === true \? " a11y"/);
+  assert.match(js, /100dvh/);
+  assert.match(readFileSync("public/clients/sunder/index.html", "utf8"), /chat\.v1\.js\?v=1\.3\.2" data-site="sunder"/);
+});
+
+test("chatLimited: per-IP minute, per-IP day, bot day, and fails open", async () => {
+  const { chatLimited } = await import("../lib/chatbot/ratelimit");
+  const store = new Map<string, number>();
+  const redis = { incr: async (k: string) => { const n = (store.get(k) ?? 0) + 1; store.set(k, n); return n; }, expire: async () => 1 };
+  const req = new Request("https://x", { headers: { "x-forwarded-for": "1.2.3.4" } });
+  const lim = { perIpMinute: 2, perIpDay: 3, botDay: 100 };
+  const t = Date.UTC(2026, 10, 2, 1, 0, 0);
+  assert.equal(await chatLimited(req, "sunder", lim, redis, t), null);
+  assert.equal(await chatLimited(req, "sunder", lim, redis, t), null);
+  assert.equal(await chatLimited(req, "sunder", lim, redis, t), "ip-minute");
+  assert.equal(await chatLimited(req, "sunder", lim, redis, t + 61000), null);
+  assert.equal(await chatLimited(req, "sunder", lim, redis, t + 122000), "ip-day");
+  const req2 = new Request("https://x", { headers: { "x-forwarded-for": "9.9.9.9" } });
+  assert.equal(await chatLimited(req2, "sunder", { perIpMinute: 9, perIpDay: 9, botDay: 0 }, redis, t), "bot-day");
+  const broken = { incr: async () => { throw new Error("down"); }, expire: async () => 1 };
+  assert.equal(await chatLimited(req, "sunder", lim, broken, t), null);
+  assert.deepEqual(SUNDER_PERSONA.chatLimits, { perIpMinute: 6, perIpDay: 40, botDay: 400 });
+});
