@@ -98,6 +98,7 @@ export const SUNDER_PERSONA: BotPersona = {
   // Same cheap model as the platform fallback. Uses the existing Anthropic key. No new env.
   noSpacedHyphen: true,
   widgetA11y: true,
+  poweredByLabel: "Saabai.ai", // Shane 2 Nov 2026. SUNDER only.
   // Tighter than the shared 60 a minute / 2,000 a day per slug. Same Upstash Redis, no new env.
   chatLimits: { perIpMinute: 6, perIpDay: 40, botDay: 400 },
   fallbackModel: "anthropic:claude-haiku-4-5",

@@ -277,6 +277,8 @@ export interface PublicWidgetConfig {
   privacyUrl: string;
   /** Opt-in widget accessibility fixes, set in code per bot. */
   a11y?: true;
+  /** Link text after "Powered by", only when a bot sets it in code. */
+  poweredByLabel?: string;
 }
 
 export function toPublicConfig(opts: { slug?: string; active: boolean; config: Pick<ChatbotConfig, "plan" | "skin" | "goal" | "engage">; site: { name: string; business?: { name?: string; phone?: string; email?: string }; chatbot?: { name?: string; greeting?: string; avatarUrl?: string } } }): PublicWidgetConfig {
@@ -308,6 +310,7 @@ export function toPublicConfig(opts: { slug?: string; active: boolean; config: P
     engage: toPublicEngage(effectiveEngage(opts.config.engage), { leadCapture: leadCaptureEnabled() }),
     privacyUrl: privacyUrlFor(opts.slug),
     ...(persona?.widgetA11y ? { a11y: true as const } : {}),
+    ...(persona?.poweredByLabel ? { poweredByLabel: persona.poweredByLabel } : {}),
   };
 }
 

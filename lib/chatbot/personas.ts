@@ -53,6 +53,8 @@ export interface BotPersona {
    * Code-only. Other bots keep the current widget look until they opt in.
    */
   widgetA11y?: boolean;
+  /** Code-only link text after "Powered by". Absent keeps "Saabai AI". */
+  poweredByLabel?: string;
   /** Code-only extra limits for this bot, on top of the shared per-slug limits. */
   chatLimits?: { perIpMinute: number; perIpDay: number; botDay: number };
   /** https privacy policy for a small Privacy link. Absent means no link. */

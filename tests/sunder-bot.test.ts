@@ -52,6 +52,8 @@ test("a11y widget fixes are opt-in: only SUNDER's public config sets a11y", asyn
   const site = { name: "x" };
   assert.equal(toPublicConfig({ slug: "sunder", active: true, config: cfg, site }).a11y, true);
   assert.equal(toPublicConfig({ slug: "nico-moretti", active: true, config: cfg, site }).a11y, undefined);
+  assert.equal(toPublicConfig({ slug: "sunder", active: true, config: cfg, site }).poweredByLabel, "Saabai.ai");
+  assert.equal(toPublicConfig({ slug: "nico-moretti", active: true, config: cfg, site }).poweredByLabel, undefined);
   const { readFileSync } = await import("node:fs");
   const js = readFileSync("public/embed/chat.v1.js", "utf8");
   assert.match(js, /c\.a11y === true \? " a11y"/);

@@ -146,7 +146,7 @@
     send.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>';
     bar.appendChild(inp); bar.appendChild(send);
     var pw = el("div", "pw"); els.pw = pw;
-    var a = el("a", "", "Saabai AI"); a.href = "https://www.saabai.ai"; a.target = "_blank"; a.rel = "noopener"; pw.appendChild(document.createTextNode("Powered by ")); pw.appendChild(a);
+    var a = el("a", "", "Saabai AI"); els.pwa = a; a.href = "https://www.saabai.ai"; a.target = "_blank"; a.rel = "noopener"; pw.appendChild(document.createTextNode("Powered by ")); pw.appendChild(a);
     var go = el("div", "go"); els.go = go;
     var offer = el("div", "offer"); offer.style.display = "none"; els.offer = offer;
     var pl = el("a", "pl", "Privacy policy"); pl.target = "_blank"; pl.rel = "noopener"; els.pl = pl;
@@ -191,6 +191,7 @@
     }
     fill(els.btn, true); fill(els.av, false);
     els.pw.style.display = c.poweredBy === false ? "none" : "";
+    if (els.pwa && typeof c.poweredByLabel === "string" && c.poweredByLabel && c.poweredByLabel.length <= 40) els.pwa.textContent = c.poweredByLabel;
     if (els.go) {
       els.go.textContent = "";
       if (c.handoff && c.handoff.href && c.handoff.label) {
