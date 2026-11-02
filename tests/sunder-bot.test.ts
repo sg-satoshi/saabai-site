@@ -91,3 +91,10 @@ test("sunder: rules and fun section is in the prompt, sparing and SUNDER-safe", 
   assert.ok(m.SUNDER_JOKES.length >= 10);
   assert.doesNotMatch(p, / - |[\u2013\u2014]/);
 });
+
+test("sunder: polish rules (90 word cap, kitchen opener, not public yet plus CTA)", () => {
+  const p = buildSystemPrompt(SUNDER_PERSONA);
+  assert.match(p, /Hard limit: every reply is 90 words or fewer/);
+  assert.match(p, /you can stand in the kitchen, you just cannot volley from it/);
+  assert.match(p, /price, cost, specs .* or the launch date, say plainly that it is not public yet and that the Pre-Launch List hears first/);
+});
