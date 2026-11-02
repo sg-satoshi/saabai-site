@@ -3,7 +3,7 @@ import ConfirmNow from "./ConfirmNow";
 import { SunderError } from "./SunderPages";
 import "./sunder-confirm.css";
 
-export const metadata = { title: "Confirm your email | SUNDER", robots: { index: false, follow: false } };
+export const metadata = { title: "Confirm your email | SUNDER", robots: { index: false, follow: false }, referrer: "no-referrer" as const };
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ t?: string }> }) {
   const { t = "" } = await searchParams;

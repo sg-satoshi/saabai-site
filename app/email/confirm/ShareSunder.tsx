@@ -22,7 +22,7 @@ export default function ShareSunder() {
   return (
     <>
       <a className="btn" href={URL_} onClick={share}>Share SUNDER</a>
-      {copied ? <span className="toast" role="status">Copied</span> : null}
+      <span className="toast" role="status" aria-live="polite">{copied ? "Copied" : ""}</span>
     </>
   );
 }

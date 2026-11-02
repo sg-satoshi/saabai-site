@@ -85,7 +85,8 @@ export function SunderUnsubscribed() {
   return (
     <div className="se"><div className="in2">
       <img className="lk" src={`${IMG}/sunder-lockup-colour-dark.svg`} alt="SUNDER" />
-      <p style={{ marginTop: 36 }}>This address is unsubscribed, so we won&apos;t send marketing to it.</p>
+      <h1 className="cap off">You&apos;re off the list.</h1>
+      <p>This address is unsubscribed, so we won&apos;t send marketing to it.</p>
       <a className="btn" href={SUNDER_NEW_LINK}>Join again</a>
     </div></div>
   );

@@ -56,7 +56,12 @@
 .se .btn{display:flex;max-width:420px;background:#d4ff3a;color:#0d0d0d;margin-top:24px;width:100%}
 .se small{display:block;margin-top:16px;color:#f2f2ee88;font-size:14px}
 .sc .toast{margin-left:10px;font-size:14px;font-weight:700}
-.sc .note{font-size:17px;line-height:1.5;margin-top:22px}
-.sc .pre .btn{background:#0d0d0d;color:#d4ff3a;margin-top:28px;cursor:pointer}
+.sc.pre .btn{background:#0d0d0d;color:#d4ff3a;margin-top:28px;cursor:pointer}
 .se .in2{max-width:560px;margin:0 auto}
 body:has(.sc),body:has(.se){margin:0;background:#f2f2ee}body:has(.se){background:#0d0d0d}
+.sc :focus-visible,.se :focus-visible{outline:2px solid #d4ff3a;outline-offset:3px}
+.sc .share :focus-visible{outline-color:#0d0d0d}
+.sc .foot a{display:inline-block;padding:6px 0}
+.sc .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.se h1.off{margin-top:36px}
+.sc button.btn{font-family:inherit;font-weight:700;border:0}

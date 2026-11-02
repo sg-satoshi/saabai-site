@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { EMAIL_PUBLIC_ORIGIN, SUNDER_PUBLIC_ORIGIN, confirmOrigin } from "../lib/email/constants";
 import { sunderAppRoute } from "../lib/sunder-factory-seed";
+import { skipsFeedback } from "../app/components/ui/ButtonFeedback";
 
 const read = (p: string) => readFileSync(p, "utf8");
 
@@ -38,4 +39,20 @@ test("confirm view maps POST status to the right state", async () => {
   assert.match(src, /state === "confirmed" \|\| state === "already"\) return <SunderConfirmed \/>/);
   assert.match(src, /state === "bad"\) return <SunderError \/>/);
   assert.match(src, /state === "unsubscribed"\) return <SunderUnsubscribed \/>/);
+});
+
+test("r2: pending button styled, no Saabai toasts on /email, a11y and referrer", () => {
+  const css = read("app/email/confirm/sunder-confirm.css");
+  assert.ok(css.includes(".sc.pre .btn{"));
+  assert.ok(!css.includes(".sc .pre "));
+  assert.ok(!css.includes(".sc .note"));
+  assert.ok(css.includes(".sc :focus-visible,.se :focus-visible{outline:2px solid #d4ff3a"));
+  assert.ok(skipsFeedback("/email/confirm"));
+  assert.ok(skipsFeedback("/email"));
+  assert.ok(!skipsFeedback("/emails"));
+  assert.ok(!skipsFeedback("/"));
+  assert.match(read("app/components/ui/ButtonFeedback.tsx"), /skipsFeedback\(location\.pathname\)\) return orig/);
+  assert.match(read("app/email/confirm/page.tsx"), /referrer: "no-referrer"/);
+  assert.ok(read("app/email/confirm/SunderPages.tsx").includes("You&apos;re off the list."));
+  assert.match(read("app/email/confirm/ShareSunder.tsx"), /role="status" aria-live="polite">\{copied \? "Copied" : ""\}/);
 });
