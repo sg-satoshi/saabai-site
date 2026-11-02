@@ -17,7 +17,7 @@ const SUPPRESS_PATHS = [
   // Focused Blueprint flows: no chat or sticky bars
   "/score", "/blueprint/checkout", "/blueprint/confirmation",
   // Client feedback and unsubscribe: focused, no sales widgets
-  "/testimonial", "/unsubscribe",
+  "/testimonial", "/unsubscribe", "/email",
   // Admin pages have their own nav
   "/login", "/saabai-admin",
   // LeadGen — has its own dedicated widget

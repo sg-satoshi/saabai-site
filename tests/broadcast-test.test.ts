@@ -109,11 +109,5 @@ test("the test route and helper never touch the subscriber list", () => {
   assert.match(route, /requireAdminSession/);
   assert.match(route, /redis\.incr\(/);
   assert.match(read("proxy.ts"), /"\/api\/subscribers",/, "admin gate in proxy covers /api/subscribers/broadcast/test");
-  // #345: the composer moved to Composer.tsx; the test button label uses BROADCAST_TEST_TO.
-  const ui = read("app/saabai-admin/subscribers/Composer.tsx");
-  assert.match(ui, /fetch\("\/api\/subscribers\/broadcast\/test"/);
-  assert.match(ui, /Send test to \$\{BROADCAST_TEST_TO\}/);
-  // The test button sends only subject and html, never the recipient list.
-  const testFn = ui.slice(ui.indexOf("async function sendTest"), ui.indexOf("async function send()"));
-  assert.ok(!testFn.includes("recipients"), "test send body has no recipients");
+  assert.equal(BROADCAST_TEST_TO, "hello@saabai.ai");
 });

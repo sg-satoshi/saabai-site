@@ -87,6 +87,15 @@ const NAV: NavGroup[] = [
     ],
   },
   {
+    section: "Email",
+    items: [
+      { label: "Campaigns", href: "/saabai-admin/email", icon: "mail" },
+      { label: "Series", href: "/saabai-admin/email/series", icon: "flow" },
+      { label: "Subscribers", href: "/saabai-admin/email/subscribers", icon: "users" },
+      { label: "Sending health", href: "/saabai-admin/email/health", icon: "chart" },
+    ],
+  },
+  {
     section: "Marketing",
     items: [
       { label: "Drafts", href: "/saabai-admin/marketing", icon: "mail" },
@@ -106,7 +115,7 @@ const NAV: NavGroup[] = [
       { label: "Testimonials", href: "/saabai-admin/growth/testimonials", icon: "doc" },
       { label: "Referrals", href: "/saabai-admin/growth/referrals", icon: "users" },
       { label: "Attribution", href: "/saabai-admin/growth/attribution", icon: "layers" },
-      { label: "Subscribers", href: "/saabai-admin/subscribers", icon: "mail" },
+      { label: "Subscribers (legacy)", href: "/saabai-admin/subscribers", icon: "mail" },
       { label: "Wholesale Leads", href: "/saabai-admin/wholesale-leads", icon: "home" },
       { label: "LinkedIn", href: "/saabai-admin/social/linkedin", icon: "in" },
       { label: "Instagram", href: "/saabai-admin/social/instagram", icon: "ig" },
@@ -137,7 +146,7 @@ const NAV: NavGroup[] = [
 
 function isActive(pathname: string, href: string) {
   const path = href.split("?")[0];
-  if (path === "/saabai-admin" || path === "/saabai-admin/marketing") return pathname === path;
+  if (path === "/saabai-admin" || path === "/saabai-admin/marketing" || path === "/saabai-admin/email") return pathname === path;
   return pathname === path || pathname.startsWith(path + "/");
 }
 

@@ -2,13 +2,15 @@
  * SUNDER waitlist (sunder.com.au). Validation, referral codes, tokens and the
  * store calls. Storage is Supabase table sunder_subscribers
  * (db/migrations/008_sunder_waitlist.sql), service role only.
- * Single opt-in. Referrer extra entries are capped at 10 in SQL.
+ * The waitlist row is still created on signup. Marketing email is double opt-in
+ * after migration 009: existing rows stay confirmed, new rows start pending.
+ * Referrer extra entries are capped at 10 in SQL.
  */
 import { createHash, randomBytes } from "node:crypto";
 
-export const SUNDER_CONSENT_VERSION = "2026-11-01-v1";
+export const SUNDER_CONSENT_VERSION = "2026-11-02-v2";
 export const SUNDER_CONSENT_TEXT =
-  "By joining, you agree to receive emails from Saabai Pty Ltd (ABN 44 703 735 264) trading as SUNDER about our launch, offers and giveaways. Unsubscribe any time.";
+  "By joining, you agree to receive emails from Saabai Pty Ltd (ABN 44 703 735 264) trading as SUNDER about our launch, offers and giveaways. We email you to confirm before any marketing. Unsubscribe any time.";
 export const SUNDER_SMS_CONSENT_TEXT = "Text me launch news and offers. Reply STOP to opt out.";
 export const REFERRAL_CAP = 10;
 export const LAUNCH_PREFS = ["outright", "subscription", "unsure"] as const;
