@@ -75,7 +75,7 @@ ${hidden}
 <tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#0d0d0d;">
   <tr><td style="padding:28px 40px 18px;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="vertical-align:middle;padding:0;"><img src="${SUNDER_LOGO_URL}" alt="SUNDER" width="150" style="display:block;width:150px;max-width:150px;height:auto;border:0;"></td><td style="vertical-align:middle;padding:0 0 0 10px;"><span style="font-family:Arial,Helvetica,sans-serif;font-size:22px;line-height:22px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:#d4ff3a;">PICKLEBALL</span></td></tr></table>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="vertical-align:middle;padding:0;"><img src="${SUNDER_LOGO_URL}" alt="SUNDER" width="120" style="display:block;width:120px;max-width:100%;height:auto;border:0;"></td><td style="vertical-align:middle;padding:0 0 0 8px;"><span style="font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:18px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#d4ff3a;">PICKLEBALL</span></td></tr></table>
     <p style="margin:8px 0 0;font-family:${HEAD};font-size:11px;letter-spacing:0.14em;font-weight:800;color:#d4ff3a;">SPLIT THE GAME OPEN.</p>
   </td></tr>
   <tr><td style="padding:8px 40px 8px;">${inner}</td></tr>
