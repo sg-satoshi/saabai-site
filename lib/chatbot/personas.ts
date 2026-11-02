@@ -48,6 +48,8 @@ export interface BotPersona {
   fallbackModel?: string;
   /** Also rewrite a spaced hyphen used as a dash (" - ") to a comma. Off by default. */
   noSpacedHyphen?: boolean;
+  /** Code-side reply word cap (trim at a sentence end). SUNDER only for now. */
+  maxReplyWords?: number;
   /**
    * Opt-in widget fixes (privacy link shown, focus rings, mobile safe areas, contrast).
    * Code-only. Other bots keep the current widget look until they opt in.
@@ -97,6 +99,36 @@ export function buildSystemPrompt(persona: BotPersona): string {
 }
 
 /** " - " between words becomes ", ". Line-start bullets ("- item") are kept. */
+const countWords = (t: string) => (t.match(/\S+/g) || []).length;
+
+/**
+ * Trim a reply over `max` words at the last sentence end at or before `max` words.
+ * Keeps the closing question when one fits: the kept text plus that question stays within `max`.
+ * A reply with no usable sentence end is returned unchanged rather than cut mid-sentence.
+ */
+export function capReplyWords(text: string, max = 90): string {
+  if (countWords(text) <= max) return text;
+  const ends: number[] = [];
+  const re = /[.!?]+["')\]]*(?=\s|$)/g;
+  for (let m; (m = re.exec(text)); ) ends.push(m.index + m[0].length);
+  if (!ends.length) return text;
+  const lastStart = ends.length > 1 ? ends[ends.length - 2] : 0;
+  const lastSentence = text.slice(lastStart).trim();
+  const question = /\?["')\]]*$/.test(lastSentence) && ends[ends.length - 1] >= text.trimEnd().length ? lastSentence : "";
+  const pick = (budget: number, limit: number) => {
+    let best = -1;
+    for (const e of ends) if (e <= limit && countWords(text.slice(0, e)) <= budget) best = e;
+    return best;
+  };
+  if (question) {
+    const qw = countWords(question);
+    const cut = pick(max - qw, lastStart);
+    if (cut > 0) return text.slice(0, cut).trimEnd() + "\n\n" + question;
+  }
+  const cut = pick(max, text.length);
+  return cut > 0 ? text.slice(0, cut).trimEnd() : text;
+}
+
 export function noSpacedHyphen(text: string): string {
   return text.replace(/(\S)[ \t]+-[ \t]+(?=\S)/g, "$1, ").replace(/,\s*([.!?])/g, "$1");
 }

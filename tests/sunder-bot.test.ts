@@ -1,6 +1,7 @@
 /** SUNDER chatbot persona: guardrails present, no banned claims. Run: npx tsx --test tests/sunder-bot.test.ts */
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { SUNDER_PERSONA, SUNDER_GOAL } from "../lib/chatbot/sunder-bot";
 import { buildSystemPrompt, getPersona, domainsForBot } from "../lib/chatbot/personas";
 import { codeChatbotSites } from "../lib/chatbot/code-sites";
@@ -54,7 +55,7 @@ test("a11y widget fixes are opt-in: only SUNDER's public config sets a11y", asyn
   assert.equal(toPublicConfig({ slug: "nico-moretti", active: true, config: cfg, site }).a11y, undefined);
   assert.equal(toPublicConfig({ slug: "sunder", active: true, config: cfg, site }).poweredByLabel, "Saabai.ai");
   assert.equal(toPublicConfig({ slug: "nico-moretti", active: true, config: cfg, site }).poweredByLabel, undefined);
-  const { readFileSync } = await import("node:fs");
+  // readFileSync imported at top
   const js = readFileSync("public/embed/chat.v1.js", "utf8");
   assert.match(js, /c\.a11y === true \? " a11y"/);
   assert.match(js, /100dvh/);
@@ -97,4 +98,26 @@ test("sunder: polish rules (90 word cap, kitchen opener, not public yet plus CTA
   assert.match(p, /Hard limit: every reply is 90 words or fewer/);
   assert.match(p, /you can stand in the kitchen, you just cannot volley from it/);
   assert.match(p, /price, cost, specs .* or the launch date, say plainly that it is not public yet and that the Pre-Launch List hears first/);
+});
+
+test("sunder: code-side 90 word cap trims at a sentence end and keeps the closing question", async () => {
+  const { capReplyWords } = await import("../lib/chatbot/personas");
+  const real = "Absolutely, champ. You can stand in the kitchen whenever you like. The rule is simple: you just can't volley from it.\n\nHere's the deal. The kitchen is the 7-foot zone on both sides of the net, lines included. You can't hit a volley while you're touching the kitchen or its line. And your momentum from a volley can't carry you into it, even after the ball is dead.\n\nBut if the ball has bounced? You're good to step in and play it however you want.\n\nSo dink battles often happen right at the kitchen line. That's where the soft game shines.\n\nWhat's your go-to kitchen shot?";
+  const out = capReplyWords(real, 90);
+  const n = (out.match(/\S+/g) || []).length;
+  assert.ok(n <= 90, `words ${n}`);
+  assert.match(out, /^Absolutely, champ\. You can stand in the kitchen/);
+  assert.match(out, /\n\nWhat's your go-to kitchen shot\?$/);
+  assert.match(out.replace(/\n\nWhat's your go-to kitchen shot\?$/, ""), /[.!?]$/);
+  const short = "Easy, champ. Fill in the form. Ready?";
+  assert.equal(capReplyWords(short, 90), short);
+  const noEnd = Array(120).fill("word").join(" ");
+  assert.equal(capReplyWords(noEnd, 90), noEnd);
+  const noQ = Array(30).fill("This is three.").join(" ");
+  const t = capReplyWords(noQ, 90);
+  assert.equal((t.match(/\S+/g) || []).length, 90); assert.match(t, /\.$/);
+  assert.equal(SUNDER_PERSONA.maxReplyWords, 90);
+  const { getPersona } = await import("../lib/chatbot/personas");
+  assert.equal(getPersona("nico-moretti")?.maxReplyWords, undefined);
+  assert.match(readFileSync("lib/chatbot/handler.ts", "utf8"), /persona\?\.maxReplyWords\) parsed\.content = capReplyWords/);
 });
