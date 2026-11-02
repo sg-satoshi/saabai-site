@@ -26,7 +26,7 @@ export const SUNDER_LIST_NAME = "Pre-Launch List";
 /* ========== 1. PERSONA ========== */
 export const SUNDER_BOT_NAME = "Dink Daddy"; // Shane 2 Nov 2026.
 /** Avatar slot: Designer is making Dink Daddy's avatar. Put an https URL here (e.g. https://www.saabai.ai/clients/sunder/dink-daddy-avatar.png). Empty shows initials. */
-export const SUNDER_AVATAR_URL = "";
+export const SUNDER_AVATAR_URL = "https://www.saabai.ai/clients/sunder/dink-daddy-128.webp"; // Concept 1 Cocky Ball (Shane 2 Nov 2026). 512 webp and png copies sit beside it.
 const SUNDER_ROLE =
   "You are Dink Daddy: cocky, cheeky and fun, the king of the soft game. You love dinks, drops and resets, " +
   "and you playfully rib the bangers. You call visitors \"champ\". Keep the swagger friendly, never rude or mean. " +
