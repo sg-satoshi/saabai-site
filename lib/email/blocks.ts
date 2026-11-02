@@ -5,7 +5,6 @@
 import { escapeHtml } from "../html-escape";
 
 export const SUNDER_LOGO_URL = "https://sunder.com.au/clients/sunder/img/sunder-lockup-colour-dark-1000w.png";
-export const SUNDER_LOGO_BLACK_URL = "https://sunder.com.au/clients/sunder/img/sunder-lockup-black-1000w.png";
 
 const HEAD = "Archivo, Arial Black, Arial, sans-serif";
 const BODY = "Inter Tight, Arial, sans-serif";
@@ -69,16 +68,16 @@ export function documentHtml(input: { preheader: string; blocks: Block[] }): str
     ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#0d0d0d;">${escapeHtml(pre)}</div>`
     : "";
   const inner = input.blocks.map(blockHtml).join("");
-  return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f2f2ee;">
+  return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>@media (max-width:480px){.sl{display:block!important;padding:0!important}.sl2{display:block!important;padding:6px 0 0!important}.sx{padding-left:20px!important;padding-right:20px!important}.sxf{margin-left:20px!important;margin-right:20px!important}}</style></head><body style="margin:0;padding:0;background:#f2f2ee;">
 ${hidden}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f2ee;padding:24px 12px;">
 <tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#0d0d0d;">
-  <tr><td style="padding:28px 40px 18px;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="vertical-align:middle;padding:0;"><img src="${SUNDER_LOGO_URL}" alt="SUNDER" width="120" style="display:block;width:120px;max-width:100%;height:auto;border:0;"></td><td style="vertical-align:middle;padding:0 0 0 8px;"><span style="font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:18px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#d4ff3a;">PICKLEBALL</span></td></tr></table>
+  <tr><td class="sx" style="padding:28px 40px 18px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td class="sl" style="vertical-align:middle;padding:0;"><img src="${SUNDER_LOGO_URL}" alt="SUNDER" width="120" style="display:block;width:120px;max-width:100%;height:auto;border:0;"></td><td class="sl2" style="vertical-align:middle;padding:0 0 0 8px;"><span style="font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:16px;line-height:18px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#d4ff3a;">PICKLEBALL</span></td></tr></table>
     <p style="margin:8px 0 0;font-family:${HEAD};font-size:11px;letter-spacing:0.14em;font-weight:800;color:#d4ff3a;">SPLIT THE GAME OPEN.</p>
   </td></tr>
-  <tr><td style="padding:8px 40px 8px;">${inner}</td></tr>
+  <tr><td class="sx" style="padding:8px 40px 8px;">${inner}</td></tr>
   <tr><td style="background:#f2f2ee;padding-top:8px;"><!--EMAIL_FOOTER--></td></tr>
 </table>
 </td></tr></table></body></html>`;

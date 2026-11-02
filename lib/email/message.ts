@@ -3,7 +3,7 @@
  * same builder. The footer cannot be removed. Personalisation is {{firstName|there}}.
  */
 import { escapeHtml } from "../html-escape";
-import { SUNDER_LOGO_BLACK_URL, SUNDER_LOGO_URL } from "./blocks";
+import { SUNDER_LOGO_URL } from "./blocks";
 import { personaliseHtml, personaliseText, type MergeValues } from "../personalise";
 import type { SenderIdentity } from "./constants";
 import { cleanFromName, formatFrom } from "./rules";
@@ -13,21 +13,21 @@ export function buildSunderHtml(rawBody: string, extraHtml = ""): string {
     const text = escapeHtml(line);
     return `<p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.7;">${text || "&nbsp;"}</p>`;
   }).join("");
-  return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>@media (max-width:480px){.sl{display:block!important;padding:0!important}.sl2{display:block!important;padding:6px 0 0!important}.sx{padding-left:20px!important;padding-right:20px!important}.sxf{margin-left:20px!important;margin-right:20px!important}}</style></head><body style="margin:0;padding:0;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 16px;">
 <tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:16px;overflow:hidden;">
-  <tr><td style="background:#111111;padding:22px 32px;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="vertical-align:middle;padding:0;"><img src="${SUNDER_LOGO_URL}" alt="SUNDER" width="120" style="display:block;width:120px;max-width:100%;height:auto;border:0;"></td><td style="vertical-align:middle;padding:0 0 0 8px;"><span style="font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:18px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#d4ff3a;">PICKLEBALL</span></td></tr></table>
+  <tr><td class="sx" style="background:#0d0d0d;padding:22px 32px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td class="sl" style="vertical-align:middle;padding:0;"><img src="${SUNDER_LOGO_URL}" alt="SUNDER" width="120" style="display:block;width:120px;max-width:100%;height:auto;border:0;"></td><td class="sl2" style="vertical-align:middle;padding:0 0 0 8px;"><span style="font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:16px;line-height:18px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#d4ff3a;">PICKLEBALL</span></td></tr></table>
   </td></tr>
-  <tr><td style="padding:28px 32px 8px;">${paragraphs}${extraHtml}</td></tr>
+  <tr><td class="sx" style="padding:28px 32px 8px;">${paragraphs}${extraHtml}</td></tr>
   <tr><td style="background:#f2f2ee;padding-top:8px;"><!--EMAIL_FOOTER--></td></tr>
 </table></td></tr></table></body></html>`;
 }
 
 export function footerHtml(identity: SenderIdentity, unsubUrl: string, viewUrl?: string): string {
-  const view = viewUrl ? ` &nbsp;·&nbsp; <a href="${escapeHtml(viewUrl)}" style="color:#111111;">View in browser</a>` : "";
-  return `<p style="margin:8px 40px 28px;padding-top:16px;border-top:1px solid #d9d9d2;font-family:Inter Tight, Arial, sans-serif;font-size:12.5px;line-height:1.55;color:#4b4b45;"><img src="${SUNDER_LOGO_BLACK_URL}" alt="Sunder Pickleball" width="96" style="display:block;width:96px;max-width:96px;height:auto;border:0;margin:0 0 6px;"><strong style="color:#111111;">Sunder Pickleball</strong><br>You are getting this because ${escapeHtml(identity.whyText)}. Sent by ${escapeHtml(identity.legalName)} for Sunder Pickleball, ABN ${escapeHtml(identity.abn)}, ${escapeHtml(identity.postalAddress)}. Contact: <a href="mailto:${escapeHtml(identity.replyTo)}" style="color:#111111;">${escapeHtml(identity.replyTo)}</a>.<br><a href="${escapeHtml(unsubUrl)}" style="color:#111111;">Unsubscribe</a> in one click${view}</p>`;
+  const view = viewUrl ? ` &nbsp;·&nbsp; <a href="${escapeHtml(viewUrl)}" style="color:#111111;display:inline-block;padding:10px 0;">View in browser</a>` : "";
+  return `<div class="sxf" style="margin:8px 40px 28px;padding-top:16px;border-top:1px solid #d9d9d2;font-family:'Inter Tight',Arial,sans-serif;font-size:12.5px;line-height:1.55;color:#4b4b45;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 10px;"><tr><td bgcolor="#0d0d0d" style="background:#0d0d0d;padding:10px 14px;border-radius:8px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td class="sl" style="vertical-align:middle;padding:0;"><img src="${SUNDER_LOGO_URL}" alt="SUNDER" width="120" style="display:block;width:120px;max-width:100%;height:auto;border:0;"></td><td class="sl2" style="vertical-align:middle;padding:0 0 0 8px;"><span style="font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:16px;line-height:18px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#d4ff3a;">PICKLEBALL</span></td></tr></table></td></tr></table>You are getting this because ${escapeHtml(identity.whyText)}. Sent by ${escapeHtml(identity.legalName)} for Sunder Pickleball, ABN ${escapeHtml(identity.abn)}, ${escapeHtml(identity.postalAddress)}. Contact: <a href="mailto:${escapeHtml(identity.replyTo)}" style="color:#111111;display:inline-block;padding:10px 0;">${escapeHtml(identity.replyTo)}</a>.<br><a href="${escapeHtml(unsubUrl)}" style="color:#111111;display:inline-block;padding:10px 0;">Unsubscribe</a> in one click${view}</div>`;
 }
 
 export function footerText(identity: SenderIdentity, unsubUrl: string, viewUrl?: string): string {
@@ -109,7 +109,7 @@ export function confirmMessage(): { subject: string; html: string } {
     "Confirm this address and we'll email you about the SUNDER launch, offers and the giveaway.",
     "Until you confirm, you won't get marketing from us.",
   ];
-  const button = `<p style="margin:8px 0 22px;"><a href="{{confirmUrl}}" style="display:inline-block;background:#111;color:#fff;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:700;">Confirm your email</a></p>`;
+  const button = `<p style="margin:8px 0 22px;"><a href="{{confirmUrl}}" style="display:inline-block;background:#d4ff3a;color:#0d0d0d;padding:14px 22px;line-height:20px;min-height:44px;box-sizing:border-box;border-radius:8px;text-decoration:none;font-weight:800;">Confirm your email</a></p>`;
   return { subject: "Confirm your SUNDER email", html: buildSunderHtml(lines.join("\n"), button) };
 }
 
