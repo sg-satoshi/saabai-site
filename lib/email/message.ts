@@ -3,7 +3,7 @@
  * same builder. The footer cannot be removed. Personalisation is {{firstName|there}}.
  */
 import { escapeHtml } from "../html-escape";
-import { SUNDER_LOGO_URL } from "./blocks";
+import { SUNDER_LOGO_BLACK_URL, SUNDER_LOGO_URL } from "./blocks";
 import { personaliseHtml, personaliseText, type MergeValues } from "../personalise";
 import type { SenderIdentity } from "./constants";
 import { cleanFromName, formatFrom } from "./rules";
@@ -21,13 +21,13 @@ export function buildSunderHtml(rawBody: string, extraHtml = ""): string {
     <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="vertical-align:middle;padding:0;"><img src="${SUNDER_LOGO_URL}" alt="SUNDER" width="150" style="display:block;width:150px;max-width:150px;height:auto;border:0;"></td><td style="vertical-align:middle;padding:0 0 0 10px;"><span style="font-family:Arial,Helvetica,sans-serif;font-size:22px;line-height:22px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:#d4ff3a;">PICKLEBALL</span></td></tr></table>
   </td></tr>
   <tr><td style="padding:28px 32px 8px;">${paragraphs}${extraHtml}</td></tr>
-  <tr><td style="background:#0d0d0d;padding-top:8px;"><!--EMAIL_FOOTER--></td></tr>
+  <tr><td style="background:#f2f2ee;padding-top:8px;"><!--EMAIL_FOOTER--></td></tr>
 </table></td></tr></table></body></html>`;
 }
 
 export function footerHtml(identity: SenderIdentity, unsubUrl: string, viewUrl?: string): string {
-  const view = viewUrl ? ` &nbsp;·&nbsp; <a href="${escapeHtml(viewUrl)}" style="color:#f2f2ee;">View in browser</a>` : "";
-  return `<p style="margin:8px 40px 28px;padding-top:16px;border-top:1px solid #2a2a2a;font-family:Inter Tight, Arial, sans-serif;font-size:12.5px;line-height:1.55;color:#b5b5ae;"><img src="${SUNDER_LOGO_URL}" alt="Sunder Pickleball" width="96" style="display:block;width:96px;max-width:96px;height:auto;border:0;margin:0 0 6px;"><strong style="color:#f2f2ee;">Sunder Pickleball</strong><br>You are getting this because ${escapeHtml(identity.whyText)}. Sent by ${escapeHtml(identity.legalName)} for Sunder Pickleball, ABN ${escapeHtml(identity.abn)}, ${escapeHtml(identity.postalAddress)}. Contact: <a href="mailto:${escapeHtml(identity.replyTo)}" style="color:#f2f2ee;">${escapeHtml(identity.replyTo)}</a>.<br><a href="${escapeHtml(unsubUrl)}" style="color:#f2f2ee;">Unsubscribe</a> in one click${view}</p>`;
+  const view = viewUrl ? ` &nbsp;·&nbsp; <a href="${escapeHtml(viewUrl)}" style="color:#111111;">View in browser</a>` : "";
+  return `<p style="margin:8px 40px 28px;padding-top:16px;border-top:1px solid #d9d9d2;font-family:Inter Tight, Arial, sans-serif;font-size:12.5px;line-height:1.55;color:#4b4b45;"><img src="${SUNDER_LOGO_BLACK_URL}" alt="Sunder Pickleball" width="96" style="display:block;width:96px;max-width:96px;height:auto;border:0;margin:0 0 6px;"><strong style="color:#111111;">Sunder Pickleball</strong><br>You are getting this because ${escapeHtml(identity.whyText)}. Sent by ${escapeHtml(identity.legalName)} for Sunder Pickleball, ABN ${escapeHtml(identity.abn)}, ${escapeHtml(identity.postalAddress)}. Contact: <a href="mailto:${escapeHtml(identity.replyTo)}" style="color:#111111;">${escapeHtml(identity.replyTo)}</a>.<br><a href="${escapeHtml(unsubUrl)}" style="color:#111111;">Unsubscribe</a> in one click${view}</p>`;
 }
 
 export function footerText(identity: SenderIdentity, unsubUrl: string, viewUrl?: string): string {

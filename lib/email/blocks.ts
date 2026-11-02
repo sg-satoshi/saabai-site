@@ -5,6 +5,7 @@
 import { escapeHtml } from "../html-escape";
 
 export const SUNDER_LOGO_URL = "https://sunder.com.au/clients/sunder/img/sunder-lockup-colour-dark-1000w.png";
+export const SUNDER_LOGO_BLACK_URL = "https://sunder.com.au/clients/sunder/img/sunder-lockup-black-1000w.png";
 
 const HEAD = "Archivo, Arial Black, Arial, sans-serif";
 const BODY = "Inter Tight, Arial, sans-serif";
@@ -78,7 +79,7 @@ ${hidden}
     <p style="margin:8px 0 0;font-family:${HEAD};font-size:11px;letter-spacing:0.14em;font-weight:800;color:#d4ff3a;">SPLIT THE GAME OPEN.</p>
   </td></tr>
   <tr><td style="padding:8px 40px 8px;">${inner}</td></tr>
-  <tr><td><!--EMAIL_FOOTER--></td></tr>
+  <tr><td style="background:#f2f2ee;padding-top:8px;"><!--EMAIL_FOOTER--></td></tr>
 </table>
 </td></tr></table></body></html>`;
 }
