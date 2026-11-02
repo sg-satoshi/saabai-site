@@ -196,10 +196,10 @@ insert into email_tenants (
   config_set, ses_tenant_name, status
 ) values (
   'sunder', 'SUNDER', 'sunder.com.au', 'SUNDER', 'hello@sunder.com.au', 'hello@sunder.com.au',
-  '31 Bourton Road, Merrimac QLD 4226 Australia', '44 703 735 264', 'Saabai Pty Ltd',
+  'Merrimac QLD 4226 Australia', '44 703 735 264', 'Saabai Pty Ltd',
   'you joined the SUNDER waitlist and agreed to hear from us',
   null, 'sunder', 'ready'
-) on conflict (slug) do nothing;
+) on conflict (slug) do update set postal_address = excluded.postal_address;
 
 insert into email_templates (tenant_id, name, subject, body_text, html)
 select t.id, v.name, v.subject, v.body, v.body

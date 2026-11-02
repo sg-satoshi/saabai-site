@@ -34,7 +34,7 @@ export const SUNDER_IDENTITY: SenderIdentity = {
   replyTo: SUNDER_FROM_EMAIL,
   legalName: "Saabai Pty Ltd",
   abn: "44 703 735 264",
-  postalAddress: "31 Bourton Road, Merrimac QLD 4226 Australia",
+  postalAddress: "Merrimac QLD 4226 Australia",
   domain: "sunder.com.au",
   whyText: "you joined the SUNDER waitlist and agreed to hear from us",
   sesTenantName: SUNDER_SLUG,
