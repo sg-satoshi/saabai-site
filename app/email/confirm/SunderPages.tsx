@@ -37,13 +37,26 @@ export function SunderPending({ action }: { action: React.ReactNode }) {
   );
 }
 
-/** Neutral state while the auto-confirm POST runs. Noscript readers get a plain note. */
-export function SunderConfirming() {
+/** Shown until the auto-confirm gate opens (see ConfirmNow). The button is always available. */
+export function SunderConfirming({ action }: { action: React.ReactNode }) {
   return (
     <div className="sc pre">
       <Hero eyebrow="Confirming">
-        <h1 className="cap" style={{ marginTop: 14 }} role="status" aria-live="polite">Confirming<span className="hl">…</span></h1>
-        <noscript><p style={{ marginTop: 14 }}>Turn on JavaScript to finish confirming your email.</p></noscript>
+        <h1 className="cap" style={{ marginTop: 14 }}>Confirming<span className="hl">…</span></h1>
+        {action}
+      </Hero>
+    </div>
+  );
+}
+
+/** Retry after a failed first attempt (network or server error). */
+export function SunderRetry({ action }: { action: React.ReactNode }) {
+  return (
+    <div className="sc pre">
+      <Hero eyebrow="One more step">
+        <h1 className="cap" style={{ marginTop: 14 }}>One tap and you&apos;re <span className="hl">in</span>.</h1>
+        <p style={{ marginTop: 14 }}>That first try didn&apos;t go through. Tap below to try again.</p>
+        {action}
       </Hero>
     </div>
   );

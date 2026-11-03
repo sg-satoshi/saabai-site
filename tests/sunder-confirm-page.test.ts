@@ -57,16 +57,25 @@ test("r2: pending button styled, no Saabai toasts on /email, a11y and referrer",
   assert.match(read("app/email/confirm/ShareSunder.tsx"), /role="status" aria-live="polite">\{copied \? "Copied" : ""\}/);
 });
 
-test("one-click: auto POST on mount, once, with neutral Confirming state and retry fallback", () => {
+test("r2 gated auto-confirm: visible + interaction or dwell, once, honest comment", () => {
   const src = read("app/email/confirm/ConfirmNow.tsx");
-  assert.match(src, /initial = "working"/);
-  assert.match(src, /useEffect\(\(\) => \{\s+if \(sent\.current \|\| initial !== "working"\) return;\s+sent\.current = true;/);
-  assert.match(src, /method: "POST"/);
-  assert.match(src, /state === "working"\) return <SunderConfirming \/>/);
-  assert.match(src, /catch \{\s+setState\("retry"\)/);
+  assert.match(src, /MIN_VISIBLE_MS = 1500/);
+  assert.match(src, /DWELL_MS = 3000/);
+  assert.match(src, /document\.visibilityState === "visible"/);
+  assert.match(src, /if \(e\.isTrusted\)/);
+  assert.match(src, /shown >= MIN_VISIBLE_MS && \(interacted \|\| shown >= DWELL_MS\)/);
+  assert.match(src, /if \(sent\.current && !manual\) return;\s+sent\.current = true;/);
+  assert.doesNotMatch(src, /don't run JS|do not run JS/i);
+  assert.match(src, /DO render pages and run JS/);
+  assert.match(src, /state === "working"|return <SunderConfirming action=\{button\} \/>/);
+  assert.match(src, /<div className="sc-sr" role="status" aria-live="polite">\{SAY\[state\]\}<\/div>/);
+  assert.match(src, /<form method="post" action="\/api\/email\/confirm"/);
   const pages = read("app/email/confirm/SunderPages.tsx");
-  assert.match(pages, /export function SunderConfirming\(\)/);
-  assert.match(pages, /<noscript>/);
+  assert.ok(pages.includes("That first try didn&apos;t go through."));
+  assert.match(pages, /export function SunderConfirming\(\{ action \}/);
   const route = read("app/api/email/confirm/route.ts");
   assert.doesNotMatch(route, /export (async )?function GET/, "GET stays side-effect free");
+  assert.match(route, /status: 303/);
+  assert.match(route, /if \(isForm\) return backToPage\(req, result\.status\)/);
+  assert.match(read("app/email/confirm/page.tsx"), /if \(!t && \(s === "confirmed" \|\| s === "already" \|\| s === "unsubscribed"\)\)/);
 });
