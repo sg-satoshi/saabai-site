@@ -106,9 +106,9 @@ export function renderMarketingEmail(input: {
 export function confirmMessage(): { subject: string; html: string } {
   const lines = [
     "Hi {{firstName|there}},",
-    "Tap confirm and you're on the SUNDER list. You'll be first to hear about the launch, member offers and our giveaways.",
+    "Tap the button below and you're on the SUNDER list. You'll be first to hear about the launch, offers and our giveaways.",
   ];
-  const button = `<p style="margin:8px 0 22px;"><a href="{{confirmUrl}}" style="display:inline-block;background:#d4ff3a;color:#0d0d0d;padding:14px 22px;line-height:20px;min-height:44px;box-sizing:border-box;border-radius:8px;text-decoration:none;font-weight:800;">Confirm my spot</a></p>`;
+  const button = `<p style="margin:8px 0 22px;"><a href="{{confirmUrl}}" style="display:inline-block;background:#d4ff3a;color:#0d0d0d;padding:14px 22px;line-height:20px;min-height:44px;box-sizing:border-box;border-radius:8px;text-decoration:none;font-weight:800;">Join the SUNDER list</a></p>`;
   return { subject: "Confirm your SUNDER email", html: buildSunderHtml(lines.join("\n"), button) };
 }
 
