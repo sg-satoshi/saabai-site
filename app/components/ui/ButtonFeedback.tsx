@@ -10,6 +10,11 @@ import { isFocusedFormPath } from "@/lib/focused-paths";
  */
 const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
+/** Branded email pages (e.g. SUNDER /email/confirm) render their own states: no Saabai toasts. */
+export function skipsFeedback(pathname: string): boolean {
+  return pathname === "/email" || pathname.startsWith("/email/");
+}
+
 function toast(kind: "ok" | "err", msg: string) {
   let box = document.querySelector<HTMLElement>(".sb-toasts");
   if (!box) {
@@ -45,7 +50,7 @@ export default function ButtonFeedback() {
       const own = typeof url === "string" && (url.startsWith("/") || url.startsWith(location.origin));
       const el = own && last && Date.now() - last.at < 400 && !/chat|stream|track|analytics|events?\b/i.test(url) ? last.el : null;
       // The fact-find form shows its own saving state; no global toasts over its buttons.
-      if (!el || !el.isConnected || isFocusedFormPath(location.pathname)) return orig(input, init);
+      if (!el || !el.isConnected || isFocusedFormPath(location.pathname) || skipsFeedback(location.pathname)) return orig(input, init);
       last = null;
       const was = el.getAttribute("aria-busy");
       el.setAttribute("aria-busy", "true");

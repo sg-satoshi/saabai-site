@@ -112,6 +112,11 @@ export function sunderGeoProfile(): GeoProfile {
 
 /** Clean legal URLs on sunder.com.au. Old /clients/sunder/*.html paths 301 to them; the clean paths serve the repo files. */
 export const SUNDER_LEGAL_PAGES: Record<string, string> = { "/privacy": "privacy.html", "/giveaway-terms": "giveaway-terms.html" };
+/** App pages served as-is on sunder.com.au (not rewritten under /sites/sunder). */
+export function sunderAppRoute(pathname: string): boolean {
+  return pathname === "/email/confirm" || pathname === "/email/confirm/";
+}
+
 export function sunderLegalRoute(pathname: string): { redirect: string } | { rewrite: string } | null {
   const p = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
   if (SUNDER_LEGAL_PAGES[p]) return { rewrite: `/clients/sunder/${SUNDER_LEGAL_PAGES[p]}` };

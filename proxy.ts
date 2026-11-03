@@ -13,7 +13,7 @@ import { isSiteEnabled } from "./lib/exp/sites";
 import { SLOTS } from "./lib/exp/seed";
 import { CHIEF_COOKIE, chiefAllowed, chiefAudit, chiefHostOk, verifyChiefToken } from "./lib/chief";
 import { OV_COOKIE, encodeOverlay, liveOverlays, overlayPathOk } from "./lib/exp/overlay";
-import { SUNDER_ROBOTS, SUNDER_SLUG, sunderLegalRoute } from "./lib/sunder-factory-seed";
+import { SUNDER_ROBOTS, SUNDER_SLUG, sunderAppRoute, sunderLegalRoute } from "./lib/sunder-factory-seed";
 import {
   NOINDEX_ROBOTS,
   ROBOTS_REQUEST_HEADER,
@@ -339,6 +339,12 @@ export async function proxy(req: NextRequest) {
       }
       // SUNDER legal pages live at /privacy and /giveaway-terms; the old /clients/sunder/*.html paths 301 there.
       if (slug === SUNDER_SLUG) {
+        // Double opt-in confirm page: the app route itself, noindex.
+        if (sunderAppRoute(pathname)) {
+          const res = NextResponse.next();
+          res.headers.set("X-Robots-Tag", "noindex");
+          return res;
+        }
         const legal = sunderLegalRoute(pathname);
         if (legal && "redirect" in legal) return NextResponse.redirect(new URL(legal.redirect + url.search, `https://${hostname}`), 301);
         if (legal) {

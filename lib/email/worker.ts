@@ -5,7 +5,7 @@
  * does not send it again.
  */
 import type { SenderIdentity } from "./constants";
-import { EMAIL_PUBLIC_ORIGIN } from "./constants";
+import { EMAIL_PUBLIC_ORIGIN, confirmOrigin } from "./constants";
 import { listUnsubscribeHeader, renderMarketingEmail } from "./message";
 import { classifySesError, fromDomainAllowed, publicSesError } from "./rules";
 import type { SesMessage, SesSender } from "./ses";
@@ -110,7 +110,7 @@ export async function drainOutbox(opts: {
       let confirmUrl: string | undefined;
       if (row.kind === "confirm") {
         const confirmToken = signEmailToken({ k: "confirm", t: row.identity.slug, e: row.toEmail, iat: nowSec }, opts.secret);
-        confirmUrl = `${origin}/email/confirm?t=${encodeURIComponent(confirmToken)}`;
+        confirmUrl = `${confirmOrigin(row.identity.slug, origin)}/email/confirm?t=${encodeURIComponent(confirmToken)}`;
       }
       const viewToken = signEmailToken({ k: "view", t: row.identity.slug, e: row.toEmail, iat: nowSec, id: /^[0-9a-f-]{36}$/i.test(row.id) ? row.id : undefined }, opts.secret);
       const viewUrl = /^[0-9a-f-]{36}$/i.test(row.id) ? `${origin}/email/view?t=${encodeURIComponent(viewToken)}` : undefined;
