@@ -8,7 +8,7 @@ export const SUNDER_NEW_LINK = `${SUNDER_SITE}/#f`;
 function Hero({ eyebrow, children }: { eyebrow: string; children: React.ReactNode }) {
   return (
     <section className="hero">
-      <div className="top"><img src={`${IMG}/sunder-lockup-colour-light.svg`} alt="SUNDER" /></div>
+      <div className="top"><a href="/" aria-label="SUNDER home"><img src={`${IMG}/sunder-lockup-colour-light.svg`} alt="SUNDER" /></a></div>
       <div className="grid">
         <div>
           <div className="eyebrow">{eyebrow}</div>
@@ -97,7 +97,7 @@ export function SunderConfirmed() {
 export function SunderError() {
   return (
     <div className="se"><div className="in2">
-      <img className="lk" src={`${IMG}/sunder-lockup-colour-dark.svg`} alt="SUNDER" />
+      <a href="/" aria-label="SUNDER home"><img className="lk" src={`${IMG}/sunder-lockup-colour-dark.svg`} alt="SUNDER" /></a>
       <h1 className="cap">Let&apos;s go again.</h1>
       <p>That link is out of play. It may have expired or already been used. Pop your email in again and we&apos;ll send a fresh one.</p>
       <a className="btn" href={SUNDER_NEW_LINK}>Get a new link</a>
@@ -109,7 +109,7 @@ export function SunderError() {
 export function SunderUnsubscribed() {
   return (
     <div className="se"><div className="in2">
-      <img className="lk" src={`${IMG}/sunder-lockup-colour-dark.svg`} alt="SUNDER" />
+      <a href="/" aria-label="SUNDER home"><img className="lk" src={`${IMG}/sunder-lockup-colour-dark.svg`} alt="SUNDER" /></a>
       <h1 className="cap off">You&apos;re off the list.</h1>
       <p>This address is unsubscribed, so we won&apos;t send marketing to it.</p>
       <a className="btn" href={SUNDER_NEW_LINK}>Join again</a>
