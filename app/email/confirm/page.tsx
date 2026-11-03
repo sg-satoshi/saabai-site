@@ -10,5 +10,5 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
   // Landing after the no-JS form POST (303). Display only; the confirm already happened server side.
   if (!t && (s === "confirmed" || s === "already" || s === "unsubscribed")) return <main><ConfirmView state={s} /></main>;
   const parsed = readEmailToken(t, process.env.SAABAI_SESSION_SECRET || "", "confirm");
-  return <main>{parsed ? <ConfirmNow token={t} /> : <SunderError />}</main>;
+  return <main>{parsed ? (s === "retry" ? <ConfirmNow token={t} initial="retry" /> : <ConfirmNow token={t} />) : <SunderError />}</main>;
 }

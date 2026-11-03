@@ -5,17 +5,17 @@ import { SunderConfirmed, SunderConfirming, SunderError, SunderRetry, SunderUnsu
 
 export type ConfirmState = "working" | "sending" | "retry" | "confirmed" | "already" | "unsubscribed" | "bad";
 
-/** Auto-confirm gate: the page must be visible for MIN_VISIBLE_MS, then either a trusted user
- * interaction or DWELL_MS of continuous visible time opens it. Hidden time resets the clock. */
+/** Auto-confirm gate: a trusted pointerdown, touchstart or keydown is required, and the page must have been
+ * continuously visible for MIN_VISIBLE_MS. No interaction means no auto POST; the button stays the path.
+ * Hidden time resets the clock. */
 export const MIN_VISIBLE_MS = 1500;
-export const DWELL_MS = 3000;
-const SIGNALS = ["pointerdown", "touchstart", "keydown", "scroll", "focus", "wheel"] as const;
+const SIGNALS = ["pointerdown", "touchstart", "keydown"] as const;
 
 /**
  * Confirm from the email link with no second tap for real people.
  * Some security scanners (Defender Safe Links, Proofpoint, Mimecast and others) DO render pages and run JS,
- * so we never POST on mount. The POST waits for the gate above, which most sandbox detonations
- * (hidden or short-lived tabs, no trusted input) never pass. It is a mitigation, not a guarantee.
+ * so we never POST on mount or on time alone. The POST waits for the gate above, which needs real
+ * trusted input that sandbox detonations rarely produce. It is a mitigation, not a guarantee.
  * The button is always shown as the explicit path; the POST runs at most once per page.
  */
 export default function ConfirmNow({ token, initial = "working" }: { token: string; initial?: ConfirmState }) {
@@ -51,8 +51,9 @@ export default function ConfirmNow({ token, initial = "working" }: { token: stri
       clearTimeout(timer);
       if (sent.current || visibleSince < 0 || document.visibilityState !== "visible") return;
       const shown = performance.now() - visibleSince;
-      if (shown >= MIN_VISIBLE_MS && (interacted || shown >= DWELL_MS)) { void go(); return; }
-      timer = setTimeout(check, (interacted ? MIN_VISIBLE_MS : DWELL_MS) - shown + 20);
+      if (!interacted) return; // no timer until a real interaction
+      if (shown >= MIN_VISIBLE_MS) { void go(); return; }
+      timer = setTimeout(check, MIN_VISIBLE_MS - shown + 20);
     };
     const onVis = () => {
       visibleSince = document.visibilityState === "visible" ? performance.now() : -1;

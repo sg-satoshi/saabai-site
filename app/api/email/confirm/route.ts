@@ -23,13 +23,13 @@ export async function POST(req: Request) {
     return Response.json({ ok: result.status === "confirmed" || result.status === "already", ...result }, { status, headers: NO_STORE });
   } catch (e) {
     console.error("email confirm failed:", e instanceof Error ? e.message : "error");
-    if (isForm) return backToPage(req, "retry");
+    if (isForm) return backToPage(req, "retry", token);
     return Response.json({ ok: false, status: "missing" }, { status: 500, headers: NO_STORE });
   }
 }
 
 /** No-JS form fallback: send the person back to the page (never raw JSON). The ?s= value only picks copy. */
-function backToPage(req: Request, status: string) {
+function backToPage(req: Request, status: string, token = "") {
   const s = status === "confirmed" || status === "already" || status === "unsubscribed" || status === "retry" ? status : "bad";
-  return new Response(null, { status: 303, headers: { ...NO_STORE, Location: new URL(`/email/confirm?s=${s}`, req.url).toString() } });
+  return new Response(null, { status: 303, headers: { ...NO_STORE, Location: new URL(s === "retry" && token ? `/email/confirm?s=retry&t=${encodeURIComponent(token)}` : `/email/confirm?s=${s}`, req.url).toString() } });
 }

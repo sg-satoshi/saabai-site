@@ -31,7 +31,7 @@ test("confirm page copy follows COPY.md and has no banned cues", () => {
   assert.doesNotMatch(src, /[?&](ref|utm_[a-z]+)=/, "no referral params");
   const page = read("app/email/confirm/page.tsx");
   assert.match(page, /index: false/);
-  assert.match(page, /parsed \? <ConfirmNow token=\{t\} \/> : <SunderError \/>/);
+  assert.match(page, /parsed \? \(s === "retry" \? <ConfirmNow token=\{t\} initial="retry" \/> : <ConfirmNow token=\{t\} \/>\) : <SunderError \/>/);
 });
 
 test("confirm view maps POST status to the right state", async () => {
@@ -60,10 +60,12 @@ test("r2: pending button styled, no Saabai toasts on /email, a11y and referrer",
 test("r2 gated auto-confirm: visible + interaction or dwell, once, honest comment", () => {
   const src = read("app/email/confirm/ConfirmNow.tsx");
   assert.match(src, /MIN_VISIBLE_MS = 1500/);
-  assert.match(src, /DWELL_MS = 3000/);
+  assert.doesNotMatch(src, /DWELL_MS/);
+  assert.match(src, /SIGNALS = \["pointerdown", "touchstart", "keydown"\] as const/);
+  assert.match(src, /if \(!interacted\) return; \/\/ no timer until a real interaction/);
+  assert.match(src, /if \(shown >= MIN_VISIBLE_MS\) \{ void go\(\); return; \}/);
   assert.match(src, /document\.visibilityState === "visible"/);
   assert.match(src, /if \(e\.isTrusted\)/);
-  assert.match(src, /shown >= MIN_VISIBLE_MS && \(interacted \|\| shown >= DWELL_MS\)/);
   assert.match(src, /if \(sent\.current && !manual\) return;\s+sent\.current = true;/);
   assert.doesNotMatch(src, /don't run JS|do not run JS/i);
   assert.match(src, /DO render pages and run JS/);
@@ -76,6 +78,7 @@ test("r2 gated auto-confirm: visible + interaction or dwell, once, honest commen
   const route = read("app/api/email/confirm/route.ts");
   assert.doesNotMatch(route, /export (async )?function GET/, "GET stays side-effect free");
   assert.match(route, /status: 303/);
+  assert.match(route, /backToPage\(req, "retry", token\)/);
   assert.match(route, /if \(isForm\) return backToPage\(req, result\.status\)/);
   assert.match(read("app/email/confirm/page.tsx"), /if \(!t && \(s === "confirmed" \|\| s === "already" \|\| s === "unsubscribed"\)\)/);
 });
