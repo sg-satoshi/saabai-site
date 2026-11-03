@@ -59,7 +59,7 @@ test("SUNDER default copy is in the static HTML so crawlers see it", () => {
   assert.match(html, /<p class="sub" data-c="sub">A new pickleball paddle with power, spin and control\. Join for 20% off at launch, early access and a giveaway\.<\/p>/);
   assert.match(html, /<button type="submit" data-c="cta"[^>]*>Get first hit<\/button>/);
   assert.match(html, /<p class="wty" data-c="wty" data-no-test>12-month warranty on core and edge\.<\/p>/);
-  assert.match(html, /<title>SUNDER pickleball paddles, Australia 🇦🇺 \| Join the waitlist<\/title>/);
+  assert.match(html, /<title>SUNDER pickleball paddles, Australia 🇦🇺 \| Join the VIP list<\/title>/);
   for (const m of ["og:title", "og:description", "og:url", "og:type", "og:image"]) assert.match(html, new RegExp(`property="${m}" content="[^"]+"`), m);
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
   const ld = JSON.parse(html.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)![1]);
