@@ -56,3 +56,17 @@ test("r2: pending button styled, no Saabai toasts on /email, a11y and referrer",
   assert.ok(read("app/email/confirm/SunderPages.tsx").includes("You&apos;re off the list."));
   assert.match(read("app/email/confirm/ShareSunder.tsx"), /role="status" aria-live="polite">\{copied \? "Copied" : ""\}/);
 });
+
+test("one-click: auto POST on mount, once, with neutral Confirming state and retry fallback", () => {
+  const src = read("app/email/confirm/ConfirmNow.tsx");
+  assert.match(src, /initial = "working"/);
+  assert.match(src, /useEffect\(\(\) => \{\s+if \(sent\.current \|\| initial !== "working"\) return;\s+sent\.current = true;/);
+  assert.match(src, /method: "POST"/);
+  assert.match(src, /state === "working"\) return <SunderConfirming \/>/);
+  assert.match(src, /catch \{\s+setState\("retry"\)/);
+  const pages = read("app/email/confirm/SunderPages.tsx");
+  assert.match(pages, /export function SunderConfirming\(\)/);
+  assert.match(pages, /<noscript>/);
+  const route = read("app/api/email/confirm/route.ts");
+  assert.doesNotMatch(route, /export (async )?function GET/, "GET stays side-effect free");
+});

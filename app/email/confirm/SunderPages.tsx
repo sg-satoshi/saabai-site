@@ -37,6 +37,18 @@ export function SunderPending({ action }: { action: React.ReactNode }) {
   );
 }
 
+/** Neutral state while the auto-confirm POST runs. Noscript readers get a plain note. */
+export function SunderConfirming() {
+  return (
+    <div className="sc pre">
+      <Hero eyebrow="Confirming">
+        <h1 className="cap" style={{ marginTop: 14 }} role="status" aria-live="polite">Confirming<span className="hl">…</span></h1>
+        <noscript><p style={{ marginTop: 14 }}>Turn on JavaScript to finish confirming your email.</p></noscript>
+      </Hero>
+    </div>
+  );
+}
+
 export function SunderConfirmed() {
   return (
     <div className="sc">
