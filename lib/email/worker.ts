@@ -9,6 +9,7 @@ import { EMAIL_PUBLIC_ORIGIN, confirmOrigin } from "./constants";
 import { listUnsubscribeHeader, renderMarketingEmail } from "./message";
 import { classifySesError, fromDomainAllowed, publicSesError } from "./rules";
 import type { SesMessage, SesSender } from "./ses";
+import { sesEnvDiag } from "./ses-diag";
 import { readEmailToken, signEmailToken } from "./tokens";
 
 export type OutboxRow = {
@@ -152,7 +153,9 @@ export async function drainOutbox(opts: {
           result.released++;
           await sleep(1000);
         } else {
-          await opts.outbox.markFailed(row.id, kind === "uncertain" ? `not_retried: ${publicSesError(err)}` : publicSesError(err));
+          const diag = sesEnvDiag();
+          console.error("email ses send failed:", publicSesError(err), "|", diag);
+          await opts.outbox.markFailed(row.id, `${kind === "uncertain" ? `not_retried: ${publicSesError(err)}` : publicSesError(err)} | diag: ${diag}`);
           result.failed++;
         }
       }
