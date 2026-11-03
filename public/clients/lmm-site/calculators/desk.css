@@ -1,0 +1,26 @@
+.dk{max-width:1280px;margin:-40px auto 0;padding:0 24px 48px;display:grid;grid-template-columns:1fr 500px;gap:28px;align-items:start}
+.dk .card{margin-bottom:20px}.dk h3.sec{font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin:0 0 4px}
+.fld{display:grid;grid-template-columns:1fr 160px;gap:6px 16px;align-items:center;margin:14px 0}.fld label{margin:0}.fld input[type=number]{height:44px;border:1.5px solid var(--line);border-radius:10px;padding:0 10px;font:600 1rem Inter,sans-serif;color:var(--text);text-align:right;width:100%}
+.fld input[type=range]{grid-column:1/-1;width:100%;-webkit-appearance:none;height:44px;background:transparent}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:9px;background:linear-gradient(90deg,var(--gold) var(--p,50%),#e8edf3 var(--p,50%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;margin-top:-11px;border-radius:50%;background:#fff;border:3px solid var(--navy);box-shadow:0 4px 10px rgba(16,31,52,.25)}
+.segb{display:flex;background:#e8edf3;border-radius:99px;padding:4px}.segb button{flex:1;border:0;background:none;padding:10px;border-radius:99px;font:600 .88rem Inter,sans-serif;color:var(--muted);cursor:pointer}.segb button.on{background:var(--navy);color:#fff}
+.sticky{position:sticky;top:20px}.res{background:var(--navy);color:#fff;border-radius:16px;padding:26px;box-shadow:0 24px 70px rgba(12,41,45,.18)}
+.res .segb{background:rgba(255,255,255,.12)}.res .segb button{color:#c8d0da}.res .segb button.on{background:var(--gold);color:var(--navy)}
+.res h4{margin:18px 0 8px;font-size:.85rem;color:#c8d0da;font-weight:600;text-transform:uppercase;letter-spacing:.08em}
+.chartrow{display:flex;gap:18px;align-items:center}
+.res .kv{border-color:rgba(255,255,255,.12)}
+.dk2{max-width:1280px;margin:-40px auto 0;padding:0 24px 48px}.rgrid{display:grid;grid-template-columns:1.2fr 1fr 1.1fr;gap:28px;align-items:start}.rtop{margin-bottom:20px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}.cols .card{margin-bottom:20px}
+.fq{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px}.fq div{border:1.5px solid var(--line);border-radius:12px;padding:12px}.fq div.on{border-color:var(--gold);background:#fbf7ee}.fq b{display:block;font-size:1.35rem;color:var(--navy)}.fq small{color:var(--muted);font-size:.76rem}
+.sv{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}.sv>div{background:#edf4ef;border-radius:12px;padding:12px}.svn{font-size:1.25rem;font-weight:800;color:var(--green)}
+.lt .lg{color:var(--text)}.lg.lt{color:var(--text);font-size:.82rem;margin-top:6px}
+/* r3b: make the results panel top edge read at the same line as the left column */
+.dk .res,.cols .res:first-child{border:1px solid rgba(255,255,255,.16);border-top:4px solid var(--gold);padding-top:20px;box-shadow:0 0 0 1px rgba(16,31,52,.9),0 24px 70px rgba(12,41,45,.18)}
+.dk .res .ex,.cols .res .ex{margin:0}
+.dk .res .lbl#biglbl,.cols .res #biglbl{margin-top:10px!important}
+.sticky{top:16px}
+/* build: responsive layout for tablet and mobile */
+header a{color:inherit}.tabs a{cursor:pointer}
+@media(max-width:1000px){.dk{grid-template-columns:1fr}.sticky{position:static}.rgrid,.cols{grid-template-columns:1fr}}
+@media(max-width:600px){.dk,.dk2{padding:0 12px 32px}.fld{grid-template-columns:1fr 120px}.fq,.sv{grid-template-columns:1fr}.chartrow{flex-wrap:wrap;justify-content:center}.res{padding:20px}.big{font-size:2.6rem}header img{height:36px}}
