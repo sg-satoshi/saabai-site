@@ -50,7 +50,7 @@ export function SunderConfirmed() {
         <div className="perks">
           <div className="perk"><div className="n">01</div><h3>Hear it first</h3><p>When SUNDER opens, insiders get the news before it goes anywhere else.</p></div>
           <div className="perk"><div className="n">02</div><h3>Behind the build</h3><p>Prototype shots, testing notes and the calls we&apos;re making on the paddle, as they happen.</p></div>
-          <div className="perk"><div className="n">03</div><h3>Built to take hits</h3><p>Every paddle will carry a 12-month core and edge warranty. Play hard.</p></div>
+          <div className="perk"><div className="n">03</div><h3>Built to take hits</h3><p>Play hard.</p></div>
         </div>
         <div className="tease">
           <div><div className="eyebrow">Coming into focus</div><h3 style={{ marginTop: 12 }}>Something&apos;s taking shape.</h3><p>We&apos;re not showing it yet. The first proper look lands in your inbox, before anyone else sees it.</p></div>
