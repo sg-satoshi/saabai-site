@@ -37,6 +37,31 @@ export function SunderPending({ action }: { action: React.ReactNode }) {
   );
 }
 
+/** Shown until the auto-confirm gate opens (see ConfirmNow). The button is always available. */
+export function SunderConfirming({ action }: { action: React.ReactNode }) {
+  return (
+    <div className="sc pre">
+      <Hero eyebrow="Confirming">
+        <h1 className="cap" style={{ marginTop: 14 }}>Confirming<span className="hl">…</span></h1>
+        {action}
+      </Hero>
+    </div>
+  );
+}
+
+/** Retry after a failed first attempt (network or server error). */
+export function SunderRetry({ action }: { action: React.ReactNode }) {
+  return (
+    <div className="sc pre">
+      <Hero eyebrow="One more step">
+        <h1 className="cap" style={{ marginTop: 14 }}>One tap and you&apos;re <span className="hl">in</span>.</h1>
+        <p style={{ marginTop: 14 }}>That first try didn&apos;t go through. Tap below to try again.</p>
+        {action}
+      </Hero>
+    </div>
+  );
+}
+
 export function SunderConfirmed() {
   return (
     <div className="sc">

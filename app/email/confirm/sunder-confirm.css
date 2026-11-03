@@ -65,3 +65,5 @@ body:has(.sc),body:has(.se){margin:0;background:#f2f2ee}body:has(.se){background
 .sc .foot a{display:inline-block;padding:6px 0}
 .se h1.off{margin-top:36px}
 .sc button.btn{font-family:inherit;font-weight:700;border:0}
+
+.sc-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}

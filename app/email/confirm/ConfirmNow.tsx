@@ -1,16 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import { SunderConfirmed, SunderError, SunderPending, SunderUnsubscribed } from "./SunderPages";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { SunderConfirmed, SunderConfirming, SunderError, SunderRetry, SunderUnsubscribed } from "./SunderPages";
 
-export type ConfirmState = "idle" | "working" | "confirmed" | "already" | "unsubscribed" | "bad";
+export type ConfirmState = "working" | "sending" | "retry" | "confirmed" | "already" | "unsubscribed" | "bad";
 
-/** Two-step confirm (link scanners only GET). The POST runs only when the person taps the button. */
-export default function ConfirmNow({ token, initial = "idle" }: { token: string; initial?: ConfirmState }) {
+/** Auto-confirm gate: a trusted pointerdown, touchstart or keydown is required, and the page must have been
+ * continuously visible for MIN_VISIBLE_MS. No interaction means no auto POST; the button stays the path.
+ * Hidden time resets the clock. */
+export const MIN_VISIBLE_MS = 1500;
+const SIGNALS = ["pointerdown", "touchstart", "keydown"] as const;
+
+/**
+ * Confirm from the email link with no second tap for real people.
+ * Some security scanners (Defender Safe Links, Proofpoint, Mimecast and others) DO render pages and run JS,
+ * so we never POST on mount or on time alone. The POST waits for the gate above, which needs real
+ * trusted input that sandbox detonations rarely produce. It is a mitigation, not a guarantee.
+ * The button is always shown as the explicit path; the POST runs at most once per page.
+ */
+export default function ConfirmNow({ token, initial = "working" }: { token: string; initial?: ConfirmState }) {
   const [state, setState] = useState<ConfirmState>(initial);
+  const sent = useRef(false);
 
-  async function go() {
-    setState("working");
+  const go = useCallback(async (manual = false) => {
+    if (sent.current && !manual) return;
+    sent.current = true;
+    setState("sending");
     try {
       const res = await fetch("/api/email/confirm", {
         method: "POST",
@@ -20,24 +35,75 @@ export default function ConfirmNow({ token, initial = "idle" }: { token: string;
       const data = await res.json().catch(() => ({}));
       const status = data.status;
       if (status === "confirmed" || status === "already" || status === "unsubscribed") setState(status);
+      else if (res.status >= 500) setState("retry");
       else setState("bad");
     } catch {
-      setState("bad");
+      setState("retry");
     }
-  }
+  }, [token]);
 
-  return <ConfirmView state={state} onConfirm={go} />;
+  useEffect(() => {
+    if (initial !== "working") return;
+    let visibleSince = document.visibilityState === "visible" ? performance.now() : -1;
+    let interacted = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const check = () => {
+      clearTimeout(timer);
+      if (sent.current || visibleSince < 0 || document.visibilityState !== "visible") return;
+      const shown = performance.now() - visibleSince;
+      if (!interacted) return; // no timer until a real interaction
+      if (shown >= MIN_VISIBLE_MS) { void go(); return; }
+      timer = setTimeout(check, MIN_VISIBLE_MS - shown + 20);
+    };
+    const onVis = () => {
+      visibleSince = document.visibilityState === "visible" ? performance.now() : -1;
+      check();
+    };
+    const onSignal = (e: Event) => { if (e.isTrusted) { interacted = true; check(); } };
+    document.addEventListener("visibilitychange", onVis);
+    for (const ev of SIGNALS) window.addEventListener(ev, onSignal, { passive: true, capture: true });
+    check();
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVis);
+      for (const ev of SIGNALS) window.removeEventListener(ev, onSignal, { capture: true });
+    };
+  }, [go, initial]);
+
+  return <ConfirmView state={state} token={token} onConfirm={() => void go(true)} />;
 }
 
-export function ConfirmView({ state, onConfirm }: { state: ConfirmState; onConfirm?: () => void }) {
+const SAY: Record<ConfirmState, string> = {
+  working: "Confirming your email.",
+  sending: "Confirming your email.",
+  retry: "That first try didn't go through. Try again.",
+  confirmed: "Confirmed. You're an insider now.",
+  already: "Confirmed. You're an insider now.",
+  unsubscribed: "You're off the list.",
+  bad: "This link has expired.",
+};
+
+/** The live region sits outside the swapped view so the announcement survives the state change. */
+export function ConfirmView({ state, token = "", onConfirm }: { state: ConfirmState; token?: string; onConfirm?: () => void }) {
+  return (
+    <>
+      <div className="sc-sr" role="status" aria-live="polite">{SAY[state]}</div>
+      <StateView state={state} token={token} onConfirm={onConfirm} />
+    </>
+  );
+}
+
+function StateView({ state, token, onConfirm }: { state: ConfirmState; token: string; onConfirm?: () => void }) {
   if (state === "confirmed" || state === "already") return <SunderConfirmed />;
   if (state === "unsubscribed") return <SunderUnsubscribed />;
   if (state === "bad") return <SunderError />;
-  return (
-    <SunderPending action={
-      <button type="button" className="btn" onClick={onConfirm} disabled={state === "working"}>
-        {state === "working" ? "Confirming…" : "Confirm my email"}
-      </button>
-    } />
+  // A real form, so the button also works with JS off: the route answers a form POST with a 303 back here.
+  const button = (
+    <form method="post" action="/api/email/confirm" onSubmit={(e) => { e.preventDefault(); onConfirm?.(); }}>
+      <input type="hidden" name="t" value={token} />
+      <button type="submit" className="btn" disabled={state === "sending"}>Confirm my email</button>
+    </form>
   );
+  if (state === "retry") return <SunderRetry action={button} />;
+  return <SunderConfirming action={button} />;
 }
