@@ -12,3 +12,13 @@ export function lmmBrandAsset(pathname: string): string | null {
   return null;
 }
 
+
+/** LMM calculator pages: friendly path on the LMM host -> static file under public/clients/lmm-site/calculators. */
+export const LMM_CALCULATORS = ["borrowing-power", "serviceability", "repayments"] as const;
+export function lmmCalculatorPath(pathname: string): string | null {
+  const p = pathname.replace(/\/+$/, "");
+  if (p === "/calculators") return "/clients/lmm-site/calculators/borrowing-power.html";
+  const m = /^\/calculators\/([a-z-]+)$/.exec(p);
+  if (m && (LMM_CALCULATORS as readonly string[]).includes(m[1])) return `/clients/lmm-site/calculators/${m[1]}.html`;
+  return null;
+}

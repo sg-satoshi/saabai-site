@@ -6,7 +6,7 @@ import { ACL_HEADER, ADMIN_AUDIT_KEY, ADMIN_AUDIT_MAX, aclHeaderValue, gate } fr
 import { getRequestSession } from "./lib/request-session";
 import { CHAT_API, chatGuard } from "./lib/chat-guard";
 import { formGuard } from "./lib/form-guard";
-import { lmmBrandAsset } from "./lib/lmm-brand";
+import { lmmBrandAsset, lmmCalculatorPath } from "./lib/lmm-brand";
 import { EXP_COOKIE, EXP_HEADER, EXP_MAX_AGE, EXP_OFF_COOKIE, EXP_TRACK_HEADER, assignAll, enabledSites, parseExpCookie, privacySignal, siteKeyForHost } from "./lib/exp/core";
 import { getExperiments } from "./lib/exp/config";
 import { isSiteEnabled } from "./lib/exp/sites";
@@ -330,6 +330,16 @@ export async function proxy(req: NextRequest) {
         url.pathname = `/clients/lmm-site${pathname}`;
         url.search = "";
         return NextResponse.rewrite(url);
+      }
+      // LMM calculators: static pages beside the LMM site.
+      if (slug === "lmm-site") {
+        const calc = lmmCalculatorPath(pathname);
+        if (calc) {
+          url.hostname = "www.saabai.ai";
+          url.pathname = calc;
+          url.search = "";
+          return NextResponse.rewrite(url);
+        }
       }
       // SUNDER ships its own icons beside its static page (not the Saabai fallback).
       if (slug === SUNDER_SLUG && /^\/(favicon\.ico|apple-touch-icon(-precomposed)?\.png)$/.test(pathname)) {
