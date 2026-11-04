@@ -125,6 +125,8 @@ const COPY={
  const hv=(ovB&&HEADLINES[1])||HEADLINES.find(x=>String(x.id)===new URLSearchParams(location.search).get('h'))||HEADLINES[0];COPY.headline=hv.headline;COPY.cta=hv.cta;document.documentElement.dataset.headline=hv.id;}
 document.querySelectorAll('[data-c]').forEach(e=>{const v=COPY[e.dataset.c];e.dataset.h?e.innerHTML=v:e.textContent=v});
 const q=new URLSearchParams(location.search),$=id=>document.getElementById(id);
+// Referral: keep ?r= for 30 days so browsing before signup does not lose it.
+const REFK='sunder_ref',REFTTL=2592e6;function getRef(){const u=(q.get('r')||'').trim().toLowerCase();try{if(/^[a-z0-9]{6,12}$/.test(u)){localStorage.setItem(REFK,JSON.stringify({c:u,t:Date.now()}));return u}const o=JSON.parse(localStorage.getItem(REFK)||'null');if(o&&o.c&&Date.now()-o.t<REFTTL)return o.c;localStorage.removeItem(REFK)}catch{}return u}const REF0=getRef();
 /* Waitlist API (same origin): /api/sunder-waitlist signup, /api/sunder-waitlist/update for the thank-you extras. Marketing is double opt-in. */
 const post=(u,d)=>fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(r=>r.json().then(j=>({ok:r.ok,j})));
 let TOKEN=null;
@@ -151,8 +153,8 @@ $('f').addEventListener('submit',async e=>{e.preventDefault();say('');
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){say('Please enter a valid email.');return}
  const btn=document.querySelector('#f button[type=submit]');btn.disabled=true;
  const utm={};['source','medium','campaign','content','term'].forEach(k=>{const v=q.get('utm_'+k);if(v)utm[k]=v});
- try{const r=await post('/api/sunder-waitlist',{firstName:first,email,mobile:mob0,h:Number(document.documentElement.dataset.headline)||1,ref:q.get('r')||'',utm,source:document.referrer?document.referrer.slice(0,200):'',website:$('hp').value});
-  if(r.ok&&r.j.ok){if(mob0)$('mobile').value=mob0;thanks(first,r.j.ref,r.j.token);try{window.dispatchEvent(new Event('sb:goal'))}catch{}}else{say(r.j.error||'Something went wrong. Please try again.');btn.disabled=false}
+ try{const r=await post('/api/sunder-waitlist',{firstName:first,email,mobile:mob0,h:Number(document.documentElement.dataset.headline)||1,ref:REF0,utm,source:document.referrer?document.referrer.slice(0,200):'',website:$('hp').value});
+  if(r.ok&&r.j.ok){try{localStorage.removeItem(REFK)}catch{}if(mob0)$('mobile').value=mob0;thanks(first,r.j.ref,r.j.token);try{window.dispatchEvent(new Event('sb:goal'))}catch{}}else{say(r.j.error||'Something went wrong. Please try again.');btn.disabled=false}
  }catch{say('Something went wrong. Please try again.');btn.disabled=false}
 });
 </script>

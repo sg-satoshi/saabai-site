@@ -4,9 +4,11 @@
  * (db/migrations/008_sunder_waitlist.sql), service role only.
  * The waitlist row is still created on signup. Marketing email is double opt-in
  * after migration 009: existing rows stay confirmed, new rows start pending.
- * Referrer extra entries are capped at 10 in SQL.
+ * Referrer extra entries are capped at 10 in SQL and, after migration 011,
+ * are credited when the referred person confirms, not at signup.
  */
 import { createHash, randomBytes } from "node:crypto";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const SUNDER_CONSENT_VERSION = "2026-11-02-v2";
 export const SUNDER_CONSENT_TEXT =
@@ -202,4 +204,58 @@ export const EXPORT_COLUMNS = [
 ] as const;
 export function toCsv(rows: Record<string, unknown>[]): string {
   return [EXPORT_COLUMNS.join(","), ...rows.map((r) => EXPORT_COLUMNS.map((c) => csvCell(r[c])).join(","))].join("\n") + "\n";
+}
+
+/** "sam@example.com" -> "s**@example.com". Admin display only. */
+export function maskEmail(email: string | null | undefined): string {
+  if (!email) return "";
+  const [local, domain] = email.split("@");
+  if (!domain) return "***";
+  return `${local.slice(0, 1)}${"*".repeat(Math.max(2, Math.min(local.length - 1, 6)))}@${domain}`;
+}
+
+export type ReferralStats = { code: string; friends: number; entries: number };
+
+/** Counts only, never names. */
+export function referralLineText(r: ReferralStats): string {
+  return `Your link: https://sunder.com.au/?r=${r.code} · ${r.friends} ${r.friends === 1 ? "friend" : "friends"} joined · ${Math.min(r.entries, REFERRAL_CAP)}/${REFERRAL_CAP} bonus entries`;
+}
+
+
+/**
+ * Referral stats per email (lower case). friends = referred people who
+ * confirmed (migration 011). Before 011 it falls back to referral_entries.
+ */
+export async function referralStatsFor(db: SupabaseClient, emails: string[]): Promise<Map<string, ReferralStats & { referredBy: string | null; referredByEmail: string | null }>> {
+  const out = new Map<string, ReferralStats & { referredBy: string | null; referredByEmail: string | null }>();
+  if (!emails.length) return out;
+  const { data, error } = await db.from("sunder_subscribers").select("email,referral_code,referred_by,referral_entries").in("email", emails.slice(0, 300));
+  if (error || !data) return out;
+  const rows = data as { email: string; referral_code: string; referred_by: string | null; referral_entries: number }[];
+  const codes = rows.map((r) => r.referral_code);
+  const friends = new Map<string, number>();
+  let counted = false;
+  if (codes.length) {
+    const f = await db.from("sunder_subscribers").select("referred_by").in("referred_by", codes).not("referral_credited_at", "is", null);
+    if (!f.error && f.data) {
+      counted = true;
+      for (const r of f.data as { referred_by: string }[]) friends.set(r.referred_by, (friends.get(r.referred_by) || 0) + 1);
+    }
+  }
+  const byCodes = [...new Set(rows.map((r) => r.referred_by).filter((c): c is string => !!c))];
+  const byEmail = new Map<string, string>();
+  if (byCodes.length) {
+    const b = await db.from("sunder_subscribers").select("email,referral_code").in("referral_code", byCodes);
+    for (const r of (b.data || []) as { email: string; referral_code: string }[]) byEmail.set(r.referral_code, r.email);
+  }
+  for (const r of rows) {
+    out.set(r.email, {
+      code: r.referral_code,
+      friends: counted ? friends.get(r.referral_code) || 0 : r.referral_entries,
+      entries: r.referral_entries,
+      referredBy: r.referred_by,
+      referredByEmail: r.referred_by ? byEmail.get(r.referred_by) || null : null,
+    });
+  }
+  return out;
 }
