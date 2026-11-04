@@ -123,6 +123,17 @@ export function confirmMessage(): { subject: string; html: string } {
   return { subject: "Confirm your SUNDER email", html: buildSunderHtml(lines.join("\n"), button) };
 }
 
+/** "Check my referrals": the private status link, by email only. */
+export function referralLinkMessage(statusUrl: string): { subject: string; html: string } {
+  const lines = [
+    "Hi {{firstName|there}},",
+    "Here's your private SUNDER referral link. Open it any time to see how many friends have joined and your bonus giveaway entries.",
+  ];
+  const safe = statusUrl.replace(/[^A-Za-z0-9:/._-]/g, "");
+  const button = `<p style="margin:8px 0 22px;"><a href="${safe}" style="display:inline-block;background:#d4ff3a;color:#0d0d0d;padding:14px 22px;line-height:20px;min-height:44px;box-sizing:border-box;border-radius:8px;text-decoration:none;font-weight:800;">Check my referrals</a></p><p style="margin:0 0 14px;font-size:14px;color:#374151;">Keep this link to yourself. Didn't ask for it? You can ignore this email.</p>`;
+  return { subject: "Your SUNDER referral link", html: buildSunderHtml(lines.join("\n"), button) };
+}
+
 /**
  * mailto is only a fallback address for mail clients. Nothing reads that inbox automatically.
  * The HTTPS one-click POST is what unsubscribes immediately.
