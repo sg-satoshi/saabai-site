@@ -75,6 +75,7 @@
 .xp-ve-frame{background:var(--n-100);border:1px solid var(--n-200);border-radius:var(--r-lg);padding:10px;display:flex;justify-content:center;overflow:auto}
 .xp-ve-frame iframe{height:78vh;min-height:520px;border:0;background:#fff;border-radius:var(--r-md);max-width:100%}
 .xp-ve-panel{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+.xp-ve-panel .xp-save-bar{position:sticky;bottom:0;z-index:2;background:#fff;padding:10px 0 4px;border-top:1px solid var(--n-200);margin-top:4px}
 .xp-ve-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
 .xp-ve-vars{display:grid;gap:10px}
 .xp-ve-var{border:1px solid var(--n-200);border-radius:var(--r-md);padding:10px 12px;display:grid;gap:8px;background:#fff}
