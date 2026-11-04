@@ -58,7 +58,7 @@ test("SUNDER default copy is in the static HTML so crawlers see it", () => {
   assert.equal((html.match(/<h1/g) ?? []).length, 1);
   assert.match(html, /<p class="sub" data-c="sub">A new pickleball paddle with power, spin and control\. Join for 20% off at launch, early access and a giveaway\.<\/p>/);
   assert.match(html, /<button type="submit" data-c="cta"[^>]*>Get first hit<\/button>/);
-  assert.match(html, /<p class="wty" data-c="wty" data-no-test>12-month warranty on core and edge\.<\/p>/);
+  assert.doesNotMatch(html, /warrant/i);
   assert.match(html, /<title>SUNDER pickleball paddles, Australia 🇦🇺 \| Join the VIP list<\/title>/);
   for (const m of ["og:title", "og:description", "og:url", "og:type", "og:image"]) assert.match(html, new RegExp(`property="${m}" content="[^"]+"`), m);
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
@@ -76,12 +76,12 @@ function renderCopy(cookie: string) {
   const document = { cookie, documentElement: { dataset: {} as Record<string, string> }, querySelectorAll: () => els };
   new Function("document", "location", "URLSearchParams", src)(document, { pathname: "/", search: "" }, URLSearchParams);
   const get = (c: string) => els.find((e) => e.dataset.c === c)!;
-  return { h1: get("headline").textContent, cta: get("cta").textContent, sub: get("sub").textContent, wty: get("wty").textContent };
+  return { h1: get("headline").textContent, cta: get("cta").textContent, sub: get("sub").textContent };
 }
 
 test("both headline variants still swap over the pre-rendered default", () => {
   const ovB = `sb_ov=${encodeURIComponent(JSON.stringify({ p: "/", o: [{ i: "sunder-home-hero-headline", a: "b" }] }))}`;
-  assert.deepEqual(renderCopy(""), { h1: "Get first hit.", cta: "Get first hit", sub: "A new pickleball paddle with power, spin and control. Join for 20% off at launch, early access and a giveaway.", wty: "12-month warranty on core and edge." });
+  assert.deepEqual(renderCopy(""), { h1: "Get first hit.", cta: "Get first hit", sub: "A new pickleball paddle with power, spin and control. Join for 20% off at launch, early access and a giveaway." });
   const b = renderCopy(ovB);
   assert.equal(b.h1, "Feel the power. Keep the control."); assert.equal(b.cta, "Be first to hit it");
 });
