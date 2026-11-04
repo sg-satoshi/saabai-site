@@ -11,7 +11,7 @@ import { readFileSync } from "fs";
 import path from "path";
 
 // Explicit allowlist. SUNDER: the waitlist page ships with the code (sb:goal event, sb_ov headline picker), never a stale Blob copy.
-const REPO_FIRST_SLUGS = new Set(["nico-moretti", "sunder"]);
+const REPO_FIRST_SLUGS = new Set(["nico-moretti", "sunder", "heaven-thai-massage"]);
 
 export function readRepoClientHtml(slug: string, file: string): string | null {
   if (!REPO_FIRST_SLUGS.has(slug)) return null;
