@@ -110,3 +110,42 @@ export function upfrontTotals(monthlyCents: number, setupCents: number, gst: boo
 
 /** Status that should show the site as needing attention in admin. */
 export const NEEDS_ATTENTION: SiteBillingStatus[] = ["payment_failed", "past_due", "paused", "link_expired"];
+
+/** Admin-set discount on a site's care plan (shown to the client as original price, discount, new price). */
+export interface PlanDiscount {
+  type: "percent" | "amount";
+  /** Percent (1-100) or cents off per month */
+  value: number;
+  /** Months the discount lasts; omitted = forever */
+  months?: number;
+  /** Shown to the client, e.g. "Mates rates" */
+  label?: string;
+}
+
+/** Validate and normalise admin discount input. Null = no discount. */
+export function normaliseDiscount(d: Partial<PlanDiscount> | undefined | null, monthlyCents: number): { ok: true; discount?: PlanDiscount } | { ok: false; error: string } {
+  if (!d || !d.type || !d.value) return { ok: true };
+  if (d.type !== "percent" && d.type !== "amount") return { ok: false, error: "Unknown discount type" };
+  const value = d.type === "percent" ? Math.round(Number(d.value) * 100) / 100 : Math.round(Number(d.value));
+  if (!(value > 0)) return { ok: true };
+  if (d.type === "percent" && value > 100) return { ok: false, error: "Discount can't be more than 100%" };
+  if (d.type === "amount" && value > monthlyCents) return { ok: false, error: "Discount can't be more than the monthly price" };
+  const months = d.months ? Math.round(Number(d.months)) : undefined;
+  if (months !== undefined && (months < 1 || months > 36)) return { ok: false, error: "Discount months must be 1 to 36" };
+  const label = (d.label || "").trim().slice(0, 40) || undefined;
+  return { ok: true, discount: { type: d.type, value, ...(months ? { months } : {}), ...(label ? { label } : {}) } };
+}
+
+/** Cents off per month for a discount. */
+export function discountOffCents(monthlyCents: number, d?: PlanDiscount): number {
+  if (!d) return 0;
+  const off = d.type === "percent" ? Math.round((monthlyCents * d.value) / 100) : d.value;
+  return Math.min(monthlyCents, Math.max(0, off));
+}
+
+/** Client-facing discount label, e.g. "Mates rates (50% off)" or "Founding client ($100 off, 3 months)". */
+export function discountLabel(d: PlanDiscount, money: (c: number) => string): string {
+  const what = d.type === "percent" ? `${d.value}% off` : `${money(d.value)} off`;
+  const dur = d.months ? `, ${d.months === 1 ? "first month" : `${d.months} months`}` : "";
+  return `${d.label || "Discount"} (${what}${dur})`;
+}
