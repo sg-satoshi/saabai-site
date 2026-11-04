@@ -3,14 +3,18 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { documentHtml, newBlock, type Block } from "../../../lib/email/blocks";
-import { SUNDER_IDENTITY } from "../../../lib/email/constants";
+import { SUNDER_FROM_NAME, SUNDER_IDENTITY } from "../../../lib/email/constants";
+import { cleanFromName } from "../../../lib/email/rules";
 import { PREHEADER_MAX, SEND_CONFIRM_OVER, SUBJECT_MAX, contentHash } from "../../../lib/email/gates";
 import { renderMarketingEmail } from "../../../lib/email/message";
+import { SUNDER_MERGE_FIELDS, SUNDER_SAMPLE_VALUES, insertToken, mergeTagIssues } from "../../../lib/email/merge-tags";
+import { mergeToken } from "../../../lib/personalise";
 
 type Detail = {
   ok: true;
   campaign: { id: string; name: string; subject: string; preheader: string; blocks: Block[]; fromName: string; status: string; testHash: string | null; testSentAt: string | null };
   fromEmail: string;
+  defaultFromName?: string;
   paused: boolean;
   audience: number;
   pending: number;
@@ -29,7 +33,7 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
   const [subject, setSubject] = useState("");
   const [preheader, setPreheader] = useState("");
   const [blocks, setBlocks] = useState<Block[]>([newBlock("text")]);
-  const [fromName, setFromName] = useState("SUNDER");
+  const [fromName, setFromName] = useState(SUNDER_FROM_NAME);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [testHash, setTestHash] = useState<string | null>(null);
   const [testedAt, setTestedAt] = useState<string | null>(null);
@@ -45,9 +49,19 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
   const [when, setWhen] = useState("");
   const [pick, setPick] = useState<string | null>(null);
   const loaded = useRef(false);
+  const subjectRef = useRef<HTMLInputElement | null>(null);
+
+  function insertInto(el: HTMLInputElement | HTMLTextAreaElement | null, value: string, set: (v: string) => void, token: string) {
+    const r = insertToken(value, token, el?.selectionStart ?? null, el?.selectionEnd ?? null);
+    set(r.value);
+    requestAnimationFrame(() => { if (el) { el.focus(); el.setSelectionRange(r.caret, r.caret); } });
+  }
 
   useEffect(() => {
-    if (!campaignId) { loaded.current = true; return; }
+    if (!campaignId) {
+      fetch("/api/admin/email", { cache: "no-store" }).then((r) => r.json()).then((j) => { if (j?.ok && j.fromName) setFromName(cleanFromName(j.fromName)); }).catch(() => {}).finally(() => { loaded.current = true; });
+      return;
+    }
     fetch(`/api/admin/email?view=campaign&id=${campaignId}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((j) => {
@@ -59,7 +73,7 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
         setSubject(j.campaign.subject || "");
         setPreheader(j.campaign.preheader || "");
         setBlocks(j.campaign.blocks?.length ? j.campaign.blocks : [newBlock("text")]);
-        setFromName(j.campaign.fromName || "SUNDER");
+        setFromName(cleanFromName(j.campaign.fromName || j.defaultFromName || ""));
         setTestHash(j.campaign.testHash);
         setTestedAt(j.campaign.testSentAt);
         loaded.current = true;
@@ -145,7 +159,7 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
     identity: { ...SUNDER_IDENTITY, fromName },
     unsubUrl: "https://saabai.ai/email/u",
     viewUrl: "https://saabai.ai/email/view",
-    values: { firstName: "Sam" },
+    values: SUNDER_SAMPLE_VALUES,
   }), [subject, preheader, blocks, fromName]);
 
   function statusChip(status: string) {
@@ -178,6 +192,8 @@ function patch(blockId: string, next: Partial<Block>) {
     });
   }
 
+  const tagIssues = mergeTagIssues([subject, preheader, ...blocks.flatMap((b) => Object.values(b).filter((v): v is string => typeof v === "string"))]);
+
   const room = Math.max(0, (detail?.dailyCap || 0) - (detail?.usedToday || 0));
   const today = Math.min(audience, room);
   const later = Math.max(0, audience - today);
@@ -193,13 +209,14 @@ function patch(blockId: string, next: Partial<Block>) {
         <div className="em-actions">
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
             <button type="button" className="btn" onClick={() => setTestOpen(true)} disabled={!!busy || !!detail?.paused}>Send test</button>
-            <button type="button" className="btn" disabled={!unlocked || !!busy} aria-describedby="send-lock" onClick={() => { setTyped(""); setConfirm("schedule"); }}>Schedule</button>
-            <button type="button" className="btn pri" disabled={!unlocked || !!busy} aria-describedby="send-lock" onClick={() => { setTyped(""); setConfirm("send"); }}>Send now</button>
+            <button type="button" className="btn" disabled={!unlocked || !!busy || tagIssues.length > 0} aria-describedby="send-lock" onClick={() => { setTyped(""); setConfirm("schedule"); }}>Schedule</button>
+            <button type="button" className="btn pri" disabled={!unlocked || !!busy || tagIssues.length > 0} aria-describedby="send-lock" onClick={() => { setTyped(""); setConfirm("send"); }}>Send now</button>
           </div>
-          <p id="send-lock" className="em-help" style={{ textAlign: "right" }}>{unlocked ? "A test of this version was sent." : "Send a test first to unlock Send now and Schedule."}</p>
+          <p id="send-lock" className="em-help" style={{ textAlign: "right" }}>{tagIssues.length ? "Fix the field tags below to unlock sending." : unlocked ? "A test of this version was sent." : "Send a test first to unlock Send now and Schedule."}</p>
         </div>
       </div>
       {banner && <div className="em-alert info" role="status" style={{ margin: "12px 0" }}>{banner}</div>}
+      {tagIssues.length > 0 && <div className="em-alert warn" role="alert" style={{ marginBottom: 12 }}><b>Unknown field {tagIssues.length === 1 ? "tag" : "tags"}:</b> {tagIssues.map((t) => <code key={t} className="em-tag">{t}</code>)}. These would be left blank for subscribers. Use Insert field to add a supported tag.</div>}
       {detail?.paused && <div className="em-alert warn" style={{ marginBottom: 12 }}>Sending is paused. Tests and sends stay locked.</div>}
 
       <div className="em-split">
@@ -209,9 +226,14 @@ function patch(blockId: string, next: Partial<Block>) {
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}><span>Waitlist, confirmed only</span><b className="num">{audience.toLocaleString("en-AU")} recipients</b></div>
             <p className="em-help">Excludes {detail?.unsubscribed || 0} unsubscribed and {detail?.suppressed || 0} suppressed. {detail?.pending || 0} pending confirmation are not in this audience.</p>
             <label className="em-field">Name<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
-            <label className="em-field">Subject
-              <input value={subject} maxLength={SUBJECT_MAX} aria-invalid={subject.length > SUBJECT_MAX} onChange={(e) => setSubject(e.target.value)} />
+            <div className="em-field">
+              <div className="em-labelrow"><label htmlFor="em-subject">Subject</label><InsertField onPick={(t) => insertInto(subjectRef.current, subject, setSubject, t)} /></div>
+              <input id="em-subject" ref={subjectRef} value={subject} maxLength={SUBJECT_MAX} aria-invalid={subject.length > SUBJECT_MAX} onChange={(e) => setSubject(e.target.value)} />
               <span className="em-count">{subject.length} / {SUBJECT_MAX}</span>
+            </div>
+            <label className="em-field">From name
+              <input value={fromName} maxLength={80} onChange={(e) => setFromName(e.target.value)} onBlur={() => setFromName(cleanFromName(fromName))} />
+              <span className="em-help">Inbox shows: {cleanFromName(fromName)} &lt;{detail?.fromEmail || "hello@sunder.com.au"}&gt;</span>
             </label>
             <label className={`em-field${preheader.trim() ? "" : " err"}`}>Preview text
               <input value={preheader} maxLength={PREHEADER_MAX} onChange={(e) => setPreheader(e.target.value)} />
@@ -230,23 +252,23 @@ function patch(blockId: string, next: Partial<Block>) {
                     <div>{summary(b)}</div>
                     {pick === b.id && (
                       <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
-                        {(b.kind === "heading" || b.kind === "text") && <label className="em-field">Text<textarea rows={b.kind === "heading" ? 2 : 4} value={b.text} onChange={(e) => patch(b.id, { text: e.target.value })} /></label>}
+                        {(b.kind === "heading" || b.kind === "text") && <TagField id={`${b.id}-text`} label="Text" rows={b.kind === "heading" ? 2 : 4} value={b.text} onChange={(v) => patch(b.id, { text: v })} insert={insertInto} />}
                         {b.kind === "image" && <>
                           <label className="em-field">Image address<input value={b.src} onChange={(e) => patch(b.id, { src: e.target.value })} /></label>
                           <label className="em-field">Alt text<input value={b.alt} onChange={(e) => patch(b.id, { alt: e.target.value })} /></label>
                         </>}
                         {b.kind === "button" && <>
-                          <label className="em-field">Label<input value={b.label} onChange={(e) => patch(b.id, { label: e.target.value })} /></label>
+                          <TagField id={`${b.id}-label`} label="Label" value={b.label} onChange={(v) => patch(b.id, { label: v })} insert={insertInto} />
                           <label className="em-field">Link<input value={b.href} onChange={(e) => patch(b.id, { href: e.target.value })} /></label>
                         </>}
                         {b.kind === "columns" && <>
-                          <label className="em-field">Left<textarea rows={3} value={b.left} onChange={(e) => patch(b.id, { left: e.target.value })} /></label>
-                          <label className="em-field">Right<textarea rows={3} value={b.right} onChange={(e) => patch(b.id, { right: e.target.value })} /></label>
+                          <TagField id={`${b.id}-left`} label="Left" rows={3} value={b.left} onChange={(v) => patch(b.id, { left: v })} insert={insertInto} />
+                          <TagField id={`${b.id}-right`} label="Right" rows={3} value={b.right} onChange={(v) => patch(b.id, { right: v })} insert={insertInto} />
                         </>}
                         {b.kind === "product" && <>
-                          <label className="em-field">Title<input value={b.title} onChange={(e) => patch(b.id, { title: e.target.value })} /></label>
+                          <TagField id={`${b.id}-title`} label="Title" value={b.title} onChange={(v) => patch(b.id, { title: v })} insert={insertInto} />
                           <label className="em-field">Link<input value={b.href} onChange={(e) => patch(b.id, { href: e.target.value })} /></label>
-                          <label className="em-field">Text<textarea rows={2} value={b.text} onChange={(e) => patch(b.id, { text: e.target.value })} /></label>
+                          <TagField id={`${b.id}-ptext`} label="Text" rows={2} value={b.text} onChange={(v) => patch(b.id, { text: v })} insert={insertInto} />
                         </>}
                       </div>
                     )}
@@ -277,6 +299,7 @@ function patch(blockId: string, next: Partial<Block>) {
           </div>
           <div className="bd em-prev">
             <p className="em-help" style={{ marginTop: 0 }}><b>{preview.subject}</b> · {preview.from}</p>
+            <p className="em-help" style={{ marginTop: -4 }}>Field tags show sample values (First name: Sam).</p>
             <iframe title="Email preview" sandbox="" srcDoc={preview.html} className="em-frame" style={{ maxWidth: mobilePreview ? 375 : 620 }} />
           </div>
         </div>
@@ -286,7 +309,7 @@ function patch(blockId: string, next: Partial<Block>) {
         <div className="em-modal" role="presentation">
           <div className="em-dialog" role="dialog" aria-modal="true" aria-labelledby="test-h">
             <h2 id="test-h">Send a test</h2>
-            <p className="em-help">One address. Use a mailbox you can open. The sample name in the message is Sam.</p>
+            <p className="em-help">One address. Use a mailbox you can open. Field tags use sample values, so First name shows as Sam.</p>
             <label className="em-field">Address<input value={testTo} onChange={(e) => setTestTo(e.target.value)} /></label>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
               <button type="button" className="btn" onClick={() => setTestOpen(false)}>Cancel</button>
@@ -326,6 +349,52 @@ function patch(blockId: string, next: Partial<Block>) {
         </div>
       )}
       <p style={{ marginTop: 16 }}><Link href="/saabai-admin/email" className="btn">Back to campaigns</Link></p>
+    </div>
+  );
+}
+
+type FieldEl = HTMLInputElement | HTMLTextAreaElement;
+type Insert = (el: FieldEl | null, value: string, set: (v: string) => void, token: string) => void;
+
+function InsertField({ onPick }: { onPick: (token: string) => void }) {
+  const ref = useRef<HTMLDetailsElement | null>(null);
+  useEffect(() => {
+    const close = (e: Event) => {
+      const el = ref.current;
+      if (!el?.open) return;
+      if (e instanceof KeyboardEvent ? e.key === "Escape" : !el.contains(e.target as Node)) el.open = false;
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", close);
+    return () => { document.removeEventListener("mousedown", close); document.removeEventListener("keydown", close); };
+  }, []);
+  return (
+    <details className="em-insert" ref={ref}>
+      <summary aria-label="Insert a personalisation field"><span aria-hidden="true">{"{ }"}</span> Insert field</summary>
+      <div className="em-insert-menu" role="menu">
+        {SUNDER_MERGE_FIELDS.map((f) => (
+          <button key={f.key} type="button" role="menuitem" onMouseDown={(e) => e.preventDefault()} onClick={() => { onPick(mergeToken(f)); if (ref.current) ref.current.open = false; }}>
+            <span className="em-insert-name">{f.label}</span>
+            <code className="em-tag">{mergeToken(f)}</code>
+          </button>
+        ))}
+        <p className="em-insert-hint">Text after the | is the fallback, used when a subscriber has no {SUNDER_MERGE_FIELDS[0]?.label.toLowerCase()}. Edit it to suit, e.g. {"{{firstName|mate}}"}.</p>
+      </div>
+    </details>
+  );
+}
+
+function TagField({ id, label, value, rows, onChange, insert }: { id: string; label: string; value: string; rows?: number; onChange: (v: string) => void; insert: Insert }) {
+  const areaRef = useRef<HTMLTextAreaElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  return (
+    <div className="em-field">
+      <div className="em-labelrow"><label htmlFor={id}>{label}</label><InsertField onPick={(t) => insert(rows ? areaRef.current : inputRef.current, value, onChange, t)} /></div>
+      {rows ? (
+        <textarea id={id} ref={areaRef} rows={rows} value={value} onChange={(e) => onChange(e.target.value)} />
+      ) : (
+        <input id={id} ref={inputRef} value={value} onChange={(e) => onChange(e.target.value)} />
+      )}
     </div>
   );
 }

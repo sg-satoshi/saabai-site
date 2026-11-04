@@ -6,7 +6,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { confirmEvidencePatch, EVIDENCE_COLUMNS, type Evidence, type RequestEvidence } from "../consent-evidence";
 import { getRedis } from "../redis";
-import { SUNDER_IDENTITY, SUNDER_SLUG, type SenderIdentity } from "./constants";
+import { SUNDER_FROM_NAME, SUNDER_IDENTITY, SUNDER_SLUG, type SenderIdentity } from "./constants";
 import { documentHtml, parseBlocks, textToBlocks, type Block } from "./blocks";
 import {
   contentHash, copyProblem, DEFAULT_DAILY_CAP, rateDecision, sendBlocked, splitByDailyCap,
@@ -606,6 +606,7 @@ export async function campaignDetail(id: string) {
       scheduledAt: row.scheduled_at,
     },
     fromEmail: ready.tenant.from_email,
+    defaultFromName: ready.tenant.from_name || SUNDER_FROM_NAME,
     paused: await sendingPaused(ready.db, ready.tenant),
     audience: audience.gate.recipients.length,
     pending: audience.pending,
