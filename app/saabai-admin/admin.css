@@ -391,3 +391,6 @@ a.btn{text-decoration:none}
  .sub-panel .sub-foot .btn{height:44px}
  .sub-panel .em-field input,.sub-panel .em-field select{height:44px;font-size:16px}
 }
+/* Subscriber panel: always the admin sans, never a browser-default serif */
+.drawer-detail .panel.sub-panel{font-family:var(--font-admin-sans),system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-feature-settings:"cv11","ss01";-webkit-font-smoothing:antialiased}
+.sub-panel h2,.sub-panel .sub-sec,.sub-panel summary,.sub-panel blockquote,.sub-panel dl,.sub-panel input,.sub-panel select,.sub-panel button,.sub-panel .badge,.sub-panel .em-help{font-family:inherit}
