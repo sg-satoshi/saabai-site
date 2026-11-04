@@ -5,6 +5,7 @@ export type Action =
   | { type: "update_variant"; variantId: string; text: string; emphasis?: string }
   | { type: "add_variant"; text: string; emphasis?: string; source?: "human" | "ai"; suggestionId?: string; edited?: boolean }
   | { type: "set_variant_active"; variantId: string; active: boolean }
+  | { type: "delete_variant"; variantId: string }
   | { type: "set_status"; status: "running" | "paused" }
   | { type: "make_winner"; variantId: string }
   | { type: "set_lead_value"; leadValueAUD: number | null };
@@ -76,6 +77,17 @@ export function applyAction(current: Experiment, a: Action, now: Date = new Date
       v.active = a.active;
       action = a.active ? "resume_variant" : "pause_variant";
       detail = { variant: v.id };
+      break;
+    }
+    case "delete_variant": {
+      const v = find(a.variantId);
+      if (!v) return fail("That variant doesn't exist.", 404);
+      if (v.id === exp.defaultVariantId) return fail("The control can't be deleted. Make another variant the winner first.");
+      const rest = exp.variants.filter((x) => x.id !== v.id);
+      if (!rest.some((x) => x.id !== exp.defaultVariantId)) return fail("A test needs at least one variant besides the control. Add another variant before deleting this one.");
+      if (exp.status === "running" && rest.filter((x) => x.active).length < 2) return fail("A running test needs at least two active variants. Resume or add a variant first, or pause the test.");
+      detail = { variant: v.id, text: v.text, emphasis: v.emphasis ?? "" };
+      exp.variants = rest;
       break;
     }
     case "set_status": {

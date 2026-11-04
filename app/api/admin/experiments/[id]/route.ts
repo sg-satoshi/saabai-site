@@ -5,7 +5,7 @@ import type { Action } from "@/lib/exp/mutate";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const ACTIONS = ["update_variant", "add_variant", "set_variant_active", "set_status", "make_winner", "set_lead_value"];
+const ACTIONS = ["update_variant", "add_variant", "set_variant_active", "delete_variant", "set_status", "make_winner", "set_lead_value"];
 
 /** Admin only. Full detail: config, analytics, breakdowns, audit trail. */
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
