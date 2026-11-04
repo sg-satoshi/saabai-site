@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { dunningDays, dueDunningStep, isLinkExpired, linkExpiresAt, planChangeKind, prorate, shouldPause, statusAfterFailure, statusFromSubscription, upfrontTotals } from "../lib/billing/state";
+import { dunningDays, dueDunningStep, isLinkExpired, linkExpiresAt, planChangeKind, prorate, shouldPause, statusAfterFailure, statusFromSubscription, upfrontTotals, normaliseDiscount, discountOffCents, discountLabel } from "../lib/billing/state";
 import { isRetiredPortalAddon, normaliseCatalog, omitRetiredPortalAddons, SEED_CATALOG, type Addon } from "../lib/billing/catalog";
 import { paymentFailedEmail, setupLinkEmail } from "../lib/billing/emails";
 
@@ -97,4 +97,29 @@ test("emails have no em dashes and the key copy", () => {
   assert.match(e1.text, /GST not applicable/);
   const e2 = paymentFailedEmail({ contactName: "Tom", siteName: "bulimbapetwash.com.au", planName: "Presence", amountCents: 10000, updateUrl: "https://x/pay/a?update=1", day: 0 });
   for (const e of [e1, e2]) assert.ok(!/\u2014/.test(e.html + e.text + e.subject));
+});
+
+// ---------- admin discount ----------
+
+test("discount: percent and amount off", () => {
+  assert.equal(discountOffCents(20000, { type: "percent", value: 50 }), 10000);
+  assert.equal(discountOffCents(20000, { type: "amount", value: 10000 }), 10000);
+  assert.equal(discountOffCents(20000, undefined), 0);
+});
+
+test("discount: validation", () => {
+  assert.deepEqual(normaliseDiscount(undefined, 20000), { ok: true });
+  assert.equal(normaliseDiscount({ type: "percent", value: 150 }, 20000).ok, false);
+  assert.equal(normaliseDiscount({ type: "amount", value: 30000 }, 20000).ok, false);
+  const r = normaliseDiscount({ type: "percent", value: 50, months: 3, label: " Mates rates " }, 20000);
+  assert.deepEqual(r, { ok: true, discount: { type: "percent", value: 50, months: 3, label: "Mates rates" } });
+});
+
+test("discount: label and setup email show original, discount and new price", () => {
+  assert.equal(discountLabel({ type: "percent", value: 50, label: "Mates rates" }, (c) => `$${c / 100}`), "Mates rates (50% off)");
+  const e = setupLinkEmail({ contactName: "Jess", siteName: "Harbour Physio", planName: "Growth", monthlyCents: 20000, setupFeeCents: 0, startDate: "2026-11-10", gst: false, payUrl: "https://x/pay/a", discount: { type: "amount", value: 10000, label: "Founding client" } });
+  assert.match(e.html, /\$200\.00/);
+  assert.match(e.html, /Founding client \(\$100\.00 off\)/);
+  assert.match(e.html, /-\$100\.00/);
+  assert.match(e.html, /saving \$100\.00 every month/);
 });

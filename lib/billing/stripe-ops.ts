@@ -40,8 +40,27 @@ export async function ensureCustomer(rec: SiteBillingRecord): Promise<string> {
 export async function createSetupCheckout(rec: SiteBillingRecord, customerId: string, code?: string): Promise<string> {
   const stripe = getStripe();
   // Fixed per-plan product (set up from Marketing > Offers & Coupons) so product-restricted codes match.
-  const fixedProduct = await careProductFor(rec.planId);
-  let promo = code ? await findActivePromo(normaliseCode(code)) : null;
+  let fixedProduct = await careProductFor(rec.planId);
+  // Admin discount: a one-use coupon scoped to the care plan product only (not the setup fee).
+  // It replaces customer promo codes on this session (Stripe allows one or the other).
+  let adminCoupon: string | null = null;
+  if (rec.discount) {
+    if (!fixedProduct) {
+      const prod = await stripe.products.create({ name: `${rec.planName} website care`, metadata: { planId: rec.planId, siteId: rec.siteId, source: BILLING_SOURCE } });
+      fixedProduct = prod.id;
+    }
+    const d = rec.discount;
+    const coupon = await stripe.coupons.create({
+      name: (d.label || "Discount").slice(0, 40),
+      ...(d.type === "percent" ? { percent_off: d.value } : { amount_off: d.value, currency: "aud" }),
+      ...(d.months ? { duration: "repeating" as const, duration_in_months: d.months } : { duration: "forever" as const }),
+      applies_to: { products: [fixedProduct] },
+      max_redemptions: 1,
+      metadata: { source: BILLING_SOURCE, siteId: rec.siteId, kind: "admin_discount" },
+    });
+    adminCoupon = coupon.id;
+  }
+  let promo = code && !adminCoupon ? await findActivePromo(normaliseCode(code)) : null;
   // A product-restricted code (one or several products) only pre-applies if it covers this care plan.
   // Otherwise skip the pre-apply so the customer still reaches Stripe, where they can retry a code.
   if (promo && !promoCoversProducts(promo, [fixedProduct])) promo = null;
@@ -70,6 +89,7 @@ export async function createSetupCheckout(rec: SiteBillingRecord, customerId: st
   const anchor = monthAfter(rec.startDate);
   const meta: Record<string, string> = { source: BILLING_SOURCE, kind: "setup", siteId: rec.siteId, planId: rec.planId };
   if (promo) meta.coupon_code = promo.code;
+  if (adminCoupon) meta.admin_coupon = adminCoupon;
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
@@ -80,7 +100,7 @@ export async function createSetupCheckout(rec: SiteBillingRecord, customerId: st
       ...(anchor > Date.now() / 1000 + 3600 ? { billing_cycle_anchor: anchor, proration_behavior: "none" as const } : {}),
     },
     metadata: meta,
-    ...(promo ? { discounts: [{ promotion_code: promo.id }] } : { allow_promotion_codes: true }),
+    ...(adminCoupon ? { discounts: [{ coupon: adminCoupon }] } : promo ? { discounts: [{ promotion_code: promo.id }] } : { allow_promotion_codes: true }),
     payment_method_collection: "always",
     success_url: `${siteUrl()}/pay/done?site=${encodeURIComponent(rec.siteName)}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${siteUrl()}/pay/${rec.payToken}`,
