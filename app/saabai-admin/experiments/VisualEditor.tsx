@@ -6,7 +6,7 @@ import { Card, CardBody } from "../ui/Card";
 import { confirmDialog, notify } from "../ui/Feedback";
 import { api, CopyView, EditForm, nf, pct, tone, vtone, type Detail } from "./ExperimentsClient";
 import { isLegalPath, isProtectedText, kindForElement, suggestSlot, type ElementInfo } from "../../../lib/exp/editor";
-import { captureOrig, imagePathOf, previewInto, sectionOf } from "../../../lib/exp/editor-dom";
+import { captureOrig, copyOnDeselect, imagePathOf, previewInto, rememberSaved, sectionOf, type KeptCopy } from "../../../lib/exp/editor-dom";
 import { KIND_RULES, type SlotKind } from "../../../lib/exp/core";
 import { findTarget, missingTargetWarning, resolvePreviewTarget, stableSelector } from "../../../lib/exp/overlay-dom";
 import { SAABAI, SitePicker, readSite, rememberSite, siteParam, type ExpSite } from "./SitePicker";
@@ -83,6 +83,7 @@ export default function VisualEditor() {
   const frame = useRef<HTMLIFrameElement>(null);
   const selEl = useRef<HTMLElement | null>(null);
   const orig = useRef<string>("");
+  const kept = useRef(new WeakMap<object, KeptCopy>());
   const selKind = useRef<SlotKind>("headline");
   const pathRef = useRef("/");
   const siteRef = useRef(SAABAI);
@@ -135,7 +136,7 @@ export default function VisualEditor() {
       e.preventDefault(); e.stopPropagation();
       t.classList.remove("sb-hov", "sb-cand");
       selEl.current?.classList.remove("sb-sel");
-      if (selEl.current && selEl.current !== t) previewInto(selEl.current, orig.current, selKind.current, null);
+      if (selEl.current && selEl.current !== t) { const k = copyOnDeselect(kept.current, selEl.current); previewInto(selEl.current, orig.current, k?.kind ?? selKind.current, k?.v ?? null); }
       selEl.current = t; orig.current = captureOrig(t);
       t.classList.add("sb-sel");
       const slot = t.getAttribute("data-exp-slot");
@@ -151,12 +152,13 @@ export default function VisualEditor() {
 
   // Preview into the selected element. If the selection was lost or belongs to an old frame document (client sites
   // reload as a fresh static page), find the test element again by its id, so the button never silently does nothing.
-  const preview = useCallback((kind: SlotKind, v: { text: string; emphasis?: string } | null, expId?: string) => {
+  const preview = useCallback((kind: SlotKind, v: { text: string; emphasis?: string } | null, expId?: string, keep?: boolean) => {
     const doc = frame.current?.contentDocument;
     const el = resolvePreviewTarget(doc, selEl.current, expId);
     if (!el) { if (v) notify.error("Couldn't find this test's element on the page shown. Pick it on the page, then try again."); return; }
     if (el !== selEl.current) { selEl.current?.classList.remove("sb-sel"); selEl.current = el; orig.current = captureOrig(el); el.classList.add("sb-sel"); }
     previewInto(el, orig.current, kind, v);
+    if (keep || !v) rememberSaved(kept.current, el, kind, keep ? v : null);
     if (v) el.scrollIntoView({ block: "center", behavior: "smooth" });
   }, []);
 
@@ -212,7 +214,7 @@ export default function VisualEditor() {
         </div>
         <aside className="xp-ve-panel">
           {!picked && <Card><CardBody><p className="xp-note">{editing ? "Hover the page. Teal dashed outlines are existing test elements, grey dotted ones are headings, text, buttons, links, prices, images and form hints you could turn into a test. Click one." : "Edit mode is off, so the page behaves normally. Turn it on to pick an element."}</p></CardBody></Card>}
-          {picked?.type === "slot" && <SlotPanel key={picked.expId} site={site} expId={picked.expId} onPreview={preview} onClose={() => { preview("headline", null); clearSel(); setPicked(null); }} />}
+          {picked?.type === "slot" && <SlotPanel key={picked.expId} site={site} expId={picked.expId} onPreview={preview} onClose={() => { if (!selEl.current || !copyOnDeselect(kept.current, selEl.current)) preview("headline", null); clearSel(); setPicked(null); }} />}
           {picked?.type === "candidate" && <CandidatePanel key={picked.text} site={site} p={picked} path={path} onClose={() => { clearSel(); setPicked(null); }} onStarted={(expId, slotName) => { selEl.current?.setAttribute("data-exp-id", expId); setPicked({ type: "slot", slotName, expId }); }} />}
         </aside>
       </div>
@@ -220,7 +222,7 @@ export default function VisualEditor() {
   );
 }
 
-function SlotPanel({ site, expId, onPreview, onClose }: { site: string; expId: string; onPreview: (k: SlotKind, v: { text: string; emphasis?: string } | null, expId?: string) => void; onClose: () => void }) {
+function SlotPanel({ site, expId, onPreview, onClose }: { site: string; expId: string; onPreview: (k: SlotKind, v: { text: string; emphasis?: string } | null, expId?: string, keep?: boolean) => void; onClose: () => void }) {
   const [d, setD] = useState<Detail | null>(null);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
@@ -267,7 +269,7 @@ function SlotPanel({ site, expId, onPreview, onClose }: { site: string; expId: s
                 <div className="xp-top"><span className="nm">{x.id.toUpperCase()}{isCtl && <Badge tone="neutral">control</Badge>}{!x.active && <Badge tone="warn">paused</Badge>}</span>
                   <span className="xp-note">{r ? `${nf(r.impressions)} views · ${pct(r.rate)} · ${pct(r.probBest, 0)} best` : ""}</span></div>
                 {editing === x.id
-                  ? <EditForm image={kind === "image"} noun={kr.noun} hasEmph={kr.emphasis} maxLen={kr.maxText} v={x} hasData={(r?.impressions ?? 0) > 0} busy={busy} onCancel={() => setEditing(null)} onSave={async (t, em) => { if (await act({ type: "update_variant", variantId: x.id, text: t, emphasis: em }, "Copy saved. Live within about a minute.")) { setEditing(null); onPreview(kind, { text: t, emphasis: em }, expId); } }} />
+                  ? <EditForm image={kind === "image"} noun={kr.noun} hasEmph={kr.emphasis} maxLen={kr.maxText} v={x} hasData={(r?.impressions ?? 0) > 0} busy={busy} onCancel={() => setEditing(null)} onSave={async (t, em) => { if (await act({ type: "update_variant", variantId: x.id, text: t, emphasis: em }, "Copy saved. Live within about a minute.")) { setEditing(null); onPreview(kind, { text: t, emphasis: em }, expId, true); } }} />
                   : <>
                     <CopyView v={x} kind={kind} />
                     <div className="xp-acts">
@@ -281,7 +283,7 @@ function SlotPanel({ site, expId, onPreview, onClose }: { site: string; expId: s
           })}
         </div>
         {adding
-          ? <EditForm noun={kind === "button" ? "button label" : "headline"} hasEmph={kind !== "button"} maxLen={kind === "button" ? 40 : 90} v={{ text: "" }} hasData={false} busy={busy} saveLabel="Add variant" onCancel={() => setAdding(false)} onSave={async (t, em) => { if (await act({ type: "add_variant", text: t, emphasis: em }, "Variant added. It starts getting visitors within about a minute.")) { setAdding(false); onPreview(kind, { text: t, emphasis: em }, expId); } }} />
+          ? <EditForm noun={kind === "button" ? "button label" : "headline"} hasEmph={kind !== "button"} maxLen={kind === "button" ? 40 : 90} v={{ text: "" }} hasData={false} busy={busy} saveLabel="Add variant" onCancel={() => setAdding(false)} onSave={async (t, em) => { if (await act({ type: "add_variant", text: t, emphasis: em }, "Variant added. It starts getting visitors within about a minute.")) { setAdding(false); onPreview(kind, { text: t, emphasis: em }, expId, true); } }} />
           : <div className="xp-acts" style={{ marginTop: 10 }}><Button variant="sec" disabled={busy || e.variants.length >= 8} onClick={() => setAdding(true)}>Add variant</Button></div>}
         <p className="xp-note" style={{ marginTop: 8 }}>Previews only change this editor frame. Saving a change is logged and goes live for visitors within about a minute.</p>
       </CardBody>

@@ -37,3 +37,14 @@ test("missing overlay targets give a clear warning, none when all found", async 
   assert.match(w, /Get first hit text/);
   assert.match(missingTargetWarning(["a", "b", "c", "d", "e"])!, /\+2 more/);
 });
+
+test("saved copy survives deselect; showing control clears it", async () => {
+  const { rememberSaved, copyOnDeselect } = await import("../lib/exp/editor-dom");
+  const kept = new WeakMap(); const tagline = {}; const headline = {};
+  assert.equal(copyOnDeselect(kept, tagline), null);
+  rememberSaved(kept, tagline, "text", { text: "New tagline" });
+  assert.deepEqual(copyOnDeselect(kept, tagline), { kind: "text", v: { text: "New tagline", emphasis: undefined } });
+  assert.equal(copyOnDeselect(kept, headline), null);
+  rememberSaved(kept, tagline, "text", null);
+  assert.equal(copyOnDeselect(kept, tagline), null);
+});

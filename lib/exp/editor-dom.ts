@@ -56,3 +56,13 @@ export function sectionOf(el: Element): string {
   const h = sec.querySelector("h1, h2");
   return (h?.textContent ?? "").trim().split(/\s+/).slice(0, 3).join(" ") || "main";
 }
+
+/** Copy saved in this editor session, per element, so picking another element doesn't revert a saved edit. */
+export type KeptCopy = { kind: SlotKind; v: { text: string; emphasis?: string } };
+export function rememberSaved(kept: WeakMap<object, KeptCopy>, el: object, kind: SlotKind, v: { text: string; emphasis?: string } | null): void {
+  if (v) kept.set(el, { kind, v: { text: v.text, emphasis: v.emphasis } }); else kept.delete(el);
+}
+/** What an element should show once it's deselected: its saved copy, or null for the original. */
+export function copyOnDeselect(kept: WeakMap<object, KeptCopy>, el: object): KeptCopy | null {
+  return kept.get(el) ?? null;
+}
