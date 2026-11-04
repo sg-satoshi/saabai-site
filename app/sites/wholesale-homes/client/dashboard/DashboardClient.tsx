@@ -118,7 +118,7 @@ export default function DashboardClient({ allPackages }: { allPackages: Package[
       <section className="bg-[#f8f6f2]">
         <div className="mx-auto w-full max-w-7xl px-6 pt-8 lg:px-10">
           <div className="wh-rise mb-4 inline-flex items-center gap-1.5 rounded-full bg-[#1A2B3C]/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1A2B3C]">
-            <Lock className="h-3 w-3" /> Members only — not publicly listed
+            <Lock className="h-3 w-3" /> Members only, not publicly listed
           </div>
           <Hero
             eyebrow="Private client access"

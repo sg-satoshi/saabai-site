@@ -3,6 +3,7 @@ import { list, put } from "@vercel/blob";
 import { getSiteBySlug, updateSite } from "../../../../lib/site-registry";
 import { buildChatWidget, getNicheColors } from "../../../../lib/chat-widget-template";
 import { seedPlatformSkin, widgetV2Enabled } from "../../../../lib/chatbot/seed";
+import { noDashesHtml } from "@/lib/no-dashes-html";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Save updated HTML to draft
-    await put(`sites/${slug}/draft.html`, html, {
+    await put(`sites/${slug}/draft.html`, noDashesHtml(html), {
       access: "public",
       contentType: "text/html",
       addRandomSuffix: false,

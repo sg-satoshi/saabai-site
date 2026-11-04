@@ -53,13 +53,13 @@ export default function DualIncomeYieldCalculator() {
   return (
     <ClientPortalShell>
       <PageWrap>
-        <Masthead label="Wholesale Homes — Dual Income Yield" />
+        <Masthead label="Wholesale Homes: Dual Income Yield" />
         <CalculatorNav current="dual-income-yield" />
 
         <Hero
           eyebrow="Rental return"
           headline={<>This dual-income home yields{" "}<span style={{ color: "#5fd4ab" }}><AnimatedNumber value={ny} format={(n) => n.toFixed(1) + "%"} /></span> net.</>}
-          sub={<>{fmt$(twr)}/wk combined rent — ${mr} main + ${gr} granny — on a {fmt$(pp)} purchase, after all holding costs.</>}
+          sub={<>{fmt$(twr)}/wk combined rent, ${mr} main + ${gr} granny, on a {fmt$(pp)} purchase, after all holding costs.</>}
           stats={[
             { label: "Net income / yr", value: <AnimatedNumber value={nri} format={(n) => fmt$(Math.round(n))} /> },
             { label: "Gross yield", value: <AnimatedNumber value={gy} format={(n) => n.toFixed(1) + "%"} /> },
@@ -79,7 +79,7 @@ export default function DualIncomeYieldCalculator() {
           <Card>
             <Eyebrow>Assumptions</Eyebrow>
             <Title>Your numbers</Title>
-            <p style={{ fontSize: 12.5, color: UI.faintInk, margin: "4px 0 16px" }}>Rents and holding costs — everything updates live.</p>
+            <p style={{ fontSize: 12.5, color: UI.faintInk, margin: "4px 0 16px" }}>Rents and holding costs, everything updates live.</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <FieldGrid items={[
                 { label: "Purchase Price", val: pp, set: setPp, suffix: "$" },
@@ -148,7 +148,7 @@ export default function DualIncomeYieldCalculator() {
               <LedgerRow label="Tax" sub={`${(taxRate * 100).toFixed(1)}% marginal rate on net income`} value={`−${fmt$(Math.round(nri * taxRate))}`} valueColor={UI.faintInk} />
               <LedgerRow strong last label="After-tax income" sub={`${afterTaxWeekly >= 0 ? "+" : "−"}$${Math.abs(Math.round(afterTaxWeekly))}/wk`} value={fmt$(Math.round(afterTaxNri))} valueColor={afterTaxNri >= 0 ? UI.green : UI.red} />
             </div>
-            <p style={{ fontSize: 10.5, color: UI.faint, marginTop: 12 }}>No loan modelled in this calculator — for after-tax cash flow with financing, use the Investment Analyzer.</p>
+            <p style={{ fontSize: 10.5, color: UI.faint, marginTop: 12 }}>No loan modelled in this calculator, for after-tax cash flow with financing, use the Investment Analyzer.</p>
           </Card>
         </div>
       </PageWrap>

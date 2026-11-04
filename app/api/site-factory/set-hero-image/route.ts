@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { list, put } from "@vercel/blob";
+import { noDashesHtml } from "@/lib/no-dashes-html";
 
 export const runtime = "nodejs";
 
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "Could not find a hero background image to replace — no background-image found in site CSS" }, { status: 422 });
     }
 
-    await put(`sites/${slug}/draft.html`, html, {
+    await put(`sites/${slug}/draft.html`, noDashesHtml(html), {
       access: "public",
       contentType: "text/html",
       addRandomSuffix: false,

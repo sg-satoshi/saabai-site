@@ -10,7 +10,7 @@
     bgColor: '#FAF8F5',
     textColor: '#1A1A1A',
     apiEndpoint: '/api/tributum-chat',
-    greeting: "Hello. I'm Mike, Tributum Law's AI assistant. I can help with questions about tax law, ATO disputes, trusts, estate planning — or get you connected with the team. How can I help?",
+    greeting: "Hello. I'm Mike, Tributum Law's AI assistant. I can help with questions about tax law, ATO disputes, trusts, estate planning, or get you connected with the team. How can I help?",
     placeholder: "Ask about tax law, trusts, ATO disputes..."
   };
 
