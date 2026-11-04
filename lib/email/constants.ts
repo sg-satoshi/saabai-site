@@ -1,7 +1,7 @@
 /** SUNDER is the first tenant. The send-only IAM key may From these domains only. */
 export const SUNDER_SLUG = "sunder";
 export const SUNDER_FROM_EMAIL = "hello@sunder.com.au";
-export const SUNDER_FROM_NAME = "Sunder Pickleball";
+export const SUNDER_FROM_NAME = "SUNDER Pickleball";
 export const EMAIL_PUBLIC_ORIGIN = "https://saabai.ai";
 /** SUNDER confirm links land on its own domain (proxy serves /email/confirm there). */
 export const SUNDER_PUBLIC_ORIGIN = "https://sunder.com.au";

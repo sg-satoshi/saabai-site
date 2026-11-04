@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { documentHtml, textToBlocks } from "../../../../lib/email/blocks";
-import { SUNDER_IDENTITY } from "../../../../lib/email/constants";
+import { SUNDER_FROM_NAME, SUNDER_IDENTITY } from "../../../../lib/email/constants";
 import { renderMarketingEmail } from "../../../../lib/email/message";
 import type { EmailAdminSnapshot, SeriesStepView } from "../../../../lib/email/types";
 
@@ -117,7 +117,7 @@ export default function Series() {
             <iframe title="Series preview" sandbox="" style={{ width: "100%", height: 480, border: 0 }} srcDoc={renderMarketingEmail({
               subject: preview.subject,
               html: documentHtml({ preheader: "", blocks: textToBlocks(preview.body) }),
-              fromName: "SUNDER",
+              fromName: SUNDER_FROM_NAME,
               identity: SUNDER_IDENTITY,
               unsubUrl: "https://saabai.ai/email/u",
               values: { firstName: "Sam" },

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { documentHtml, newBlock, type Block } from "../../../lib/email/blocks";
-import { SUNDER_IDENTITY } from "../../../lib/email/constants";
+import { SUNDER_FROM_NAME, SUNDER_IDENTITY } from "../../../lib/email/constants";
+import { cleanFromName } from "../../../lib/email/rules";
 import { PREHEADER_MAX, SEND_CONFIRM_OVER, SUBJECT_MAX, contentHash } from "../../../lib/email/gates";
 import { renderMarketingEmail } from "../../../lib/email/message";
 import { SUNDER_MERGE_FIELDS, SUNDER_SAMPLE_VALUES, insertToken, mergeTagIssues } from "../../../lib/email/merge-tags";
@@ -13,6 +14,7 @@ type Detail = {
   ok: true;
   campaign: { id: string; name: string; subject: string; preheader: string; blocks: Block[]; fromName: string; status: string; testHash: string | null; testSentAt: string | null };
   fromEmail: string;
+  defaultFromName?: string;
   paused: boolean;
   audience: number;
   pending: number;
@@ -31,7 +33,7 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
   const [subject, setSubject] = useState("");
   const [preheader, setPreheader] = useState("");
   const [blocks, setBlocks] = useState<Block[]>([newBlock("text")]);
-  const [fromName, setFromName] = useState("SUNDER");
+  const [fromName, setFromName] = useState(SUNDER_FROM_NAME);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [testHash, setTestHash] = useState<string | null>(null);
   const [testedAt, setTestedAt] = useState<string | null>(null);
@@ -56,7 +58,10 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
   }
 
   useEffect(() => {
-    if (!campaignId) { loaded.current = true; return; }
+    if (!campaignId) {
+      fetch("/api/admin/email", { cache: "no-store" }).then((r) => r.json()).then((j) => { if (j?.ok && j.fromName) setFromName(cleanFromName(j.fromName)); }).catch(() => {}).finally(() => { loaded.current = true; });
+      return;
+    }
     fetch(`/api/admin/email?view=campaign&id=${campaignId}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((j) => {
@@ -68,7 +73,7 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
         setSubject(j.campaign.subject || "");
         setPreheader(j.campaign.preheader || "");
         setBlocks(j.campaign.blocks?.length ? j.campaign.blocks : [newBlock("text")]);
-        setFromName(j.campaign.fromName || "SUNDER");
+        setFromName(cleanFromName(j.campaign.fromName || j.defaultFromName || ""));
         setTestHash(j.campaign.testHash);
         setTestedAt(j.campaign.testSentAt);
         loaded.current = true;
@@ -226,6 +231,10 @@ function patch(blockId: string, next: Partial<Block>) {
               <input id="em-subject" ref={subjectRef} value={subject} maxLength={SUBJECT_MAX} aria-invalid={subject.length > SUBJECT_MAX} onChange={(e) => setSubject(e.target.value)} />
               <span className="em-count">{subject.length} / {SUBJECT_MAX}</span>
             </div>
+            <label className="em-field">From name
+              <input value={fromName} maxLength={80} onChange={(e) => setFromName(e.target.value)} onBlur={() => setFromName(cleanFromName(fromName))} />
+              <span className="em-help">Inbox shows: {cleanFromName(fromName)} &lt;{detail?.fromEmail || "hello@sunder.com.au"}&gt;</span>
+            </label>
             <label className={`em-field${preheader.trim() ? "" : " err"}`}>Preview text
               <input value={preheader} maxLength={PREHEADER_MAX} onChange={(e) => setPreheader(e.target.value)} />
               <span className="em-count">{preheader.length} / {PREHEADER_MAX}</span>

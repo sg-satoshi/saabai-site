@@ -34,6 +34,18 @@ export default function Campaigns() {
   const [tab, setTab] = useState("all");
   const [q, setQ] = useState("");
   const [err, setErr] = useState("");
+  const [sender, setSender] = useState<string | null>(null);
+  const [senderMsg, setSenderMsg] = useState("");
+  const [senderBusy, setSenderBusy] = useState(false);
+
+  async function saveSender(name: string) {
+    setSenderBusy(true); setSenderMsg("");
+    const res = await fetch("/api/admin/email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "fromName", fromName: name }) }).catch(() => null);
+    const j = res ? await res.json().catch(() => ({})) : {};
+    setSenderBusy(false);
+    if (!j.ok) { setSenderMsg(j.error || "Could not save. Nothing changed."); return; }
+    setSender(j.fromName); setSenderMsg("Saved. New broadcasts and the welcome emails use this name.");
+  }
 
   function load() {
     setErr("");
@@ -80,6 +92,17 @@ export default function Campaigns() {
           {snap?.paused ? <span className="badge b-warn">Sending off</span> : <span className="badge b-ok">Sending on</span>}
           <button type="button" className="btn" onClick={exp} disabled={!shown.length}>Export</button>
           <Link href="/saabai-admin/email/new" className="btn pri">New broadcast</Link>
+        </div>
+      </div>
+
+      <div className="card em-sender">
+        <div className="hd"><h2>Default sender</h2><span className="em-help">Used by new broadcasts and the confirm and welcome emails</span></div>
+        <div className="bd" style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
+          <label className="em-field" style={{ flex: "1 1 260px" }}>From name
+            <input value={sender ?? (snap?.fromName || "")} maxLength={80} disabled={!snap} onChange={(e) => setSender(e.target.value)} />
+            <span className="em-help">{senderMsg || `Inbox shows: ${(sender ?? snap?.fromName) || "SUNDER Pickleball"} <${snap?.fromEmail || "hello@sunder.com.au"}>`}</span>
+          </label>
+          <button type="button" className="btn pri" style={{ marginBottom: 22 }} disabled={!snap || senderBusy || sender === null || sender.trim() === (snap?.fromName || "")} onClick={() => saveSender(sender || "")}>{senderBusy ? "Saving" : "Save"}</button>
         </div>
       </div>
 
