@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { deleteConfirmText, editLocked } from "../../../../lib/email/contact-copy";
+import type { Evidence } from "../../../../lib/consent-evidence";
 
 type Person = {
   id: string;
@@ -20,6 +21,7 @@ type Person = {
   review?: boolean;
   referred_by?: string;
   mobile?: string | null;
+  evidence?: Evidence | null;
 };
 
 const EMAIL_RE = /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/;
@@ -32,6 +34,73 @@ function fmtWhen(iso: string | null) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }) + " AEST";
+}
+
+const NR = "Not recorded";
+const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : "");
+function place(country: unknown, region: unknown, city: unknown) {
+  return [str(city), str(region), str(country)].filter(Boolean).join(", ");
+}
+
+/** Read-only Spam Act consent evidence. Missing values read "Not recorded". */
+function ConsentRecord({ p }: { p: Person }) {
+  const e = p.evidence || {};
+  const utm = (["source", "medium", "campaign", "content", "term"] as const)
+    .map((k) => [k, str(e[`utm_${k}` as keyof Evidence])] as const).filter(([, v]) => v).map(([k, v]) => `${k}=${v}`).join(" · ");
+  const row = (label: string, value: string, mono = false) => (
+    <><span>{label}</span><b className={mono ? "mono" : undefined}>{value || NR}</b></>
+  );
+  return (
+    <div className="sub-ev">
+      <details className="sub-consent" open>
+        <summary>Signup</summary>
+        <div className="in">
+          <dl className="em-kv">
+            {row("Signed up", fmtWhen(p.consent_at))}
+            {row("Form", str(e.form_id) || str(p.consent_source))}
+            {row("Page", str(e.page_url), true)}
+            {row("Referrer", str(e.source), true)}
+            {row("UTM", utm)}
+            {row("IP address", str(e.signup_ip), true)}
+            {row("Location", place(e.signup_country, e.signup_region, e.signup_city))}
+            {row("Device", str(e.user_agent))}
+          </dl>
+        </div>
+      </details>
+      <details className="sub-consent" open>
+        <summary>Consent shown</summary>
+        <div className="in">
+          <dl className="em-kv">
+            {row("Version", str(p.consent_version))}
+            {row("SMS opt-in", e.sms_consent ? `Yes, ${fmtWhen(str(e.sms_consent_at) || null) || "time not recorded"}` : "No")}
+          </dl>
+          <blockquote>{p.consent_text || "No wording stored."}</blockquote>
+          {e.sms_consent && str(e.sms_consent_text) ? <blockquote>{str(e.sms_consent_text)}</blockquote> : null}
+        </div>
+      </details>
+      <details className="sub-consent" open>
+        <summary>Double opt-in confirmation</summary>
+        <div className="in">
+          <dl className="em-kv">
+            {row("Confirmed", fmtWhen(p.confirmed_at) || (p.status === "pending" ? "Not yet" : ""))}
+            {row("Click recorded", fmtWhen(str(e.confirm_evidence_at) || null))}
+            {row("IP address", str(e.confirm_ip), true)}
+            {row("Location", place(e.confirm_country, e.confirm_region, e.confirm_city))}
+            {row("Device", str(e.confirm_user_agent))}
+          </dl>
+        </div>
+      </details>
+      <details className="sub-consent">
+        <summary>Referrals</summary>
+        <div className="in">
+          <dl className="em-kv">
+            {row("Referrals", String(p.referrals ?? 0) + (p.review ? " (over 25: check before a draw)" : ""))}
+            {row("Referred by", p.referred_by || "None")}
+          </dl>
+        </div>
+      </details>
+    </div>
+  );
 }
 
 function statusChip(p: Person) {
@@ -262,20 +331,7 @@ export default function Subscribers() {
                 </label>
               )}
               <div className="sub-sec">Record</div>
-              <details className="sub-consent">
-                <summary>Consent record</summary>
-                <div className="in">
-                <dl className="em-kv">
-                  <span>Source</span><b>{open.consent_source || "Waitlist"}</b>
-                  <span>Version</span><b>{open.consent_version || "Not recorded"}</b>
-                  <span>Consent time</span><b>{fmtWhen(open.consent_at) || "Not recorded"}</b>
-                  <span>Confirmed</span><b>{fmtWhen(open.confirmed_at) || "Not yet"}</b>
-                  <span>Referrals</span><b>{open.referrals ?? 0}{open.review ? " (over 25: check before a draw)" : ""}</b>
-                  <span>Referred by</span><b>{open.referred_by || "None"}</b>
-                </dl>
-                <blockquote>{open.consent_text || "No wording stored."}</blockquote>
-                </div>
-              </details>
+              <ConsentRecord p={open} />
             </div>
             <div className="sub-foot">
               <button type="button" className="btn dg" onClick={() => setConfirmIds([open.id])}>Delete</button>

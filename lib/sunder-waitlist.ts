@@ -9,6 +9,7 @@
  */
 import { createHash, randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cleanFormId, cleanPageUrl, signupEvidencePatch, type RequestEvidence } from "./consent-evidence";
 
 export const SUNDER_CONSENT_VERSION = "2026-11-04-v3";
 export const SUNDER_CONSENT_TEXT =
@@ -38,6 +39,10 @@ export type SignupInput = {
   source: string | null;
   /** Optional mobile from the signup form. Entering it is the SMS opt-in. */
   mobile: string | null;
+  /** Page the form was on (consent evidence). */
+  page?: string | null;
+  /** Which form (consent evidence), e.g. sunder-home-waitlist. */
+  form?: string | null;
 };
 
 const MOBILE = /^\+?\d{8,15}$/;
@@ -80,6 +85,8 @@ export function validateSignup(body: unknown): { ok: true; input: SignupInput } 
       utm: { source: clip(u.source, 100), medium: clip(u.medium, 100), campaign: clip(u.campaign, 100), content: clip(u.content, 100), term: clip(u.term, 100) },
       source: clip(b.source, 200),
       mobile,
+      page: cleanPageUrl(b.page, null),
+      form: cleanFormId(b.form),
     },
   };
 }
@@ -160,7 +167,7 @@ export async function supabaseStore(): Promise<WaitlistStore> {
  * Signup. A new email gets a fresh code and an update token. A repeat email
  * gets only its existing referral code (no token, no other data).
  */
-export async function signup(store: WaitlistStore, input: SignupInput, meta: { ipHash: string; userAgent: string | null }) {
+export async function signup(store: WaitlistStore, input: SignupInput, meta: { ipHash: string; userAgent: string | null; evidence?: RequestEvidence; referer?: string | null }) {
   const token = newToken();
   for (let i = 0; i < 3; i++) {
     const code = newReferralCode();
@@ -174,6 +181,15 @@ export async function signup(store: WaitlistStore, input: SignupInput, meta: { i
         p_referral_code: code, p_referred_by: input.referredBy, p_update_token_hash: hashToken(token),
       });
       if (!r.created) return { ref: r.referral_code, token: null };
+      // Consent evidence (migration 015): new rows only. Best effort, so a
+      // missing column never fails the signup.
+      if (meta.evidence) {
+        try {
+          await store.update(hashToken(token), signupEvidencePatch(meta.evidence, { pageUrl: input.page ?? cleanPageUrl(null, meta.referer ?? null), formId: input.form ?? null }));
+        } catch (e) {
+          console.error("sunder consent evidence save failed:", e instanceof Error ? e.message : "error");
+        }
+      }
       // Optional signup mobile: new rows only (never overwrite an existing
       // subscriber's data). The labelled field is the SMS opt-in. Best effort.
       if (input.mobile) {

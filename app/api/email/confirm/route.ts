@@ -1,4 +1,5 @@
 import { confirmByToken } from "../../../../lib/email/ops";
+import { requestEvidence } from "../../../../lib/consent-evidence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
     token = String(form?.get("t") || "");
   }
   try {
-    const result = await confirmByToken(token);
+    const result = await confirmByToken(token, requestEvidence(req));
     if (isForm) return backToPage(req, result.status);
     const status = result.status === "invalid" ? 400 : 200;
     return Response.json({ ok: result.status === "confirmed" || result.status === "already", ...result }, { status, headers: NO_STORE });

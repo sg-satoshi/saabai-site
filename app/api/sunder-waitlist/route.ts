@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { ipHash } from "../../../lib/chatbot/ratelimit";
 import { signup, supabaseStore, validateSignup } from "../../../lib/sunder-waitlist";
+import { requestEvidence } from "../../../lib/consent-evidence";
 
 // SUNDER waitlist signup. Public (proxy.ts) and rate limited per IP (lib/form-guard.ts).
 export const runtime = "nodejs";
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: v.error }, { status: 400, headers: NO_STORE });
   }
   try {
-    const r = await signup(await supabaseStore(), v.input, { ipHash: ipHash(req), userAgent: req.headers.get("user-agent") });
+    const r = await signup(await supabaseStore(), v.input, { ipHash: ipHash(req), userAgent: req.headers.get("user-agent"), evidence: requestEvidence(req), referer: req.headers.get("referer") });
     // Double opt-in for marketing. A failure here must not fail the waitlist signup.
     try {
       const { afterSunderSignup } = await import("../../../lib/email/ops");

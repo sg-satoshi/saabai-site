@@ -4,6 +4,7 @@
  * and tests pass a mock sender into drainOutbox instead of calling these.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { confirmEvidencePatch, EVIDENCE_COLUMNS, type Evidence, type RequestEvidence } from "../consent-evidence";
 import { getRedis } from "../redis";
 import { SUNDER_IDENTITY, SUNDER_SLUG, type SenderIdentity } from "./constants";
 import { documentHtml, parseBlocks, textToBlocks, type Block } from "./blocks";
@@ -670,9 +671,19 @@ export async function listContacts(filter: { q?: string; status?: string }) {
   const q = (filter.q || "").trim().toLowerCase();
   const refs: Awaited<ReturnType<typeof referralStatsFor>> = await referralStatsFor(ready.db, emails).catch(() => new Map());
   const mobiles = new Map<string, string>();
+  const evidence = new Map<string, Evidence>();
   if (emails.length) {
-    const wl = await ready.db.from("sunder_subscribers").select("email,mobile").in("email", emails.slice(0, 300));
-    for (const r of (wl.data || []) as { email: string; mobile: string | null }[]) if (r.mobile) mobiles.set(r.email, r.mobile);
+    const some = emails.slice(0, 300);
+    const pick = (cols: string) => ready.db.from("sunder_subscribers").select(cols).in("email", some) as unknown as Promise<{ data: unknown[] | null; error: { message: string } | null }>;
+    let wl = await pick(["email", "mobile", ...EVIDENCE_COLUMNS].join(","));
+    // Before migration 015 the new columns do not exist: fall back to the pre-015 set.
+    if (wl.error) wl = await pick(["email", "mobile", ...EVIDENCE_COLUMNS.filter((c) => !c.startsWith("signup_") && !c.startsWith("confirm_") && c !== "page_url" && c !== "form_id")].join(","));
+    if (wl.error) wl = await pick("email,mobile");
+    for (const r of (wl.data || []) as unknown as ({ email: string; mobile: string | null } & Evidence)[]) {
+      if (r.mobile) mobiles.set(r.email, r.mobile);
+      const { email, mobile: _m, ...ev } = r;
+      evidence.set(email, ev);
+    }
   }
   const people = rows.filter((r) => !q || r.email.includes(q) || (r.first_name || "").toLowerCase().includes(q)).filter((r) => status !== "suppressed" || suppressed.has(r.email) || r.status === "bounced" || r.status === "complained").map((r) => ({
     ...r,
@@ -683,6 +694,7 @@ export async function listContacts(filter: { q?: string; status?: string }) {
     review: needsReferralReview(refs.get(r.email)?.entries),
     referred_by: maskEmail(refs.get(r.email)?.referredByEmail),
     mobile: mobiles.get(r.email) || null,
+    evidence: evidence.get(r.email) || null,
   }));
   return {
     ok: true as const,
@@ -1016,7 +1028,7 @@ export async function viewByToken(token: string): Promise<{ subject: string; htm
   return { subject: rendered.subject, html: rendered.html };
 }
 
-export async function confirmByToken(token: string): Promise<{ status: "confirmed" | "already" | "unsubscribed" | "missing" | "invalid" }> {
+export async function confirmByToken(token: string, evidence?: RequestEvidence): Promise<{ status: "confirmed" | "already" | "unsubscribed" | "missing" | "invalid" }> {
   const parsed = tokenEmail(token, secret(), "confirm");
   if (!parsed || parsed.tenant !== SUNDER_SLUG) return { status: "invalid" };
   const db = emailDb();
@@ -1026,6 +1038,11 @@ export async function confirmByToken(token: string): Promise<{ status: "confirme
     throw new Error(error.message);
   }
   const status = String(data || "missing");
+  if (status === "confirmed" && evidence) {
+    // First confirm click only (confirm_evidence_at is null). Best effort: migration 015.
+    const up = await db.from("sunder_subscribers").update(confirmEvidencePatch(evidence)).eq("email", parsed.email).is("confirm_evidence_at", null);
+    if (up.error) console.error("sunder confirm evidence save failed:", up.error.message);
+  }
   if (status === "confirmed" || status === "already" || status === "unsubscribed" || status === "missing") return { status };
   return { status: "missing" };
 }
