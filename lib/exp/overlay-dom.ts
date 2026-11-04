@@ -64,3 +64,11 @@ export function resolvePreviewTarget(doc: Document | null | undefined, sel: HTML
   if (!expId || !/^[a-z0-9_-]{1,120}$/i.test(expId)) return null;
   return doc.querySelector<HTMLElement>(`[data-exp-id="${expId}"]`);
 }
+
+export const MISSING_TARGET_MSG = "Test element not found on this page, copy may have changed. Recreate it in the visual editor.";
+
+/** Warning for overlay tests on this page whose element couldn't be matched (null when all were found). */
+export function missingTargetWarning(names: string[]): string | null {
+  if (!names.length) return null;
+  return `${MISSING_TARGET_MSG} (${names.slice(0, 3).join(", ")}${names.length > 3 ? ` +${names.length - 3} more` : ""})`;
+}
