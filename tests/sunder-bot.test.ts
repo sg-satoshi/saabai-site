@@ -14,7 +14,8 @@ test("sunder persona is registered and allowed only on sunder hosts", () => {
 
 test("prompt keeps guardrails and no banned claims", () => {
   const p = buildSystemPrompt(SUNDER_PERSONA);
-  assert.match(p, /12-month warranty on core and edge/);
+  assert.doesNotMatch(p, /12-month warranty/);
+  assert.match(p, /Warranty terms have not been announced yet/);
   assert.match(p, /Never say or imply the paddle is made, designed or manufactured in Australia/);
   assert.match(p, /launch date, price, specs/);
   assert.doesNotMatch(p, /\$\d|A\$|made in Australia\b(?! )/);

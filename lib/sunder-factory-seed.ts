@@ -32,8 +32,8 @@ export const SUNDER_ALIAS_HOSTS = [
 ] as const;
 
 export const SUNDER_PLACEHOLDER = "SUNDER. Coming soon.";
-/** llms.txt summary: only what the live page already says (including its warranty line). No specs, price, launch date or origin claim. */
-export const SUNDER_GEO_SUMMARY = "SUNDER is a new pickleball paddle with power, spin and control, with a 12-month warranty on core and edge. It has not launched yet. Join the waitlist for 20% off at launch, early access and a giveaway.";
+/** llms.txt summary: only what the live page already says . No specs, price, launch date or origin claim. */
+export const SUNDER_GEO_SUMMARY = "SUNDER is a new pickleball paddle with power, spin and control. It has not launched yet. Join the waitlist for 20% off at launch, early access and a giveaway.";
 
 /**
  * Headline copy for the waitlist shell.
