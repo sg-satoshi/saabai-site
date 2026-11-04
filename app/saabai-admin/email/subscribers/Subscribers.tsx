@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { deleteConfirmText, editLocked } from "../../../../lib/email/contact-copy";
 
 type Person = {
   id: string;
@@ -18,7 +19,11 @@ type Person = {
   referral_entries?: number;
   review?: boolean;
   referred_by?: string;
+  mobile?: string | null;
 };
+
+const EMAIL_RE = /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/;
+type Draft = { email: string; firstName: string; mobile: string; status: "keep" | "unsubscribed" };
 
 type Payload = { ok: true; people: Person[]; counts: { confirmed: number; pending: number; unsubscribed: number; suppressed: number } };
 
@@ -42,12 +47,71 @@ export default function Subscribers() {
   const [csv, setCsv] = useState("");
   const [importOpen, setImportOpen] = useState(false);
   const [note, setNote] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [fieldErr, setFieldErr] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+  const [confirmIds, setConfirmIds] = useState<string[] | null>(null);
+  const [toast, setToast] = useState("");
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function flash(msg: string) {
+    setToast(msg);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(""), 3200);
+  }
+
+  function openRow(p: Person) {
+    setOpen(p);
+    setFieldErr({});
+    setDraft({ email: p.email, firstName: p.first_name || "", mobile: p.mobile || "", status: "keep" });
+  }
+
+  function toggle(id: string) {
+    setSelected((cur) => { const n = new Set(cur); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  }
+
+  async function post(body: Record<string, unknown>) {
+    const res = await fetch("/api/admin/email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    return res.json().catch(() => ({ ok: false, error: "Check your connection and try again." }));
+  }
+
+  async function saveEdit() {
+    if (!open || !draft) return;
+    const errs: Record<string, string> = {};
+    if (!EMAIL_RE.test(draft.email.trim())) errs.email = "Enter one valid email address.";
+    if (draft.firstName.trim().length > 60) errs.firstName = "Keep the name under 60 characters.";
+    setFieldErr(errs);
+    if (Object.keys(errs).length) return;
+    setSaving(true);
+    const j = await post({ action: "updateContact", id: open.id, email: draft.email, firstName: draft.firstName, mobile: draft.mobile, status: draft.status });
+    setSaving(false);
+    if (!j.ok) { setFieldErr(j.fields || {}); if (!j.fields) setFieldErr({ form: j.error || "That did not save." }); return; }
+    setOpen(null); setDraft(null);
+    flash(j.changed?.length ? "Subscriber saved" : "No changes to save");
+    load();
+  }
+
+  async function doDelete() {
+    if (!confirmIds) return;
+    setSaving(true);
+    const j = await post({ action: "deleteContacts", ids: confirmIds });
+    setSaving(false);
+    if (!j.ok) { setConfirmIds(null); setNote(j.error || "Delete did not run. Nothing was changed."); return; }
+    setConfirmIds(null); setOpen(null); setDraft(null);
+    setSelected(new Set());
+    flash(`Deleted ${j.deleted} subscriber${j.deleted === 1 ? "" : "s"}${j.cancelled ? `, cancelled ${j.cancelled} queued email${j.cancelled === 1 ? "" : "s"}` : ""}`);
+    load();
+  }
 
   function load(nextStatus = status, nextQ = q) {
     const params = new URLSearchParams({ view: "subscribers", status: nextStatus, q: nextQ });
     fetch(`/api/admin/email?${params}`, { cache: "no-store" })
       .then((r) => r.json())
-      .then((j) => { if (!j.ok) setErr(j.error || "Could not load subscribers."); else { setErr(""); setData(j); } })
+      .then((j) => {
+        if (!j.ok) setErr(j.error || "Could not load subscribers.");
+        else { setErr(""); setData(j); const ids = new Set((j.people as Person[]).map((p) => p.id)); setSelected((cur) => new Set([...cur].filter((id) => ids.has(id)))); }
+      })
       .catch(() => setErr("Check your connection and try again. Nothing was changed."));
   }
   useEffect(() => { load("all", ""); }, []);
@@ -69,6 +133,10 @@ export default function Subscribers() {
     a.download = "sunder-subscribers.csv";
     a.click();
   }
+
+  const people = data?.people || [];
+  const allOn = people.length > 0 && people.every((p) => selected.has(p.id));
+  const someOn = !allOn && people.some((p) => selected.has(p.id));
 
   return (
     <div className="em-page">
@@ -104,6 +172,13 @@ export default function Subscribers() {
           <button type="button" className="btn sm" onClick={() => { setQ(""); setStatus("all"); load("all", ""); }}>Clear</button>
           <span className="em-help" style={{ marginLeft: "auto" }}>{data ? `${data.people.length} shown` : ""}</span>
         </div>
+        {selected.size > 0 && (
+          <div className="sub-selbar" role="region" aria-label="Selected subscribers">
+            <b>{selected.size} selected</b>
+            <button type="button" className="btn sm" onClick={() => setSelected(new Set())}>Clear selection</button>
+            <button type="button" className="btn sm dg" onClick={() => setConfirmIds([...selected])}>Delete {selected.size}</button>
+          </div>
+        )}
         {err && <div className="bd"><div className="em-alert bad">{err}</div></div>}
         {!!data?.people.some((p) => p.review) && <div className="bd"><div className="em-alert warn">{data.people.filter((p) => p.review).length} shown with over 25 referral entries. Check them by hand before a draw.</div></div>}
         {data && !data.people.length && (
@@ -113,24 +188,29 @@ export default function Subscribers() {
           <>
           <div className="em-mob">
             {data.people.map((p) => (
-              <button key={p.id} type="button" className="oc" onClick={() => setOpen(p)} style={{ width: "100%", textAlign: "left", background: "transparent", border: 0, font: "inherit" }}>
-                <b>{p.email}</b>
-                <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6 }}>{statusChip(p)}<span className="em-help">{p.consent_at ? new Date(p.consent_at).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "short" }) : ""}</span></div>
-              </button>
+              <div key={p.id} className={`oc sub-row${selected.has(p.id) ? " on" : ""}`} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <input type="checkbox" className="sub-cb" aria-label={`Select ${p.email}`} checked={selected.has(p.id)} onChange={() => toggle(p.id)} />
+                <button type="button" onClick={() => openRow(p)} style={{ flex: 1, textAlign: "left", background: "transparent", border: 0, font: "inherit", padding: 0, cursor: "pointer" }}>
+                  <b>{p.email}</b>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6 }}>{statusChip(p)}<span className="em-help">{p.consent_at ? new Date(p.consent_at).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "short" }) : ""}</span></div>
+                </button>
+              </div>
             ))}
           </div>
-          <table className="em-desk">
-            <thead><tr><th>Email</th><th>Status</th><th>Consent source</th><th>Consent time</th><th>Referrals</th><th>Referred by</th><th></th></tr></thead>
+          <table className="em-desk sub-table">
+            <thead><tr><th className="sub-cbcell"><input type="checkbox" className="sub-cb" aria-label="Select all shown" checked={allOn} ref={(el) => { if (el) el.indeterminate = someOn; }} onChange={() => setSelected(allOn ? new Set() : new Set(people.map((p) => p.id)))} /></th><th>Name</th><th>Email</th><th>Status</th><th>Consent source</th><th>Consent time</th><th>Referrals</th><th>Referred by</th><th></th></tr></thead>
             <tbody>
               {data.people.map((p) => (
-                <tr key={p.id}>
+                <tr key={p.id} className={`sub-row${selected.has(p.id) ? " on" : ""}`} tabIndex={0} aria-label={`Edit ${p.email}`} onClick={() => openRow(p)} onKeyDown={(e) => { if (e.key === "Enter" && e.target === e.currentTarget) openRow(p); }}>
+                  <td className="sub-cbcell" onClick={(e) => e.stopPropagation()}><input type="checkbox" className="sub-cb" aria-label={`Select ${p.email}`} checked={selected.has(p.id)} onChange={() => toggle(p.id)} /></td>
+                  <td>{p.first_name || <span className="em-help">None</span>}</td>
                   <td>{p.email}</td>
                   <td>{statusChip(p)}</td>
                   <td>{p.consent_source || "Waitlist"}</td>
                   <td>{p.consent_at ? new Date(p.consent_at).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : ""}</td>
                   <td>{p.referrals ?? 0}{p.review && <> <span className="badge b-warn" title="Over 25 referral entries: check before a draw">Review</span></>}</td>
                   <td>{p.referred_by || ""}</td>
-                  <td><button type="button" className="btn sm" onClick={() => setOpen(p)}>View consent</button></td>
+                  <td className="sub-go" aria-hidden="true">Edit</td>
                 </tr>
               ))}
             </tbody>
@@ -140,26 +220,77 @@ export default function Subscribers() {
       </div>
       <div className="em-alert warn" style={{ marginTop: 12 }}>Suppressed and unsubscribed people are never mailed and cannot be re-added from here. They can only rejoin by signing up again.</div>
 
-      {open && (
-        <div className="drawer-detail" role="presentation" onClick={() => setOpen(null)}>
-          <aside className="panel" role="dialog" aria-modal="true" aria-labelledby="consent-h" onClick={(e) => e.stopPropagation()}>
-            <div className="hd"><h2 id="consent-h">{open.email}</h2><button type="button" className="btn sm" onClick={() => setOpen(null)}>Close</button></div>
-            <div className="bd">
-              {statusChip(open)}
-              <dl className="em-kv">
-                <span>Source</span><b>{open.consent_source || "Waitlist"}</b>
-                <span>Version</span><b>{open.consent_version || ""}</b>
-                <span>Consent time</span><b>{open.consent_at || ""}</b>
-                <span>Confirmed</span><b>{open.confirmed_at || "Not yet"}</b>
-                <span>Referrals</span><b>{open.referrals ?? 0}{open.review ? " (over 25: check before a draw)" : ""}</b>
-                <span>Referred by</span><b>{open.referred_by || "None"}</b>
-              </dl>
-              <p>{open.consent_text || "No wording stored."}</p>
-              {open.suppressed && <p className="em-help">This row is read only. It is not in any audience.</p>}
+      {open && draft && (() => {
+        const locked = editLocked(open.status, open.suppressed);
+        const dirty = draft.email.trim().toLowerCase() !== open.email || draft.firstName.trim() !== (open.first_name || "") || draft.mobile.trim() !== (open.mobile || "") || draft.status !== "keep";
+        const close = () => { if (dirty && !window.confirm("Discard your unsaved changes?")) return; setOpen(null); setDraft(null); };
+        return (
+        <div className="drawer-detail" role="presentation" onClick={close}>
+          <aside className="panel" role="dialog" aria-modal="true" aria-labelledby="sub-edit-h" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === "Escape") close(); }}>
+            <div className="hd"><h2 id="sub-edit-h">{locked ? "Subscriber" : "Edit subscriber"}</h2><button type="button" className="btn sm" onClick={close}>Close</button></div>
+            <div className="bd" style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
+              <div>{statusChip(open)}</div>
+              {fieldErr.form && <div className="em-alert bad">{fieldErr.form}</div>}
+              {locked && <p className="em-help">Bounced or complained people are read only so the suppression record stays intact. You can still delete them.</p>}
+              <label className={`em-field${fieldErr.firstName ? " err" : ""}`}>First name
+                <input value={draft.firstName} disabled={locked} maxLength={60} onChange={(e) => setDraft({ ...draft, firstName: e.target.value })} />
+                {fieldErr.firstName && <span className="em-help e">{fieldErr.firstName}</span>}
+              </label>
+              <label className={`em-field${fieldErr.email ? " err" : ""}`}>Email
+                <input type="email" value={draft.email} disabled={locked} onChange={(e) => setDraft({ ...draft, email: e.target.value })} aria-invalid={!!fieldErr.email} />
+                {fieldErr.email && <span className="em-help e">{fieldErr.email}</span>}
+              </label>
+              <label className={`em-field${fieldErr.mobile ? " err" : ""}`}>Mobile
+                <input type="tel" value={draft.mobile} disabled={locked} placeholder="Optional" onChange={(e) => setDraft({ ...draft, mobile: e.target.value })} />
+                {fieldErr.mobile ? <span className="em-help e">{fieldErr.mobile}</span> : <span className="em-help">Clearing it also turns off SMS consent.</span>}
+              </label>
+              {!locked && open.status !== "unsubscribed" && (
+                <label className="em-field">Status
+                  <select value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as Draft["status"] })} style={{ height: 40 }}>
+                    <option value="keep">Keep as {open.status === "subscribed" ? "confirmed" : open.status}</option>
+                    <option value="unsubscribed">Unsubscribe</option>
+                  </select>
+                  {fieldErr.status ? <span className="em-help e">{fieldErr.status}</span> : <span className="em-help">People can only be confirmed by clicking their own confirm email.</span>}
+                </label>
+              )}
+              <details>
+                <summary className="em-help" style={{ cursor: "pointer" }}>Consent record</summary>
+                <dl className="em-kv">
+                  <span>Source</span><b>{open.consent_source || "Waitlist"}</b>
+                  <span>Version</span><b>{open.consent_version || ""}</b>
+                  <span>Consent time</span><b>{open.consent_at || ""}</b>
+                  <span>Confirmed</span><b>{open.confirmed_at || "Not yet"}</b>
+                  <span>Referrals</span><b>{open.referrals ?? 0}{open.review ? " (over 25: check before a draw)" : ""}</b>
+                  <span>Referred by</span><b>{open.referred_by || "None"}</b>
+                </dl>
+                <p>{open.consent_text || "No wording stored."}</p>
+              </details>
+            </div>
+            <div className="sub-foot">
+              <button type="button" className="btn dg" onClick={() => setConfirmIds([open.id])}>Delete</button>
+              <span style={{ flex: 1 }} />
+              <button type="button" className="btn" onClick={close}>Cancel</button>
+              {!locked && <button type="button" className="btn pri" disabled={saving || !dirty} onClick={saveEdit}>{saving ? "Saving..." : "Save"}</button>}
             </div>
           </aside>
         </div>
+        );
+      })()}
+
+      {confirmIds && (
+        <div className="em-modal" style={{ zIndex: 95 }}>
+          <div className="em-dialog" role="alertdialog" aria-modal="true" aria-labelledby="del-h" aria-describedby="del-d">
+            <h2 id="del-h">Delete {confirmIds.length === 1 ? "1 subscriber" : `${confirmIds.length} subscribers`}</h2>
+            <p id="del-d" className="em-help" style={{ fontSize: 13.5 }}>{deleteConfirmText(confirmIds.length)}</p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+              <button type="button" className="btn" disabled={saving} onClick={() => setConfirmIds(null)} autoFocus>Cancel</button>
+              <button type="button" className="btn danger-solid" disabled={saving} onClick={doDelete}>{saving ? "Deleting..." : `Delete ${confirmIds.length}`}</button>
+            </div>
+          </div>
+        </div>
       )}
+
+      {toast && <div className="sub-toast" role="status" aria-live="polite">{toast}</div>}
 
       {importOpen && (
         <div className="em-modal">

@@ -24,6 +24,8 @@ import {
 import { sendSes, sesConfigured, type SesMessage } from "./ses";
 import type { CampaignView, EmailAdminSnapshot, SeriesStepView } from "./types";
 import { readEmailToken } from "./tokens";
+import type { ContactEdit } from "./contact-admin";
+import { editLocked } from "./contact-copy";
 import { drainOutbox, tokenEmail, type Outbox, type OutboxRow } from "./worker";
 
 const MIGRATION = "Apply db/migrations/009_email_marketing.sql in the Supabase SQL editor, then refresh.";
@@ -667,6 +669,11 @@ export async function listContacts(filter: { q?: string; status?: string }) {
   }
   const q = (filter.q || "").trim().toLowerCase();
   const refs: Awaited<ReturnType<typeof referralStatsFor>> = await referralStatsFor(ready.db, emails).catch(() => new Map());
+  const mobiles = new Map<string, string>();
+  if (emails.length) {
+    const wl = await ready.db.from("sunder_subscribers").select("email,mobile").in("email", emails.slice(0, 300));
+    for (const r of (wl.data || []) as { email: string; mobile: string | null }[]) if (r.mobile) mobiles.set(r.email, r.mobile);
+  }
   const people = rows.filter((r) => !q || r.email.includes(q) || (r.first_name || "").toLowerCase().includes(q)).filter((r) => status !== "suppressed" || suppressed.has(r.email) || r.status === "bounced" || r.status === "complained").map((r) => ({
     ...r,
     suppressed: suppressed.has(r.email) || r.status === "bounced" || r.status === "complained",
@@ -675,6 +682,7 @@ export async function listContacts(filter: { q?: string; status?: string }) {
     referral_entries: refs.get(r.email)?.entries ?? 0,
     review: needsReferralReview(refs.get(r.email)?.entries),
     referred_by: maskEmail(refs.get(r.email)?.referredByEmail),
+    mobile: mobiles.get(r.email) || null,
   }));
   return {
     ok: true as const,
@@ -1060,4 +1068,90 @@ export async function recordProviderEvent(input: { email: string; reason: "bounc
 
 export function safeError(err: unknown): string {
   return publicSesError(err);
+}
+
+type ContactRow = { id: string; email: string; first_name: string | null; status: string; source_table: string | null; source_id: string | null };
+
+/** Admin edit of one contact. Mirrors name, email and mobile onto the linked waitlist row. Never re-subscribes anyone. */
+export async function updateContact(edit: ContactEdit): Promise<{ ok: true; changed: string[] } | { ok: false; error: string; fields?: Record<string, string> }> {
+  const ready = await requireReady();
+  if ("error" in ready) return { ok: false, error: ready.error };
+  const { db, tenant } = ready;
+  const cur = await db.from("email_contacts").select("id,email,first_name,status,source_table,source_id").eq("tenant_id", tenant.id).eq("id", edit.id).maybeSingle();
+  if (cur.error) return { ok: false, error: cur.error.message };
+  const row = cur.data as ContactRow | null;
+  if (!row) return { ok: false, error: "That subscriber was not found. Refresh the list." };
+  const suppressed = (await suppressedEmails(db, tenant.id, [row.email])).has(row.email);
+  if (editLocked(row.status, suppressed)) return { ok: false, error: "Bounced or complained people are read only. You can still delete them." };
+  const changed: string[] = [];
+  const patch: Record<string, unknown> = {};
+  if (edit.email !== row.email) {
+    const clash = await db.from("email_contacts").select("id").eq("tenant_id", tenant.id).eq("email", edit.email).maybeSingle();
+    if (clash.data) return { ok: false, error: "Some fields need fixing.", fields: { email: "Another subscriber already uses this email." } };
+    if ((await suppressedEmails(db, tenant.id, [edit.email])).has(edit.email)) return { ok: false, error: "Some fields need fixing.", fields: { email: "That address is suppressed after a bounce or complaint." } };
+    patch.email = edit.email; changed.push("email");
+  }
+  if ((edit.firstName || null) !== (row.first_name || null)) { patch.first_name = edit.firstName; changed.push("name"); }
+  if (edit.unsubscribe && row.status !== "unsubscribed") { patch.status = "unsubscribed"; patch.unsubscribed_at = new Date().toISOString(); changed.push("status"); }
+  const linked = row.source_table === "sunder_subscribers" && row.source_id
+    ? await db.from("sunder_subscribers").select("id,mobile").eq("id", row.source_id).maybeSingle()
+    : await db.from("sunder_subscribers").select("id,mobile").eq("email", row.email).maybeSingle();
+  const wl = linked.data as { id: string; mobile: string | null } | null;
+  const wlPatch: Record<string, unknown> = {};
+  if (wl) {
+    if (patch.email) wlPatch.email = edit.email;
+    if (edit.firstName && patch.first_name !== undefined) wlPatch.first_name = edit.firstName;
+    if (edit.mobile !== undefined && (edit.mobile || null) !== (wl.mobile || null)) {
+      wlPatch.mobile = edit.mobile;
+      if (!edit.mobile) { wlPatch.sms_consent = false; }
+      changed.push("mobile");
+    }
+  } else if (edit.mobile) {
+    return { ok: false, error: "Some fields need fixing.", fields: { mobile: "This person has no waitlist row, so a mobile cannot be stored." } };
+  }
+  if (!changed.length) return { ok: true, changed };
+  if (Object.keys(patch).length) {
+    patch.updated_at = new Date().toISOString();
+    const up = await db.from("email_contacts").update(patch).eq("tenant_id", tenant.id).eq("id", row.id);
+    if (up.error) return { ok: false, error: up.error.message };
+  }
+  if (wl && Object.keys(wlPatch).length) {
+    wlPatch.updated_at = new Date().toISOString();
+    const up = await db.from("sunder_subscribers").update(wlPatch).eq("id", wl.id);
+    if (up.error) return { ok: false, error: `Saved the email list, but the waitlist row did not update: ${up.error.message}` };
+  }
+  if (patch.status === "unsubscribed" || patch.email) {
+    // Queued mail was rendered for the old state. Cancel it rather than send it.
+    await db.from("email_sends").update({ status: "skipped", error: "admin_edit" }).eq("tenant_id", tenant.id).eq("contact_id", row.id).eq("status", "pending");
+  }
+  return { ok: true, changed };
+}
+
+/**
+ * Hard delete. The foreign keys have no cascade, so this runs in a safe order:
+ * cancel pending sends, detach send history (kept for the audit trail), drop series
+ * enrolments, delete the contact, then the linked waitlist row. Suppressions are kept.
+ */
+export async function deleteContacts(ids: string[]): Promise<{ ok: true; deleted: number; cancelled: number; emails: string[] } | { ok: false; error: string }> {
+  const ready = await requireReady();
+  if ("error" in ready) return { ok: false, error: ready.error };
+  const { db, tenant } = ready;
+  const found = await db.from("email_contacts").select("id,email,first_name,status,source_table,source_id").eq("tenant_id", tenant.id).in("id", ids);
+  if (found.error) return { ok: false, error: found.error.message };
+  const rows = (found.data || []) as ContactRow[];
+  if (!rows.length) return { ok: false, error: "Those subscribers were not found. Refresh the list." };
+  const rowIds = rows.map((r) => r.id);
+  const emails = rows.map((r) => r.email);
+  const cancel = await db.from("email_sends").update({ status: "skipped", error: "contact_deleted" }).eq("tenant_id", tenant.id).eq("status", "pending").or(`contact_id.in.(${rowIds.join(",")}),to_email.in.(${emails.map((e) => `"${e.replace(/"/g, "")}"`).join(",")})`).select("id");
+  if (cancel.error) return { ok: false, error: cancel.error.message };
+  const detach = await db.from("email_sends").update({ contact_id: null }).eq("tenant_id", tenant.id).in("contact_id", rowIds);
+  if (detach.error) return { ok: false, error: detach.error.message };
+  const enr = await db.from("email_series_enrolments").delete().in("contact_id", rowIds);
+  if (enr.error) return { ok: false, error: enr.error.message };
+  const del = await db.from("email_contacts").delete().eq("tenant_id", tenant.id).in("id", rowIds);
+  if (del.error) return { ok: false, error: del.error.message };
+  const wlIds = rows.filter((r) => r.source_table === "sunder_subscribers" && r.source_id).map((r) => r.source_id as string);
+  const wl = await db.from("sunder_subscribers").delete().or(`email.in.(${emails.map((e) => `"${e.replace(/"/g, "")}"`).join(",")})${wlIds.length ? `,id.in.(${wlIds.join(",")})` : ""}`);
+  if (wl.error) console.error("waitlist delete failed:", wl.error.message);
+  return { ok: true, deleted: rows.length, cancelled: (cancel.data || []).length, emails };
 }
