@@ -13,7 +13,8 @@ import {
 import {
   countStatus, countSuppressions, emailDb, identityFrom, isMissingSchema, listConfirmed, loadTenant, suppressedEmails, type TenantRow,
 } from "./db";
-import { buildSunderHtml, confirmMessage, renderMarketingEmail } from "./message";
+import { buildSunderHtml, confirmMessage, renderMarketingEmail, withReferralLine } from "./message";
+import { maskEmail, referralLineText, referralStatsFor } from "../sunder-waitlist";
 import { brisbaneAt, brisbaneParts, isQuiet, seriesRunAt } from "./quiet";
 import { acquireSendSlot, type RateCounter } from "./rate";
 import {
@@ -438,6 +439,16 @@ type DueRow = {
   next_delay_minutes: number | null;
 };
 
+/** SUNDER referral line for one subscriber, or null. Never blocks a send. */
+async function referralLineFor(db: SupabaseClient, email: string): Promise<string | null> {
+  try {
+    const r = (await referralStatsFor(db, [email])).get(email);
+    return r ? referralLineText(r) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function enqueueDueSeries(db: SupabaseClient): Promise<number> {
   const { data, error } = await db.rpc("email_due_enrolments", { p_limit: 40 });
   if (error) throw new Error(error.message);
@@ -454,7 +465,7 @@ export async function enqueueDueSeries(db: SupabaseClient): Promise<number> {
       continue;
     }
     const campaignId = await seriesCampaign(db, raw);
-    const html = raw.body_text ? documentHtml({ preheader: "", blocks: textToBlocks(raw.body_text) }) : raw.html;
+    const html = withReferralLine(raw.body_text ? documentHtml({ preheader: "", blocks: textToBlocks(raw.body_text) }) : raw.html, await referralLineFor(db, email));
     const { error: insertError } = await db.from("email_sends").insert({
       tenant_id: raw.tenant_id,
       campaign_id: campaignId,
@@ -655,10 +666,13 @@ export async function listContacts(filter: { q?: string; status?: string }) {
     for (const r of (found.data || []) as { email: string; reason: string }[]) reasons.set(r.email, r.reason);
   }
   const q = (filter.q || "").trim().toLowerCase();
+  const refs: Awaited<ReturnType<typeof referralStatsFor>> = await referralStatsFor(ready.db, emails).catch(() => new Map());
   const people = rows.filter((r) => !q || r.email.includes(q) || (r.first_name || "").toLowerCase().includes(q)).filter((r) => status !== "suppressed" || suppressed.has(r.email) || r.status === "bounced" || r.status === "complained").map((r) => ({
     ...r,
     suppressed: suppressed.has(r.email) || r.status === "bounced" || r.status === "complained",
     reason: reasons.get(r.email) || (r.status === "bounced" || r.status === "complained" ? r.status : ""),
+    referrals: refs.get(r.email)?.friends ?? 0,
+    referred_by: maskEmail(refs.get(r.email)?.referredByEmail),
   }));
   return {
     ok: true as const,
@@ -857,7 +871,8 @@ export async function afterSunderSignup(input: { email: string; firstName: strin
   if (sync.error) throw new Error(sync.error.message);
   const contact = await db.from("email_contacts").select("id,status").eq("tenant_id", tenant.id).eq("email", email).maybeSingle();
   if (contact.error) throw new Error(contact.error.message);
-  const msg = confirmMessage();
+  const base = confirmMessage();
+  const msg = { ...base, html: withReferralLine(base.html, await referralLineFor(db, email)) };
   const key = confirmationKey(email, new Date());
   const { error: insertError } = await db.from("email_sends").insert({
     tenant_id: tenant.id,

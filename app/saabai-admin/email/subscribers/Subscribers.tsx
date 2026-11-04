@@ -14,6 +14,8 @@ type Person = {
   confirmed_at: string | null;
   suppressed: boolean;
   reason: string;
+  referrals?: number;
+  referred_by?: string;
 };
 
 type Payload = { ok: true; people: Person[]; counts: { confirmed: number; pending: number; unsubscribed: number; suppressed: number } };
@@ -115,7 +117,7 @@ export default function Subscribers() {
             ))}
           </div>
           <table className="em-desk">
-            <thead><tr><th>Email</th><th>Status</th><th>Consent source</th><th>Consent time</th><th></th></tr></thead>
+            <thead><tr><th>Email</th><th>Status</th><th>Consent source</th><th>Consent time</th><th>Referrals</th><th>Referred by</th><th></th></tr></thead>
             <tbody>
               {data.people.map((p) => (
                 <tr key={p.id}>
@@ -123,6 +125,8 @@ export default function Subscribers() {
                   <td>{statusChip(p)}</td>
                   <td>{p.consent_source || "Waitlist"}</td>
                   <td>{p.consent_at ? new Date(p.consent_at).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : ""}</td>
+                  <td>{p.referrals ?? 0}</td>
+                  <td>{p.referred_by || ""}</td>
                   <td><button type="button" className="btn sm" onClick={() => setOpen(p)}>View consent</button></td>
                 </tr>
               ))}
@@ -144,6 +148,8 @@ export default function Subscribers() {
                 <span>Version</span><b>{open.consent_version || ""}</b>
                 <span>Consent time</span><b>{open.consent_at || ""}</b>
                 <span>Confirmed</span><b>{open.confirmed_at || "Not yet"}</b>
+                <span>Referrals</span><b>{open.referrals ?? 0}</b>
+                <span>Referred by</span><b>{open.referred_by || "None"}</b>
               </dl>
               <p>{open.consent_text || "No wording stored."}</p>
               {open.suppressed && <p className="em-help">This row is read only. It is not in any audience.</p>}
