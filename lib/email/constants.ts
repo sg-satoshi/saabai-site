@@ -42,7 +42,7 @@ export const SUNDER_IDENTITY: SenderIdentity = {
   abn: "44 703 735 264",
   postalAddress: "Merrimac QLD 4226 Australia",
   domain: "sunder.com.au",
-  whyText: "you joined the SUNDER waitlist and agreed to hear from us",
+  whyText: "you joined the SUNDER Pickleball waitlist and agreed to hear from us",
   sesTenantName: SUNDER_SLUG,
   configSet: "",
 };
