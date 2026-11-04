@@ -2,7 +2,11 @@ import { requireAdminSession } from "../../../../lib/admin-guard";
 import {
   adminSnapshot, campaignDetail, healthReport, importContacts, listContacts, queueBroadcast,
   saveCampaign, saveDailyCap, saveFromName, saveSeries, scheduleBroadcast, sendTest, setSendingPaused,
+  deleteContacts, updateContact,
 } from "../../../../lib/email/ops";
+import { cleanDeleteIds, validateContactEdit } from "../../../../lib/email/contact-admin";
+import { addChangeLogEntry } from "../../../../lib/change-log";
+import { maskEmail } from "../../../../lib/sunder-waitlist";
 import type { SeriesStepInput } from "../../../../lib/email/rules";
 
 export const runtime = "nodejs";
@@ -69,6 +73,26 @@ export async function POST(req: Request) {
         when: String(body.when || ""),
         confirm: typeof body.confirm === "string" ? body.confirm : undefined,
       }));
+    }
+    if (action === "updateContact") {
+      const v = validateContactEdit(body);
+      if (!v.ok) return Response.json(v, { status: 400 });
+      const r = await updateContact(v.edit);
+      if (r.ok && r.changed.length) {
+        await addChangeLogEntry({ siteId: "sunder", siteName: "SUNDER", summary: `Email subscriber ${maskEmail(v.edit.email)} edited (${r.changed.join(", ")})`, source: "manual", authorName: "Admin" }).catch(() => {});
+      }
+      return Response.json(r, { status: r.ok ? 200 : 400 });
+    }
+    if (action === "deleteContacts") {
+      const v = cleanDeleteIds(body.ids);
+      if (!v.ok) return Response.json(v, { status: 400 });
+      const r = await deleteContacts(v.ids);
+      if (r.ok) {
+        console.info("email admin: deleted contacts", { count: r.deleted, cancelled: r.cancelled });
+        await addChangeLogEntry({ siteId: "sunder", siteName: "SUNDER", summary: `Deleted ${r.deleted} email subscriber${r.deleted === 1 ? "" : "s"} (${r.emails.slice(0, 5).map((e) => maskEmail(e)).join(", ")}${r.emails.length > 5 ? ", ..." : ""}); cancelled ${r.cancelled} queued email${r.cancelled === 1 ? "" : "s"}`, source: "manual", authorName: "Admin" }).catch(() => {});
+        return Response.json({ ok: true, deleted: r.deleted, cancelled: r.cancelled });
+      }
+      return Response.json(r, { status: 400 });
     }
     if (action === "import") return Response.json(await importContacts(String(body.csv || "")));
     return Response.json({ error: "Unknown action" }, { status: 400 });
