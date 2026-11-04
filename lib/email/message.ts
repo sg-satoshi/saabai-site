@@ -68,9 +68,10 @@ export function withFooter(html: string, footer: string): string {
 const FOOTER_ROW = '<tr><td style="background:#f2f2ee;padding-top:8px;"><!--EMAIL_FOOTER-->';
 
 /** Adds the referral line (counts only) as its own row above the footer. */
-export function withReferralLine(html: string, line: string | null): string {
+export function withReferralLine(html: string, line: string | null, statusUrl?: string | null): string {
   if (!line) return html;
-  const p = `<p style="margin:0 0 14px;font-size:14px;color:#374151;line-height:1.6;">${escapeHtml(line)}</p>`;
+  const check = statusUrl ? ` · <a href="${escapeHtml(statusUrl)}" style="color:#0d0d0d;font-weight:700;">Check your referrals</a>` : "";
+  const p = `<p style="margin:0 0 14px;font-size:14px;color:#374151;line-height:1.6;">${escapeHtml(line)}${check}</p>`;
   if (html.includes(FOOTER_ROW)) return html.replace(FOOTER_ROW, `<tr><td class="sx" style="padding:0 32px 14px;">${p}</td></tr>\n  ${FOOTER_ROW}`);
   return withFooter(html, p + "<!--EMAIL_FOOTER-->");
 }

@@ -14,7 +14,7 @@ import {
   countStatus, countSuppressions, emailDb, identityFrom, isMissingSchema, listConfirmed, loadTenant, suppressedEmails, type TenantRow,
 } from "./db";
 import { buildSunderHtml, confirmMessage, renderMarketingEmail, withReferralLine } from "./message";
-import { maskEmail, referralLineText, referralStatsFor } from "../sunder-waitlist";
+import { maskEmail, referralLineText, referralStatsFor, referralStatusUrl } from "../sunder-waitlist";
 import { brisbaneAt, brisbaneParts, isQuiet, seriesRunAt } from "./quiet";
 import { acquireSendSlot, type RateCounter } from "./rate";
 import {
@@ -440,12 +440,12 @@ type DueRow = {
 };
 
 /** SUNDER referral line for one subscriber, or null. Never blocks a send. */
-async function referralLineFor(db: SupabaseClient, email: string): Promise<string | null> {
+async function referralLineFor(db: SupabaseClient, email: string): Promise<[string | null, string | null]> {
   try {
     const r = (await referralStatsFor(db, [email])).get(email);
-    return r ? referralLineText(r) : null;
+    return r ? [referralLineText(r), referralStatusUrl(r.code)] : [null, null];
   } catch {
-    return null;
+    return [null, null];
   }
 }
 
@@ -465,7 +465,7 @@ export async function enqueueDueSeries(db: SupabaseClient): Promise<number> {
       continue;
     }
     const campaignId = await seriesCampaign(db, raw);
-    const html = withReferralLine(raw.body_text ? documentHtml({ preheader: "", blocks: textToBlocks(raw.body_text) }) : raw.html, await referralLineFor(db, email));
+    const html = withReferralLine(raw.body_text ? documentHtml({ preheader: "", blocks: textToBlocks(raw.body_text) }) : raw.html, ...(await referralLineFor(db, email)));
     const { error: insertError } = await db.from("email_sends").insert({
       tenant_id: raw.tenant_id,
       campaign_id: campaignId,
@@ -872,7 +872,7 @@ export async function afterSunderSignup(input: { email: string; firstName: strin
   const contact = await db.from("email_contacts").select("id,status").eq("tenant_id", tenant.id).eq("email", email).maybeSingle();
   if (contact.error) throw new Error(contact.error.message);
   const base = confirmMessage();
-  const msg = { ...base, html: withReferralLine(base.html, await referralLineFor(db, email)) };
+  const msg = { ...base, html: withReferralLine(base.html, ...(await referralLineFor(db, email))) };
   const key = confirmationKey(email, new Date());
   const { error: insertError } = await db.from("email_sends").insert({
     tenant_id: tenant.id,

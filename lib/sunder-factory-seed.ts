@@ -117,6 +117,12 @@ export function sunderAppRoute(pathname: string): boolean {
   return pathname === "/email/confirm" || pathname === "/email/confirm/";
 }
 
+/** Private referral status page: sunder.com.au/r/<code> rewrites to /sunder-ref/<code>. */
+export function sunderReferralRoute(pathname: string): string | null {
+  const m = /^\/r\/([a-z0-9]{6,12})\/?$/i.exec(pathname);
+  return m ? `/sunder-ref/${m[1].toLowerCase()}` : null;
+}
+
 export function sunderLegalRoute(pathname: string): { redirect: string } | { rewrite: string } | null {
   const p = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
   if (SUNDER_LEGAL_PAGES[p]) return { rewrite: `/clients/sunder/${SUNDER_LEGAL_PAGES[p]}` };
