@@ -27,6 +27,13 @@ type Draft = { email: string; firstName: string; mobile: string; status: "keep" 
 
 type Payload = { ok: true; people: Person[]; counts: { confirmed: number; pending: number; unsubscribed: number; suppressed: number } };
 
+function fmtWhen(iso: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }) + " AEST";
+}
+
 function statusChip(p: Person) {
   if (p.suppressed || p.status === "bounced" || p.status === "complained") {
     const why = /complaint/i.test(p.reason) || p.status === "complained" ? "complaint" : "bounce";
@@ -226,12 +233,13 @@ export default function Subscribers() {
         const close = () => { if (dirty && !window.confirm("Discard your unsaved changes?")) return; setOpen(null); setDraft(null); };
         return (
         <div className="drawer-detail" role="presentation" onClick={close}>
-          <aside className="panel" role="dialog" aria-modal="true" aria-labelledby="sub-edit-h" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === "Escape") close(); }}>
+          <aside className="panel sub-panel" role="dialog" aria-modal="true" aria-labelledby="sub-edit-h" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === "Escape") close(); }}>
             <div className="hd"><h2 id="sub-edit-h">{locked ? "Subscriber" : "Edit subscriber"}</h2><button type="button" className="btn sm" onClick={close}>Close</button></div>
-            <div className="bd" style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
+            <div className="bd">
               <div>{statusChip(open)}</div>
               {fieldErr.form && <div className="em-alert bad">{fieldErr.form}</div>}
               {locked && <p className="em-help">Bounced or complained people are read only so the suppression record stays intact. You can still delete them.</p>}
+              <div className="sub-sec sub-first">Details</div>
               <label className={`em-field${fieldErr.firstName ? " err" : ""}`}>First name
                 <input value={draft.firstName} disabled={locked} maxLength={60} onChange={(e) => setDraft({ ...draft, firstName: e.target.value })} />
                 {fieldErr.firstName && <span className="em-help e">{fieldErr.firstName}</span>}
@@ -246,24 +254,27 @@ export default function Subscribers() {
               </label>
               {!locked && open.status !== "unsubscribed" && (
                 <label className="em-field">Status
-                  <select value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as Draft["status"] })} style={{ height: 40 }}>
+                  <select value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as Draft["status"] })}>
                     <option value="keep">Keep as {open.status === "subscribed" ? "confirmed" : open.status}</option>
                     <option value="unsubscribed">Unsubscribe</option>
                   </select>
                   {fieldErr.status ? <span className="em-help e">{fieldErr.status}</span> : <span className="em-help">People can only be confirmed by clicking their own confirm email.</span>}
                 </label>
               )}
-              <details>
-                <summary className="em-help" style={{ cursor: "pointer" }}>Consent record</summary>
+              <div className="sub-sec">Record</div>
+              <details className="sub-consent">
+                <summary>Consent record</summary>
+                <div className="in">
                 <dl className="em-kv">
                   <span>Source</span><b>{open.consent_source || "Waitlist"}</b>
-                  <span>Version</span><b>{open.consent_version || ""}</b>
-                  <span>Consent time</span><b>{open.consent_at || ""}</b>
-                  <span>Confirmed</span><b>{open.confirmed_at || "Not yet"}</b>
+                  <span>Version</span><b>{open.consent_version || "Not recorded"}</b>
+                  <span>Consent time</span><b>{fmtWhen(open.consent_at) || "Not recorded"}</b>
+                  <span>Confirmed</span><b>{fmtWhen(open.confirmed_at) || "Not yet"}</b>
                   <span>Referrals</span><b>{open.referrals ?? 0}{open.review ? " (over 25: check before a draw)" : ""}</b>
                   <span>Referred by</span><b>{open.referred_by || "None"}</b>
                 </dl>
-                <p>{open.consent_text || "No wording stored."}</p>
+                <blockquote>{open.consent_text || "No wording stored."}</blockquote>
+                </div>
               </details>
             </div>
             <div className="sub-foot">
