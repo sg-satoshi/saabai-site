@@ -227,6 +227,17 @@ export function referralLineText(r: ReferralStats): string {
   return `Your link: https://sunder.com.au/?r=${r.code} · ${r.friends} ${r.friends === 1 ? "friend" : "friends"} joined · ${Math.min(r.entries, REFERRAL_CAP)}/${REFERRAL_CAP} bonus entries`;
 }
 
+export function referralStatusUrl(code: string): string {
+  return `https://sunder.com.au/r/${code}`;
+}
+
+/** Status page stats by code. Counts only, never names or emails. null if the code is unknown. */
+export async function referralStatsByCode(db: SupabaseClient, code: string): Promise<ReferralStats | null> {
+  if (!/^[a-z0-9]{6,12}$/.test(code)) return null;
+  const { data, error } = await db.from("sunder_subscribers").select("email").eq("referral_code", code).maybeSingle();
+  if (error || !data) return null;
+  return (await referralStatsFor(db, [(data as { email: string }).email])).get((data as { email: string }).email) ?? null;
+}
 
 /**
  * Referral stats per email (lower case). friends = referred people who

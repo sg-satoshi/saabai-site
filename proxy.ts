@@ -13,7 +13,7 @@ import { isSiteEnabled } from "./lib/exp/sites";
 import { SLOTS } from "./lib/exp/seed";
 import { CHIEF_COOKIE, chiefAllowed, chiefAudit, chiefHostOk, verifyChiefToken } from "./lib/chief";
 import { OV_COOKIE, encodeOverlay, liveOverlays, overlayPathOk } from "./lib/exp/overlay";
-import { SUNDER_ROBOTS, SUNDER_SLUG, sunderAppRoute, sunderLegalRoute } from "./lib/sunder-factory-seed";
+import { SUNDER_ROBOTS, SUNDER_SLUG, sunderAppRoute, sunderLegalRoute, sunderReferralRoute } from "./lib/sunder-factory-seed";
 import {
   NOINDEX_ROBOTS,
   ROBOTS_REQUEST_HEADER,
@@ -352,6 +352,13 @@ export async function proxy(req: NextRequest) {
         // Double opt-in confirm page: the app route itself, noindex.
         if (sunderAppRoute(pathname)) {
           const res = NextResponse.next();
+          res.headers.set("X-Robots-Tag", "noindex");
+          return res;
+        }
+        const refPage = sunderReferralRoute(pathname);
+        if (refPage) {
+          url.pathname = refPage;
+          const res = NextResponse.rewrite(url);
           res.headers.set("X-Robots-Tag", "noindex");
           return res;
         }
