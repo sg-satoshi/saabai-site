@@ -81,7 +81,7 @@ test("marketing mail names the sender and carries one-click unsubscribe", () => 
   assert.doesNotMatch(rendered.html, /Bourton/);
   assert.match(rendered.html, /Saabai Pty Ltd for Sunder Pickleball/);
   assert.match(rendered.html, /hello@sunder.com.au/);
-  assert.match(rendered.html, /you joined the SUNDER waitlist and agreed to hear from us/);
+  assert.match(rendered.html, /you joined the SUNDER Pickleball waitlist and agreed to hear from us/);
   assert.match(rendered.html, new RegExp(page.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(rendered.text, /Unsubscribe in one click/);
   const headers = listUnsubscribeHeader(api, "mailto:hello@sunder.com.au?subject=unsubscribe");
