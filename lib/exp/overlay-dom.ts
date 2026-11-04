@@ -53,3 +53,14 @@ export function stableSelector(el: HTMLElement): string | null {
 }
 
 export { fingerprint };
+
+/**
+ * The element "Preview in page" writes into: the current selection while it is still in the shown frame document,
+ * otherwise the element tagged with this test id. Null when neither is on the page.
+ */
+export function resolvePreviewTarget(doc: Document | null | undefined, sel: HTMLElement | null, expId?: string): HTMLElement | null {
+  if (!doc) return null;
+  if (sel && sel.ownerDocument === doc && sel.isConnected) return sel;
+  if (!expId || !/^[a-z0-9_-]{1,120}$/i.test(expId)) return null;
+  return doc.querySelector<HTMLElement>(`[data-exp-id="${expId}"]`);
+}

@@ -5,7 +5,7 @@ import { Button } from "../ui/Button";
 import { Card, CardBody, CardHeader } from "../ui/Card";
 import { confirmDialog, notify } from "../ui/Feedback";
 import { KIND_RULES, kindOf, type SlotKind } from "../../../lib/exp/core";
-import { SAABAI, SitePicker, readSite, siteParam, type ExpSite } from "./SitePicker";
+import { SAABAI, SitePicker, readSite, rememberSite, siteParam, type ExpSite } from "./SitePicker";
 import "./experiments.css";
 
 export type Variant = { id: string; text: string; emphasis?: string; active: boolean; source?: string };
@@ -50,7 +50,7 @@ export default function ExperimentsClient() {
   useEffect(() => { const s = readSite(); setSite(s); const id = new URLSearchParams(window.location.search).get("id"); if (id) setOpenId(id); loadList(s); }, [loadList]);
   const url = (s: string, id: string | null) => { const q = [s === SAABAI ? "" : `site=${encodeURIComponent(s)}`, id ? `id=${id}` : ""].filter(Boolean).join("&"); return q ? `?${q}` : window.location.pathname; };
   const open = (id: string | null) => { if (!site) return; setOpenId(id); history.replaceState(null, "", url(site, id)); if (!id) loadList(site); };
-  const pickSite = (s: string) => { if (s === site) return; setSite(s); setOpenId(null); setItems(null); history.replaceState(null, "", url(s, null)); loadList(s); };
+  const pickSite = (s: string) => { if (s === site) return; rememberSite(s); setSite(s); setOpenId(null); setItems(null); history.replaceState(null, "", url(s, null)); loadList(s); };
   const cur = sites.find((s) => s.key === site);
 
   async function toggle() {
@@ -70,7 +70,7 @@ export default function ExperimentsClient() {
     <div className="xp">
       {openId ? <DetailView id={openId} site={site} onBack={() => open(null)} /> : (
         <>
-          <div className="ph"><div><h1>Split testing</h1><p className="sub">Pick a site, then a test to edit copy, see results and choose a winner.</p></div><a className="xp-editlink" href={`?view=editor${siteParam(site, "&")}`}>Visual editor</a></div>
+          <div className="ph"><div><h1>Split testing</h1><p className="sub">Pick a site, then a test to edit copy, see results and choose a winner.</p></div><a className="btn pri" href={`?view=editor${siteParam(site, "&")}`}>Open visual editor</a></div>
           {sites.length > 0 && <SitePicker sites={sites} site={site} onPick={pickSite} />}
           {cur?.kind === "client" && (
             <div className="xp-siteoff" role="status">

@@ -11,7 +11,17 @@ export const SAABAI = "saabai";
 export function readSite(): string {
   if (typeof window === "undefined") return SAABAI;
   const s = new URLSearchParams(window.location.search).get("site") ?? "";
-  return SITE_RE.test(s) ? s : SAABAI;
+  if (SITE_RE.test(s)) return s;
+  // No site in the link: reopen the last site picked here (this browser only).
+  let last = "";
+  try { last = window.localStorage.getItem(LAST_SITE_KEY) ?? ""; } catch { /* storage blocked */ }
+  return SITE_RE.test(last) ? last : SAABAI;
+}
+
+const LAST_SITE_KEY = "sb_exp_last_site";
+/** Remember the picked site so the split testing pages reopen on it. */
+export function rememberSite(site: string): void {
+  try { window.localStorage.setItem(LAST_SITE_KEY, site); } catch { /* storage blocked */ }
 }
 
 /** "site=<key>" query part, empty for saabai.ai so its links stay as they were. */

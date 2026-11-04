@@ -8,8 +8,8 @@ import { api, CopyView, EditForm, nf, pct, tone, vtone, type Detail } from "./Ex
 import { isLegalPath, isProtectedText, kindForElement, suggestSlot, type ElementInfo } from "../../../lib/exp/editor";
 import { captureOrig, imagePathOf, previewInto, sectionOf } from "../../../lib/exp/editor-dom";
 import { KIND_RULES, type SlotKind } from "../../../lib/exp/core";
-import { findTarget, stableSelector } from "../../../lib/exp/overlay-dom";
-import { SAABAI, SitePicker, readSite, siteParam, type ExpSite } from "./SitePicker";
+import { findTarget, resolvePreviewTarget, stableSelector } from "../../../lib/exp/overlay-dom";
+import { SAABAI, SitePicker, readSite, rememberSite, siteParam, type ExpSite } from "./SitePicker";
 import "./experiments.css";
 
 type Picked =
@@ -149,8 +149,15 @@ export default function VisualEditor() {
 
   useEffect(() => { frame.current?.contentDocument?.documentElement.classList.toggle("sb-edit", editing); if (!editing) { clearSel(); setPicked(null); } }, [editing, clearSel]);
 
-  const preview = useCallback((kind: SlotKind, v: { text: string; emphasis?: string } | null) => {
-    if (selEl.current) previewInto(selEl.current, orig.current, kind, v);
+  // Preview into the selected element. If the selection was lost or belongs to an old frame document (client sites
+  // reload as a fresh static page), find the test element again by its id, so the button never silently does nothing.
+  const preview = useCallback((kind: SlotKind, v: { text: string; emphasis?: string } | null, expId?: string) => {
+    const doc = frame.current?.contentDocument;
+    const el = resolvePreviewTarget(doc, selEl.current, expId);
+    if (!el) { if (v) notify.error("Couldn't find this test's element on the page shown. Pick it on the page, then try again."); return; }
+    if (el !== selEl.current) { selEl.current?.classList.remove("sb-sel"); selEl.current = el; orig.current = captureOrig(el); el.classList.add("sb-sel"); }
+    previewInto(el, orig.current, kind, v);
+    if (v) el.scrollIntoView({ block: "center", behavior: "smooth" });
   }, []);
 
   const onLoad = () => {
@@ -170,7 +177,7 @@ export default function VisualEditor() {
   // Client sites preview through saabai.ai's own /sites/<slug> route (same origin, so the editor can read the page).
   const src = !site || site === SAABAI ? safe : `/sites/${site}${safe === "/" ? "" : safe}`;
   const qs = (s: string, page: string) => `?view=editor${siteParam(s, "&")}&page=${encodeURIComponent(page)}`;
-  const pickSite = (s: string) => { if (s === site) return; clearSel(); setPicked(null); setSite(s); setPath("/"); setPaths(["/"]); if (s === SAABAI) loadSaabaiPaths(setPaths); history.replaceState(null, "", qs(s, "/")); };
+  const pickSite = (s: string) => { if (s === site) return; rememberSite(s); clearSel(); setPicked(null); setSite(s); setPath("/"); setPaths(["/"]); if (s === SAABAI) loadSaabaiPaths(setPaths); history.replaceState(null, "", qs(s, "/")); };
   if (!site) return <div className="xp"><p className="muted">Loading…</p></div>;
   const cur = sites.find((x) => x.key === site);
 
@@ -202,14 +209,14 @@ export default function VisualEditor() {
         <aside className="xp-ve-panel">
           {!picked && <Card><CardBody><p className="xp-note">{editing ? "Hover the page. Teal dashed outlines are existing test elements, grey dotted ones are headings, text, buttons, links, prices, images and form hints you could turn into a test. Click one." : "Edit mode is off, so the page behaves normally. Turn it on to pick an element."}</p></CardBody></Card>}
           {picked?.type === "slot" && <SlotPanel key={picked.expId} site={site} expId={picked.expId} onPreview={preview} onClose={() => { preview("headline", null); clearSel(); setPicked(null); }} />}
-          {picked?.type === "candidate" && <CandidatePanel key={picked.text} site={site} p={picked} path={path} onClose={() => { clearSel(); setPicked(null); }} onStarted={(expId, slotName) => setPicked({ type: "slot", slotName, expId })} />}
+          {picked?.type === "candidate" && <CandidatePanel key={picked.text} site={site} p={picked} path={path} onClose={() => { clearSel(); setPicked(null); }} onStarted={(expId, slotName) => { selEl.current?.setAttribute("data-exp-id", expId); setPicked({ type: "slot", slotName, expId }); }} />}
         </aside>
       </div>
     </div>
   );
 }
 
-function SlotPanel({ site, expId, onPreview, onClose }: { site: string; expId: string; onPreview: (k: SlotKind, v: { text: string; emphasis?: string } | null) => void; onClose: () => void }) {
+function SlotPanel({ site, expId, onPreview, onClose }: { site: string; expId: string; onPreview: (k: SlotKind, v: { text: string; emphasis?: string } | null, expId?: string) => void; onClose: () => void }) {
   const [d, setD] = useState<Detail | null>(null);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
@@ -245,7 +252,7 @@ function SlotPanel({ site, expId, onPreview, onClose }: { site: string; expId: s
           {e.status === "running" && <Button size="sm" disabled={busy} onClick={() => act({ type: "set_status", status: "paused" }, "Test paused. Everyone sees the control.")}>Pause test</Button>}
           {e.status === "draft" && <Button size="sm" variant="acc" disabled={busy || e.variants.filter((x) => x.active).length < 2} onClick={() => act({ type: "set_status", status: "running" }, "Test started.")}>Start test</Button>}
           {e.status === "paused" && <Button size="sm" variant="acc" disabled={busy} onClick={() => act({ type: "set_status", status: "running" }, "Test resumed.")}>Resume test</Button>}
-          <Button size="sm" variant="gh" onClick={() => onPreview(kind, null)}>Show control in page</Button>
+          <Button size="sm" variant="gh" onClick={() => onPreview(kind, null, expId)}>Show control in page</Button>
           <a className="xp-editlink" href={`/saabai-admin/experiments?id=${e.id}${siteParam(site, "&")}`}>Full results</a>
         </div>
         <div className="xp-ve-vars">
@@ -256,11 +263,11 @@ function SlotPanel({ site, expId, onPreview, onClose }: { site: string; expId: s
                 <div className="xp-top"><span className="nm">{x.id.toUpperCase()}{isCtl && <Badge tone="neutral">control</Badge>}{!x.active && <Badge tone="warn">paused</Badge>}</span>
                   <span className="xp-note">{r ? `${nf(r.impressions)} views · ${pct(r.rate)} · ${pct(r.probBest, 0)} best` : ""}</span></div>
                 {editing === x.id
-                  ? <EditForm image={kind === "image"} noun={kr.noun} hasEmph={kr.emphasis} maxLen={kr.maxText} v={x} hasData={(r?.impressions ?? 0) > 0} busy={busy} onCancel={() => setEditing(null)} onSave={async (t, em) => { if (await act({ type: "update_variant", variantId: x.id, text: t, emphasis: em }, "Copy saved. Live within about a minute.")) { setEditing(null); onPreview(kind, { text: t, emphasis: em }); } }} />
+                  ? <EditForm image={kind === "image"} noun={kr.noun} hasEmph={kr.emphasis} maxLen={kr.maxText} v={x} hasData={(r?.impressions ?? 0) > 0} busy={busy} onCancel={() => setEditing(null)} onSave={async (t, em) => { if (await act({ type: "update_variant", variantId: x.id, text: t, emphasis: em }, "Copy saved. Live within about a minute.")) { setEditing(null); onPreview(kind, { text: t, emphasis: em }, expId); } }} />
                   : <>
                     <CopyView v={x} kind={kind} />
                     <div className="xp-acts">
-                      <Button size="sm" onClick={() => onPreview(kind, x)}>Preview in page</Button>
+                      <Button size="sm" onClick={() => onPreview(kind, x, expId)}>Preview in page</Button>
                       <Button size="sm" variant="gh" disabled={busy} onClick={() => setEditing(x.id)}>Edit</Button>
                       {!isCtl && <Button size="sm" variant="gh" disabled={busy} onClick={() => act({ type: "set_variant_active", variantId: x.id, active: !x.active }, x.active ? "Variant paused." : "Variant resumed.")}>{x.active ? "Pause" : "Resume"}</Button>}
                     </div></>}
@@ -269,7 +276,7 @@ function SlotPanel({ site, expId, onPreview, onClose }: { site: string; expId: s
           })}
         </div>
         {adding
-          ? <EditForm noun={kind === "button" ? "button label" : "headline"} hasEmph={kind !== "button"} maxLen={kind === "button" ? 40 : 90} v={{ text: "" }} hasData={false} busy={busy} saveLabel="Add variant" onCancel={() => setAdding(false)} onSave={async (t, em) => { if (await act({ type: "add_variant", text: t, emphasis: em }, "Variant added. It starts getting visitors within about a minute.")) { setAdding(false); onPreview(kind, { text: t, emphasis: em }); } }} />
+          ? <EditForm noun={kind === "button" ? "button label" : "headline"} hasEmph={kind !== "button"} maxLen={kind === "button" ? 40 : 90} v={{ text: "" }} hasData={false} busy={busy} saveLabel="Add variant" onCancel={() => setAdding(false)} onSave={async (t, em) => { if (await act({ type: "add_variant", text: t, emphasis: em }, "Variant added. It starts getting visitors within about a minute.")) { setAdding(false); onPreview(kind, { text: t, emphasis: em }, expId); } }} />
           : <div className="xp-acts" style={{ marginTop: 10 }}><Button variant="sec" disabled={busy || e.variants.length >= 8} onClick={() => setAdding(true)}>Add variant</Button></div>}
         <p className="xp-note" style={{ marginTop: 8 }}>Previews only change this editor frame. Saving a change is logged and goes live for visitors within about a minute.</p>
       </CardBody>
