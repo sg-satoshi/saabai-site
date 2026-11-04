@@ -142,7 +142,7 @@ $('f').addEventListener('submit',async e=>{e.preventDefault();say('');
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){say('Please enter a valid email.');return}
  const btn=document.querySelector('#f button[type=submit]');btn.disabled=true;
  const utm={};['source','medium','campaign','content','term'].forEach(k=>{const v=q.get('utm_'+k);if(v)utm[k]=v});
- try{const r=await post('/api/sunder-waitlist',{firstName:first,email,mobile:mob0,h:Number(document.documentElement.dataset.headline)||1,ref:REF0,utm,source:document.referrer?document.referrer.slice(0,200):'',website:$('hp').value});
+ try{const r=await post('/api/sunder-waitlist',{firstName:first,email,mobile:mob0,h:Number(document.documentElement.dataset.headline)||1,ref:REF0,utm,source:document.referrer?document.referrer.slice(0,200):'',page:location.href.slice(0,400),form:'sunder-home-waitlist',website:$('hp').value});
   if(r.ok&&r.j.ok){try{localStorage.removeItem(REFK)}catch{}thanks(first,r.j.ref,r.j.token);try{window.dispatchEvent(new Event('sb:goal'))}catch{}}else{say(r.j.error||'Something went wrong. Please try again.');btn.disabled=false}
  }catch{say('Something went wrong. Please try again.');btn.disabled=false}
 });
