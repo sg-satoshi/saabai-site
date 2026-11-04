@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { Card, CardBody } from "../ui/Card";
-import { notify } from "../ui/Feedback";
+import { confirmDialog, notify } from "../ui/Feedback";
 import { api, CopyView, EditForm, nf, pct, tone, vtone, type Detail } from "./ExperimentsClient";
 import { isLegalPath, isProtectedText, kindForElement, suggestSlot, type ElementInfo } from "../../../lib/exp/editor";
 import { captureOrig, imagePathOf, previewInto, sectionOf } from "../../../lib/exp/editor-dom";
@@ -274,6 +274,7 @@ function SlotPanel({ site, expId, onPreview, onClose }: { site: string; expId: s
                       <Button size="sm" onClick={() => onPreview(kind, x, expId)}>Preview in page</Button>
                       <Button size="sm" variant="gh" disabled={busy} onClick={() => setEditing(x.id)}>Edit</Button>
                       {!isCtl && <Button size="sm" variant="gh" disabled={busy} onClick={() => act({ type: "set_variant_active", variantId: x.id, active: !x.active }, x.active ? "Variant paused." : "Variant resumed.")}>{x.active ? "Pause" : "Resume"}</Button>}
+                      {!isCtl && <Button size="sm" variant="gh" disabled={busy} onClick={async () => { if (await confirmDialog(`Delete variant ${x.id.toUpperCase()}? Its copy is removed from the test. This is logged and can't be undone.`, { confirmLabel: "Delete", danger: true })) act({ type: "delete_variant", variantId: x.id }, `Variant ${x.id.toUpperCase()} deleted.`); }}>Delete</Button>}
                     </div></>}
               </div>
             );

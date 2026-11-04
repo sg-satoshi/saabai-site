@@ -206,6 +206,7 @@ function DetailView({ id, site, onBack }: { id: string; site: string; onBack: ()
                 <div className="xp-acts">
                   <Button size="sm" disabled={busy} onClick={() => setEditing(editing === vr.id ? null : vr.id)}>{editing === vr.id ? "Close" : "Edit copy"}</Button>
                   {!isControl && <Button size="sm" disabled={busy} onClick={() => act({ type: "set_variant_active", variantId: vr.id, active: !vr.active }, vr.active ? `Variant ${vr.id.toUpperCase()} paused.` : `Variant ${vr.id.toUpperCase()} resumed.`)}>{vr.active ? "Pause" : "Resume"}</Button>}
+                  {!isControl && <Button size="sm" disabled={busy} onClick={async () => { if (await confirmDialog(`Delete variant ${vr.id.toUpperCase()}? Its copy is removed from the test. This is logged and can't be undone.`, { confirmLabel: "Delete", danger: true })) act({ type: "delete_variant", variantId: vr.id }, `Variant ${vr.id.toUpperCase()} deleted.`); }}>Delete</Button>}
                   {!(e.status === "won" && isControl) && <Button size="sm" variant="pri" disabled={busy} onClick={async () => {
                     const proven = v.canMakeWinner && v.leaderId === vr.id;
                     const ok = await confirmDialog(proven ? `Make variant ${vr.id.toUpperCase()} the live ${noun} for everyone? The test will end.` : `Variant ${vr.id.toUpperCase()} is not a proven winner yet. Make it the live ${noun} for everyone anyway? The test will end, and the call is logged as yours.`, { confirmLabel: "Make it live" });
