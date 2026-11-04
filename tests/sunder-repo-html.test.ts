@@ -27,7 +27,7 @@ test("SUNDER is repo-first: the repo file is served, never a Blob copy", async (
   assert.equal(body, await pipeline("sunder", "public/clients/sunder/index.html"));
   assert.match(body, /window\.dispatchEvent\(new Event\('sb:goal'\)\)/);
   assert.match(body, /const ovB=/);
-  assert.match(body, /<input type="checkbox" id="smsok" checked>/);
+  assert.match(body, /Mobile <span class="opt">\(optional\): for a launch-day text and SMS-only offers<\/span>/);
 });
 
 test("SUNDER headers match live: no-store and noindex, nofollow", async () => {

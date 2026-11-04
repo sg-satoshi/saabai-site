@@ -10,10 +10,13 @@
 import { createHash, randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export const SUNDER_CONSENT_VERSION = "2026-11-02-v2";
+export const SUNDER_CONSENT_VERSION = "2026-11-04-v3";
 export const SUNDER_CONSENT_TEXT =
-  "By joining, you agree to receive emails from Saabai Pty Ltd (ABN 44 703 735 264) trading as SUNDER about our launch, offers and giveaways. We email you to confirm before any marketing. Unsubscribe any time.";
+  "By joining, you agree to receive emails or SMS from Saabai Pty Ltd (ABN 44 703 735 264) trading as SUNDER Pickleball about our launch, offers and FREE giveaways. We email you to confirm before any marketing. Unsubscribe any time.";
 export const SUNDER_SMS_CONSENT_TEXT = "Text me launch news and offers. Reply STOP to opt out.";
+/** Front-page signup: entering a mobile under this label is the SMS opt-in. Every text must say "Reply STOP to opt out". */
+export const SUNDER_SIGNUP_SMS_CONSENT_TEXT =
+  "Signup form: Mobile (optional): for a launch-day text and SMS-only offers. Reply STOP to opt out.";
 export const REFERRAL_CAP = 10;
 export const LAUNCH_PREFS = ["outright", "subscription", "unsure"] as const;
 export type LaunchPref = (typeof LAUNCH_PREFS)[number];
@@ -29,7 +32,7 @@ export type SignupInput = {
   referredBy: string | null;
   utm: Record<"source" | "medium" | "campaign" | "content" | "term", string | null>;
   source: string | null;
-  /** Optional mobile from the signup form. Stored without SMS consent. */
+  /** Optional mobile from the signup form. Entering it is the SMS opt-in. */
   mobile: string | null;
 };
 
@@ -168,10 +171,13 @@ export async function signup(store: WaitlistStore, input: SignupInput, meta: { i
       });
       if (!r.created) return { ref: r.referral_code, token: null };
       // Optional signup mobile: new rows only (never overwrite an existing
-      // subscriber's data), and never opted into SMS here. Best effort.
+      // subscriber's data). The labelled field is the SMS opt-in. Best effort.
       if (input.mobile) {
         try {
-          await store.update(hashToken(token), { mobile: input.mobile, updated_at: new Date().toISOString() });
+          const t = new Date().toISOString();
+          await store.update(hashToken(token), {
+            mobile: input.mobile, sms_consent: true, sms_consent_at: t, sms_consent_text: SUNDER_SIGNUP_SMS_CONSENT_TEXT, updated_at: t,
+          });
         } catch (e) {
           console.error("sunder waitlist mobile save failed:", e instanceof Error ? e.message : "error");
         }
