@@ -198,7 +198,7 @@ export default function TributumLawPage() {
             "The hardest thing in the world to understand is the income tax."
           </blockquote>
           <p className="text-sm mb-16" style={{ color: COLORS.grey }}>
-            — Albert Einstein. We understand it so you don't have to.
+            Albert Einstein. We understand it so you don't have to.
           </p>
 
           <div className="grid grid-cols-3 gap-8 mb-16">
@@ -383,14 +383,14 @@ export default function TributumLawPage() {
             Three steps to resolution.
           </h2>
           <p className="text-base max-w-2xl mb-16 leading-relaxed" style={{ color: "rgba(255,255,255,0.6)" }}>
-            A clear, structured path to resolving your tax or trust matter — from initial assessment through to resolution.
+            A clear, structured path to resolving your tax or trust matter, from initial assessment through to resolution.
           </p>
 
           {/* Process Image */}
           <div className="mb-16 rounded-2xl overflow-hidden">
             <img
               src="/sites/tributum-law-v2/process-timeline.png"
-              alt="Tributum Law process timeline — Assess, Advise, Resolve"
+              alt="Tributum Law process timeline: Assess, Advise, Resolve"
               className="w-full h-auto"
             />
           </div>

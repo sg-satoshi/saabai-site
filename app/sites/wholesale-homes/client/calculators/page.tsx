@@ -11,14 +11,14 @@ const CALCULATORS = [
   {
     slug: "investment-analyzer",
     label: "Property investment analyzer",
-    desc: "Complete financial analysis — repayments, cash flow, yields, ROI projections and equity growth over 30 years.",
+    desc: "Complete financial analysis, repayments, cash flow, yields, ROI projections and equity growth over 30 years.",
     icon: Calculator,
     featured: true,
   },
   {
     slug: "dual-income-yield",
     label: "Dual income yield",
-    desc: "Net rental yield on dual-occupancy packages — main house plus granny flat income streams.",
+    desc: "Net rental yield on dual-occupancy packages, main house plus granny flat income streams.",
     icon: TrendingUp,
   },
   {
@@ -43,7 +43,7 @@ export default function CalculatorsHub() {
   return (
     <ClientPortalShell>
       <PageWrap>
-        <Masthead label="Wholesale Homes — Calculators" />
+        <Masthead label="Wholesale Homes: Calculators" />
 
         <div className="wh-rise" style={{ animationDelay: "60ms", position: "relative", overflow: "hidden", borderRadius: 28, background: UI.heroInk, color: "#e8efe9", padding: "clamp(28px,4vw,44px)", margin: "18px 0 22px" }}>
           <div aria-hidden style={{ position: "absolute", top: -140, right: -70, width: 460, height: 460, background: "radial-gradient(circle, rgba(8,145,178,0.38), rgba(8,145,178,0) 66%)", pointerEvents: "none" }} />

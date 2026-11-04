@@ -4,6 +4,7 @@ import { readFileSync, existsSync } from "fs";
 import path from "path";
 import { createSite, getSiteBySlug } from "../../../../lib/site-registry";
 import { SUNDER_FACTORY_SEED, SUNDER_LEGACY_META, SUNDER_SLUG } from "../../../../lib/sunder-factory-seed";
+import { noDashesHtml } from "@/lib/no-dashes-html";
 
 export const runtime = "nodejs";
 
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
   // Upload to Blob if not already there
   const { blobs } = await list({ prefix: `sites/${slug}/index.html` });
   if (!blobs.length) {
-    await put(`sites/${slug}/index.html`, html, { access: "public", contentType: "text/html" });
+    await put(`sites/${slug}/index.html`, noDashesHtml(html), { access: "public", contentType: "text/html" });
   }
 
   // Register in Redis. SUNDER uses the seed (draft, no chatbot, canonical host).

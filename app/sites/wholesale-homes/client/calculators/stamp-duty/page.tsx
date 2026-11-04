@@ -42,13 +42,13 @@ export default function StampDutyCalculator() {
   return (
     <ClientPortalShell>
       <PageWrap>
-        <Masthead label="Wholesale Homes — Stamp Duty" />
+        <Masthead label="Wholesale Homes: Stamp Duty" />
         <CalculatorNav current="stamp-duty" />
 
         <Hero
           eyebrow="Upfront cost"
           headline={<>Stamp duty in {STATE_NAMES[state]} is{" "}<span style={{ color: "#5fd4ab" }}><AnimatedNumber value={duty} format={(n) => fmt$(Math.round(n))} /></span>.</>}
-          sub={<>On a {fmt$(price)} purchase — {dutyPct.toFixed(2)}% of the price. State transfer duty at standard investor rates.</>}
+          sub={<>On a {fmt$(price)} purchase, {dutyPct.toFixed(2)}% of the price. State transfer duty at standard investor rates.</>}
           stats={[
             { label: "Total upfront", value: <AnimatedNumber value={total} format={(n) => fmt$(Math.round(n))} /> },
             { label: "% of price", value: <AnimatedNumber value={dutyPct} format={(n) => n.toFixed(2) + "%"} /> },
@@ -60,10 +60,10 @@ export default function StampDutyCalculator() {
           <Card>
             <Eyebrow>Assumptions</Eyebrow>
             <Title>Your numbers</Title>
-            <p style={{ fontSize: 12.5, color: UI.faintInk, margin: "4px 0 16px" }}>Adjust the purchase and state — everything updates live.</p>
+            <p style={{ fontSize: 12.5, color: UI.faintInk, margin: "4px 0 16px" }}>Adjust the purchase and state, everything updates live.</p>
             <FieldGrid items={[
               { label: "Purchase Price", val: price, set: (v: number) => setPrice(v), suffix: "$" },
-              { label: "State", val: state, set: (v: string) => setState(v as State), isSelect: true, opts: STATES.map(s => ({ label: `${s} — ${STATE_NAMES[s]}`, value: s })) },
+              { label: "State", val: state, set: (v: string) => setState(v as State), isSelect: true, opts: STATES.map(s => ({ label: `${s}, ${STATE_NAMES[s]}`, value: s })) },
             ]} />
             <div style={{ marginTop: 18 }}>
               <LedgerRow label="Property price" value={fmt$(price)} />
@@ -106,8 +106,8 @@ export default function StampDutyCalculator() {
           <Eyebrow>Where it's cheapest</Eyebrow>
           <Title>Across the states</Title>
           <div style={{ marginTop: 12 }}>
-            <LedgerRow label={`Cheapest — ${STATE_NAMES[cheapest.name as State]}`} sub={`${(cheapest.value / price * 100).toFixed(2)}% of price`} value={fmt$(cheapest.value)} valueColor={UI.green} />
-            <LedgerRow label={`Most expensive — ${STATE_NAMES[dearest.name as State]}`} sub={`${(dearest.value / price * 100).toFixed(2)}% of price`} value={fmt$(dearest.value)} valueColor={UI.red} />
+            <LedgerRow label={`Cheapest: ${STATE_NAMES[cheapest.name as State]}`} sub={`${(cheapest.value / price * 100).toFixed(2)}% of price`} value={fmt$(cheapest.value)} valueColor={UI.green} />
+            <LedgerRow label={`Most expensive: ${STATE_NAMES[dearest.name as State]}`} sub={`${(dearest.value / price * 100).toFixed(2)}% of price`} value={fmt$(dearest.value)} valueColor={UI.red} />
             <LedgerRow strong last label="Difference across states" sub="what location alone costs you" value={fmt$(dearest.value - cheapest.value)} />
           </div>
           <p style={{ fontSize: 10.5, color: UI.faint, marginTop: 12 }}>First-home-buyer concessions and off-the-plan discounts may apply. Verify with your conveyancer.</p>

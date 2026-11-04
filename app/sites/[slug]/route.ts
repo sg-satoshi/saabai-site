@@ -4,6 +4,7 @@ import { readFileSync } from "fs";
 import path from "path";
 import { ensurePoweredBy } from "@/lib/client-site";
 import { readRepoClientHtml } from "@/lib/repo-client-html";
+import { noDashesHtml } from "@/lib/no-dashes-html";
 import { prepareLmmHomeHtml } from "@/lib/lmm-legal";
 import { ensureFavicon } from "@/lib/site-favicon";
 import { ensureSchema } from "@/lib/site-schema";
@@ -49,7 +50,7 @@ export async function GET(
     // the fallback, so the privacy policy ships with the deploy.
     const repoHtml = readRepoClientHtml(slug, "index.html");
     if (repoHtml !== null) {
-      const html = injectStaticExp(ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, repoHtml)))), exp);
+      const html = injectStaticExp(noDashesHtml(ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, repoHtml))))), exp);
       return siteResponse(slug, html, 200, {
         "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": cc("no-store"),
@@ -71,7 +72,7 @@ export async function GET(
     }
 
     if (blobHtml !== null) {
-      const html = injectStaticExp(ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, applyCssPatch(slug, prepareStoredHtml(slug, blobHtml))))), exp);
+      const html = injectStaticExp(noDashesHtml(ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, applyCssPatch(slug, prepareStoredHtml(slug, blobHtml)))))), exp);
       return siteResponse(slug, html, 200, {
         "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": cc("no-store"),
@@ -81,7 +82,7 @@ export async function GET(
     // 2. Fall back to legacy static sites in public/clients/
     try {
       const filePath = path.join(process.cwd(), "public", "clients", slug, "index.html");
-      const html = injectStaticExp(ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, readFileSync(filePath, "utf-8"))))), exp);
+      const html = injectStaticExp(noDashesHtml(ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, readFileSync(filePath, "utf-8")))))), exp);
       return siteResponse(slug, html, 200, {
         "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": cc("public, s-maxage=3600"),

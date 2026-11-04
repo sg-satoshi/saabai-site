@@ -210,7 +210,7 @@ export default function PackageDetailClient({ pkg }: { pkg: Pkg | null }) {
                         </div>
                         <p className="mt-1 text-xs text-[#5C6670]">Main house ${pkg.rentalAppraisal.weeklyMain}/wk + Granny flat ${pkg.rentalAppraisal.weeklyGranny}/wk</p>
                         <p className="mt-3 text-xs leading-relaxed text-[#5C6670]">
-                          Appraised by <strong className="text-[#1A2B3C]">{pkg.rentalAppraisal.appraiser}</strong>, {pkg.rentalAppraisal.company} — based on comparable rental evidence, property condition and current market conditions. Use these figures directly in the calculators for accurate cash-flow projections.
+                          Appraised by <strong className="text-[#1A2B3C]">{pkg.rentalAppraisal.appraiser}</strong>, {pkg.rentalAppraisal.company}, based on comparable rental evidence, property condition and current market conditions. Use these figures directly in the calculators for accurate cash-flow projections.
                         </p>
                       </>
                     )}

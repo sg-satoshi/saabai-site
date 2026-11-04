@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { list } from "@vercel/blob";
 import { ensurePoweredBy } from "@/lib/client-site";
 import { readRepoClientHtml } from "@/lib/repo-client-html";
+import { noDashesHtml } from "@/lib/no-dashes-html";
 import { lmmLegalDocument, type LmmLegalPage } from "@/lib/lmm-legal";
 import { resolveGeoProfile } from "@/lib/geo/profiles";
 import { llmsFullTxt, llmsTxt, robotsTxt, sitemapXml } from "@/lib/geo";
@@ -63,7 +64,7 @@ export async function GET(
   const { slug, page } = await params;
 
   if (slug === "lmm-site" && (page === "privacy" || page === "complaints")) {
-    const html = ensurePoweredBy(slug, lmmLegalDocument(page as LmmLegalPage));
+    const html = noDashesHtml(ensurePoweredBy(slug, lmmLegalDocument(page as LmmLegalPage)));
     return textResponse(slug, html, 200, {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "public, s-maxage=3600",
@@ -137,7 +138,7 @@ export async function GET(
   try {
     const repoHtml = readRepoClientHtml(slug, `${page}.html`);
     if (repoHtml !== null) {
-      const html = ensurePoweredBy(slug, await ensureFavicon(slug, repoHtml));
+      const html = noDashesHtml(ensurePoweredBy(slug, await ensureFavicon(slug, repoHtml)));
       return textResponse(slug, html, 200, {
         "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": "no-store",
@@ -149,7 +150,7 @@ export async function GET(
     if (!blob) return new Response("Page not found", { status: 404 });
 
     const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
-    const html = ensurePoweredBy(slug, await ensureFavicon(slug, await res.text()));
+    const html = noDashesHtml(ensurePoweredBy(slug, await ensureFavicon(slug, await res.text())));
     return textResponse(slug, html, 200, {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-store",

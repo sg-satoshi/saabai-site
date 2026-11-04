@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { put, list } from "@vercel/blob";
+import { noDashesHtml } from "@/lib/no-dashes-html";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -237,7 +238,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    await put(`sites/${slug}/draft.html`, html, {
+    await put(`sites/${slug}/draft.html`, noDashesHtml(html), {
       access: "public",
       contentType: "text/html",
       addRandomSuffix: false,

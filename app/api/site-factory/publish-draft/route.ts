@@ -3,6 +3,7 @@ import { list, put, del } from "@vercel/blob";
 import { Redis } from "@upstash/redis";
 import { snapshotVersion } from "../../../../lib/site-versions";
 import { robotsTxt } from "../../../../lib/geo";
+import { noDashesHtml } from "@/lib/no-dashes-html";
 
 export const runtime = "nodejs";
 
@@ -104,7 +105,7 @@ export async function POST(req: NextRequest) {
     snapshotVersion(slug, html, "Published").catch(() => {});
 
     await Promise.all([
-      put(`sites/${slug}/index.html`, html, {
+      put(`sites/${slug}/index.html`, noDashesHtml(html), {
         access: "public", contentType: "text/html",
         addRandomSuffix: false, allowOverwrite: true,
       }),

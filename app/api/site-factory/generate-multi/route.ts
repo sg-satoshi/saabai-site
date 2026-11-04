@@ -7,6 +7,7 @@ import { buildChatWidget, getNicheColors } from "../../../../lib/chat-widget-tem
 import { seedPlatformSkin, widgetV2Enabled } from "../../../../lib/chatbot/seed";
 import { THEMES, NICHE_THEME_DEFAULTS, ThemeDef, NichePage, DEFAULT_PAGES } from "../../../../lib/site-themes";
 import { snapshotVersion } from "../../../../lib/site-versions";
+import { noDashesHtml } from "@/lib/no-dashes-html";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -298,7 +299,7 @@ export async function POST(req: NextRequest) {
             ? `sites/${slug}/index.html`
             : `sites/${slug}/${page.slug}.html`;
 
-          await put(blobPath, html, {
+          await put(blobPath, blobPath.endsWith(".html") ? noDashesHtml(html) : html, {
             access: "public",
             contentType: "text/html",
             addRandomSuffix: false,
