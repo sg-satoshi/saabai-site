@@ -13,8 +13,8 @@ import {
 import {
   countStatus, countSuppressions, emailDb, identityFrom, isMissingSchema, listConfirmed, loadTenant, suppressedEmails, type TenantRow,
 } from "./db";
-import { buildSunderHtml, confirmMessage, renderMarketingEmail, withReferralLine } from "./message";
-import { maskEmail, referralLineText, referralStatsFor, referralStatusUrl } from "../sunder-waitlist";
+import { buildSunderHtml, confirmMessage, referralLinkMessage, renderMarketingEmail, withReferralLine } from "./message";
+import { maskEmail, needsReferralReview, referralLineText, referralStatsFor, referralStatusUrl } from "../sunder-waitlist";
 import { brisbaneAt, brisbaneParts, isQuiet, seriesRunAt } from "./quiet";
 import { acquireSendSlot, type RateCounter } from "./rate";
 import {
@@ -672,6 +672,8 @@ export async function listContacts(filter: { q?: string; status?: string }) {
     suppressed: suppressed.has(r.email) || r.status === "bounced" || r.status === "complained",
     reason: reasons.get(r.email) || (r.status === "bounced" || r.status === "complained" ? r.status : ""),
     referrals: refs.get(r.email)?.friends ?? 0,
+    referral_entries: refs.get(r.email)?.entries ?? 0,
+    review: needsReferralReview(refs.get(r.email)?.entries),
     referred_by: maskEmail(refs.get(r.email)?.referredByEmail),
   }));
   return {
@@ -920,6 +922,63 @@ export async function afterSunderSignup(input: { email: string; firstName: strin
     secret: secret(),
     limit: 1,
     deadlineMs: 15_000,
+  });
+}
+
+/** Per email: at most one referral-link email per 8 hours (idempotency key). */
+export function referralLinkKey(email: string, now: Date): string {
+  return `reflink:sunder:${email.trim().toLowerCase()}:${now.toISOString().slice(0, 10)}:${Math.floor(now.getUTCHours() / 8)}`;
+}
+
+/**
+ * "Check my referrals": email a confirmed subscriber their status link.
+ * Silent no-op for anyone else, so the route can always answer the same way.
+ */
+export async function sendSunderReferralLink(rawEmail: string): Promise<void> {
+  const db = emailDb();
+  const email = rawEmail.trim().toLowerCase();
+  const { data, error } = await db.from("sunder_subscribers").select("marketing_status,referral_code,first_name").eq("email", email).maybeSingle();
+  if (error) {
+    if (isMissingSchema(error)) return;
+    throw new Error(error.message);
+  }
+  const sub = data as { marketing_status?: string; referral_code?: string; first_name?: string | null } | null;
+  if (!sub || sub.marketing_status !== "confirmed" || !sub.referral_code) return;
+  const tenant = await loadTenant(db);
+  if (!tenant) return;
+  const contact = await db.from("email_contacts").select("id,status,confirmed_at,first_name").eq("tenant_id", tenant.id).eq("email", email).maybeSingle();
+  if (contact.error) throw new Error(contact.error.message);
+  const c = contact.data as { id: string; status: string; confirmed_at: string | null; first_name: string | null } | null;
+  if (!c || c.status !== "subscribed") return;
+  const msg = referralLinkMessage(referralStatusUrl(sub.referral_code));
+  const key = referralLinkKey(email, new Date());
+  const { data: inserted, error: insertError } = await db.from("email_sends").insert({
+    tenant_id: tenant.id, contact_id: c.id, to_email: email, kind: "confirm", idempotency_key: key,
+    status: "pending", subject: msg.subject, html: msg.html, from_name: tenant.from_name || SUNDER_IDENTITY.fromName, respect_quiet: false,
+  }).select("id").maybeSingle();
+  if (insertError) {
+    if (insertError.code === "23505") return; // already sent in this window
+    throw new Error(insertError.message);
+  }
+  if (!inserted || await sendingPaused(db, tenant) || !sesConfigured() || !secret()) return;
+  const id = (inserted as { id: string }).id;
+  const claimed = await db.from("email_sends").update({ status: "sending", claimed_at: new Date().toISOString() }).eq("id", id).eq("status", "pending").select("id");
+  if (claimed.error || !claimed.data?.length) return;
+  const row = mapClaimed({ id, to_email: email, kind: "confirm", subject: msg.subject, html: msg.html, from_name: tenant.from_name || SUNDER_IDENTITY.fromName, respect_quiet: false, campaign_id: null },
+    { status: c.status, confirmed_at: c.confirmed_at, first_name: c.first_name || sub.first_name || null }, identityFrom(tenant));
+  let once = true;
+  await drainOutbox({
+    outbox: {
+      claim: async () => { if (!once) return []; once = false; return [row]; },
+      markSent: async (rid, messageId) => { await db.from("email_sends").update({ status: "sent", ses_message_id: messageId, sent_at: new Date().toISOString() }).eq("id", rid); },
+      markFailed: async (rid, err) => { await db.from("email_sends").update({ status: "failed", error: err.slice(0, 300) }).eq("id", rid); },
+      markSkipped: async (rid, reason) => { await db.from("email_sends").update({ status: "skipped", error: reason }).eq("id", rid); },
+      release: async (rid) => { await db.from("email_sends").update({ status: "pending", claimed_at: null }).eq("id", rid).is("ses_message_id", null); },
+      suppressed: (emails) => suppressedEmails(db, tenant.id, emails),
+    },
+    send: (m) => sendSes(m),
+    acquire: () => acquireSendSlot(rateCounter()),
+    paused: false, quiet: false, secret: secret(), limit: 1, deadlineMs: 15_000,
   });
 }
 

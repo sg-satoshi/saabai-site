@@ -67,3 +67,12 @@ body:has(.sc),body:has(.se){margin:0;background:#f2f2ee}body:has(.se){background
 .sc button.btn{font-family:inherit;font-weight:700;border:0}
 
 .sc-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* Referral pass: keep the label clear of the paddle graphic. */
+.sc .pass .row{position:relative;z-index:1;justify-content:flex-start;gap:14px}
+.sc .pass .t,.sc .pass .stub{position:relative;z-index:1}
+.se .ref-form{margin-top:28px;max-width:420px}
+.se .ref-form input[type=email]{width:100%;min-height:52px;padding:0 16px;border-radius:10px;border:1px solid #f2f2ee33;background:#161616;color:#f2f2ee;font:500 17px 'Inter Tight',sans-serif}
+.se .ref-form input[type=email]:focus{outline:2px solid #d4ff3a;outline-offset:2px;border-color:#d4ff3a}
+.se .ref-form .btn{margin-top:14px;cursor:pointer;font-family:inherit}
+.se .ref-form .btn:disabled{opacity:.6}
+.se .ref-ok{margin-top:28px;max-width:420px;border:1px solid #d4ff3a55;border-radius:12px;padding:18px;color:#f2f2ee}

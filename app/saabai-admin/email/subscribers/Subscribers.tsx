@@ -15,6 +15,8 @@ type Person = {
   suppressed: boolean;
   reason: string;
   referrals?: number;
+  referral_entries?: number;
+  review?: boolean;
   referred_by?: string;
 };
 
@@ -103,6 +105,7 @@ export default function Subscribers() {
           <span className="em-help" style={{ marginLeft: "auto" }}>{data ? `${data.people.length} shown` : ""}</span>
         </div>
         {err && <div className="bd"><div className="em-alert bad">{err}</div></div>}
+        {!!data?.people.some((p) => p.review) && <div className="bd"><div className="em-alert warn">{data.people.filter((p) => p.review).length} shown with over 25 referral entries. Check them by hand before a draw.</div></div>}
         {data && !data.people.length && (
           <div className="em-empty"><h2>No subscribers match these filters</h2><p>Try another status or clear the filters.</p></div>
         )}
@@ -125,7 +128,7 @@ export default function Subscribers() {
                   <td>{statusChip(p)}</td>
                   <td>{p.consent_source || "Waitlist"}</td>
                   <td>{p.consent_at ? new Date(p.consent_at).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : ""}</td>
-                  <td>{p.referrals ?? 0}</td>
+                  <td>{p.referrals ?? 0}{p.review && <> <span className="badge b-warn" title="Over 25 referral entries: check before a draw">Review</span></>}</td>
                   <td>{p.referred_by || ""}</td>
                   <td><button type="button" className="btn sm" onClick={() => setOpen(p)}>View consent</button></td>
                 </tr>
@@ -148,7 +151,7 @@ export default function Subscribers() {
                 <span>Version</span><b>{open.consent_version || ""}</b>
                 <span>Consent time</span><b>{open.consent_at || ""}</b>
                 <span>Confirmed</span><b>{open.confirmed_at || "Not yet"}</b>
-                <span>Referrals</span><b>{open.referrals ?? 0}</b>
+                <span>Referrals</span><b>{open.referrals ?? 0}{open.review ? " (over 25: check before a draw)" : ""}</b>
                 <span>Referred by</span><b>{open.referred_by || "None"}</b>
               </dl>
               <p>{open.consent_text || "No wording stored."}</p>

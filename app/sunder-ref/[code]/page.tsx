@@ -1,5 +1,5 @@
 /* SUNDER private referral status (sunder.com.au/r/<code>). Counts only: no names, no emails, no login. */
-import { REFERRAL_CAP, referralStatsByCode } from "../../../lib/sunder-waitlist";
+import { referralStatsByCode } from "../../../lib/sunder-waitlist";
 import { SUNDER_SITE, SUNDER_NEW_LINK } from "../../email/confirm/SunderPages";
 import RefShare from "./RefShare";
 import "../../email/confirm/sunder-confirm.css";
@@ -27,7 +27,7 @@ export default async function Page({ params }: { params: Promise<{ code: string 
     );
   }
   const link = `${SUNDER_SITE}/?r=${stats.code}`;
-  const entries = Math.min(stats.entries, REFERRAL_CAP);
+  const entries = stats.entries;
   return (
     <main><div className="sc">
       <section className="hero">
@@ -36,14 +36,14 @@ export default async function Page({ params }: { params: Promise<{ code: string 
           <div>
             <div className="eyebrow">Your referrals</div>
             <h1 className="cap" style={{ marginTop: 14 }}><span className="hl">{stats.friends}</span> {stats.friends === 1 ? "friend" : "friends"} joined</h1>
-            <p className="sub">Every friend who joins with your link and confirms their email gets you a bonus giveaway entry, up to {REFERRAL_CAP}.</p>
+            <p className="sub">Every friend who joins with your link and confirms their email gets you a bonus giveaway entry. No limit.</p>
           </div>
           <div className="pass">
             <div className="row"><img className="m" src={`${IMG}/sunder-s-mark-colour-dark.svg`} alt="" /><span className="eyebrow" style={{ color: "#f2f2ee99" }}>Bonus entries</span></div>
-            <div className="t">{entries}/{REFERRAL_CAP}</div>
+            <div className="t">{entries} {entries === 1 ? "entry" : "entries"}</div>
             <div style={{ fontSize: 15, color: "#f2f2eecc" }}>Split the game open.</div>
             <img className="peek" src={`${IMG}/sunder-mid-vector.svg`} alt="" />
-            <div className="stub">{entries >= REFERRAL_CAP ? "Maxed out" : `${REFERRAL_CAP - entries} to go`}</div>
+            <div className="stub">{entries ? "Keep them coming" : "Share your link to start"}</div>
           </div>
         </div>
         <div className="share">

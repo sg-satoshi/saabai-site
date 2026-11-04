@@ -4,8 +4,8 @@
  * (db/migrations/008_sunder_waitlist.sql), service role only.
  * The waitlist row is still created on signup. Marketing email is double opt-in
  * after migration 009: existing rows stay confirmed, new rows start pending.
- * Referrer extra entries are capped at 10 in SQL and, after migration 011,
- * are credited when the referred person confirms, not at signup.
+ * Referrer extra entries are uncapped after migration 012 (capped at 10
+ * before). Since migration 011 they are credited when the referred person confirms, not at signup.
  */
 import { createHash, randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -17,7 +17,11 @@ export const SUNDER_SMS_CONSENT_TEXT = "Text me launch news and offers. Reply ST
 /** Front-page signup: entering a mobile under this label is the SMS opt-in. Every text must say "Reply STOP to opt out". */
 export const SUNDER_SIGNUP_SMS_CONSENT_TEXT =
   "Signup form: Mobile (optional): for a launch-day text and SMS-only offers. Reply STOP to opt out.";
-export const REFERRAL_CAP = 10;
+/** Admin flag: more than this many referral entries gets a manual check before a draw. */
+export const REFERRAL_REVIEW_THRESHOLD = 25;
+export function needsReferralReview(entries: number | null | undefined): boolean {
+  return (entries ?? 0) > REFERRAL_REVIEW_THRESHOLD;
+}
 export const LAUNCH_PREFS = ["outright", "subscription", "unsure"] as const;
 export type LaunchPref = (typeof LAUNCH_PREFS)[number];
 
@@ -116,10 +120,10 @@ export function hashToken(t: string): string {
   return createHash("sha256").update(t).digest("hex");
 }
 
-/** Pure referral credit rule (mirrors the SQL): +1, never above the cap, never self. */
+/** Pure referral credit rule (mirrors the SQL, migration 012): +1, no cap, never self. */
 export function creditReferral(current: number, referrerCode: string | null, newCode: string): number {
   if (!referrerCode || referrerCode === newCode) return current;
-  return Math.min(current + 1, REFERRAL_CAP);
+  return current + 1;
 }
 
 export type SignupRow = {
@@ -224,7 +228,7 @@ export type ReferralStats = { code: string; friends: number; entries: number };
 
 /** Counts only, never names. */
 export function referralLineText(r: ReferralStats): string {
-  return `Your link: https://sunder.com.au/?r=${r.code} · ${r.friends} ${r.friends === 1 ? "friend" : "friends"} joined · ${Math.min(r.entries, REFERRAL_CAP)}/${REFERRAL_CAP} bonus entries`;
+  return `Your link: https://sunder.com.au/?r=${r.code} · ${r.friends} ${r.friends === 1 ? "friend" : "friends"} joined · ${r.entries} bonus ${r.entries === 1 ? "entry" : "entries"}`;
 }
 
 export function referralStatusUrl(code: string): string {

@@ -6,9 +6,9 @@ import { confirmMessage, withReferralLine } from "../lib/email/message";
 
 const read = (p: string) => readFileSync(p, "utf8");
 
-test("referral line shows counts only and caps entries", () => {
-  assert.equal(referralLineText({ code: "abc234de", friends: 3, entries: 3 }), "Your link: https://sunder.com.au/?r=abc234de · 3 friends joined · 3/10 bonus entries");
-  assert.equal(referralLineText({ code: "abc234de", friends: 12, entries: 10 }), "Your link: https://sunder.com.au/?r=abc234de · 12 friends joined · 10/10 bonus entries");
+test("referral line shows counts only, no cap", () => {
+  assert.equal(referralLineText({ code: "abc234de", friends: 3, entries: 3 }), "Your link: https://sunder.com.au/?r=abc234de · 3 friends joined · 3 bonus entries");
+  assert.equal(referralLineText({ code: "abc234de", friends: 30, entries: 30 }), "Your link: https://sunder.com.au/?r=abc234de · 30 friends joined · 30 bonus entries");
   assert.match(referralLineText({ code: "abc234de", friends: 1, entries: 1 }), /1 friend joined/);
 });
 
@@ -30,6 +30,14 @@ test("front page keeps ?r= for 30 days and sends it at signup", () => {
   assert.match(h, /localStorage\.setItem\(REFK/);
   assert.match(h, /REFTTL=2592e6/);
   assert.match(h, /ref:REF0/);
+});
+
+test("migration 012 removes the cap", () => {
+  const m = read("db/migrations/012_sunder_referral_uncapped.sql");
+  assert.match(m, /referral_entries = r\.referral_entries \+ 1,/);
+  assert.doesNotMatch(m.slice(m.indexOf("create or replace")), /least\(|< 10/);
+  assert.match(m, /check \(referral_entries >= 0\)/);
+  assert.match(m, /sunder_email_key\(r\.email\) <> v_key/);
 });
 
 test("migration 011 credits on confirm and blocks self-referral", () => {

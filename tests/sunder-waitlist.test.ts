@@ -6,7 +6,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  REFERRAL_CAP, creditReferral, hashToken, signup, toCsv, updatePatch, validateSignup, validateUpdate,
+  creditReferral, needsReferralReview, hashToken, signup, toCsv, updatePatch, validateSignup, validateUpdate,
   type SignupRow, type WaitlistStore,
 } from "../lib/sunder-waitlist";
 
@@ -61,14 +61,16 @@ test("dedupe returns the existing code and no token", async () => {
   assert.equal(rows.get("sam@x.co")!.p_update_token_hash, hashToken(a.token!));
 });
 
-test("referral entries cap at 10 and never self-credit", async () => {
+test("referral entries are uncapped and never self-credit", async () => {
   const { rows, store } = memStore();
   const ref = (await signup(store, ok({ firstName: "R", email: "r@x.co" }), meta)).ref;
   for (let n = 0; n < 15; n++) await signup(store, ok({ firstName: "F", email: `f${n}@x.co`, ref }), meta);
   await signup(store, ok({ firstName: "F", email: "f0@x.co", ref }), meta); // repeat: no credit
-  assert.equal(rows.get("r@x.co")!.entries, REFERRAL_CAP);
+  assert.equal(rows.get("r@x.co")!.entries, 15);
   assert.equal(creditReferral(3, "abc", "abc"), 3);
-  assert.equal(creditReferral(10, "abc", "def"), 10);
+  assert.equal(creditReferral(10, "abc", "def"), 11);
+  assert.equal(needsReferralReview(25), false);
+  assert.equal(needsReferralReview(26), true);
   assert.equal(creditReferral(0, null, "def"), 0);
 });
 

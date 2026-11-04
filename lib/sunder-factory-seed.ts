@@ -101,7 +101,7 @@ export function sunderGeoProfile(): GeoProfile {
     facts: [
       "Status: pre-launch. The waitlist is open at https://sunder.com.au/",
       "Joining the waitlist gets 20% off at launch, early access and a giveaway entry",
-      "Each mate who joins with your share link gives you an extra giveaway entry, up to 10 extra entries",
+      "Each mate who joins with your share link gives you an extra giveaway entry, with no limit",
       "Operated by Saabai Pty Ltd (ABN 44 703 735 264), trading as SUNDER, Queensland",
       "Giveaway terms: https://sunder.com.au/giveaway-terms",
       "Privacy policy: https://sunder.com.au/privacy",
@@ -119,6 +119,7 @@ export function sunderAppRoute(pathname: string): boolean {
 
 /** Private referral status page: sunder.com.au/r/<code> rewrites to /sunder-ref/<code>. */
 export function sunderReferralRoute(pathname: string): string | null {
+  if (/^\/referrals\/?$/i.test(pathname)) return "/sunder-ref";
   const m = /^\/r\/([a-z0-9]{6,12})\/?$/i.exec(pathname);
   return m ? `/sunder-ref/${m[1].toLowerCase()}` : null;
 }
