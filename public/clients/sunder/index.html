@@ -44,7 +44,7 @@ button:focus-visible{outline:3px solid var(--chalk);outline-offset:3px}
 a{color:var(--chalk);text-decoration:underline;text-underline-offset:2px}
 .done{display:none}.state-thanks .form{display:none}.state-thanks .thanks{display:block}
 .done h2{color:var(--volt);font-family:Archivo,"Inter Tight";font-weight:800;font-stretch:125%;font-size:32px;line-height:1.05;margin:0 0 10px;text-transform:uppercase}.done p{margin:0;font-size:17px}
-.tl{margin:0 0 18px!important;color:var(--chalk)}.share{border-top:1.5px solid #333;padding-top:16px}.sh{font-weight:600;color:var(--volt);margin:0 0 12px!important}.cap{font-size:14px!important;color:var(--chalk);margin:-4px 0 12px!important}.cap a{color:var(--chalk)}.ro{color:var(--volt)!important}.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}.b2{height:46px;font-size:15px}.ghost{background:transparent;color:var(--volt);border:1.5px solid var(--volt)}.smsb{margin-top:18px;padding:14px;border:1.5px solid #333;border-radius:10px}.sq{font-size:15px!important;font-weight:600;margin:0 0 10px!important}.b3{height:44px;font-size:14px;background:var(--volt);color:var(--carbon)}.smsb label.f span{font-size:13px}.smsb input[type=tel]{height:44px}.sms span{font-size:14px;color:var(--chalk)}.b3:disabled{background:#262626;color:#b4b4ae;border:1.5px dashed #6a6a66;cursor:not-allowed}
+.tl{margin:0 0 18px!important;color:var(--chalk)}.share{border-top:1.5px solid #333;padding-top:16px}.sh{font-weight:600;color:var(--volt);margin:0 0 12px!important}.cap{font-size:14px!important;color:var(--chalk);margin:-4px 0 12px!important}.cap a{color:var(--chalk)}.ro{color:var(--volt)!important}.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}.b2{height:46px;font-size:15px}.ghost{background:transparent;color:var(--volt);border:1.5px solid var(--volt)}
 .tick{width:44px;height:44px;border-radius:50%;background:var(--volt);color:var(--carbon);display:flex;align-items:center;justify-content:center;font:800 22px Archivo,"Inter Tight";margin-bottom:16px}
 footer{position:relative;padding:18px 72px;font-size:13px;color:var(--muted);border-top:1px solid #262626;background:var(--carbon)}footer{line-height:1.5}footer .ft{display:block;max-width:760px}footer .fl{display:block;font-size:12px;margin-top:6px}footer a{display:inline-block;padding:6px 0;margin-right:16px;color:var(--muted);text-decoration-color:rgba(214,214,208,.4)}
 .band{display:none}
@@ -73,7 +73,7 @@ footer{position:relative;padding:18px 72px;font-size:13px;color:var(--muted);bor
 <form class="form" id="f" novalidate>
 <label class="f"><span data-c="lFirst">First name</span><input type="text" id="first" autocomplete="given-name"></label>
 <label class="f"><span data-c="lEmail">Email</span><input type="email" id="email" autocomplete="email"></label>
-<label class="f"><span data-c="lMob0" data-h="1">Mobile <span class="opt">(optional)</span></span><input type="tel" id="mob0" autocomplete="tel" inputmode="tel"></label>
+<label class="f"><span data-c="lMob0" data-h="1">Mobile <span class="opt">(optional): for a launch-day text and SMS-only offers</span></span><input type="tel" id="mob0" autocomplete="tel" inputmode="tel"></label>
 <button type="submit" data-c="cta" style="margin-top:6px">Get first hit</button>
 <input type="text" id="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
 <p class="below" id="wn" role="status" aria-live="polite" hidden style="color:#d4ff3a;font-weight:600"></p>
@@ -83,10 +83,6 @@ footer{position:relative;padding:18px 72px;font-size:13px;color:var(--muted);bor
 <div class="share"><p class="sh" data-c="shareL"></p><p class="cap" data-c="shareCap" data-h="1"></p>
 <label class="f"><span data-c="lLink"></span><input type="text" readonly id="ref" class="ro"></label>
 <div class="btns"><button type="button" class="b2" data-c="copyB"></button><button type="button" class="b2 ghost" data-c="shareB"></button></div></div>
-<div class="smsb"><p class="sq" data-c="smsQ"></p>
-<label class="f"><span data-c="lMobile"></span><input type="tel" id="mobile" autocomplete="tel"></label>
-<label class="sms show"><input type="checkbox" id="smsok" checked><span data-c="sms"></span></label>
-<button type="button" class="b3" id="addb" disabled data-c="addB"></button></div>
 <div class="dq" id="dq"><p class="dl" data-c="dqL"></p>
 <div class="opts"><button type="button" class="o" data-v="outright" data-c="dq1"></button><button type="button" class="o" data-v="subscription" data-c="dq2"></button><button type="button" class="o" data-v="unsure" data-c="dq3"></button></div>
 <p class="dt" data-c="dqT" aria-live="polite"></p></div>
@@ -105,7 +101,7 @@ const COPY={
  eyebrow:"Split the game open.",
  headline:"Get first hit.", /* set from HEADLINES below */
  sub:"A new pickleball paddle with power, spin and control. Join for 20% off at launch, early access and a giveaway.",
- lFirst:"First name", lEmail:"Email", lMob0:'Mobile <span class="opt">(optional)</span>',
+ lFirst:"First name", lEmail:"Email", lMob0:'Mobile <span class="opt">(optional): for a launch-day text and SMS-only offers</span>',
  cta:"Get first hit",
  wty:"12-month warranty on core and edge.", /* Confirmed by Shane 2 Nov 2026 */
  thanksH:"You're in.",
@@ -113,12 +109,11 @@ const COPY={
  shareL:"Get more chances to win. Share your link: every mate who joins gets you an extra giveaway entry.",
  shareCap:'Up to 10 extra entries.',
  lLink:"Your link", copyB:"Copy link", shareB:"Share",
- smsQ:"Want a text the day we launch?", lMobile:"Mobile", sms:"Text me launch news and offers. Reply STOP to opt out.", addB:"Add",
  /* Demand question (copy v4, "Thank-you state: optional demand question", not locked). Last block, one tap, no price. */
  dqL:"Quick one, totally optional. When SUNDER launches, would you rather:",
  dq1:"Buy a paddle outright", dq2:"Get a fresh paddle every 6 months for a monthly fee", dq3:"Not sure yet",
  dqT:"Thanks, noted. It helps us shape the launch.",
- footer:'<span class="ft">By joining, you agree to receive emails from Saabai Pty Ltd (ABN&nbsp;44&nbsp;703&nbsp;735&nbsp;264) trading as SUNDER about our launch, offers and giveaways. We email you to confirm before any marketing. Unsubscribe any time.</span><span class="fl"><a href="/privacy">Privacy</a><a href="/giveaway-terms">Giveaway terms</a></span>'
+ footer:'<span class="ft">By joining, you agree to receive emails or SMS from Saabai Pty Ltd (ABN&nbsp;44&nbsp;703&nbsp;735&nbsp;264) trading as SUNDER Pickleball about our launch, offers and FREE giveaways. We email you to confirm before any marketing. Unsubscribe any time.</span><span class="fl"><a href="/privacy">Privacy</a><a href="/giveaway-terms">Giveaway terms</a></span>'
 };
 /* ===== END COPY BLOCK ===== */
 {const ovB=(()=>{try{const m=document.cookie.match(/(?:^|; )sb_ov=([^;]+)/);const o=m&&JSON.parse(decodeURIComponent(m[1]));return !!o&&o.p===location.pathname&&o.o.some(t=>t.i==='sunder-home-hero-headline'&&t.a==='b')}catch{return false}})();
@@ -135,13 +130,9 @@ function thanks(first,ref,token){
  const h=document.querySelector('[data-c="thanksH"]');h.textContent=first?"You're in, "+first+".":"You're in.";
  $('ref').value=ref?refLink(ref):'';
  if(!ref)document.querySelector('.share').style.display='none';
- if(!token){document.querySelector('.smsb').style.display='none';$('dq').style.display='none'}
+ if(!token){$('dq').style.display='none'}
  document.body.className='state-thanks';
- syncAdd();
 }
-const syncAdd=()=>{$('addb').disabled=!($('smsok').checked&&$('mobile').value.trim())};$('smsok').addEventListener('change',syncAdd);$('mobile').addEventListener('input',syncAdd);
-$('addb').addEventListener('click',async()=>{const b=$('addb');b.disabled=true;try{const r=await post('/api/sunder-waitlist/update',{token:TOKEN,mobile:$('mobile').value,smsConsent:$('smsok').checked});
- if(r.ok){b.textContent='Added';$('mobile').readOnly=true;$('smsok').disabled=true}else{b.disabled=false;alert(r.j.error||'Please try again.')}}catch{b.disabled=false;alert('Please try again.')}});
 document.querySelectorAll('#dq .o').forEach(b=>b.addEventListener('click',()=>{const d=$('dq');d.dataset.pref=b.dataset.v;d.classList.add('ans');if(TOKEN)post('/api/sunder-waitlist/update',{token:TOKEN,launchPref:b.dataset.v}).catch(()=>{})}));
 document.querySelector('[data-c="copyB"]').addEventListener('click',e=>{navigator.clipboard&&navigator.clipboard.writeText($('ref').value).then(()=>{e.target.textContent='Copied'})});
 document.querySelector('[data-c="shareB"]').addEventListener('click',()=>{const u=$('ref').value;if(navigator.share)navigator.share({title:'SUNDER',url:u}).catch(()=>{});else navigator.clipboard&&navigator.clipboard.writeText(u)});
@@ -152,7 +143,7 @@ $('f').addEventListener('submit',async e=>{e.preventDefault();say('');
  const btn=document.querySelector('#f button[type=submit]');btn.disabled=true;
  const utm={};['source','medium','campaign','content','term'].forEach(k=>{const v=q.get('utm_'+k);if(v)utm[k]=v});
  try{const r=await post('/api/sunder-waitlist',{firstName:first,email,mobile:mob0,h:Number(document.documentElement.dataset.headline)||1,ref:q.get('r')||'',utm,source:document.referrer?document.referrer.slice(0,200):'',website:$('hp').value});
-  if(r.ok&&r.j.ok){if(mob0)$('mobile').value=mob0;thanks(first,r.j.ref,r.j.token);try{window.dispatchEvent(new Event('sb:goal'))}catch{}}else{say(r.j.error||'Something went wrong. Please try again.');btn.disabled=false}
+  if(r.ok&&r.j.ok){thanks(first,r.j.ref,r.j.token);try{window.dispatchEvent(new Event('sb:goal'))}catch{}}else{say(r.j.error||'Something went wrong. Please try again.');btn.disabled=false}
  }catch{say('Something went wrong. Please try again.');btn.disabled=false}
 });
 </script>

@@ -133,7 +133,7 @@ test("sunder ships its own favicons and the host serves them", async () => {
   assert.match(res.headers.get("x-middleware-rewrite") ?? "", /\/clients\/sunder\/favicon\.ico$/);
 });
 
-test("signup mobile is optional, validated, saved without SMS consent, new rows only", async () => {
+test("signup mobile is optional, validated, entering it is the SMS opt-in, new rows only", async () => {
   assert.equal(ok({ firstName: "Sam", email: "a@b.co" }).mobile, null);
   assert.equal(ok({ firstName: "Sam", email: "a@b.co", mobile: "  " }).mobile, null);
   assert.equal(ok({ firstName: "Sam", email: "a@b.co", mobile: "0412 345 678" }).mobile, "0412345678");
@@ -144,32 +144,30 @@ test("signup mobile is optional, validated, saved without SMS consent, new rows 
   await signup(s, ok({ firstName: "M", email: "m@x.co", mobile: "+61412345678" }), meta);
   assert.equal(patches.length, 1);
   assert.equal(patches[0].mobile, "+61412345678");
-  assert.equal("sms_consent" in patches[0], false);
+  assert.equal(patches[0].sms_consent, true);
+  assert.equal(typeof patches[0].sms_consent_at, "string");
+  assert.match(String(patches[0].sms_consent_text), /^Signup form: .*Reply STOP to opt out\.$/);
   await signup(s, ok({ firstName: "M", email: "m@x.co", mobile: "0499999999" }), meta); // repeat email
   await signup(s, ok({ firstName: "N", email: "n@x.co" }), meta); // no mobile
   assert.equal(patches.length, 1);
 });
 
-test("page asks for optional mobile on signup and keeps SMS opt-in on thank-you", () => {
+test("page asks for optional mobile on signup and labels it as the SMS opt-in, no thank-you SMS step", () => {
   const html = readFileSync("public/clients/sunder/index.html", "utf8");
   assert.match(html, /id="mob0"/);
-  assert.match(html, /Mobile <span class="opt">\(optional\)<\/span>/);
+  assert.match(html, /Mobile <span class="opt">\(optional\): for a launch-day text and SMS-only offers<\/span>/);
   assert.match(html, /<input type="tel" id="mob0" autocomplete="tel" inputmode="tel">/);
   assert.equal(/\[(Privacy Policy|Giveaway terms)\]/.test(html), false);
   assert.match(html, /ABN&nbsp;44&nbsp;703&nbsp;735&nbsp;264/);
   const form = html.slice(html.indexOf('<form class="form"'), html.indexOf("</form>"));
   assert.equal(/smsok|type="checkbox"/.test(form), false);
-  assert.match(html, /<input type="checkbox" id="smsok" checked>/);
-  assert.match(html, /<button type="button" class="b3" id="addb" disabled data-c="addB">/);
-  assert.match(html, /syncAdd=\(\)=>\{\$\('addb'\)\.disabled=!\(\$\('smsok'\)\.checked&&\$\('mobile'\)\.value\.trim\(\)\)\}/);
-  assert.match(html, /\$\('mobile'\)\.addEventListener\('input',syncAdd\)/);
-  assert.match(html, /smsConsent:\$\('smsok'\)\.checked/);
+  assert.equal(/smsok|addb|Want a text|smsb/.test(html), false);
   assert.equal(/href="#privacy"|href="#giveaway-terms"/.test(html), false);
   const thanks = html.slice(html.indexOf('<div class="done thanks">'), html.indexOf("</section>"));
   assert.equal(/privacy|giveaway-terms/i.test(form + thanks), false);
   assert.equal(/By joining|Unsubscribe|ABN/.test(form), false);
   const footer = html.slice(html.indexOf("footer:'"));
-  assert.match(footer, /By joining, you agree to receive emails from Saabai Pty Ltd \(ABN&nbsp;44&nbsp;703&nbsp;735&nbsp;264\)/);
+  assert.match(footer, /By joining, you agree to receive emails or SMS from Saabai Pty Ltd \(ABN&nbsp;44&nbsp;703&nbsp;735&nbsp;264\)/);
   assert.equal(/ABN 44/.test(html), false);
   assert.match(html, /href="\/privacy">Privacy</);
   assert.match(html, /href="\/giveaway-terms">Giveaway terms</);
