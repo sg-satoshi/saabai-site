@@ -22,6 +22,8 @@ const SUPPRESS_PATHS = [
   "/login", "/saabai-admin",
   // LeadGen — has its own dedicated widget
   "/leadgen", "/leadgen-widget",
+  // SUNDER referral status page (sunder.com.au/r/<code>): SUNDER brand only
+  "/sunder-ref",
 ];
 
 // Pages where the NewsTicker/Signal bar should be hidden
