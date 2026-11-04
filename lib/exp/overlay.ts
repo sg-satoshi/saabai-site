@@ -56,7 +56,10 @@ export function encodeOverlay(path: string, exps: Experiment[], assigned: Record
     if (!v) continue;
     const ctl = e.variants.find((x) => x.id === "a") ?? e.variants[0]; // the page's own copy is always the original, variant a
     const it: OvItem = { i: e.id, s: e.overlay!.sel, f: e.overlay!.fp, t: e.overlay!.tag, k: e.kind ?? "headline", l: e.slot, a: v.id };
-    if (v.id !== ctl.id) { it.x = v.text; if (v.emphasis) it.e = v.emphasis; }
+    // Non-control variants always swap. The control swaps too when its stored copy was edited away from the page's
+    // original text, so every visitor sees exactly A or B and never the untested page copy.
+    const ctlEdited = v.id === ctl.id && fingerprint(v.emphasis ? `${v.text} ${v.emphasis}` : v.text) !== e.overlay!.fp;
+    if (v.id !== ctl.id || ctlEdited) { it.x = v.text; if (v.emphasis) it.e = v.emphasis; }
     items.push(it);
   }
   while (items.length) {
@@ -67,11 +70,18 @@ export function encodeOverlay(path: string, exps: Experiment[], assigned: Record
   return null;
 }
 
+/** Cookie values arrive double-encoded (encodeOverlay encodes, then the framework encodes again). Undo both. */
+export function unwrapCookie(raw: string): string {
+  let s = decodeURIComponent(raw);
+  if (/^%7B/i.test(s)) s = decodeURIComponent(s);
+  return s;
+}
+
 /** Defensive parse, used by the browser. Anything odd returns null. */
 export function decodeOverlay(raw: string | null | undefined): OvPayload | null {
   if (!raw) return null;
   try {
-    const o = JSON.parse(decodeURIComponent(raw));
+    const o = JSON.parse(unwrapCookie(raw));
     if (!o || typeof o.p !== "string" || !Array.isArray(o.o)) return null;
     const out: OvItem[] = [];
     for (const it of o.o.slice(0, OV_MAX_PER_PAGE)) {
@@ -87,7 +97,7 @@ export function decodeOverlay(raw: string | null | undefined): OvPayload | null 
 }
 
 /** Inline head script source: hides only the targeted elements (non-control variants) until the overlay has applied. */
-export const ANTI_FLICKER_SCRIPT = `(function(){try{var m=document.cookie.match(/(?:^|; )${OV_COOKIE}=([^;]+)/);if(!m)return;var o=JSON.parse(decodeURIComponent(m[1])),p=location.pathname;if(p.length>1&&p.slice(-1)=="/")p=p.slice(0,-1);if(o.p!==p)return;var re=/^[a-z0-9#_\\-:>() .]{1,300}$/i,c=[];for(var i=0;i<o.o.length;i++){var t=o.o[i];if(t.x&&re.test(t.s))c.push("html.sb-af "+t.s)}if(!c.length)return;var s=document.createElement("style");s.id="sb-af-style";s.textContent=c.join(",")+"{visibility:hidden!important}";document.head.appendChild(s);document.documentElement.classList.add("sb-af");setTimeout(function(){document.documentElement.classList.remove("sb-af")},${AF_TIMEOUT_MS})}catch(e){}})();`;
+export const ANTI_FLICKER_SCRIPT = `(function(){try{var m=document.cookie.match(/(?:^|; )${OV_COOKIE}=([^;]+)/);if(!m)return;var o=(function(r){r=decodeURIComponent(r);if(/^%7B/i.test(r))r=decodeURIComponent(r);return JSON.parse(r)})(m[1]),p=location.pathname;if(p.length>1&&p.slice(-1)=="/")p=p.slice(0,-1);if(o.p!==p)return;var re=/^[a-z0-9#_\\-:>() .]{1,300}$/i,c=[];for(var i=0;i<o.o.length;i++){var t=o.o[i];if(t.x&&re.test(t.s))c.push("html.sb-af "+t.s)}if(!c.length)return;var s=document.createElement("style");s.id="sb-af-style";s.textContent=c.join(",")+"{visibility:hidden!important}";document.head.appendChild(s);document.documentElement.classList.add("sb-af");setTimeout(function(){document.documentElement.classList.remove("sb-af")},${AF_TIMEOUT_MS})}catch(e){}})();`;
 
 /** Decide where an element can be targeted. Pure: given what the DOM scan found, pick one or none. */
 export type Cand = { text: string; viaSelector: boolean };

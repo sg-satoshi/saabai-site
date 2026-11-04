@@ -66,3 +66,6 @@ export function rememberSaved(kept: WeakMap<object, KeptCopy>, el: object, kind:
 export function copyOnDeselect(kept: WeakMap<object, KeptCopy>, el: object): KeptCopy | null {
   return kept.get(el) ?? null;
 }
+
+/** Closing the variant panel asks first only when a form is open with unsaved typing. */
+export function closeNeedsConfirm(formOpen: boolean, dirty: boolean): boolean { return formOpen && dirty; }

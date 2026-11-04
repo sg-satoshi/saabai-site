@@ -316,9 +316,11 @@ function AutoText({ value, onChange, minRows, ...rest }: { value: string; onChan
   return <textarea ref={ref} className="xp-ta" rows={minRows} value={value} onChange={(x) => onChange(x.target.value.replace(/\r?\n/g, " "))} {...rest} />;
 }
 
-export function EditForm({ v, hasData, busy, onSave, onCancel, saveLabel = "Save copy", noun = "headline", hasEmph = true, maxLen = 90, image = false }: { image?: boolean; noun?: string; hasEmph?: boolean; maxLen?: number; v: { text: string; emphasis?: string }; hasData: boolean; busy: boolean; onSave: (text: string, emphasis: string) => void; onCancel?: () => void; saveLabel?: string }) {
+export function EditForm({ v, hasData, busy, onSave, onCancel, onDirty, saveLabel = "Save copy", noun = "headline", hasEmph = true, maxLen = 90, image = false }: { onDirty?: (dirty: boolean) => void; image?: boolean; noun?: string; hasEmph?: boolean; maxLen?: number; v: { text: string; emphasis?: string }; hasData: boolean; busy: boolean; onSave: (text: string, emphasis: string) => void; onCancel?: () => void; saveLabel?: string }) {
   const [text, setText] = useState(v.text);
   const [emphasis, setEmphasis] = useState(v.emphasis ?? "");
+  const dirty = text !== v.text || emphasis !== (v.emphasis ?? "");
+  useEffect(() => { onDirty?.(dirty); }, [dirty, onDirty]);
   const bad = /[\u2013\u2014]/.test(text + emphasis) ? "Please avoid long dashes. Use a comma or full stop." : !text.trim() ? "" : text.length > maxLen || emphasis.length > 140 ? `Keep each part under ${maxLen} characters.` : "";
   return (
     <form className="xp-form" onSubmit={(ev) => { ev.preventDefault(); if (!bad && text.trim()) onSave(text, emphasis); }}>
@@ -327,7 +329,7 @@ export function EditForm({ v, hasData, busy, onSave, onCancel, saveLabel = "Save
       <div className="xp-prev"><CopyView kind={image ? "image" : undefined} v={{ text: text || `Your ${noun}`, emphasis }} /></div>
       {hasData && <p className="xp-note">This variant already has results. Changing the wording mixes old and new numbers, so adding a new variant is usually cleaner.</p>}
       {bad && <p className="xp-note" style={{ color: "var(--bad)" }}>{bad}</p>}
-      <div className="xp-acts"><Button variant="acc" type="submit" disabled={busy || !!bad || !text.trim()}>{saveLabel}</Button>{onCancel && <Button variant="gh" onClick={onCancel}>Cancel</Button>}</div>
+      <div className="xp-acts xp-save-bar"><Button variant="acc" type="submit" disabled={busy || !!bad || !text.trim()}>{saveLabel}</Button>{onCancel && <Button variant="gh" onClick={onCancel}>Cancel</Button>}</div>
     </form>
   );
 }

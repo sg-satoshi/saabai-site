@@ -6,7 +6,7 @@ import { Card, CardBody } from "../ui/Card";
 import { confirmDialog, notify } from "../ui/Feedback";
 import { api, CopyView, EditForm, nf, pct, tone, vtone, type Detail } from "./ExperimentsClient";
 import { isLegalPath, isProtectedText, kindForElement, suggestSlot, type ElementInfo } from "../../../lib/exp/editor";
-import { captureOrig, copyOnDeselect, imagePathOf, previewInto, rememberSaved, sectionOf, type KeptCopy } from "../../../lib/exp/editor-dom";
+import { captureOrig, closeNeedsConfirm, copyOnDeselect, imagePathOf, previewInto, rememberSaved, sectionOf, type KeptCopy } from "../../../lib/exp/editor-dom";
 import { KIND_RULES, type SlotKind } from "../../../lib/exp/core";
 import { findTarget, missingTargetWarning, resolvePreviewTarget, stableSelector } from "../../../lib/exp/overlay-dom";
 import { SAABAI, SitePicker, readSite, rememberSite, siteParam, type ExpSite } from "./SitePicker";
@@ -214,7 +214,7 @@ export default function VisualEditor() {
         </div>
         <aside className="xp-ve-panel">
           {!picked && <Card><CardBody><p className="xp-note">{editing ? "Hover the page. Teal dashed outlines are existing test elements, grey dotted ones are headings, text, buttons, links, prices, images and form hints you could turn into a test. Click one." : "Edit mode is off, so the page behaves normally. Turn it on to pick an element."}</p></CardBody></Card>}
-          {picked?.type === "slot" && <SlotPanel key={picked.expId} site={site} expId={picked.expId} onPreview={preview} onClose={() => { if (!selEl.current || !copyOnDeselect(kept.current, selEl.current)) preview("headline", null); clearSel(); setPicked(null); }} />}
+          {picked?.type === "slot" && <SlotPanel key={picked.expId} site={site} expId={picked.expId} onPreview={preview} onClose={() => { clearSel(); setPicked(null); }} />}
           {picked?.type === "candidate" && <CandidatePanel key={picked.text} site={site} p={picked} path={path} onClose={() => { clearSel(); setPicked(null); }} onStarted={(expId, slotName) => { selEl.current?.setAttribute("data-exp-id", expId); setPicked({ type: "slot", slotName, expId }); }} />}
         </aside>
       </div>
@@ -228,6 +228,7 @@ function SlotPanel({ site, expId, onPreview, onClose }: { site: string; expId: s
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const load = useCallback(async () => { try { setD(await api(`/api/admin/experiments/${expId}?site=${encodeURIComponent(site)}`)); setErr(""); } catch (e) { setErr((e as Error).message); } }, [expId, site]);
   useEffect(() => { load(); }, [load]);
 
@@ -239,6 +240,15 @@ function SlotPanel({ site, expId, onPreview, onClose }: { site: string; expId: s
     finally { setBusy(false); }
   }
 
+  // Close: confirm before throwing away unsaved typing, then leave the frame showing the control copy (A).
+  async function close() {
+    if (closeNeedsConfirm(editing !== null || adding, dirty) && !(await confirmDialog("You have unsaved changes. Close without saving?", { confirmLabel: "Discard changes", danger: true }))) return;
+    const ctl = d?.experiment.variants.find((x) => x.id === d.experiment.defaultVariantId);
+    const k: SlotKind = d?.experiment.kind && d.experiment.kind in KIND_RULES ? d.experiment.kind : "headline";
+    if (ctl) onPreview(k, ctl, expId, true);
+    onClose();
+  }
+
   if (err) return <Card><CardBody><div className="xp-err">{err}</div><Button variant="gh" onClick={onClose}>Close</Button></CardBody></Card>;
   if (!d) return <Card><CardBody><p className="muted">Loading…</p></CardBody></Card>;
   const e = d.experiment, kind: SlotKind = e.kind && e.kind in KIND_RULES ? e.kind : "headline";
@@ -248,7 +258,7 @@ function SlotPanel({ site, expId, onPreview, onClose }: { site: string; expId: s
   return (
     <Card>
       <CardBody>
-        <div className="xp-ve-head"><div><b>{e.name ?? e.id}</b><div className="xp-note">{e.slot} on {e.path}</div></div><button className="xp-back" style={{ margin: 0 }} onClick={onClose}>Close</button></div>
+        <div className="xp-ve-head"><div><b>{e.name ?? e.id}</b><div className="xp-note">{e.slot} on {e.path}</div></div><button className="xp-back" style={{ margin: 0 }} onClick={close}>Close</button></div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "8px 0" }}><Badge tone={tone(e.status)}>{e.status}</Badge><Badge tone={vtone(v.kind)}>{v.headline}</Badge></div>
         <div className="xp-nums" style={{ gridTemplateColumns: "repeat(3,1fr)" }}>
           <div>Views<b>{nf(d.totals.views)}</b></div><div>Conversions<b>{nf(d.totals.conversions)}</b></div><div>Rate<b>{pct(d.totals.rate)}</b></div>
@@ -269,7 +279,7 @@ function SlotPanel({ site, expId, onPreview, onClose }: { site: string; expId: s
                 <div className="xp-top"><span className="nm">{x.id.toUpperCase()}{isCtl && <Badge tone="neutral">control</Badge>}{!x.active && <Badge tone="warn">paused</Badge>}</span>
                   <span className="xp-note">{r ? `${nf(r.impressions)} views · ${pct(r.rate)} · ${pct(r.probBest, 0)} best` : ""}</span></div>
                 {editing === x.id
-                  ? <EditForm image={kind === "image"} noun={kr.noun} hasEmph={kr.emphasis} maxLen={kr.maxText} v={x} hasData={(r?.impressions ?? 0) > 0} busy={busy} onCancel={() => setEditing(null)} onSave={async (t, em) => { if (await act({ type: "update_variant", variantId: x.id, text: t, emphasis: em }, "Copy saved. Live within about a minute.")) { setEditing(null); onPreview(kind, { text: t, emphasis: em }, expId, true); } }} />
+                  ? <EditForm image={kind === "image"} noun={kr.noun} hasEmph={kr.emphasis} maxLen={kr.maxText} v={x} hasData={(r?.impressions ?? 0) > 0} busy={busy} onDirty={setDirty} onCancel={() => { setEditing(null); setDirty(false); }} onSave={async (t, em) => { if (await act({ type: "update_variant", variantId: x.id, text: t, emphasis: em }, "Copy saved. Live within about a minute.")) { setEditing(null); setDirty(false); onPreview(kind, { text: t, emphasis: em }, expId, true); } }} />
                   : <>
                     <CopyView v={x} kind={kind} />
                     <div className="xp-acts">
@@ -283,7 +293,7 @@ function SlotPanel({ site, expId, onPreview, onClose }: { site: string; expId: s
           })}
         </div>
         {adding
-          ? <EditForm noun={kind === "button" ? "button label" : "headline"} hasEmph={kind !== "button"} maxLen={kind === "button" ? 40 : 90} v={{ text: "" }} hasData={false} busy={busy} saveLabel="Add variant" onCancel={() => setAdding(false)} onSave={async (t, em) => { if (await act({ type: "add_variant", text: t, emphasis: em }, "Variant added. It starts getting visitors within about a minute.")) { setAdding(false); onPreview(kind, { text: t, emphasis: em }, expId, true); } }} />
+          ? <EditForm noun={kind === "button" ? "button label" : "headline"} hasEmph={kind !== "button"} maxLen={kind === "button" ? 40 : 90} v={{ text: "" }} hasData={false} busy={busy} saveLabel="Add variant" onDirty={setDirty} onCancel={() => { setAdding(false); setDirty(false); }} onSave={async (t, em) => { if (await act({ type: "add_variant", text: t, emphasis: em }, "Variant added. It starts getting visitors within about a minute.")) { setAdding(false); setDirty(false); onPreview(kind, { text: t, emphasis: em }, expId, true); } }} />
           : <div className="xp-acts" style={{ marginTop: 10 }}><Button variant="sec" disabled={busy || e.variants.length >= 8} onClick={() => setAdding(true)}>Add variant</Button></div>}
         <p className="xp-note" style={{ marginTop: 8 }}>Previews only change this editor frame. Saving a change is logged and goes live for visitors within about a minute.</p>
       </CardBody>

@@ -125,3 +125,20 @@ test("whenever the runtime is injected the page is private, no-store", () => {
   assert.equal((src.match(/"Cache-Control": cc\(/g) ?? []).length, 3);
   assert.doesNotMatch(src, /sb_ov|OV_COOKIE/, "the cookie never turns the runtime on");
 });
+
+test("static overlay reads the double-encoded sb_ov cookie the proxy actually sends", () => {
+  const once = ov(SUNDER_HEADLINE.variant).slice("sb_ov=".length);
+  const r = runScript(`sb_ov=${encodeURIComponent(once)}`);
+  assert.equal(r.h1.nodeValue, SUNDER_HEADLINE.variant);
+  assert.equal(r.attrs["data-exp-id"], "sunder-home-hero-headline");
+});
+
+test("static overlay falls back to a near text match on the stored selector when the page copy drifted", () => {
+  const stale = "A new paddle with power, spin and control. Join for 20% off at launch, early access and a giveaway.";
+  const live = "A new pickleball paddle with power, spin and control. Join for 20% off at launch, early access and a giveaway.";
+  const c = `sb_ov=${encodeURIComponent(JSON.stringify({ p: "/", o: [{ i: "t1", s: "h1", f: stale.toLowerCase(), t: "h1", k: "text", l: "x.y.z", a: "b", x: "Variant B copy" }] }))}`;
+  const r = runScript(c, "/", live);
+  assert.equal(r.h1.nodeValue, "Variant B copy");
+  const far = runScript(c, "/", "Something else entirely");
+  assert.equal(far.h1.nodeValue, "Something else entirely");
+});

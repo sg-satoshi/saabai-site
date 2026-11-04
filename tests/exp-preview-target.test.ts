@@ -48,3 +48,16 @@ test("saved copy survives deselect; showing control clears it", async () => {
   rememberSaved(kept, tagline, "text", null);
   assert.equal(copyOnDeselect(kept, tagline), null);
 });
+
+test("closing the panel only confirms when a form has unsaved typing", async () => {
+  const { closeNeedsConfirm } = await import("../lib/exp/editor-dom");
+  assert.equal(closeNeedsConfirm(false, false), false);
+  assert.equal(closeNeedsConfirm(true, false), false);
+  assert.equal(closeNeedsConfirm(true, true), true);
+});
+
+test("variant edit form has a sticky Save bar in the editor panel", async () => {
+  const { readFileSync } = await import("node:fs");
+  assert.match(readFileSync("app/saabai-admin/experiments/ExperimentsClient.tsx", "utf8"), /xp-acts xp-save-bar/);
+  assert.match(readFileSync("app/saabai-admin/experiments/experiments.css", "utf8"), /\.xp-ve-panel \.xp-save-bar\{position:sticky;bottom:0/);
+});
