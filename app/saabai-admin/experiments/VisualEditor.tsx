@@ -8,7 +8,7 @@ import { api, CopyView, EditForm, nf, pct, tone, vtone, type Detail } from "./Ex
 import { isLegalPath, isProtectedText, kindForElement, suggestSlot, type ElementInfo } from "../../../lib/exp/editor";
 import { captureOrig, imagePathOf, previewInto, sectionOf } from "../../../lib/exp/editor-dom";
 import { KIND_RULES, type SlotKind } from "../../../lib/exp/core";
-import { findTarget, resolvePreviewTarget, stableSelector } from "../../../lib/exp/overlay-dom";
+import { findTarget, missingTargetWarning, resolvePreviewTarget, stableSelector } from "../../../lib/exp/overlay-dom";
 import { SAABAI, SitePicker, readSite, rememberSite, siteParam, type ExpSite } from "./SitePicker";
 import "./experiments.css";
 
@@ -165,12 +165,16 @@ export default function VisualEditor() {
     // Show overlay tests (no code wrapper) as test elements too, so clicking one opens its variants.
     const doc = frame.current?.contentDocument; const here = pathRef.current;
     if (!doc) return;
-    fetch(`/api/admin/experiments?site=${encodeURIComponent(siteRef.current)}`).then((r) => r.json()).then((d: { items?: { id: string; slot: string; path: string; kind?: string; overlay?: { sel: string; fp: string; tag: string } }[] }) => {
+    fetch(`/api/admin/experiments?site=${encodeURIComponent(siteRef.current)}`).then((r) => r.json()).then((d: { items?: { id: string; name?: string; slot: string; path: string; kind?: string; overlay?: { sel: string; fp: string; tag: string } }[] }) => {
+      const missing: string[] = [];
       for (const it of d.items ?? []) {
         if (!it.overlay || it.path !== here || doc.querySelector(`[data-exp-id="${it.id}"]`)) continue;
         const el = findTarget(doc, { s: it.overlay.sel, f: it.overlay.fp, t: it.overlay.tag });
+        if (!el) missing.push(it.name ?? it.id);
         if (el) { el.setAttribute("data-exp-slot", it.slot); el.setAttribute("data-exp-id", it.id); el.setAttribute("data-exp-kind", it.kind ?? "headline"); }
       }
+      const warn = missingTargetWarning(missing);
+      if (warn) notify.error(warn);
     }).catch(() => { /* editor still works without the highlights */ });
   };
   const safe = path.startsWith("/") && !path.startsWith("//") ? path : "/";

@@ -28,3 +28,12 @@ test("preview finds nothing without a frame, or with a bad id", () => {
   assert.equal(resolvePreviewTarget(mkDoc(), null, 'x"],body,["'), null);
   assert.equal(resolvePreviewTarget(mkDoc(), null), null);
 });
+
+test("missing overlay targets give a clear warning, none when all found", async () => {
+  const { missingTargetWarning, MISSING_TARGET_MSG } = await import("../lib/exp/overlay-dom");
+  assert.equal(missingTargetWarning([]), null);
+  const w = missingTargetWarning(["Get first hit text"])!;
+  assert.ok(w.startsWith(MISSING_TARGET_MSG));
+  assert.match(w, /Get first hit text/);
+  assert.match(missingTargetWarning(["a", "b", "c", "d", "e"])!, /\+2 more/);
+});
