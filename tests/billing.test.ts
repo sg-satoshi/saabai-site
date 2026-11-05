@@ -146,3 +146,72 @@ test("setup discount: email shows original fee, discount and waiver", () => {
   assert.match(w.html, /setup fee is waived/);
   for (const m of [e, w]) assert.ok(!/\u2014/.test(m.html + m.text + m.subject));
 });
+
+test("pay link re-open reuses an open Checkout Session; a code forces a fresh one", async () => {
+  const { checkoutReuseAction } = await import("../lib/billing/state");
+  assert.equal(checkoutReuseAction("open", false), "reuse");
+  assert.equal(checkoutReuseAction("open", true), "expire_then_new");
+  assert.equal(checkoutReuseAction("complete", false), "already_paid");
+  assert.equal(checkoutReuseAction("expired", false), "new");
+  assert.equal(checkoutReuseAction(null, false), "new");
+});
+
+test("a second paid setup checkout never overwrites the live subscription", async () => {
+  const { isDuplicateSetupPayment } = await import("../lib/billing/state");
+  assert.equal(isDuplicateSetupPayment({ status: "active", stripeSubscriptionId: "sub_1" }, "sub_2"), true);
+  assert.equal(isDuplicateSetupPayment({ status: "active", stripeSubscriptionId: "sub_1" }, "sub_1"), false);
+  assert.equal(isDuplicateSetupPayment({ status: "pending" }, "sub_1"), false);
+  assert.equal(isDuplicateSetupPayment({ status: "cancelled", stripeSubscriptionId: "sub_1" }, "sub_2"), false);
+});
+
+// ---------- first payment date (4a + future date) ----------
+const NOW = Date.parse("2026-11-05T00:30:00Z"); // 10:30 Brisbane, 5 Nov
+const BASE = { contactName: "Jess", siteName: "Harbour Physio", planName: "Presence", gst: false, payUrl: "https://x/pay/a", now: NOW };
+
+test("first payment date: today to 90 days, not past", async () => {
+  const { validateFirstPaymentDate, firstChargeAt } = await import("../lib/billing/state");
+  assert.equal(validateFirstPaymentDate("2026-11-05", NOW), null);
+  assert.equal(validateFirstPaymentDate("2027-02-03", NOW), null);
+  assert.match(validateFirstPaymentDate("2027-02-04", NOW)!, /90 days/);
+  assert.match(validateFirstPaymentDate("2026-11-04", NOW)!, /past/);
+  assert.deepEqual(firstChargeAt("2026-11-05", NOW), { mode: "now" });
+  assert.equal(firstChargeAt("2026-12-01", NOW).mode, "future");
+});
+
+test("setup waived + $100/mo today: $100 due today", () => {
+  const e = setupLinkEmail({ ...BASE, monthlyCents: 10000, setupFeeCents: 200000, startDate: "2026-11-05", setupDiscount: { type: "percent", value: 100 } });
+  assert.match(e.html, /Due today[\s\S]*?\$100\.00/);
+  assert.doesNotMatch(e.html, /First payment on/);
+});
+
+test("no discounts today: setup + first month due today", () => {
+  const e = setupLinkEmail({ ...BASE, monthlyCents: 10000, setupFeeCents: 200000, startDate: "2026-11-05" });
+  assert.match(e.html, /Due today[\s\S]*?\$2,100\.00/);
+});
+
+test("setup discounted + monthly 50% for 3 months today: exactly 3 discounted charges", async () => {
+  const { couponDurationMonths, couponCovers, chargeDates } = await import("../lib/billing/state");
+  const e = setupLinkEmail({ ...BASE, monthlyCents: 10000, setupFeeCents: 200000, startDate: "2026-11-05", setupDiscount: { type: "amount", value: 100000 }, discount: { type: "percent", value: 50, months: 3 } });
+  assert.match(e.html, /Due today[\s\S]*?\$1,050\.00/);
+  const dur = couponDurationMonths(3, NOW);
+  assert.equal(dur, 3);
+  assert.deepEqual(chargeDates(NOW, 5).map((c) => couponCovers(NOW, dur, c)), [true, true, true, false, false]);
+});
+
+test("future first payment: $0 today, discount months counted from the first charge", async () => {
+  const { couponDurationMonths, couponCovers, chargeDates, firstChargeAt } = await import("../lib/billing/state");
+  const e = setupLinkEmail({ ...BASE, monthlyCents: 10000, setupFeeCents: 200000, startDate: "2026-12-20", setupDiscount: { type: "amount", value: 100000 }, discount: { type: "percent", value: 50, months: 3 } });
+  assert.match(e.html, /First payment on 20 Dec[\s\S]*?\$1,050\.00/);
+  assert.match(e.html, /Due today \(card saved only\)[\s\S]*?\$0\.00/);
+  for (const date of ["2026-11-06", "2026-12-05", "2026-12-20", "2027-02-03"]) {
+    const f = firstChargeAt(date, NOW);
+    assert.equal(f.mode, "future");
+    const at = (f as { at: number }).at;
+    for (const n of [1, 3, 6]) {
+      const dur = couponDurationMonths(n, NOW, at);
+      const covered = chargeDates(at, n + 3).map((c) => couponCovers(NOW, dur, c));
+      assert.equal(covered.filter(Boolean).length, n, `${date} x${n}`);
+      assert.equal(covered.slice(0, n).every(Boolean), true);
+    }
+  }
+});

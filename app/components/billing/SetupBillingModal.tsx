@@ -14,6 +14,7 @@ type Sender = { value: string; label: string };
 export type SetupSite = { id: string; name: string; domain?: string; contactName?: string; contactEmail?: string };
 
 const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "Australia/Brisbane" });
+const maxDate = () => { const d = new Date(`${today()}T00:00:00`); d.setDate(d.getDate() + 90); return d.toLocaleDateString("en-CA"); };
 const ordinal = (n: number) => `${n}${["th", "st", "nd", "rd"][n % 100 > 10 && n % 100 < 14 ? 0 : n % 10 < 4 ? n % 10 : 0]}`;
 
 export function SetupBillingModal({ site, onClose, onDone }: { site: SetupSite; onClose: () => void; onDone: () => void }) {
@@ -84,6 +85,8 @@ export function SetupBillingModal({ site, onClose, onDone }: { site: SetupSite; 
     return d.toLocaleDateString("en-AU", { day: "numeric", month: "short" });
   }, [startDate]);
   const startDay = new Date(`${startDate}T00:00:00`).getDate();
+  const isFuture = startDate > today();
+  const firstLabel = new Date(`${startDate}T00:00:00`).toLocaleDateString("en-AU", { day: "numeric", month: "short" });
 
   const payload = () => ({
     siteId: site.id, siteName: site.name, siteDomain: site.domain, contactName: name.trim(), contactEmail: email.trim(),
@@ -172,9 +175,9 @@ export function SetupBillingModal({ site, onClose, onDone }: { site: SetupSite; 
 
             <div className="bl-g2" style={{ marginTop: 14 }}>
               <div>
-                <div className="bl-lbl" style={{ marginTop: 0 }}>Start date</div>
-                <input className="bl-in num" type="date" value={startDate} min={today()} onChange={(e) => setStartDate(e.target.value)} />
-                <div className="bl-help">Renews monthly on the {ordinal(startDay || 1)}</div>
+                <div className="bl-lbl" style={{ marginTop: 0 }}>First payment date</div>
+                <input className="bl-in num" type="date" value={startDate} min={today()} max={maxDate()} onChange={(e) => setStartDate(e.target.value)} />
+                <div className="bl-help">{isFuture ? `Card saved at checkout, nothing charged until ${firstLabel}. Renews monthly on the ${ordinal(startDay || 1)}.` : "Charged when the client pays, then monthly on that day."} Up to 90 days out.</div>
               </div>
               <div>
                 <div className="bl-lbl" style={{ marginTop: 0 }}><span>Setup fee<span className="opt">Optional</span></span></div>
@@ -218,8 +221,8 @@ export function SetupBillingModal({ site, onClose, onDone }: { site: SetupSite; 
               {setupCents > 0 && <div className="r"><span>Setup fee</span><span className="num">{setupOff ? <><s style={{ opacity: 0.6, marginRight: 6 }}>{aud(setupCents)}</s>{setupNet ? aud(setupNet) : "Waived"}</> : aud(setupCents)}</span></div>}
               {setupOff > 0 && <div className="r"><span>{sdText}</span><span className="num">-{aud(setupOff)}</span></div>}
               {gst && <div className="r"><span>GST</span><span className="num">{aud(gstCents)}</span></div>}
-              <div className="r t"><span>Due up front</span><span className="num">{aud(net + setupNet + gstCents)}</span></div>
-              <div className="r"><span>Then monthly from {nextDate}</span><span className="num" style={{ fontWeight: 600 }}>{discOff ? <s style={{ opacity: 0.6, marginRight: 6, fontWeight: 400 }}>{aud(monthly + (gst ? Math.round(monthly * 0.1) : 0))}</s> : null}{aud(net + (gst ? Math.round(net * 0.1) : 0))}</span></div>
+              <div className="r t"><span>{isFuture ? `First payment on ${firstLabel}` : "Due today"}</span><span className="num">{aud(net + setupNet + gstCents)}</span></div>
+              <div className="r"><span>{isFuture ? `Then monthly from ${nextDate}` : "Then monthly, on the day they pay"}</span><span className="num" style={{ fontWeight: 600 }}>{discOff ? <s style={{ opacity: 0.6, marginRight: 6, fontWeight: 400 }}>{aud(monthly + (gst ? Math.round(monthly * 0.1) : 0))}</s> : null}{aud(net + (gst ? Math.round(net * 0.1) : 0))}</span></div>
               {discOff > 0 && discMonthsN > 0 && <div className="r"><span>After {discMonthsN === 1 ? "the first month" : `${discMonthsN} months`}</span><span className="num">{aud(monthly + (gst ? Math.round(monthly * 0.1) : 0))}/mo</span></div>}
               <div className="ft">AUD · {gst ? "GST included" : "GST not applicable"} · Stripe payment link created when you send, valid 7 days</div>
             </div>

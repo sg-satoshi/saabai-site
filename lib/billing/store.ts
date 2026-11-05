@@ -41,6 +41,10 @@ export interface SiteBillingRecord {
   linkExpiresAt?: string;
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
+  /** Latest setup Checkout Session, reused while still open */
+  checkoutSessionId?: string;
+  /** Future first payment: setup fee already added to the first invoice */
+  setupFeeQueued?: boolean;
   currentPeriodStart?: string;
   currentPeriodEnd?: string;
   pendingPlan?: { planId: string; planName: string; monthlyCents: number; effectiveAt: string };

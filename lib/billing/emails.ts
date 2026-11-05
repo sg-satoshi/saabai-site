@@ -4,7 +4,7 @@
  */
 import { EMAIL_BRAND, escapeHtml, renderBrandedEmail, type BrandedEmail } from "../email/branded-layout";
 import { formatAud } from "./catalog";
-import { discountLabel, discountOffCents, upfrontTotals, type PlanDiscount, type SetupDiscount } from "./state";
+import { discountLabel, discountOffCents, firstChargeAt, upfrontTotals, type PlanDiscount, type SetupDiscount } from "./state";
 
 export const SENDER_OPTIONS = [
   { value: EMAIL_BRAND.from, label: "Saabai default sender" },
@@ -34,13 +34,19 @@ export interface SetupEmailInput {
   monthlyCents: number;
   setupFeeCents: number;
   setupFeeDescription?: string;
-  startDate: string; // YYYY-MM-DD
+  startDate: string; // YYYY-MM-DD, first payment date
+  /** Clock override for tests */
+  now?: number;
   gst: boolean;
   payUrl: string;
   /** Admin discount: shown as original price, discount line, new price */
   discount?: PlanDiscount;
   /** Admin discount on the setup fee: shown as original fee, discount line (or Waived) */
   setupDiscount?: SetupDiscount;
+}
+
+export function dateLabel(date: string): string {
+  return new Date(`${date}T00:00:00+10:00`).toLocaleDateString("en-AU", { day: "numeric", month: "short", timeZone: "Australia/Brisbane" });
 }
 
 export function nextCycleLabel(startDate: string): string {
@@ -62,7 +68,10 @@ export function setupLinkEmail(i: SetupEmailInput): BrandedEmail {
     if (setupOff && i.setupDiscount) rows.push([setupNet ? discountLabel(i.setupDiscount, money) : `${discountLabel(i.setupDiscount, money)}, setup fee waived`, `-${money(setupOff)}`]);
   }
   if (i.gst) rows.push(["GST", money(t.gst)]);
-  rows.push(["Due today", money(t.dueNow), true], [`Then monthly from ${nextCycleLabel(i.startDate)}`, money(t.monthly)]);
+  // Must match Checkout: today = charged now, renews monthly from the day they pay; future = $0 now, first payment on the date.
+  const future = firstChargeAt(i.startDate, i.now).mode === "future";
+  if (future) rows.push([`First payment on ${dateLabel(i.startDate)}`, money(t.dueNow), true], ["Due today (card saved only)", money(0)], [`Then monthly from ${nextCycleLabel(i.startDate)}`, money(t.monthly)]);
+  else rows.push(["Due today", money(t.dueNow), true], ["Then monthly, on the same day you pay", money(t.monthly)]);
   const full = upfrontTotals(i.monthlyCents, 0, i.gst).monthly;
   const saving = off && i.discount
     ? i.discount.months
