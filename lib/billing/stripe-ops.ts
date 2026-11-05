@@ -7,7 +7,8 @@
 import { getStripe } from "../stripe";
 import type { SiteBillingRecord } from "./store";
 import { formatAud } from "./catalog";
-import { couponDurationMonths, discountLabel, discountOffCents, firstChargeAt } from "./state";
+import { checkoutFirstPaymentText } from "./emails";
+import { brisbaneToday, couponDurationMonths, discountLabel, discountOffCents, firstChargeAt } from "./state";
 import { careProductFor, findActivePromo, promoCoversProducts } from "../coupons/stripe";
 import { normaliseCode, promoIsOnce, promoNotStartedMessage } from "../coupons/core";
 import { hasUsed } from "../coupons/once";
@@ -15,6 +16,8 @@ import { hasUsed } from "../coupons/once";
 export const BILLING_SOURCE = "saabai-billing";
 export const stripeConfigured = () => !!process.env.STRIPE_SECRET_KEY;
 export const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL || "https://www.saabai.ai";
+
+export const GST_BLOCKED = "GST billing links are switched off until Stripe tax is set up. Untick GST for this site.";
 
 export async function ensureCustomer(rec: SiteBillingRecord): Promise<string> {
   const stripe = getStripe();
@@ -34,6 +37,8 @@ export async function ensureCustomer(rec: SiteBillingRecord): Promise<string> {
  * link pre-applies one (Stripe doesn't allow both on one session).
  */
 export async function createSetupCheckout(rec: SiteBillingRecord, customerId: string, code?: string): Promise<{ url: string; id: string }> {
+  // GST on would undercharge vs the email (Checkout has no tax rates yet), so refuse.
+  if (rec.gst) throw new Error(GST_BLOCKED);
   const stripe = getStripe();
   // Fixed per-plan product (set up from Marketing > Offers & Coupons) so product-restricted codes match.
   let fixedProduct = await careProductFor(rec.planId);
@@ -105,11 +110,11 @@ export async function createSetupCheckout(rec: SiteBillingRecord, customerId: st
     meta.first_payment = rec.startDate;
     if (setupNet > 0) { meta.deferred_setup_cents = String(setupNet); meta.setup_name = setupName.slice(0, 450); }
   }
-  // Stripe Checkout needs trial_end at least 2 days out; closer dates use whole trial days.
+  // Stripe Checkout needs trial_end at least 2 days out; closer dates use whole Brisbane calendar
+  // days, so the charge still lands on the stated date (rounding hours could land a day early).
   const trial = first.mode === "future"
-    ? first.at - nowMs >= 49 * 3600_000 ? { trial_end: Math.floor(first.at / 1000) } : { trial_period_days: Math.max(1, Math.round((first.at - nowMs) / 86_400_000)) }
+    ? first.at - nowMs >= 49 * 3600_000 ? { trial_end: Math.floor(first.at / 1000) } : { trial_period_days: Math.max(1, Math.round((Date.parse(rec.startDate) - Date.parse(brisbaneToday(nowMs))) / 86_400_000)) }
     : {};
-  const firstLabel = first.mode === "future" ? new Date(first.at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric", timeZone: "Australia/Brisbane" }) : "";
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
@@ -120,7 +125,7 @@ export async function createSetupCheckout(rec: SiteBillingRecord, customerId: st
       metadata: { ...meta, product_type: "website_care", description: rec.siteName },
       ...trial,
     },
-    ...(firstLabel ? { custom_text: { submit: { message: `Nothing is charged today. Your first payment${setupNet > 0 ? " (first month plus setup fee)" : ""} is on ${firstLabel}, then monthly from that date.` } } } : {}),
+    ...(first.mode === "future" ? { custom_text: { submit: { message: checkoutFirstPaymentText(rec, !adminCoupon) } } } : {}),
     metadata: meta,
     ...(adminCoupon ? { discounts: [{ coupon: adminCoupon }] } : promo ? { discounts: [{ promotion_code: promo.id }] } : { allow_promotion_codes: true }),
     payment_method_collection: "always",

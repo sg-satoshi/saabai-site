@@ -9,7 +9,7 @@ import { getCatalog } from "./catalog";
 import { DEFAULT_SENDER, isAllowedSender, paymentFailedEmail, setupLinkEmail, sitePausedEmail } from "./emails";
 import { discountOffCents, normaliseDiscount, normaliseSetupDiscount, type SetupDiscount, type PlanDiscount, dueDunningStep, dunningDays, isLinkExpired, LINK_TTL_DAYS, linkExpiresAt, shouldPause, isDuplicateSetupPayment, validateFirstPaymentDate, statusAfterFailure, statusFromSubscription } from "./state";
 import { findBySubscription, getSiteBilling, listSiteBilling, saveSiteBilling, setPayToken, type SiteBillingRecord } from "./store";
-import { addDeferredSetupFee, BILLING_SOURCE, expireCheckoutSession, periodOf, siteUrl, stripeConfigured } from "./stripe-ops";
+import { addDeferredSetupFee, BILLING_SOURCE, GST_BLOCKED, expireCheckoutSession, periodOf, siteUrl, stripeConfigured } from "./stripe-ops";
 import { redemptionFrom } from "../coupons/core";
 import { recordRedemptionUse, resolveRedemptionCode } from "../coupons/stripe";
 
@@ -39,6 +39,7 @@ export async function buildSetup(input: SetupInput): Promise<{ ok: true; rec: Si
   const dateErr = validateFirstPaymentDate(input.startDate);
   if (dateErr) return { ok: false, error: dateErr };
   const catalog = await getCatalog();
+  if (input.gst && catalog.gstRegistered) return { ok: false, error: GST_BLOCKED };
   let planName: string, monthlyCents: number, priceVersion: number | undefined;
   if (input.planId === "custom") {
     monthlyCents = Math.round(Number(input.customCents) || 0);
@@ -101,6 +102,7 @@ export function previewSetupEmail(rec: SiteBillingRecord, siteDomain?: string, p
 
 /** Rotate a 7-day pay token and email the client. */
 export async function sendSetupLink(rec: SiteBillingRecord, siteDomain?: string): Promise<{ rec: SiteBillingRecord; emailed: boolean; payUrl: string }> {
+  if (rec.gst) throw new Error(GST_BLOCKED);
   // A new link may carry new prices, so never reuse the old Checkout Session.
   if (rec.checkoutSessionId && stripeConfigured()) await expireCheckoutSession(rec.checkoutSessionId);
   rec = { ...rec, checkoutSessionId: undefined };

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { dunningDays, dueDunningStep, isLinkExpired, linkExpiresAt, planChangeKind, prorate, shouldPause, statusAfterFailure, statusFromSubscription, upfrontTotals, normaliseDiscount, discountOffCents, discountLabel, normaliseSetupDiscount } from "../lib/billing/state";
 import { isRetiredPortalAddon, normaliseCatalog, omitRetiredPortalAddons, SEED_CATALOG, type Addon } from "../lib/billing/catalog";
-import { paymentFailedEmail, setupLinkEmail } from "../lib/billing/emails";
+import { checkoutFirstPaymentText, CHECKOUT_TEXT_MAX, paymentFailedEmail, setupLinkEmail } from "../lib/billing/emails";
 
 const DAY = 86_400_000;
 
@@ -214,4 +214,31 @@ test("future first payment: $0 today, discount months counted from the first cha
       assert.equal(covered.slice(0, n).every(Boolean), true);
     }
   }
+});
+
+test("checkout first payment text: exact amounts, matches the email", () => {
+  const base = { monthlyCents: 20000, setupFeeCents: 400000, startDate: "2026-11-25", gst: false };
+  assert.equal(checkoutFirstPaymentText({ ...base, discount: { type: "amount", value: 10000 } }),
+    "Nothing is charged today. First payment on 25 Nov: $4,100.00 ($4,000.00 setup + $100.00 first month), then monthly from that date.");
+  assert.equal(checkoutFirstPaymentText({ ...base, discount: { type: "amount", value: 10000 }, setupDiscount: { type: "percent", value: 100 } }),
+    "Nothing is charged today. First payment on 25 Nov: $100.00 (first month), then monthly from that date.");
+  const sig = { monthlyCents: 30000, setupFeeCents: 650000, startDate: "2026-11-25", gst: false, discount: { type: "amount" as const, value: 3777 }, setupDiscount: { type: "percent" as const, value: 33.33 } };
+  const txt = checkoutFirstPaymentText(sig);
+  assert.match(txt, /: \$4,595\.78 \(\$4,333\.55 setup \+ \$262\.23 first month\)/);
+  assert.ok(txt.length <= CHECKOUT_TEXT_MAX);
+  assert.ok(!/[\u2013\u2014]/.test(txt));
+  const email = setupLinkEmail({ ...sig, contactName: "A", siteName: "S", planName: "Signature", payUrl: "u", now: Date.parse("2026-11-05T00:00:00Z") });
+  assert.ok(email.text.includes("First payment on 25 Nov: $4,595.78"));
+});
+
+test("GST on: setup link and checkout are blocked", async () => {
+  const { createSetupCheckout, GST_BLOCKED } = await import("../lib/billing/stripe-ops");
+  await assert.rejects(createSetupCheckout({ gst: true } as unknown as Parameters<typeof createSetupCheckout>[0], "cus_x"), new RegExp(GST_BLOCKED.slice(0, 20)));
+  const { sendSetupLink } = await import("../lib/billing/service");
+  await assert.rejects(sendSetupLink({ gst: true, checkoutSessionId: "cs_x" } as unknown as Parameters<typeof sendSetupLink>[0]), /GST billing links/);
+});
+
+test("checkout text flags promo codes when the customer can still add one", () => {
+  const t = checkoutFirstPaymentText({ monthlyCents: 20000, setupFeeCents: 0, startDate: "2026-11-25", gst: false }, true);
+  assert.equal(t, "Nothing is charged today. First payment on 25 Nov: $200.00 (first month), then monthly from that date. Amounts are before any promo code.");
 });

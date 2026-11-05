@@ -17,8 +17,8 @@ const money = (c: number) => `${formatAud(c).replace(/^\$/, "$")}${c % 100 === 0
 const first = (name: string) => (name || "").trim().split(/\s+/)[0] || "there";
 
 function table(rows: [string, string, boolean?][]): string {
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_BRAND.border};border-radius:10px;border-collapse:separate;margin:18px 0;">${rows
-    .map(([l, v, strong], i) => `<tr><td style="padding:11px 14px;font-size:14px;color:${EMAIL_BRAND.text};${i ? `border-top:1px solid ${EMAIL_BRAND.border};` : ""}${strong ? "font-weight:700;" : ""}">${escapeHtml(l)}</td><td align="right" style="padding:11px 14px;font-size:14px;font-family:'Geist Mono',ui-monospace,Menlo,monospace;color:${EMAIL_BRAND.text};${i ? `border-top:1px solid ${EMAIL_BRAND.border};` : ""}${strong ? "font-weight:700;" : ""}">${escapeHtml(v)}</td></tr>`)
+  return `<table class="email-table" role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_BRAND.border};border-radius:10px;border-collapse:separate;margin:18px 0;">${rows
+    .map(([l, v, strong], i) => `<tr><td class="email-row" style="padding:11px 14px;font-size:14px;color:${EMAIL_BRAND.text};${i ? `border-top:1px solid ${EMAIL_BRAND.border};` : ""}${strong ? "font-weight:700;" : ""}">${escapeHtml(l)}</td><td class="email-row" align="right" style="padding:11px 14px;font-size:14px;font-family:'Geist Mono',ui-monospace,Menlo,monospace;color:${EMAIL_BRAND.text};${i ? `border-top:1px solid ${EMAIL_BRAND.border};` : ""}${strong ? "font-weight:700;" : ""}">${escapeHtml(v)}</td></tr>`)
     .join("")}</table>`;
 }
 const p = (s: string) => `<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:${EMAIL_BRAND.text};">${s}</p>`;
@@ -53,6 +53,21 @@ export function nextCycleLabel(startDate: string): string {
   const d = new Date(`${startDate}T00:00:00+10:00`);
   d.setMonth(d.getMonth() + 1);
   return d.toLocaleDateString("en-AU", { day: "numeric", month: "short", timeZone: "Australia/Brisbane" });
+}
+
+/** Stripe custom_text limit (submit message). */
+export const CHECKOUT_TEXT_MAX = 1200;
+
+/**
+ * Future first payment: the exact line shown on Stripe Checkout. Uses the same maths and
+ * money format as the setup email, so Checkout, email and Stripe's first invoice agree.
+ */
+export function checkoutFirstPaymentText(i: { monthlyCents: number; setupFeeCents: number; startDate: string; gst: boolean; discount?: PlanDiscount; setupDiscount?: SetupDiscount }, promoPossible = false): string {
+  const net = i.monthlyCents - discountOffCents(i.monthlyCents, i.discount);
+  const setupNet = i.setupFeeCents - discountOffCents(i.setupFeeCents, i.setupDiscount);
+  const t = upfrontTotals(net, setupNet, i.gst);
+  const parts = setupNet > 0 ? ` (${money(setupNet)} setup + ${money(net)} first month)` : " (first month)";
+  return `Nothing is charged today. First payment on ${dateLabel(i.startDate)}: ${money(t.dueNow)}${parts}, then monthly from that date.${promoPossible ? " Amounts are before any promo code." : ""}`.slice(0, CHECKOUT_TEXT_MAX);
 }
 
 export function setupLinkEmail(i: SetupEmailInput): BrandedEmail {
