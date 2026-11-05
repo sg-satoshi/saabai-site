@@ -1,7 +1,7 @@
 import { requireAdminSession } from "../../../../lib/admin-guard";
 import {
-  adminSnapshot, campaignDetail, createListCampaign, healthReport, importContacts, listContacts, queueBroadcast,
-  saveCampaign, saveDailyCap, saveFromName, saveSeries, scheduleBroadcast, sendTest, setSendingPaused,
+  adminSnapshot, automatedEditor, campaignDetail, createListCampaign, healthReport, importContacts, listContacts, queueBroadcast,
+  saveAutomated, saveCampaign, saveDailyCap, saveFromName, saveSeries, scheduleBroadcast, sendTest, setSendingPaused,
   deleteContacts, updateContact,
 } from "../../../../lib/email/ops";
 import { cleanDeleteIds, cleanListIds, validateContactEdit } from "../../../../lib/email/contact-admin";
@@ -23,6 +23,7 @@ export async function GET(req: Request) {
   const view = new URL(req.url).searchParams.get("view") || "home";
   try {
     if (view === "campaign") return Response.json(await campaignDetail(new URL(req.url).searchParams.get("id") || ""));
+    if (view === "automated") return Response.json(await automatedEditor(new URL(req.url).searchParams.get("key") || ""));
     if (view === "health") return Response.json(await healthReport());
     if (view === "subscribers") {
       const url = new URL(req.url);
@@ -45,6 +46,14 @@ export async function POST(req: Request) {
     if (action === "pause") return Response.json(await setSendingPaused(body.paused === true));
     if (action === "fromName") return Response.json(await saveFromName(String(body.fromName || "")));
     if (action === "cap") return Response.json(await saveDailyCap(Number(body.cap)));
+    if (action === "automated") {
+      return Response.json(await saveAutomated({
+        key: String(body.key || ""),
+        subject: String(body.subject || ""),
+        message: String(body.message || ""),
+        buttonLabel: typeof body.buttonLabel === "string" ? body.buttonLabel : "",
+      }));
+    }
     if (action === "series") {
       const steps = Array.isArray(body.steps) ? body.steps as SeriesStepInput[] : [];
       const status = body.status === "paused" ? "paused" : "active";

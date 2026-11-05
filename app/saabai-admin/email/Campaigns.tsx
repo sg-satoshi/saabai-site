@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import type { CampaignView, EmailAdminSnapshot } from "../../../lib/email/types";
+import type { AutomatedEmailView, CampaignView, EmailAdminSnapshot } from "../../../lib/email/types";
 
 type Load = EmailAdminSnapshot | { ok: false; error?: string } | null;
 
@@ -90,7 +90,7 @@ export default function Campaigns() {
       <div className="ph">
         <div>
           <h1>Campaigns</h1>
-          <p className="sub">One-off broadcasts for SUNDER. Opens are indicative only.</p>
+          <p className="sub">Broadcasts and automated emails for SUNDER. Automated mail is listed first. Opens on broadcasts are indicative only.</p>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {snap?.paused ? <span className="badge b-warn">Sending off</span> : <span className="badge b-ok">Sending on</span>}
@@ -98,6 +98,8 @@ export default function Campaigns() {
           <Link href="/saabai-admin/email/new" className="btn pri">New broadcast</Link>
         </div>
       </div>
+
+      <AutomatedList rows={snap?.automated} error={err} onRetry={load} />
 
       <div className="card em-sender">
         <div className="hd"><h2>Default sender</h2><span className="em-help">Used by new broadcasts and the confirm and welcome emails</span></div>
@@ -172,6 +174,64 @@ export default function Campaigns() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function sourceLabel(source: AutomatedEmailView["source"]) {
+  if (source === "saved") return "Saved message";
+  if (source === "built-in") return "Built-in message";
+  return "Not set up";
+}
+
+function AutomatedList({ rows, error, onRetry }: { rows?: AutomatedEmailView[]; error: string; onRetry: () => void }) {
+  return (
+    <div className="card" style={{ marginBottom: 16 }}>
+      <div className="hd">
+        <h2>Automated</h2>
+        <span className="em-help">Welcome, confirm and referral emails for SUNDER. Editing changes the next send. Nothing is sent from this list. Account, portal, password, billing, Lex and wholesale emails are not edited here.</span>
+      </div>
+      {error ? (
+        <div className="bd">
+          <div className="em-alert bad" role="alert"><b>Could not load automated emails.</b><div>{error}</div></div>
+          <button type="button" className="btn" style={{ marginTop: 12 }} onClick={onRetry}>Try again</button>
+        </div>
+      ) : !rows ? (
+        <div className="bd"><div className="em-skel" /></div>
+      ) : (
+      <>
+      <div className="em-mob">
+        {rows.map((a) => (
+          <Link key={a.key} className="oc" href={`/saabai-admin/email/auto/${a.key}`}>
+            <b>{a.name}</b>
+            <div className="em-help">{a.subject || "No subject yet"}</div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6, flexWrap: "wrap" }}>
+              <span className="badge b-sched">Automated</span>
+              <span className="em-help">{a.trigger}. {a.timing}.</span>
+            </div>
+          </Link>
+        ))}
+      </div>
+      <table className="em-desk">
+        <thead><tr><th>Email</th><th>Type</th><th>Trigger</th><th>Timing</th><th>Message</th><th></th></tr></thead>
+        <tbody>
+          {rows.map((a) => (
+            <tr key={a.key}>
+              <td style={{ whiteSpace: "normal" }}>
+                <Link href={`/saabai-admin/email/auto/${a.key}`} className="btn gh" style={{ height: "auto", minHeight: 44, paddingLeft: 0 }}>{a.name}</Link>
+                <div className="em-help">{a.subject || "No subject yet"}</div>
+              </td>
+              <td><span className="badge b-sched">Automated</span></td>
+              <td style={{ whiteSpace: "normal" }}>{a.trigger}</td>
+              <td style={{ whiteSpace: "normal" }}>{a.timing}</td>
+              <td>{sourceLabel(a.source)}</td>
+              <td><Link href={`/saabai-admin/email/auto/${a.key}`} className="btn sm" aria-label={`Edit ${a.name}`}>Edit</Link></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      </>
+      )}
     </div>
   );
 }

@@ -7,6 +7,21 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { confirmEvidencePatch, EVIDENCE_COLUMNS, type Evidence, type RequestEvidence } from "../consent-evidence";
 import { getRedis } from "../redis";
 import { SUNDER_FROM_NAME, SUNDER_IDENTITY, SUNDER_SLUG, type SenderIdentity } from "./constants";
+import {
+  SYSTEM_CONFIRM,
+  SYSTEM_REFERRAL,
+  automationKeyFromRequest,
+  editorFromSources,
+  isBroadcastInventory,
+  listAutomatedEmails,
+  parseAutomatedKey,
+  cleanButtonLabel,
+  replaceSeriesStep,
+  seriesOutgoingHtml,
+  seriesQueuedHtml,
+  systemButtonLabel,
+  validateAutomatedEdit,
+} from "./automated";
 import { documentHtml, parseBlocks, textToBlocks, type Block } from "./blocks";
 import {
   contentHash, copyProblem, DEFAULT_DAILY_CAP, rateDecision, sendBlocked, splitByDailyCap,
@@ -14,7 +29,7 @@ import {
 import {
   countStatus, countSuppressions, emailDb, identityFrom, isMissingSchema, listConfirmed, loadTenant, suppressedEmails, type TenantRow,
 } from "./db";
-import { buildSunderHtml, confirmMessage, referralLinkMessage, renderMarketingEmail, withReferralLine } from "./message";
+import { CONFIRM_COPY, REFERRAL_COPY, confirmMessage, referralLinkMessage, renderMarketingEmail, withReferralLine, type SystemCopy } from "./message";
 import { maskEmail, needsReferralReview, referralLineText, referralStatsFor, referralStatusUrl } from "../sunder-waitlist";
 import { brisbaneAt, brisbaneParts, isQuiet, seriesRunAt } from "./quiet";
 import { acquireSendSlot, type RateCounter } from "./rate";
@@ -23,7 +38,7 @@ import {
   shouldQueueConfirmation, validateSeriesSteps, type SeriesStepInput,
 } from "./rules";
 import { sendSes, sesConfigured, type SesMessage } from "./ses";
-import type { CampaignView, EmailAdminSnapshot, SeriesStepView } from "./types";
+import type { AutomatedEmailView, CampaignView, EmailAdminSnapshot, SeriesStepView } from "./types";
 import { readEmailToken } from "./tokens";
 import type { ContactEdit } from "./contact-admin";
 import { listCampaignName } from "./contact-admin";
@@ -90,7 +105,7 @@ export async function adminSnapshot(): Promise<EmailAdminSnapshot | { ok: false;
   const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const [series, campaigns, sent30q, unsub30q, engagement] = await Promise.all([
     loadSeries(db, tenant.id),
-    loadCampaigns(db),
+    loadCampaigns(db, tenant.id),
     db.from("email_sends").select("id", { count: "exact", head: true }).eq("tenant_id", tenant.id).eq("kind", "marketing").eq("status", "sent").gte("sent_at", since30),
     db.from("email_suppressions").select("id", { count: "exact", head: true }).eq("tenant_id", tenant.id).ilike("reason", "%unsub%").gte("created_at", since30),
     loadEngagement(db, tenant.id),
@@ -108,6 +123,7 @@ export async function adminSnapshot(): Promise<EmailAdminSnapshot | { ok: false;
     ...engagement,
     series,
     campaigns,
+    automated: await loadAutomated(db, tenant.id, series),
   };
 }
 
@@ -153,10 +169,24 @@ async function loadSeries(db: SupabaseClient, tenantId: string): Promise<EmailAd
   };
 }
 
-async function loadCampaigns(db: SupabaseClient): Promise<CampaignView[]> {
+async function loadCampaigns(db: SupabaseClient, tenantId: string): Promise<CampaignView[]> {
   const { data, error } = await db.rpc("email_recent_campaigns", { p_tenant: SUNDER_SLUG });
   if (error) throw new Error(error.message);
-  return ((data || []) as { id: string; name: string; status: string; created_at: string; scheduled_at: string | null; queued: number; sent: number; failed: number; skipped: number; pending: number; unsubscribed: number }[]).map((c) => ({
+  const rows = (data || []) as { id: string; name: string; status: string; created_at: string; scheduled_at: string | null; queued: number; sent: number; failed: number; skipped: number; pending: number; unsubscribed: number }[];
+  const ids = rows.map((c) => c.id);
+  const meta = new Map<string, { kind: string; request_key: string | null }>();
+  if (ids.length) {
+    const found = await db.from("email_campaigns").select("id,kind,request_key").eq("tenant_id", tenantId).in("id", ids);
+    if (found.error) throw new Error(found.error.message);
+    for (const raw of found.data || []) {
+      const row = raw as { id: string; kind: string; request_key: string | null };
+      meta.set(row.id, row);
+    }
+  }
+  return rows.filter((c) => {
+    const row = meta.get(c.id);
+    return !!row && isBroadcastInventory({ kind: row.kind, requestKey: row.request_key });
+  }).map((c) => ({
     id: c.id,
     name: c.name,
     status: c.status,
@@ -170,6 +200,43 @@ async function loadCampaigns(db: SupabaseClient): Promise<CampaignView[]> {
     unsubscribed: c.unsubscribed || 0,
   }));
 }
+
+async function savedSystemRows(db: SupabaseClient, tenantId: string): Promise<Map<string, { subject: string; body_text: string; html: string }>> {
+  const out = new Map<string, { subject: string; body_text: string; html: string }>();
+  const { data, error } = await db.from("email_templates").select("name,subject,body_text,html").eq("tenant_id", tenantId).in("name", [SYSTEM_CONFIRM, SYSTEM_REFERRAL]);
+  if (error) {
+    console.error("email system template read failed:", error.message);
+    return out;
+  }
+  for (const raw of data || []) {
+    const row = raw as { name: string; subject: string; body_text: string; html: string };
+    out.set(row.name, row);
+  }
+  return out;
+}
+
+async function savedSystemCopy(db: SupabaseClient, tenantId: string, name: typeof SYSTEM_CONFIRM | typeof SYSTEM_REFERRAL): Promise<SystemCopy | null> {
+  const row = (await savedSystemRows(db, tenantId)).get(name);
+  if (!row?.body_text.trim()) return null;
+  const fallback = name === SYSTEM_CONFIRM ? CONFIRM_COPY : REFERRAL_COPY;
+  return { subject: row.subject, body: row.body_text, buttonLabel: systemButtonLabel(row.html, fallback.buttonLabel) };
+}
+
+async function loadAutomated(db: SupabaseClient, tenantId: string, series: EmailAdminSnapshot["series"]): Promise<AutomatedEmailView[]> {
+  const saved = await savedSystemRows(db, tenantId);
+  const confirm = saved.get(SYSTEM_CONFIRM);
+  const referral = saved.get(SYSTEM_REFERRAL);
+  return listAutomatedEmails({
+    seriesStatus: series.steps.length ? series.status : "missing",
+    steps: series.steps,
+    confirmSaved: !!confirm?.body_text.trim(),
+    confirmSubject: confirm?.subject || "",
+    referralSaved: !!referral?.body_text.trim(),
+    referralSubject: referral?.subject || "",
+  });
+}
+
+const NOT_BROADCAST = "This is an automated email. Edit it from Campaigns. Nothing was sent.";
 
 export async function setSendingPaused(paused: boolean): Promise<{ ok: true } | { ok: false; error: string }> {
   const db = emailDb();
@@ -207,7 +274,9 @@ export async function saveSeries(steps: SeriesStepInput[], status: "active" | "p
     const { error: templateError } = await db.from("email_templates").update({
       subject: step.subject.trim(),
       body_text: body,
-      html: buildSunderHtml(body),
+      // Same dark shell the sender builds from body_text. Other steps are updated
+      // only because this call saves the whole series. Unsaved rows are not rewritten.
+      html: seriesOutgoingHtml(body, ""),
       updated_at: new Date().toISOString(),
     }).eq("id", templateId);
     if (templateError) return { ok: false, error: templateError.message };
@@ -217,6 +286,97 @@ export async function saveSeries(steps: SeriesStepInput[], status: "active" | "p
   const { error: statusError } = await db.from("email_series").update({ status }).eq("id", series.id);
   if (statusError) return { ok: false, error: statusError.message };
   return { ok: true };
+}
+
+/** Save one automated message. Does not enqueue, enrol, or create a broadcast. */
+export async function saveAutomated(input: { key: string; subject: string; message: string; buttonLabel?: string }): Promise<{ ok: true } | { ok: false; error: string }> {
+  const key = parseAutomatedKey(input.key);
+  if (!key) return { ok: false, error: "That email is not in the SUNDER list." };
+  const problem = validateAutomatedEdit(key, input);
+  if (problem) return { ok: false, error: problem };
+  const db = emailDb();
+  const tenant = await loadTenant(db);
+  if (!tenant) return { ok: false, error: MIGRATION };
+  if (key.kind === "series") {
+    const series = await loadSeries(db, tenant.id);
+    const next = replaceSeriesStep(series.steps, key.position, input.subject, input.message);
+    if ("error" in next) return { ok: false, error: next.error };
+    const step = next.find((s) => s.position === key.position);
+    if (!step) return { ok: false, error: "That welcome email is not in the series." };
+    const { data: seriesRow, error } = await db.from("email_series").select("id").eq("tenant_id", tenant.id).eq("slug", "welcome").maybeSingle();
+    if (error || !seriesRow) return { ok: false, error: error?.message || "Welcome series is missing. Apply migration 009." };
+    const { data: existing, error: stepError } = await db.from("email_series_steps").select("template_id").eq("series_id", (seriesRow as { id: string }).id).eq("position", key.position).maybeSingle();
+    if (stepError || !existing) return { ok: false, error: stepError?.message || "That welcome email is not in the series." };
+    const templateId = (existing as { template_id: string }).template_id;
+    const body = step.body.replace(/\r\n/g, "\n");
+    const { data: updated, error: templateError } = await db.from("email_templates").update({
+      subject: step.subject.trim(),
+      body_text: body,
+      // Fallback HTML matches the live send (documentHtml). Existing rows stay
+      // until this step is saved. An empty body_text elsewhere is not rewritten.
+      html: seriesOutgoingHtml(body, ""),
+      updated_at: new Date().toISOString(),
+    }).eq("id", templateId).eq("tenant_id", tenant.id).select("id");
+    if (templateError || !updated?.length) return { ok: false, error: templateError?.message || "That welcome email is not in this tenant." };
+    return { ok: true };
+  }
+  const fallback = key.mode === "confirm" ? CONFIRM_COPY : REFERRAL_COPY;
+  const label = cleanButtonLabel(input.buttonLabel ?? "", fallback.buttonLabel);
+  if (typeof label !== "string") return { ok: false, error: label.error };
+  const { error } = await db.from("email_templates").upsert({
+    tenant_id: tenant.id,
+    name: key.templateName,
+    subject: input.subject.trim(),
+    body_text: input.message.replace(/\r\n/g, "\n"),
+    html: label,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: "tenant_id,name" });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+export async function automatedEditor(keyRaw: string) {
+  const key = parseAutomatedKey(keyRaw);
+  if (!key) return { ok: false as const, error: "That email is not in the SUNDER list." };
+  const ready = await requireReady();
+  if ("error" in ready) return { ok: false as const, error: ready.error };
+  if (key.kind === "series") {
+    const { data: series, error } = await ready.db.from("email_series").select("id,status").eq("tenant_id", ready.tenant.id).eq("slug", "welcome").maybeSingle();
+    if (error) return { ok: false as const, error: error.message };
+    if (!series) {
+      const built = editorFromSources({ key, seriesStatus: "missing", step: null, saved: null });
+      return "error" in built ? { ok: false as const, error: built.error } : built;
+    }
+    const seriesId = (series as { id: string; status: string }).id;
+    const status = (series as { status: string }).status === "paused" ? "paused" as const : "active" as const;
+    const { data: steps, error: stepError } = await ready.db.from("email_series_steps").select("position,delay_minutes,template_id").eq("series_id", seriesId).order("position");
+    if (stepError) return { ok: false as const, error: stepError.message };
+    const ordered = (steps || []) as { position: number; delay_minutes: number; template_id: string }[];
+    const step = ordered.find((s) => s.position === key.position);
+    if (!step) {
+      const built = editorFromSources({ key, seriesStatus: ordered.length ? status : "missing", step: null, saved: null });
+      return "error" in built ? { ok: false as const, error: built.error } : built;
+    }
+    const { data: template, error: templateError } = await ready.db.from("email_templates").select("subject,body_text,html").eq("id", step.template_id).eq("tenant_id", ready.tenant.id).maybeSingle();
+    if (templateError || !template) return { ok: false as const, error: templateError?.message || "That welcome email is not in the series." };
+    const row = template as { subject: string; body_text: string; html: string };
+    const previous = ordered.filter((s) => s.position < key.position).reduce((max, s) => Math.max(max, Math.round(s.delay_minutes / (24 * 60))), 0);
+    const built = editorFromSources({
+      key,
+      seriesStatus: status,
+      step: { subject: row.subject, body: row.body_text, html: row.html, delayDays: Math.round(step.delay_minutes / (24 * 60)), previousDelay: previous },
+      saved: null,
+    });
+    return "error" in built ? { ok: false as const, error: built.error } : built;
+  }
+  const saved = (await savedSystemRows(ready.db, ready.tenant.id)).get(key.templateName) || null;
+  const built = editorFromSources({
+    key,
+    seriesStatus: "missing",
+    step: null,
+    saved: saved ? { subject: saved.subject, body: saved.body_text, html: saved.html } : null,
+  });
+  return "error" in built ? { ok: false as const, error: built.error } : built;
 }
 
 async function requireReady(): Promise<{ db: SupabaseClient; tenant: TenantRow; identity: SenderIdentity } | { error: string }> {
@@ -244,6 +404,8 @@ type CampaignRow = {
   send_confirmed: boolean | null;
   typed_confirm?: boolean | null;
   list_id?: string | null;
+  kind?: string | null;
+  request_key?: string | null;
 };
 
 function campaignContent(row: CampaignRow): { subject: string; preheader: string; blocks: Block[] } | { error: string } {
@@ -263,9 +425,10 @@ export async function sendTest(input: { campaignId: string; to: string }): Promi
   if (!sesConfigured()) return { ok: false, error: "Sending is not configured on this environment." };
   const blocked = await suppressedEmails(ready.db, ready.tenant.id, [to]);
   if (blocked.has(to)) return { ok: false, error: "That address is on the suppression list." };
-  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed").eq("id", input.campaignId).eq("tenant_id", ready.tenant.id).maybeSingle();
+  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed,kind,request_key").eq("id", input.campaignId).eq("tenant_id", ready.tenant.id).maybeSingle();
   if (loaded.error || !loaded.data) return { ok: false, error: loaded.error?.message || "Campaign not found." };
   const row = loaded.data as CampaignRow;
+  if (!isBroadcastInventory({ kind: row.kind, requestKey: row.request_key })) return { ok: false, error: NOT_BROADCAST };
   const content = campaignContent(row);
   if ("error" in content) return { ok: false, error: content.error };
   const fromName = cleanFromName(row.from_name || ready.tenant.from_name);
@@ -406,9 +569,10 @@ export async function queueBroadcast(input: { campaignId: string; confirm?: stri
   const ready = await requireReady();
   if ("error" in ready) return { ok: false, error: ready.error };
   const paused = await sendingPaused(ready.db, ready.tenant);
-  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed,typed_confirm,list_id").eq("id", input.campaignId).eq("tenant_id", ready.tenant.id).maybeSingle();
+  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed,typed_confirm,list_id,kind,request_key").eq("id", input.campaignId).eq("tenant_id", ready.tenant.id).maybeSingle();
   if (loaded.error || !loaded.data) return { ok: false, error: loaded.error?.message || "Campaign not found." };
   const row = loaded.data as CampaignRow;
+  if (!isBroadcastInventory({ kind: row.kind, requestKey: row.request_key })) return { ok: false, error: NOT_BROADCAST };
   if (row.status !== "draft" && row.status !== "scheduled") return { ok: false, error: ALREADY };
   const content = campaignContent(row);
   if ("error" in content) return { ok: false, error: content.error };
@@ -509,7 +673,8 @@ export async function enqueueDueSeries(db: SupabaseClient): Promise<number> {
       continue;
     }
     const campaignId = await seriesCampaign(db, raw);
-    const html = withReferralLine(raw.body_text ? documentHtml({ preheader: "", blocks: textToBlocks(raw.body_text) }) : raw.html, ...(await referralLineFor(db, email)));
+    const referral = await referralLineFor(db, email);
+    const html = seriesQueuedHtml(raw.body_text, raw.html, referral[0], referral[1]);
     const { error: insertError } = await db.from("email_sends").insert({
       tenant_id: raw.tenant_id,
       campaign_id: campaignId,
@@ -623,9 +788,12 @@ export function liveOutbox(db: SupabaseClient, tenant: TenantRow): Outbox {
 export async function campaignDetail(id: string) {
   const ready = await requireReady();
   if ("error" in ready) return { ok: false as const, error: ready.error };
-  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed,list_id").eq("id", id).eq("tenant_id", ready.tenant.id).maybeSingle();
+  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed,list_id,kind,request_key").eq("id", id).eq("tenant_id", ready.tenant.id).maybeSingle();
   if (loaded.error || !loaded.data) return { ok: false as const, error: loaded.error?.message || "Campaign not found." };
   const row = loaded.data as CampaignRow;
+  if (!isBroadcastInventory({ kind: row.kind, requestKey: row.request_key })) {
+    return { ok: false as const, error: "This row is a send record, not the message. Open it under Automated on the Campaigns page.", automationKey: automationKeyFromRequest(row.request_key) };
+  }
   const blocks = parseBlocks(row.blocks) || [];
   let audience;
   try { audience = await audienceNow(ready.db, ready.tenant.id, row.list_id || null); }
@@ -795,7 +963,7 @@ export async function importContacts(csv: string): Promise<{ ok: true; added: nu
       consent_at: new Date().toISOString(),
     }).select("id").single();
     if (inserted.error || !inserted.data) return { ok: false, error: inserted.error?.message || "Import stopped." };
-    const msg = confirmMessage();
+    const msg = confirmMessage(await savedSystemCopy(ready.db, ready.tenant.id, SYSTEM_CONFIRM));
     await ready.db.from("email_sends").insert({
       tenant_id: ready.tenant.id,
       contact_id: (inserted.data as { id: string }).id,
@@ -905,7 +1073,11 @@ export async function saveCampaign(input: { id?: string; name: string; subject: 
     kind: "broadcast",
   };
   if (input.id) {
-    const { error } = await ready.db.from("email_campaigns").update(patch).eq("id", input.id).eq("tenant_id", ready.tenant.id);
+    const existing = await ready.db.from("email_campaigns").select("kind,request_key").eq("id", input.id).eq("tenant_id", ready.tenant.id).maybeSingle();
+    if (existing.error || !existing.data) return { ok: false, error: existing.error?.message || "Campaign not found." };
+    const current = existing.data as { kind: string; request_key: string | null };
+    if (!isBroadcastInventory({ kind: current.kind, requestKey: current.request_key })) return { ok: false, error: NOT_BROADCAST };
+    const { error } = await ready.db.from("email_campaigns").update(patch).eq("id", input.id).eq("tenant_id", ready.tenant.id).eq("kind", "broadcast");
     if (error) return { ok: false, error: error.message };
     return { ok: true, id: input.id, hash };
   }
@@ -920,9 +1092,10 @@ export async function scheduleBroadcast(input: { campaignId: string; when: strin
   const ready = await requireReady();
   if ("error" in ready) return { ok: false, error: ready.error };
   const paused = await sendingPaused(ready.db, ready.tenant);
-  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed,list_id").eq("id", input.campaignId).eq("tenant_id", ready.tenant.id).maybeSingle();
+  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed,list_id,kind,request_key").eq("id", input.campaignId).eq("tenant_id", ready.tenant.id).maybeSingle();
   if (loaded.error || !loaded.data) return { ok: false, error: loaded.error?.message || "Campaign not found." };
   const row = loaded.data as CampaignRow;
+  if (!isBroadcastInventory({ kind: row.kind, requestKey: row.request_key })) return { ok: false, error: NOT_BROADCAST };
   const content = campaignContent(row);
   if ("error" in content) return { ok: false, error: content.error };
   let audience;
@@ -1012,7 +1185,7 @@ export async function afterSunderSignup(input: { email: string; firstName: strin
   if (sync.error) throw new Error(sync.error.message);
   const contact = await db.from("email_contacts").select("id,status").eq("tenant_id", tenant.id).eq("email", email).maybeSingle();
   if (contact.error) throw new Error(contact.error.message);
-  const base = confirmMessage();
+  const base = confirmMessage(await savedSystemCopy(db, tenant.id, SYSTEM_CONFIRM));
   const msg = { ...base, html: withReferralLine(base.html, ...(await referralLineFor(db, email))) };
   const key = confirmationKey(email, new Date());
   const { error: insertError } = await db.from("email_sends").insert({
@@ -1089,7 +1262,7 @@ export async function sendSunderReferralLink(rawEmail: string): Promise<void> {
   if (contact.error) throw new Error(contact.error.message);
   const c = contact.data as { id: string; status: string; confirmed_at: string | null; first_name: string | null } | null;
   if (!c || c.status !== "subscribed") return;
-  const msg = referralLinkMessage(referralStatusUrl(sub.referral_code));
+  const msg = referralLinkMessage(referralStatusUrl(sub.referral_code), await savedSystemCopy(db, tenant.id, SYSTEM_REFERRAL));
   const key = referralLinkKey(email, new Date());
   const { data: inserted, error: insertError } = await db.from("email_sends").insert({
     tenant_id: tenant.id, contact_id: c.id, to_email: email, kind: "confirm", idempotency_key: key,

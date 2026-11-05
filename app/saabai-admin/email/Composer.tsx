@@ -40,6 +40,8 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
   const [testedAt, setTestedAt] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [banner, setBanner] = useState("");
+  const [autoKey, setAutoKey] = useState<string | null>(null);
+  const [gate, setGate] = useState<"loading" | "edit" | "stopped">(campaignId ? "loading" : "edit");
   const [busy, setBusy] = useState("");
   const [width, setWidth] = useState<620 | 375>(620);
   const [mobilePreview, setMobilePreview] = useState(false);
@@ -66,7 +68,12 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
     fetch(`/api/admin/email?view=campaign&id=${campaignId}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((j) => {
-        if (!j.ok) { setBanner(j.error || "Could not open this campaign."); return; }
+        if (!j.ok) {
+          setBanner(j.error || "Could not open this campaign.");
+          setAutoKey(typeof j.automationKey === "string" ? j.automationKey : null);
+          setGate("stopped");
+          return;
+        }
         setDetail(j);
         idRef.current = j.campaign.id;
         setId(j.campaign.id);
@@ -77,9 +84,10 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
         setFromName(cleanFromName(j.campaign.fromName || j.defaultFromName || ""));
         setTestHash(j.campaign.testHash);
         setTestedAt(j.campaign.testSentAt);
+        setGate("edit");
         loaded.current = true;
       })
-      .catch(() => setBanner("Could not open this campaign."));
+      .catch(() => { setBanner("Could not open this campaign."); setGate("stopped"); });
   }, [campaignId]);
 
   const hash = contentHash({ subject, preheader, blocks, fromName });
@@ -200,6 +208,21 @@ function patch(blockId: string, next: Partial<Block>) {
   const later = Math.max(0, audience - today);
   const capLine = later > 0 ? `${today.toLocaleString("en-AU")} today, the rest sends tomorrow from 7:00 AM` : `Within today's cap (${(detail?.usedToday || 0).toLocaleString("en-AU")} of ${(detail?.dailyCap || 0).toLocaleString("en-AU")} used)`;
 
+  if (gate === "loading") return <div className="em-page"><div className="em-skel" /></div>;
+  if (gate === "stopped") {
+    return (
+      <div className="em-page">
+        <h1>Not a broadcast</h1>
+        <div className="em-alert bad" role="alert">{banner || "This email cannot be sent from the broadcast editor."}</div>
+        <p className="em-help">Send test, schedule and send now are off. Nothing was sent or saved.</p>
+        <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+          {autoKey && <Link href={`/saabai-admin/email/auto/${autoKey}`} className="btn pri">Edit the automated email</Link>}
+          <Link href="/saabai-admin/email" className="btn">Back to campaigns</Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="em-page">
       <div className="ph">
@@ -216,7 +239,7 @@ function patch(blockId: string, next: Partial<Block>) {
           <p id="send-lock" className="em-help" style={{ textAlign: "right" }}>{tagIssues.length ? "Fix the field tags below to unlock sending." : unlocked ? "A test of this version was sent." : "Send a test first to unlock Send now and Schedule."}</p>
         </div>
       </div>
-      {banner && <div className="em-alert info" role="status" style={{ margin: "12px 0" }}>{banner}</div>}
+      {banner && <div className="em-alert info" role="status" style={{ margin: "12px 0" }}>{banner}{autoKey && <div style={{ marginTop: 8 }}><Link href={`/saabai-admin/email/auto/${autoKey}`}>Edit the automated email</Link></div>}</div>}
       {tagIssues.length > 0 && <div className="em-alert warn" role="alert" style={{ marginBottom: 12 }}><b>Unknown field {tagIssues.length === 1 ? "tag" : "tags"}:</b> {tagIssues.map((t) => <code key={t} className="em-tag">{t}</code>)}. These would be left blank for subscribers. Use Insert field to add a supported tag.</div>}
       {detail?.paused && <div className="em-alert warn" style={{ marginBottom: 12 }}>Sending is paused. Tests and sends stay locked.</div>}
 

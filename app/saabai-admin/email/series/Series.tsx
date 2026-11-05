@@ -53,7 +53,7 @@ export default function Series() {
       <div className="ph">
         <div>
           <h1>Welcome series {on ? <span className="badge b-ok">On</span> : <span className="badge b-n">Off</span>}</h1>
-          <p className="sub">Trigger: joins the SUNDER waitlist and confirms. Pending people are not enrolled. Exits on unsubscribe. Quiet hours 9pm to 7am Brisbane.</p>
+          <p className="sub">Trigger: joins the SUNDER waitlist and confirms. Pending people are not enrolled. Exits on unsubscribe. Quiet hours 9pm to 7am Brisbane. These emails are also listed on Campaigns.</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button type="button" className="btn" onClick={() => turn(!on)}>{on ? "Turn off" : "Turn on"}</button>

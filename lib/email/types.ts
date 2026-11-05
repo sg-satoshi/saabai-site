@@ -1,3 +1,7 @@
+import type { AutomatedEmailView } from "./automated";
+
+export type { AutomatedEmailView };
+
 export type SeriesStepView = {
   position: number;
   delayDays: number;
@@ -35,4 +39,5 @@ export type EmailAdminSnapshot = {
   clicked30: number;
   series: { status: "active" | "paused"; steps: SeriesStepView[]; enrolled: number; active: number; completed: number; exited: number };
   campaigns: CampaignView[];
+  automated: AutomatedEmailView[];
 };
