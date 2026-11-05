@@ -1,10 +1,10 @@
 import { requireAdminSession } from "../../../../lib/admin-guard";
 import {
-  adminSnapshot, campaignDetail, healthReport, importContacts, listContacts, queueBroadcast,
+  adminSnapshot, campaignDetail, createListCampaign, healthReport, importContacts, listContacts, queueBroadcast,
   saveCampaign, saveDailyCap, saveFromName, saveSeries, scheduleBroadcast, sendTest, setSendingPaused,
   deleteContacts, updateContact,
 } from "../../../../lib/email/ops";
-import { cleanDeleteIds, validateContactEdit } from "../../../../lib/email/contact-admin";
+import { cleanDeleteIds, cleanListIds, validateContactEdit } from "../../../../lib/email/contact-admin";
 import { addChangeLogEntry } from "../../../../lib/change-log";
 import { maskEmail } from "../../../../lib/sunder-waitlist";
 import type { SeriesStepInput } from "../../../../lib/email/rules";
@@ -93,6 +93,15 @@ export async function POST(req: Request) {
         return Response.json({ ok: true, deleted: r.deleted, cancelled: r.cancelled });
       }
       return Response.json(r, { status: 400 });
+    }
+    if (action === "createListCampaign") {
+      const v = cleanListIds(body.ids);
+      if (!v.ok) return Response.json(v, { status: 400 });
+      const r = await createListCampaign(v.ids);
+      if (r.ok) {
+        await addChangeLogEntry({ siteId: "sunder", siteName: "SUNDER", summary: `Smart list draft: ${r.selected} selected, ${r.eligible} eligible`, source: "manual", authorName: "Admin" }).catch(() => {});
+      }
+      return Response.json(r, { status: r.ok ? 200 : 400 });
     }
     if (action === "import") return Response.json(await importContacts(String(body.csv || "")));
     return Response.json({ error: "Unknown action" }, { status: 400 });

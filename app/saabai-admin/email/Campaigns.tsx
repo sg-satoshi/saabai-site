@@ -157,7 +157,7 @@ export default function Campaigns() {
               <tbody>
                 {shown.map((c) => (
                   <tr key={c.id}>
-                    <td style={{ whiteSpace: "normal" }}><Link href={`/saabai-admin/email/${c.id}`} className="btn gh" style={{ height: "auto", minHeight: 44, paddingLeft: 0 }}>{c.name}</Link><div className="em-help">Waitlist, confirmed only</div></td>
+                    <td style={{ whiteSpace: "normal" }}><Link href={`/saabai-admin/email/${c.id}`} className="btn gh" style={{ height: "auto", minHeight: 44, paddingLeft: 0 }}>{c.name}</Link><div className="em-help">Audience set on campaign</div></td>
                     <td>{chip(c, !!(snap && snap.paused))}</td>
                     <td className="num r">{c.status === "sending" ? `${c.sent.toLocaleString("en-AU")} of ${c.queued.toLocaleString("en-AU")}` : num(c.sent)}</td>
                     <td className="r">no data</td>

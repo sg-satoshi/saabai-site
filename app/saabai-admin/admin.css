@@ -371,6 +371,8 @@ a.btn{text-decoration:none}
 .sub-selbar b{margin-right:auto;font-weight:600}
 .sub-selbar .btn{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22);color:#fff}
 .sub-selbar .btn.dg{background:var(--bad);border-color:var(--bad);color:#fff}
+.sub-selbar .btn.pri{background:#fff;border-color:#fff;color:var(--navy-900);font-weight:600}
+.sub-selbar .btn.pri:disabled{opacity:.6}
 .sub-foot{position:sticky;bottom:0;display:flex;gap:8px;align-items:center;padding:12px 16px;border-top:1px solid var(--n-200);background:#fff}
 .btn.danger-solid{background:var(--bad);border-color:var(--bad);color:#fff;font-weight:600}
 .sub-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:100;background:var(--navy-900);color:#fff;padding:10px 16px;border-radius:99px;font-size:13px;font-weight:500;box-shadow:var(--sh-3);animation:subToast .18s ease-out}

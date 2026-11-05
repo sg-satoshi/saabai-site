@@ -41,3 +41,21 @@ export function cleanDeleteIds(raw: unknown): { ok: true; ids: string[] } | { ok
 }
 
 export { deleteConfirmText, editLocked } from "./contact-copy";
+
+/** Cap for a static smart list created from the subscribers page. Matches the page size with headroom. */
+export const MAX_LIST = 500;
+
+export function cleanListIds(raw: unknown): { ok: true; ids: string[] } | { ok: false; error: string } {
+  if (!Array.isArray(raw) || !raw.length) return { ok: false, error: "Pick at least one subscriber." };
+  const ids = [...new Set(raw.map(String))];
+  if (ids.some((id) => !UUID.test(id))) return { ok: false, error: "That list has an unknown subscriber." };
+  if (ids.length > MAX_LIST) return { ok: false, error: `Select up to ${MAX_LIST} at a time.` };
+  return { ok: true, ids };
+}
+
+/** Brisbane-friendly draft name for a selection. Pure helper for tests. */
+export function listCampaignName(selected: number, when = new Date()): string {
+  const stamp = when.toLocaleString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "short", year: "numeric" });
+  const n = Math.max(0, Math.floor(selected));
+  return `Selected ${n} · ${stamp}`.slice(0, 120);
+}
