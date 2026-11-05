@@ -40,6 +40,7 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
   const [testedAt, setTestedAt] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [banner, setBanner] = useState("");
+  const [autoKey, setAutoKey] = useState<string | null>(null);
   const [busy, setBusy] = useState("");
   const [width, setWidth] = useState<620 | 375>(620);
   const [mobilePreview, setMobilePreview] = useState(false);
@@ -66,7 +67,7 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
     fetch(`/api/admin/email?view=campaign&id=${campaignId}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((j) => {
-        if (!j.ok) { setBanner(j.error || "Could not open this campaign."); return; }
+        if (!j.ok) { setBanner(j.error || "Could not open this campaign."); setAutoKey(typeof j.automationKey === "string" ? j.automationKey : null); return; }
         setDetail(j);
         idRef.current = j.campaign.id;
         setId(j.campaign.id);
@@ -216,7 +217,7 @@ function patch(blockId: string, next: Partial<Block>) {
           <p id="send-lock" className="em-help" style={{ textAlign: "right" }}>{tagIssues.length ? "Fix the field tags below to unlock sending." : unlocked ? "A test of this version was sent." : "Send a test first to unlock Send now and Schedule."}</p>
         </div>
       </div>
-      {banner && <div className="em-alert info" role="status" style={{ margin: "12px 0" }}>{banner}</div>}
+      {banner && <div className="em-alert info" role="status" style={{ margin: "12px 0" }}>{banner}{autoKey && <div style={{ marginTop: 8 }}><Link href={`/saabai-admin/email/auto/${autoKey}`}>Edit the automated email</Link></div>}</div>}
       {tagIssues.length > 0 && <div className="em-alert warn" role="alert" style={{ marginBottom: 12 }}><b>Unknown field {tagIssues.length === 1 ? "tag" : "tags"}:</b> {tagIssues.map((t) => <code key={t} className="em-tag">{t}</code>)}. These would be left blank for subscribers. Use Insert field to add a supported tag.</div>}
       {detail?.paused && <div className="em-alert warn" style={{ marginBottom: 12 }}>Sending is paused. Tests and sends stay locked.</div>}
 

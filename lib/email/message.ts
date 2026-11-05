@@ -115,24 +115,56 @@ export function renderMarketingEmail(input: {
   };
 }
 
-export function confirmMessage(): { subject: string; html: string } {
-  const lines = [
+/** Built-in confirm copy. Passed back in, it renders the same HTML as confirmMessage(). */
+export const CONFIRM_COPY = {
+  subject: "Confirm your SUNDER email",
+  body: [
     "Hi {{firstName|there}},",
     "Tap the button below and you're on the SUNDER VIP list. You'll be first to hear about the launch, offers and our giveaways.",
-  ];
-  const button = `<p style="margin:8px 0 22px;"><a href="{{confirmUrl}}" style="display:inline-block;background:#d4ff3a;color:#0d0d0d;padding:14px 22px;line-height:20px;min-height:44px;box-sizing:border-box;border-radius:8px;text-decoration:none;font-weight:800;">Join the SUNDER VIP list</a></p>`;
-  return { subject: "Confirm your SUNDER email", html: buildSunderHtml(lines.join("\n"), button) };
-}
+  ].join("\n"),
+  buttonLabel: "Join the SUNDER VIP list",
+};
 
-/** "Check my referrals": the private status link, by email only. */
-export function referralLinkMessage(statusUrl: string): { subject: string; html: string } {
-  const lines = [
+/** Built-in referral-link copy. The status URL is supplied at send time, never from this text. */
+export const REFERRAL_COPY = {
+  subject: "Your SUNDER referral link",
+  body: [
     "Hi {{firstName|there}},",
     "Here's your private SUNDER referral link. Open it any time to see how many friends have joined and your bonus giveaway entries.",
-  ];
+  ].join("\n"),
+  buttonLabel: "Check my referrals",
+};
+
+export type SystemCopy = { subject: string; body: string; buttonLabel: string };
+
+function actionButton(href: string, label: string): string {
+  return `<p style="margin:8px 0 22px;"><a href="${href}" style="display:inline-block;background:#d4ff3a;color:#0d0d0d;padding:14px 22px;line-height:20px;min-height:44px;box-sizing:border-box;border-radius:8px;text-decoration:none;font-weight:800;">${escapeHtml(label)}</a></p>`;
+}
+
+function applyCopy(copy: SystemCopy | null | undefined, fallback: SystemCopy): { subject: string; body: string; buttonLabel: string } {
+  const src = copy ?? fallback;
+  return {
+    subject: (src.subject || fallback.subject).trim().slice(0, 200) || fallback.subject,
+    body: (src.body ?? fallback.body).replace(/\r\n/g, "\n"),
+    buttonLabel: (src.buttonLabel || "").trim() || fallback.buttonLabel,
+  };
+}
+
+/**
+ * Opt-in confirm email. No argument uses the built-in copy.
+ * An edit changes subject, body and button label. The href stays {{confirmUrl}}.
+ */
+export function confirmMessage(edit?: SystemCopy | null): { subject: string; html: string } {
+  const copy = applyCopy(edit, CONFIRM_COPY);
+  return { subject: copy.subject, html: buildSunderHtml(copy.body, actionButton("{{confirmUrl}}", copy.buttonLabel)) };
+}
+
+/** "Check my referrals": the private status link, by email only. The href is statusUrl, never the saved copy. */
+export function referralLinkMessage(statusUrl: string, edit?: SystemCopy | null): { subject: string; html: string } {
+  const copy = applyCopy(edit, REFERRAL_COPY);
   const safe = statusUrl.replace(/[^A-Za-z0-9:/._-]/g, "");
-  const button = `<p style="margin:8px 0 22px;"><a href="${safe}" style="display:inline-block;background:#d4ff3a;color:#0d0d0d;padding:14px 22px;line-height:20px;min-height:44px;box-sizing:border-box;border-radius:8px;text-decoration:none;font-weight:800;">Check my referrals</a></p><p style="margin:0 0 14px;font-size:14px;color:#374151;">Keep this link to yourself. Didn't ask for it? You can ignore this email.</p>`;
-  return { subject: "Your SUNDER referral link", html: buildSunderHtml(lines.join("\n"), button) };
+  const extra = `${actionButton(safe, copy.buttonLabel)}<p style="margin:0 0 14px;font-size:14px;color:#374151;">Keep this link to yourself. Didn't ask for it? You can ignore this email.</p>`;
+  return { subject: copy.subject, html: buildSunderHtml(copy.body, extra) };
 }
 
 /**
