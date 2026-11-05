@@ -6,6 +6,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getStripe } from "../stripe";
 import type { SiteBillingRecord } from "./store";
+import { formatAud } from "./catalog";
+import { discountLabel, discountOffCents } from "./state";
 import { careProductFor, findActivePromo, promoCoversProducts } from "../coupons/stripe";
 import { normaliseCode, promoIsOnce, promoNotStartedMessage } from "../coupons/core";
 import { hasUsed } from "../coupons/once";
@@ -80,16 +82,29 @@ export async function createSetupCheckout(rec: SiteBillingRecord, customerId: st
       } as any,
     },
   ];
-  if (rec.setupFeeCents > 0) {
+  // Setup fee discount: charged as a reduced one-off price (no coupon, so the monthly coupon is untouched).
+  // A fully waived setup fee is left off the Checkout entirely (no zero-amount line).
+  const setupOff = discountOffCents(rec.setupFeeCents, rec.setupDiscount);
+  const setupNet = rec.setupFeeCents - setupOff;
+  if (setupNet > 0) {
+    const setupName = `Setup${rec.setupFeeDescription ? `: ${rec.setupFeeDescription}` : " fee"}`;
     line_items.push({
       quantity: 1,
-      price_data: { currency: "aud", unit_amount: rec.setupFeeCents, product_data: { name: `Setup${rec.setupFeeDescription ? `: ${rec.setupFeeDescription}` : " fee"}` } },
+      price_data: {
+        currency: "aud",
+        unit_amount: setupNet,
+        product_data: {
+          name: setupName,
+          ...(setupOff && rec.setupDiscount ? { description: `Normally ${formatAud(rec.setupFeeCents)}. ${discountLabel(rec.setupDiscount, formatAud)}.` } : {}),
+        },
+      },
     });
   }
   const anchor = monthAfter(rec.startDate);
   const meta: Record<string, string> = { source: BILLING_SOURCE, kind: "setup", siteId: rec.siteId, planId: rec.planId };
   if (promo) meta.coupon_code = promo.code;
   if (adminCoupon) meta.admin_coupon = adminCoupon;
+  if (setupOff) meta.setup_discount_cents = String(setupOff);
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer: customerId,

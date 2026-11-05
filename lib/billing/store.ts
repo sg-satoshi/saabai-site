@@ -2,7 +2,7 @@
  * Per-site billing record (one billing setup per site), stored in Redis.
  */
 import { getRedis } from "../redis";
-import type { PlanDiscount, SiteBillingStatus } from "./state";
+import type { PlanDiscount, SetupDiscount, SiteBillingStatus } from "./state";
 
 export const SITE_BILLING_PREFIX = "saabai:billing:site:";
 export const SITE_BILLING_INDEX = "saabai:billing:sites";
@@ -30,6 +30,8 @@ export interface SiteBillingRecord {
   discount?: PlanDiscount;
   setupFeeCents: number;
   setupFeeDescription?: string;
+  /** Admin discount on the setup fee (setupFeeCents stays the list price) */
+  setupDiscount?: SetupDiscount;
   startDate: string; // YYYY-MM-DD
   gst: boolean;
   contact: { name: string; email: string };

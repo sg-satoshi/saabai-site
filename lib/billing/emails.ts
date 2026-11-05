@@ -4,7 +4,7 @@
  */
 import { EMAIL_BRAND, escapeHtml, renderBrandedEmail, type BrandedEmail } from "../email/branded-layout";
 import { formatAud } from "./catalog";
-import { discountLabel, discountOffCents, upfrontTotals, type PlanDiscount } from "./state";
+import { discountLabel, discountOffCents, upfrontTotals, type PlanDiscount, type SetupDiscount } from "./state";
 
 export const SENDER_OPTIONS = [
   { value: EMAIL_BRAND.from, label: "Saabai default sender" },
@@ -39,6 +39,8 @@ export interface SetupEmailInput {
   payUrl: string;
   /** Admin discount: shown as original price, discount line, new price */
   discount?: PlanDiscount;
+  /** Admin discount on the setup fee: shown as original fee, discount line (or Waived) */
+  setupDiscount?: SetupDiscount;
 }
 
 export function nextCycleLabel(startDate: string): string {
@@ -50,10 +52,15 @@ export function nextCycleLabel(startDate: string): string {
 export function setupLinkEmail(i: SetupEmailInput): BrandedEmail {
   const off = discountOffCents(i.monthlyCents, i.discount);
   const net = i.monthlyCents - off;
-  const t = upfrontTotals(net, i.setupFeeCents, i.gst);
+  const setupOff = discountOffCents(i.setupFeeCents, i.setupDiscount);
+  const setupNet = i.setupFeeCents - setupOff;
+  const t = upfrontTotals(net, setupNet, i.gst);
   const rows: [string, string, boolean?][] = [[`${i.planName}, first month`, money(i.monthlyCents)]];
   if (off && i.discount) rows.push([discountLabel(i.discount, money), `-${money(off)}`]);
-  if (t.setup) rows.push([`Setup${i.setupFeeDescription ? `: ${i.setupFeeDescription}` : " fee"}`, money(t.setup)]);
+  if (i.setupFeeCents > 0) {
+    rows.push([`Setup${i.setupFeeDescription ? `: ${i.setupFeeDescription}` : " fee"}`, money(i.setupFeeCents)]);
+    if (setupOff && i.setupDiscount) rows.push([setupNet ? discountLabel(i.setupDiscount, money) : `${discountLabel(i.setupDiscount, money)}, setup fee waived`, `-${money(setupOff)}`]);
+  }
   if (i.gst) rows.push(["GST", money(t.gst)]);
   rows.push(["Due today", money(t.dueNow), true], [`Then monthly from ${nextCycleLabel(i.startDate)}`, money(t.monthly)]);
   const full = upfrontTotals(i.monthlyCents, 0, i.gst).monthly;
@@ -61,6 +68,9 @@ export function setupLinkEmail(i: SetupEmailInput): BrandedEmail {
     ? i.discount.months
       ? `You're saving ${money(off)} a month for ${i.discount.months === 1 ? "your first month" : `your first ${i.discount.months} months`}, then it's the usual ${money(full)} a month.`
       : `You're saving ${money(off)} every month. Normally ${money(full)} a month.`
+    : "";
+  const setupSaving = setupOff && i.setupDiscount
+    ? setupNet ? `Your setup fee is ${money(setupNet)}, down from ${money(i.setupFeeCents)}.` : `Your ${money(i.setupFeeCents)} setup fee is waived.`
     : "";
   const where = i.siteDomain || i.siteName;
   return renderBrandedEmail({
@@ -72,6 +82,7 @@ export function setupLinkEmail(i: SetupEmailInput): BrandedEmail {
       p(`Your site's live and looking sharp. ${escapeHtml(i.planName)} keeps ${escapeHtml(where)} hosted, secure, backed up and updated. You run the business, we keep the website out of your way. Fair trade.`) +
       table(rows) +
       (saving ? p(`<strong>${escapeHtml(saving)}</strong>`) : "") +
+      (setupSaving ? p(`<strong>${escapeHtml(setupSaving)}</strong>`) : "") +
       small(`${i.gst ? "Prices include GST." : "GST not applicable."} Takes about a minute. Card or bank debit, handled securely by Stripe. This link is valid for 7 days. ${CANCEL_COPY}`),
     cta: { href: i.payUrl, label: "Set up payment" },
     footnote: "Questions? Just reply. A real person reads these, usually me. Shane, Saabai",
@@ -80,6 +91,7 @@ export function setupLinkEmail(i: SetupEmailInput): BrandedEmail {
       `Your site's live and looking sharp. ${i.planName} keeps ${where} hosted, secure, backed up and updated.`,
       ...rows.map(([l, v]) => `${l}: ${v}`),
       ...(saving ? [saving] : []),
+      ...(setupSaving ? [setupSaving] : []),
       `Set up payment (valid 7 days): ${i.payUrl}`,
       `${i.gst ? "Prices include GST." : "GST not applicable."} ${CANCEL_COPY}`,
       "Questions? Just reply. Shane, Saabai",
