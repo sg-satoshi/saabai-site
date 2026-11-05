@@ -7,9 +7,9 @@ import { sendBrandedEmail } from "../email/branded-layout";
 import { enableFeature, disableFeature } from "../addons/flags";
 import { getCatalog } from "./catalog";
 import { DEFAULT_SENDER, isAllowedSender, paymentFailedEmail, setupLinkEmail, sitePausedEmail } from "./emails";
-import { discountOffCents, normaliseDiscount, normaliseSetupDiscount, type SetupDiscount, type PlanDiscount, dueDunningStep, dunningDays, isLinkExpired, LINK_TTL_DAYS, linkExpiresAt, shouldPause, statusAfterFailure, statusFromSubscription } from "./state";
+import { discountOffCents, normaliseDiscount, normaliseSetupDiscount, type SetupDiscount, type PlanDiscount, dueDunningStep, dunningDays, isLinkExpired, LINK_TTL_DAYS, linkExpiresAt, shouldPause, isDuplicateSetupPayment, statusAfterFailure, statusFromSubscription } from "./state";
 import { findBySubscription, getSiteBilling, listSiteBilling, saveSiteBilling, setPayToken, type SiteBillingRecord } from "./store";
-import { BILLING_SOURCE, periodOf, siteUrl } from "./stripe-ops";
+import { BILLING_SOURCE, expireCheckoutSession, periodOf, siteUrl, stripeConfigured } from "./stripe-ops";
 import { redemptionFrom } from "../coupons/core";
 import { recordRedemptionUse, resolveRedemptionCode } from "../coupons/stripe";
 
@@ -100,6 +100,9 @@ export function previewSetupEmail(rec: SiteBillingRecord, siteDomain?: string, p
 
 /** Rotate a 7-day pay token and email the client. */
 export async function sendSetupLink(rec: SiteBillingRecord, siteDomain?: string): Promise<{ rec: SiteBillingRecord; emailed: boolean; payUrl: string }> {
+  // A new link may carry new prices, so never reuse the old Checkout Session.
+  if (rec.checkoutSessionId && stripeConfigured()) await expireCheckoutSession(rec.checkoutSessionId);
+  rec = { ...rec, checkoutSessionId: undefined };
   const token = crypto.randomBytes(24).toString("hex");
   await setPayToken(token, rec.siteId, LINK_TTL_DAYS * 86400 + 3600);
   const sentAt = new Date().toISOString();
@@ -149,6 +152,10 @@ export async function handleBillingEvent(event: { type: string; data: { object: 
       const rec = await getSiteBilling(o.metadata.siteId);
       if (!rec) return "no-record";
       if (o.metadata.kind === "setup") {
+        if (isDuplicateSetupPayment(rec, o.subscription)) {
+          await saveSiteBilling(rec, `Review: second setup payment received (session ${o.id}, subscription ${o.subscription}). Cancel and refund the duplicate in Stripe`);
+          return "duplicate-setup";
+        }
         const red = await resolveRedemptionCode(redemptionFrom(o));
         const useResult = await recordRedemptionUse(red, o.customer_details?.email || rec.contact?.email, o.id);
         const coupon = red ? { couponCode: red.code ?? red.promotionCodeId ?? (o.metadata.admin_coupon ? `Admin: ${rec.discount?.label || "Discount"}` : undefined), discountCents: red.discountCents } : {};

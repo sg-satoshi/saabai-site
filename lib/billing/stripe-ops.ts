@@ -39,7 +39,7 @@ export async function ensureCustomer(rec: SiteBillingRecord): Promise<string> {
  * Customers can type a promo code on Stripe's page, or a ?code= on the pay
  * link pre-applies one (Stripe doesn't allow both on one session).
  */
-export async function createSetupCheckout(rec: SiteBillingRecord, customerId: string, code?: string): Promise<string> {
+export async function createSetupCheckout(rec: SiteBillingRecord, customerId: string, code?: string): Promise<{ url: string; id: string }> {
   const stripe = getStripe();
   // Fixed per-plan product (set up from Marketing > Offers & Coupons) so product-restricted codes match.
   let fixedProduct = await careProductFor(rec.planId);
@@ -120,7 +120,19 @@ export async function createSetupCheckout(rec: SiteBillingRecord, customerId: st
     success_url: `${siteUrl()}/pay/done?site=${encodeURIComponent(rec.siteName)}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${siteUrl()}/pay/${rec.payToken}`,
   });
-  return session.url!;
+  return { url: session.url!, id: session.id };
+}
+
+/** Status and URL of an earlier setup Checkout Session (null if it can't be read). */
+export async function getCheckoutSession(id: string): Promise<{ status: string | null; url: string | null } | null> {
+  try {
+    const s = await getStripe().checkout.sessions.retrieve(id);
+    return { status: s.status ?? null, url: s.url ?? null };
+  } catch { return null; }
+}
+
+export async function expireCheckoutSession(id: string) {
+  try { await getStripe().checkout.sessions.expire(id); } catch { /* already expired or completed */ }
 }
 
 export async function billingPortalUrl(customerId: string, returnUrl: string, updateCard = false, configuration?: string): Promise<string> {

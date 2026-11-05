@@ -162,3 +162,19 @@ export function normaliseSetupDiscount(d: Partial<SetupDiscount> | undefined | n
   if (left > 0 && left < 100) return { ok: false, error: "After the discount the setup fee must be $0 (waived) or at least $1" };
   return r;
 }
+
+/**
+ * Re-opening the pay link: reuse the still-open Checkout Session (so two tabs or
+ * a second click can't create two subscriptions or pile up admin coupons).
+ * A ?code= on the link needs a fresh session, so the open one is expired first.
+ */
+export function checkoutReuseAction(sessionStatus: string | null | undefined, hasCode: boolean): "reuse" | "expire_then_new" | "new" | "already_paid" {
+  if (sessionStatus === "complete") return "already_paid";
+  if (sessionStatus === "open") return hasCode ? "expire_then_new" : "reuse";
+  return "new";
+}
+
+/** A completed setup checkout whose subscription differs from the one already live on the record. */
+export function isDuplicateSetupPayment(rec: { status: SiteBillingStatus; stripeSubscriptionId?: string }, sessionSubscription?: string | null): boolean {
+  return !!rec.stripeSubscriptionId && !!sessionSubscription && rec.stripeSubscriptionId !== sessionSubscription && rec.status !== "pending" && rec.status !== "link_expired" && rec.status !== "cancelled";
+}

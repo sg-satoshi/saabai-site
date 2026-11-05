@@ -146,3 +146,20 @@ test("setup discount: email shows original fee, discount and waiver", () => {
   assert.match(w.html, /setup fee is waived/);
   for (const m of [e, w]) assert.ok(!/\u2014/.test(m.html + m.text + m.subject));
 });
+
+test("pay link re-open reuses an open Checkout Session; a code forces a fresh one", async () => {
+  const { checkoutReuseAction } = await import("../lib/billing/state");
+  assert.equal(checkoutReuseAction("open", false), "reuse");
+  assert.equal(checkoutReuseAction("open", true), "expire_then_new");
+  assert.equal(checkoutReuseAction("complete", false), "already_paid");
+  assert.equal(checkoutReuseAction("expired", false), "new");
+  assert.equal(checkoutReuseAction(null, false), "new");
+});
+
+test("a second paid setup checkout never overwrites the live subscription", async () => {
+  const { isDuplicateSetupPayment } = await import("../lib/billing/state");
+  assert.equal(isDuplicateSetupPayment({ status: "active", stripeSubscriptionId: "sub_1" }, "sub_2"), true);
+  assert.equal(isDuplicateSetupPayment({ status: "active", stripeSubscriptionId: "sub_1" }, "sub_1"), false);
+  assert.equal(isDuplicateSetupPayment({ status: "pending" }, "sub_1"), false);
+  assert.equal(isDuplicateSetupPayment({ status: "cancelled", stripeSubscriptionId: "sub_1" }, "sub_2"), false);
+});
