@@ -27,6 +27,18 @@ export interface GeoProfile {
   faqs?: Array<{ q: string; a: string }>;
   /** Real, working, indexable pages. */
   pages: Array<{ path: string; title: string; priority?: number }>;
+  /** Google Place ID when verified. */
+  placeId?: string;
+  /** Public GBP / Maps URL. */
+  gbpUrl?: string;
+  /** Public PostalAddress parts. Omit street for service-area. */
+  postalAddress?: {
+    streetAddress?: string;
+    addressLocality?: string;
+    addressRegion?: string;
+    postalCode?: string;
+    addressCountry?: string;
+  };
 }
 
 export function robotsTxt(opts: { sitemapUrl: string; disallow?: string[] }): string {
@@ -73,6 +85,9 @@ export function llmsFullTxt(p: GeoProfile): string {
 
 /** Minimal JSON-LD for sites that have none; sites with their own keep it. */
 export function localBusinessJsonLd(p: GeoProfile, type: string | string[] = "LocalBusiness") {
+  const sameAs = p.gbpUrl ? [p.gbpUrl] : [];
+  const hasMap = p.gbpUrl
+    || (p.placeId ? `https://www.google.com/maps/place/?q=place_id:${p.placeId}` : undefined);
   return {
     "@context": "https://schema.org",
     "@type": type,
@@ -82,7 +97,10 @@ export function localBusinessJsonLd(p: GeoProfile, type: string | string[] = "Lo
     description: p.summary,
     ...(p.phone ? { telephone: p.phone } : {}),
     ...(p.email ? { email: p.email } : {}),
+    ...(p.postalAddress ? { address: { "@type": "PostalAddress", ...p.postalAddress } } : {}),
     ...(p.serviceAreas?.length ? { areaServed: p.serviceAreas.map((a) => ({ "@type": "Place", name: a })) } : {}),
+    ...(sameAs.length ? { sameAs } : {}),
+    ...(hasMap ? { hasMap } : {}),
   };
 }
 

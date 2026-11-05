@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import PoweredBySaabai from "@/app/components/PoweredBySaabai";
+import MapsPack from "@/app/components/MapsPack";
 import TributumChatWidget from "@/app/components/TributumChatWidget";
 
 const COLORS = {
@@ -545,6 +546,7 @@ export default function TributumLawPage() {
                 <p>+61 405 014 888</p>
                 <p>contact@tributumlaw.com</p>
                 <p>Level 1, 195 Victoria Square</p>
+                <div style={{ marginTop: 16 }}><MapsPack slug="tributum-law-v2" /></div>
                 <p>Adelaide SA 5000</p>
               </div>
             </div>

@@ -33,6 +33,15 @@ const jsonLd = {
     addressCountry: "AU",
   },
   areaServed: { "@type": "Country", name: "Australia" },
+  hasMap: "https://www.google.com/maps/search/?api=1&query=Level+1%2C+195+Victoria+Square%2C+Adelaide+SA+5000",
+  openingHoursSpecification: [
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      opens: "09:00",
+      closes: "18:00",
+    },
+  ],
 };
 
 export default function TributumV2Layout({ children }: { children: React.ReactNode }) {

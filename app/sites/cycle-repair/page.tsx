@@ -23,6 +23,7 @@ const jsonLd = {
   email: "stuscyclerepairs@gmail.com",
   url: "https://stuscyclerepairs.com/",
   sameAs: [FACEBOOK_URL, googleBusinessUrl],
+  hasMap: googleBusinessUrl,
   areaServed: AREA_SERVED,
   address: { "@type": "PostalAddress", addressRegion: "QLD", addressCountry: "AU" },
   priceRange: "$$",

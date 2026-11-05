@@ -21,7 +21,10 @@ export const NAP = {
   logo: `${SITE_URL}/brand/saabai-logo.png`,
 } as const;
 
-/** The only social or directory profile linked in this repo. */
+/**
+ * Social / directory profiles. Saabai Google Business Profile is suspended
+ * (15 Oct 2026). Do not add a Maps/GBP sameAs until it is reinstated.
+ */
 export const SAME_AS = ["https://www.linkedin.com/in/shanegoldberg-ai"] as const;
 
 export const POSTAL_ADDRESS = {

@@ -8,6 +8,9 @@ export const googleReviewCount = 28;
  * The kgmid (/g/1v_sndg3) and listing id come from the Maps place URL already
  * used by the reviews carousel. The old latitude/longitude pin is left out.
  */
+/** Verified Place ID (ChIJ) from Maps feature id; title-checked 5 Nov 2026. */
+export const googlePlaceId = "ChIJMTybEAUCkWsRN6_ET-Nqjus";
+
 export const googleBusinessUrl =
   "https://www.google.com/search?kgmid=/g/1v_sndg3&q=Stu%27s+Cycle+Repairs#lrd=0x6b910205109b3c31:0xeb8e6ae34fc4af37,1,,,,";
 

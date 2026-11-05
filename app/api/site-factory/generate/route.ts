@@ -27,6 +27,8 @@ export async function POST(req: NextRequest) {
       phone = "",
       email = "",
       address = "",
+      placeId = "",
+      gbpUrl = "",
       style = "",
       description = "",
       chatbot: chatbotInput = {},
@@ -85,7 +87,7 @@ NAV: overflow:hidden on the nav container. Logo text must not overflow. CTA butt
 
 COPY: Write specific, persuasive Australian business copy. Real suburb names. Concrete benefits. No Lorem Ipsum. No em dashes (—).
 
-SEO: JSON-LD LocalBusiness with most specific @type. Open Graph. Twitter Card. Semantic HTML5 landmarks.`;
+SEO: JSON-LD LocalBusiness with most specific @type, full NAP (street + postcode when public), openingHoursSpecification when hours are known, hasMap and sameAs when a Google Business URL or Place ID is provided, areaServed. Shopfront sites: lazy iframe Google Map plus Get directions. Service-area (mobile / no public address): no street pin. Never invent a Place ID or address. Open Graph. Twitter Card. Semantic HTML5 landmarks.`;
 
     const servicesList = services.length
       ? services.join(", ")
@@ -106,6 +108,8 @@ SEO: JSON-LD LocalBusiness with most specific @type. Open Graph. Twitter Card. S
       `PHONE: ${phone || "Contact us for a free quote"}`,
       email ? `EMAIL: ${email}` : ``,
       `ADDRESS: ${address || location}`,
+      placeId ? `GOOGLE_PLACE_ID: ${placeId}` : "",
+      gbpUrl ? `GOOGLE_BUSINESS_URL: ${gbpUrl}` : "",
       `SERVICES: ${servicesList}`,
       description ? `\nCLIENT BRIEF (follow carefully):\n${description}\n` : "",
       ``,
@@ -227,7 +231,7 @@ SEO: JSON-LD LocalBusiness with most specific @type. Open Graph. Twitter Card. S
             status: "live",
             source: "factory",
             url: siteUrl,
-            business: { name: businessName, tagline: "", phone, email, address },
+            business: { name: businessName, tagline: "", phone, email, address, ...(placeId ? { placeId } : {}), ...(gbpUrl ? { gbpUrl } : {}) },
             chatbot: {
               enabled: true,
               name: botName,
