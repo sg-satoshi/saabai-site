@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { dunningDays, dueDunningStep, isLinkExpired, linkExpiresAt, planChangeKind, prorate, shouldPause, statusAfterFailure, statusFromSubscription, upfrontTotals, normaliseDiscount, discountOffCents, discountLabel } from "../lib/billing/state";
+import { dunningDays, dueDunningStep, isLinkExpired, linkExpiresAt, planChangeKind, prorate, shouldPause, statusAfterFailure, statusFromSubscription, upfrontTotals, normaliseDiscount, discountOffCents, discountLabel, normaliseSetupDiscount } from "../lib/billing/state";
 import { isRetiredPortalAddon, normaliseCatalog, omitRetiredPortalAddons, SEED_CATALOG, type Addon } from "../lib/billing/catalog";
 import { paymentFailedEmail, setupLinkEmail } from "../lib/billing/emails";
 
@@ -122,4 +122,27 @@ test("discount: label and setup email show original, discount and new price", ()
   assert.match(e.html, /Founding client \(\$100\.00 off\)/);
   assert.match(e.html, /-\$100\.00/);
   assert.match(e.html, /saving \$100\.00 every month/);
+});
+
+// ---------- setup fee discount ----------
+
+test("setup discount: validation, waiver and sub-$1 guard", () => {
+  assert.deepEqual(normaliseSetupDiscount(undefined, 200000), { ok: true });
+  assert.deepEqual(normaliseSetupDiscount({ type: "percent", value: 50 }, 0), { ok: true });
+  assert.equal(normaliseSetupDiscount({ type: "percent", value: 100 }, 200000).ok, true);
+  assert.equal(normaliseSetupDiscount({ type: "amount", value: 200000 }, 200000).ok, true);
+  assert.equal(normaliseSetupDiscount({ type: "amount", value: 199950 }, 200000).ok, false);
+  assert.equal(normaliseSetupDiscount({ type: "amount", value: 300000 }, 200000).ok, false);
+});
+
+test("setup discount: email shows original fee, discount and waiver", () => {
+  const base = { contactName: "Jess", siteName: "Harbour Physio", planName: "Presence", monthlyCents: 10000, setupFeeCents: 200000, startDate: "2026-11-10", gst: false, payUrl: "https://x/pay/a" };
+  const e = setupLinkEmail({ ...base, setupDiscount: { type: "percent", value: 25, label: "Founding client" } });
+  assert.match(e.html, /\$2,000\.00/);
+  assert.match(e.html, /-\$500\.00/);
+  assert.match(e.html, /down from \$2,000\.00/);
+  assert.match(e.html, /\$1,600\.00/);
+  const w = setupLinkEmail({ ...base, setupDiscount: { type: "percent", value: 100 }, discount: { type: "percent", value: 100 } });
+  assert.match(w.html, /setup fee is waived/);
+  for (const m of [e, w]) assert.ok(!/\u2014/.test(m.html + m.text + m.subject));
 });

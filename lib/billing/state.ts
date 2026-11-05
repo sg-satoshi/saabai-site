@@ -149,3 +149,16 @@ export function discountLabel(d: PlanDiscount, money: (c: number) => string): st
   const dur = d.months ? `, ${d.months === 1 ? "first month" : `${d.months} months`}` : "";
   return `${d.label || "Discount"} (${what}${dur})`;
 }
+
+/** Admin discount on the one-off setup / site build fee (one charge, so no months). */
+export type SetupDiscount = Omit<PlanDiscount, "months">;
+
+/** Validate a setup fee discount. After it the fee is $0 (waived) or at least $1. */
+export function normaliseSetupDiscount(d: Partial<SetupDiscount> | undefined | null, setupCents: number): { ok: true; discount?: SetupDiscount } | { ok: false; error: string } {
+  if (!d || !d.type || !d.value || setupCents <= 0) return { ok: true };
+  const r = normaliseDiscount({ type: d.type, value: d.value, label: d.label }, setupCents);
+  if (!r.ok) return { ok: false, error: r.error.replace("monthly price", "setup fee") };
+  const left = r.discount ? setupCents - discountOffCents(setupCents, r.discount) : setupCents;
+  if (left > 0 && left < 100) return { ok: false, error: "After the discount the setup fee must be $0 (waived) or at least $1" };
+  return r;
+}

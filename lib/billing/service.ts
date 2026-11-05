@@ -7,7 +7,7 @@ import { sendBrandedEmail } from "../email/branded-layout";
 import { enableFeature, disableFeature } from "../addons/flags";
 import { getCatalog } from "./catalog";
 import { DEFAULT_SENDER, isAllowedSender, paymentFailedEmail, setupLinkEmail, sitePausedEmail } from "./emails";
-import { discountOffCents, normaliseDiscount, type PlanDiscount, dueDunningStep, dunningDays, isLinkExpired, LINK_TTL_DAYS, linkExpiresAt, shouldPause, statusAfterFailure, statusFromSubscription } from "./state";
+import { discountOffCents, normaliseDiscount, normaliseSetupDiscount, type SetupDiscount, type PlanDiscount, dueDunningStep, dunningDays, isLinkExpired, LINK_TTL_DAYS, linkExpiresAt, shouldPause, statusAfterFailure, statusFromSubscription } from "./state";
 import { findBySubscription, getSiteBilling, listSiteBilling, saveSiteBilling, setPayToken, type SiteBillingRecord } from "./store";
 import { BILLING_SOURCE, periodOf, siteUrl } from "./stripe-ops";
 import { redemptionFrom } from "../coupons/core";
@@ -28,6 +28,7 @@ export interface SetupInput {
   gst?: boolean;
   sender?: string;
   discount?: Partial<PlanDiscount>;
+  setupDiscount?: Partial<SetupDiscount>;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -49,9 +50,13 @@ export async function buildSetup(input: SetupInput): Promise<{ ok: true; rec: Si
   }
   const disc = normaliseDiscount(input.discount, monthlyCents);
   if (!disc.ok) return { ok: false, error: disc.error };
-  if (disc.discount && monthlyCents - discountOffCents(monthlyCents, disc.discount) < 100) {
-    return { ok: false, error: "After the discount the monthly price must be at least $1" };
+  const netMonthly = disc.discount ? monthlyCents - discountOffCents(monthlyCents, disc.discount) : monthlyCents;
+  if (netMonthly > 0 && netMonthly < 100) {
+    return { ok: false, error: "After the discount the monthly price must be $0 (waived) or at least $1" };
   }
+  const setupFeeCents = Math.max(0, Math.round(Number(input.setupFeeCents) || 0));
+  const sdisc = normaliseSetupDiscount(input.setupDiscount, setupFeeCents);
+  if (!sdisc.ok) return { ok: false, error: sdisc.error };
   const existing = await getSiteBilling(input.siteId);
   if (existing && !["link_expired", "cancelled", "pending"].includes(existing.status)) {
     return { ok: false, error: "This site already has billing set up" };
@@ -67,7 +72,8 @@ export async function buildSetup(input: SetupInput): Promise<{ ok: true; rec: Si
     monthlyCents,
     priceVersion,
     discount: disc.discount,
-    setupFeeCents: Math.max(0, Math.round(Number(input.setupFeeCents) || 0)),
+    setupFeeCents,
+    setupDiscount: sdisc.discount,
     setupFeeDescription: input.setupFeeDescription?.slice(0, 80),
     startDate: input.startDate,
     gst: !!input.gst && catalog.gstRegistered,
@@ -88,7 +94,7 @@ export function payUrlFor(token: string) {
 export function previewSetupEmail(rec: SiteBillingRecord, siteDomain?: string, payUrl = `${siteUrl()}/pay/preview`) {
   return setupLinkEmail({
     contactName: rec.contact.name, siteName: rec.siteName, siteDomain, planName: rec.planName, monthlyCents: rec.monthlyCents,
-    setupFeeCents: rec.setupFeeCents, setupFeeDescription: rec.setupFeeDescription, startDate: rec.startDate, gst: rec.gst, payUrl, discount: rec.discount,
+    setupFeeCents: rec.setupFeeCents, setupFeeDescription: rec.setupFeeDescription, startDate: rec.startDate, gst: rec.gst, payUrl, discount: rec.discount, setupDiscount: rec.setupDiscount,
   });
 }
 
