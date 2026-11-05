@@ -20,3 +20,26 @@ Confidence tags: Certain / Likely / Guessing.
 
 - Embeds use keyless fallback until `NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY` is set.
 - Console links: see `GOOGLE-MAPS-EMBED-KEY.md`.
+
+## Schema / rich results
+
+- Local builder check: all 10 active profiles produce JSON-LD with `@context`, `@type`, `@id`, `name`, `url`. Service-area profiles have no `streetAddress`. Samples: `schema-samples.json`.
+- Unit tests: `tests/maps-pack.test.ts` (6/6 pass), also wired into `test:portal`.
+- Google Rich Results Test not run against the Vercel preview (Deployment Protection / SSO login wall). After merge or with preview auth, test:
+  - https://search.google.com/test/rich-results
+  - Stu contact + Tributum home JSON-LD
+
+## Screenshots
+
+Local MapsPack mocks (not SSO preview):
+
+- `docs/maps-pack/screenshots/tributum-mapspack-mobile.png`
+- `docs/maps-pack/screenshots/stu-review-us-mobile.png`
+- `docs/maps-pack/screenshots/maps-pack-preview-desktop.png`
+
+## Blob scripts (await Shane upload approval)
+
+- `scripts/maps-pack/patch-blob-inkfx.mjs` + `out/inkfx-printing.index.patched.html` (dry-run done)
+- `scripts/maps-pack/patch-blob-blue-sky.mjs` (blocked: placeholder NAP)
+- Backups under `scripts/maps-pack/backups/`
+- Heaven Thai: no script
