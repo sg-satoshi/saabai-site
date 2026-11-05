@@ -7,9 +7,9 @@ import { sendBrandedEmail } from "../email/branded-layout";
 import { enableFeature, disableFeature } from "../addons/flags";
 import { getCatalog } from "./catalog";
 import { DEFAULT_SENDER, isAllowedSender, paymentFailedEmail, setupLinkEmail, sitePausedEmail } from "./emails";
-import { discountOffCents, normaliseDiscount, normaliseSetupDiscount, type SetupDiscount, type PlanDiscount, dueDunningStep, dunningDays, isLinkExpired, LINK_TTL_DAYS, linkExpiresAt, shouldPause, isDuplicateSetupPayment, statusAfterFailure, statusFromSubscription } from "./state";
+import { discountOffCents, normaliseDiscount, normaliseSetupDiscount, type SetupDiscount, type PlanDiscount, dueDunningStep, dunningDays, isLinkExpired, LINK_TTL_DAYS, linkExpiresAt, shouldPause, isDuplicateSetupPayment, validateFirstPaymentDate, statusAfterFailure, statusFromSubscription } from "./state";
 import { findBySubscription, getSiteBilling, listSiteBilling, saveSiteBilling, setPayToken, type SiteBillingRecord } from "./store";
-import { BILLING_SOURCE, expireCheckoutSession, periodOf, siteUrl, stripeConfigured } from "./stripe-ops";
+import { addDeferredSetupFee, BILLING_SOURCE, expireCheckoutSession, periodOf, siteUrl, stripeConfigured } from "./stripe-ops";
 import { redemptionFrom } from "../coupons/core";
 import { recordRedemptionUse, resolveRedemptionCode } from "../coupons/stripe";
 
@@ -36,7 +36,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export async function buildSetup(input: SetupInput): Promise<{ ok: true; rec: SiteBillingRecord } | { ok: false; error: string }> {
   if (!input.siteId) return { ok: false, error: "Missing site" };
   if (!EMAIL_RE.test(input.contactEmail || "")) return { ok: false, error: "Enter a valid client email" };
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.startDate || "")) return { ok: false, error: "Pick a start date" };
+  const dateErr = validateFirstPaymentDate(input.startDate);
+  if (dateErr) return { ok: false, error: dateErr };
   const catalog = await getCatalog();
   let planName: string, monthlyCents: number, priceVersion: number | undefined;
   if (input.planId === "custom") {
@@ -159,7 +160,18 @@ export async function handleBillingEvent(event: { type: string; data: { object: 
         const red = await resolveRedemptionCode(redemptionFrom(o));
         const useResult = await recordRedemptionUse(red, o.customer_details?.email || rec.contact?.email, o.id);
         const coupon = red ? { couponCode: red.code ?? red.promotionCodeId ?? (o.metadata.admin_coupon ? `Admin: ${rec.discount?.label || "Discount"}` : undefined), discountCents: red.discountCents } : {};
-        await saveSiteBilling({ ...rec, ...coupon, status: "active", stripeCustomerId: o.customer || rec.stripeCustomerId, stripeSubscriptionId: o.subscription || rec.stripeSubscriptionId, failedAt: undefined, dunningSent: 0 }, red ? `Paid, subscription active (code ${coupon.couponCode})${useResult === "repeat" ? ". Review: this email had already used this one-per-customer code" : ""}` : "Paid, subscription active");
+        // Future first payment: the setup fee goes on the first real invoice (at trial end).
+        const deferred = Number(o.metadata.deferred_setup_cents || 0);
+        let setupNote = "";
+        if (deferred > 0 && o.subscription && !rec.setupFeeQueued) {
+          try {
+            await addDeferredSetupFee(String(o.customer), String(o.subscription), deferred, o.metadata.setup_name || "Setup fee", o.id);
+            setupNote = `. Setup fee ${(deferred / 100).toFixed(2)} added to the first invoice`;
+          } catch (e) {
+            setupNote = `. Review: setup fee NOT added to the first invoice (${String((e as Error)?.message || e).slice(0, 120)})`;
+          }
+        }
+        await saveSiteBilling({ ...rec, ...coupon, ...(setupNote.startsWith(". Setup") ? { setupFeeQueued: true } : {}), status: "active", stripeCustomerId: o.customer || rec.stripeCustomerId, stripeSubscriptionId: o.subscription || rec.stripeSubscriptionId, failedAt: undefined, dunningSent: 0 }, (red ? `Paid, subscription active (code ${coupon.couponCode})${useResult === "repeat" ? ". Review: this email had already used this one-per-customer code" : ""}` : "Paid, subscription active") + setupNote);
         return "setup-active";
       }
       if (o.metadata.kind === "addon") {

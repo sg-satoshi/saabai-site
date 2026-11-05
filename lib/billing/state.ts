@@ -178,3 +178,55 @@ export function checkoutReuseAction(sessionStatus: string | null | undefined, ha
 export function isDuplicateSetupPayment(rec: { status: SiteBillingStatus; stripeSubscriptionId?: string }, sessionSubscription?: string | null): boolean {
   return !!rec.stripeSubscriptionId && !!sessionSubscription && rec.stripeSubscriptionId !== sessionSubscription && rec.status !== "pending" && rec.status !== "link_expired" && rec.status !== "cancelled";
 }
+
+// ---------- first payment date ----------
+
+export const FIRST_PAYMENT_MAX_DAYS = 90;
+
+/** Today's date (YYYY-MM-DD) in Brisbane. */
+export function brisbaneToday(now = Date.now()): string {
+  return new Date(now).toLocaleDateString("en-CA", { timeZone: "Australia/Brisbane" });
+}
+
+/** First payment date must be today up to 90 days out (Brisbane dates). */
+export function validateFirstPaymentDate(date: string, now = Date.now()): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date || "")) return "Pick a first payment date";
+  const today = brisbaneToday(now);
+  if (date < today) return "First payment date can't be in the past";
+  if (Date.parse(`${date}T00:00:00+10:00`) - Date.parse(`${today}T00:00:00+10:00`) > FIRST_PAYMENT_MAX_DAYS * DAY) return `First payment date must be within ${FIRST_PAYMENT_MAX_DAYS} days`;
+  return null;
+}
+
+/** When the first charge happens: at Checkout (today or a date already passed) or on a future date. */
+export function firstChargeAt(date: string, now = Date.now()): { mode: "now" } | { mode: "future"; at: number } {
+  if (date <= brisbaneToday(now)) return { mode: "now" };
+  return { mode: "future", at: Date.parse(`${date}T09:00:00+10:00`) };
+}
+
+function addMonths(ms: number, n: number): number {
+  const d = new Date(ms);
+  d.setUTCMonth(d.getUTCMonth() + n);
+  return d.getTime();
+}
+
+/**
+ * Stripe counts a repeating coupon's months from when it's redeemed (Checkout),
+ * not from the first charge. For N discounted charges starting at firstChargeMs,
+ * the coupon must still be running at the Nth charge and over by the (N+1)th.
+ */
+export function couponDurationMonths(months: number, nowMs: number, firstChargeMs?: number): number {
+  if (!firstChargeMs || firstChargeMs <= nowMs) return months;
+  let k = 0;
+  while (addMonths(nowMs, k) <= firstChargeMs) k++;
+  return months - 1 + k;
+}
+
+/** Monthly charge dates (ms) from the first charge, for tests and copy. */
+export function chargeDates(firstChargeMs: number, count: number): number[] {
+  return Array.from({ length: count }, (_, i) => addMonths(firstChargeMs, i));
+}
+
+/** Is a repeating coupon redeemed at nowMs still on at chargeMs? (Stripe: ends nowMs + months) */
+export function couponCovers(nowMs: number, durationMonths: number, chargeMs: number): boolean {
+  return chargeMs < addMonths(nowMs, durationMonths);
+}
