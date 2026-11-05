@@ -16,7 +16,7 @@ import {
 import { SUNDER_IDENTITY } from "../lib/email/constants";
 import { SUNDER_LOGO_URL, documentHtml, textToBlocks } from "../lib/email/blocks";
 import { MIN_SENDS_FOR_RATES, rateDecision, sendBlocked, splitByDailyCap } from "../lib/email/gates";
-import { certUrlAllowed, providerEventsFromSns, snsSigningString, subscribeUrlAllowed, verifySnsSignature } from "../lib/email/sns";
+import { certUrlAllowed, providerEventsFromSns, snsSigningString, subscribeUrlAllowed, trackingEventFromSns, verifySnsSignature } from "../lib/email/sns";
 import { createSign, generateKeyPairSync } from "node:crypto";
 import { readEmailToken, signEmailToken } from "../lib/email/tokens";
 import { drainOutbox, type Outbox, type OutboxRow } from "../lib/email/worker";
@@ -392,4 +392,31 @@ test("routes, cron and the public proxy list match the module", () => {
   assert.match(readFileSync("app/api/email/unsubscribe/route.ts", "utf8"), /status: 405/);
   assert.match(readFileSync("lib/email/ses.ts", "utf8"), /ConfigurationSetName is set only when/);
   assert.equal(readFileSync("lib/website-tiers.ts", "utf8").includes("email_tenants"), false);
+});
+
+test("SES delivery, open and click events map to tracking events by message id", () => {
+  const now = new Date("2026-11-05T03:00:00.000Z");
+  const mail = { messageId: "0108-abc", tags: { tenant: ["sunder"], kind: ["marketing"] } };
+  const open = trackingEventFromSns(JSON.stringify({ eventType: "Open", mail, open: { timestamp: "2026-11-05T02:00:00.000Z" } }), now);
+  assert.deepEqual(open, { messageId: "0108-abc", type: "open", at: "2026-11-05T02:00:00.000Z", tenant: "sunder" });
+  assert.equal(trackingEventFromSns(JSON.stringify({ eventType: "Click", mail, click: { timestamp: "2026-11-05T02:01:00.000Z" } }), now)?.type, "click");
+  assert.equal(trackingEventFromSns(JSON.stringify({ notificationType: "Delivery", mail, delivery: { timestamp: "2026-11-05T01:00:00.000Z" } }), now)?.type, "delivery");
+  // Bounce, complaint, junk and missing ids are not tracking events.
+  assert.equal(trackingEventFromSns(JSON.stringify({ eventType: "Bounce", mail }), now), null);
+  assert.equal(trackingEventFromSns(JSON.stringify({ eventType: "Open", mail: {} }), now), null);
+  assert.equal(trackingEventFromSns("not json", now), null);
+  // A bad tenant tag is dropped; a wild timestamp falls back to now.
+  const odd = trackingEventFromSns(JSON.stringify({ eventType: "Open", mail: { messageId: "x", tags: { tenant: ["Bad Tenant!"] } }, open: { timestamp: "2099-01-01T00:00:00Z" } }), now);
+  assert.equal(odd?.tenant, null);
+  assert.equal(odd?.at, now.toISOString());
+});
+
+test("engagement migration is idempotent, tenant scoped and broadcast only", () => {
+  const sql = readFileSync("db/migrations/017_email_engagement.sql", "utf8");
+  assert.match(sql, /add column if not exists first_open_at/);
+  assert.match(sql, /least\(coalesce\(s\.first_open_at, p_at\), p_at\)/);
+  assert.match(sql, /s\.tenant_id = \(select t\.id from email_tenants t where t\.slug = p_tenant\)/);
+  assert.match(sql, /c\.kind = 'broadcast'/);
+  assert.match(sql, /revoke all on function email_track_event/);
+  assert.doesNotMatch(sql, /\u2014|\u2013/);
 });

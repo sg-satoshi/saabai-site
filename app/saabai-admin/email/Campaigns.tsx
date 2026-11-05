@@ -79,6 +79,10 @@ export default function Campaigns() {
   }
 
   const snap = data && data.ok ? data : null;
+  const tracked = !!snap && (snap.delivered30 || 0) > 0;
+  const pct = (n: number) => (tracked ? `${((n / snap!.delivered30) * 100).toFixed(1)}%` : "no data");
+  const openRate = pct(snap?.opened30 || 0);
+  const clickRate = pct(snap?.clicked30 || 0);
   const unsubRate = snap && snap.sent30 > 0 ? `${((snap.unsub30 / snap.sent30) * 100).toFixed(1)}%` : "no data";
 
   return (
@@ -108,8 +112,8 @@ export default function Campaigns() {
 
       <div className="kpis">
         <div className="card kpi"><div className="l">Sent, last 30 days</div><div className="v">{snap ? snap.sent30.toLocaleString("en-AU") : "..."}</div><div className="d">Confirmed recipients only</div></div>
-        <div className="card kpi"><div className="l">Open rate (indicative)</div><div className="v">no data</div><div className="d">Not measured on this account yet</div></div>
-        <div className="card kpi"><div className="l">Click rate</div><div className="v">no data</div><div className="d">Not measured on this account yet</div></div>
+        <div className="card kpi"><div className="l">Open rate (indicative)</div><div className="v">{openRate}</div><div className="d">{tracked ? `${snap!.opened30.toLocaleString("en-AU")} of ${snap!.delivered30.toLocaleString("en-AU")} delivered. Apple Mail can inflate opens` : "Not measured yet"}</div></div>
+        <div className="card kpi"><div className="l">Click rate</div><div className="v">{clickRate}</div><div className="d">{tracked ? `${snap!.clicked30.toLocaleString("en-AU")} of ${snap!.delivered30.toLocaleString("en-AU")} delivered` : "Not measured yet"}</div></div>
         <div className="card kpi"><div className="l">Unsubscribe rate</div><div className="v">{unsubRate}</div><div className="d">{snap && snap.sent30 > 0 ? "Last 30 days" : "Needs sends in the last 30 days"}</div></div>
       </div>
 

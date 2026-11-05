@@ -103,3 +103,29 @@ export function providerEventsFromSns(message: string): ProviderEvent[] {
   }
   return [];
 }
+
+export type TrackingEvent = { messageId: string; type: "delivery" | "open" | "click"; at: string; tenant: string | null };
+
+/**
+ * Delivery, Open and Click events from the SES configuration set.
+ * Matched later by SES message id. Returns null for anything else or a bad payload.
+ */
+export function trackingEventFromSns(message: string, now: Date = new Date()): TrackingEvent | null {
+  let body: Record<string, unknown>;
+  try { body = JSON.parse(message) as Record<string, unknown>; } catch { return null; }
+  if (!body || typeof body !== "object") return null;
+  const kind = String(body.eventType || body.notificationType || "");
+  const type = kind === "Delivery" ? "delivery" : kind === "Open" ? "open" : kind === "Click" ? "click" : null;
+  if (!type) return null;
+  const mail = (body.mail && typeof body.mail === "object" ? body.mail : {}) as { messageId?: unknown; tags?: Record<string, unknown> };
+  const messageId = typeof mail.messageId === "string" ? mail.messageId.trim() : "";
+  if (!messageId || messageId.length > 200) return null;
+  const detail = (body[type] && typeof body[type] === "object" ? body[type] : {}) as { timestamp?: unknown };
+  const parsed = typeof detail.timestamp === "string" ? Date.parse(detail.timestamp) : NaN;
+  // Fall back to now for a missing or wild timestamp (more than a day in the future).
+  const at = Number.isFinite(parsed) && parsed <= now.getTime() + 24 * 60 * 60 * 1000 ? new Date(parsed) : now;
+  const tagList = mail.tags && typeof mail.tags === "object" ? (mail.tags as Record<string, unknown>).tenant : undefined;
+  const rawTenant = Array.isArray(tagList) && typeof tagList[0] === "string" ? tagList[0] : "";
+  const tenant = /^[a-z0-9][a-z0-9-]{0,30}$/.test(rawTenant) ? rawTenant : null;
+  return { messageId, type, at: at.toISOString(), tenant };
+}

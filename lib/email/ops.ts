@@ -28,6 +28,7 @@ import { readEmailToken } from "./tokens";
 import type { ContactEdit } from "./contact-admin";
 import { editLocked } from "./contact-copy";
 import { drainOutbox, tokenEmail, type Outbox, type OutboxRow } from "./worker";
+import type { TrackingEvent } from "./sns";
 
 const MIGRATION = "Apply db/migrations/009_email_marketing.sql in the Supabase SQL editor, then refresh.";
 
@@ -86,11 +87,12 @@ export async function adminSnapshot(): Promise<EmailAdminSnapshot | { ok: false;
     sendingPaused(db, tenant),
   ]);
   const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-  const [series, campaigns, sent30q, unsub30q] = await Promise.all([
+  const [series, campaigns, sent30q, unsub30q, engagement] = await Promise.all([
     loadSeries(db, tenant.id),
     loadCampaigns(db),
     db.from("email_sends").select("id", { count: "exact", head: true }).eq("tenant_id", tenant.id).eq("kind", "marketing").eq("status", "sent").gte("sent_at", since30),
     db.from("email_suppressions").select("id", { count: "exact", head: true }).eq("tenant_id", tenant.id).ilike("reason", "%unsub%").gte("created_at", since30),
+    loadEngagement(db, tenant.id),
   ]);
   return {
     ok: true,
@@ -102,6 +104,7 @@ export async function adminSnapshot(): Promise<EmailAdminSnapshot | { ok: false;
     counts: { subscribed, pending, unsubscribed, suppressed },
     sent30: sent30q.count ?? 0,
     unsub30: unsub30q.count ?? 0,
+    ...engagement,
     series,
     campaigns,
   };
@@ -1062,6 +1065,29 @@ export async function unsubscribeByToken(token: string): Promise<{ ok: true } | 
     if (tenant) await db.from("email_suppressions").update({ campaign_id: parsed.c }).eq("tenant_id", tenant.id).eq("email", parsed.e);
   }
   return { ok: true };
+}
+
+/** Delivery, open or click from the sending provider. Idempotent; unknown message ids are ignored. */
+export async function recordTrackingEvent(event: TrackingEvent): Promise<{ ok: true; matched: boolean } | { ok: false; error: string }> {
+  let db: SupabaseClient;
+  try { db = emailDb(); } catch { return { ok: false, error: "no database" }; }
+  const { data, error } = await db.rpc("email_track_event", { p_message_id: event.messageId, p_type: event.type, p_at: event.at, p_tenant: event.tenant });
+  if (error) {
+    // Before migration 017 is applied, accept and drop the event rather than make SNS retry forever.
+    if (isMissingSchema(error)) return { ok: true, matched: false };
+    return { ok: false, error: error.message };
+  }
+  return { ok: true, matched: data === true };
+}
+
+async function loadEngagement(db: SupabaseClient, tenantId: string): Promise<{ delivered30: number; opened30: number; clicked30: number }> {
+  const { data, error } = await db.rpc("email_engagement", { p_tenant: tenantId, p_days: 30 });
+  if (error) {
+    if (isMissingSchema(error)) return { delivered30: 0, opened30: 0, clicked30: 0 };
+    throw new Error(error.message);
+  }
+  const row = (Array.isArray(data) ? data[0] : data) as { delivered?: number | string; opened?: number | string; clicked?: number | string } | null;
+  return { delivered30: Number(row?.delivered || 0), opened30: Number(row?.opened || 0), clicked30: Number(row?.clicked || 0) };
 }
 
 /** Hard bounce or complaint from the sending provider. Feeds suppression, series exit, and auto-pause. */
