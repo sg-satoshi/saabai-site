@@ -12,11 +12,12 @@ import { mergeToken } from "../../../lib/personalise";
 
 type Detail = {
   ok: true;
-  campaign: { id: string; name: string; subject: string; preheader: string; blocks: Block[]; fromName: string; status: string; testHash: string | null; testSentAt: string | null };
+  campaign: { id: string; name: string; subject: string; preheader: string; blocks: Block[]; fromName: string; status: string; testHash: string | null; testSentAt: string | null; listId?: string | null };
   fromEmail: string;
   defaultFromName?: string;
   paused: boolean;
   audience: number;
+  selected?: number | null;
   pending: number;
   unsubscribed: number;
   suppressed: number;
@@ -223,8 +224,15 @@ function patch(blockId: string, next: Partial<Block>) {
         <div style={{ display: "grid", gap: 16 }}>
           <div className="card"><div className="bd" style={{ display: "grid", gap: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between" }}><b>Audience</b><span className="em-help">Required</span></div>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}><span>Waitlist, confirmed only</span><b className="num">{audience.toLocaleString("en-AU")} recipients</b></div>
-            <p className="em-help">Excludes {detail?.unsubscribed || 0} unsubscribed and {detail?.suppressed || 0} suppressed. {detail?.pending || 0} pending confirmation are not in this audience.</p>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+              <span>{detail?.campaign.listId ? "Smart list (static selection)" : "Waitlist, confirmed only"}</span>
+              <b className="num">{audience.toLocaleString("en-AU")} recipients</b>
+            </div>
+            {detail?.campaign.listId ? (
+              <p className="em-help">{(detail.selected ?? 0).toLocaleString("en-AU")} selected, {audience.toLocaleString("en-AU")} eligible now (confirmed, consented, not unsubscribed or suppressed). Eligibility is checked again at send.</p>
+            ) : (
+              <p className="em-help">Excludes {detail?.unsubscribed || 0} unsubscribed and {detail?.suppressed || 0} suppressed. {detail?.pending || 0} pending confirmation are not in this audience.</p>
+            )}
             <label className="em-field">Name<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
             <div className="em-field">
               <div className="em-labelrow"><label htmlFor="em-subject">Subject</label><InsertField onPick={(t) => insertInto(subjectRef.current, subject, setSubject, t)} /></div>
@@ -326,7 +334,7 @@ function patch(blockId: string, next: Partial<Block>) {
             <div className="em-kv">
               <span>Campaign</span><b>{name}</b>
               <span>From</span><b>{fromName}, {detail?.fromEmail || "hello@sunder.com.au"}</b>
-              <span>Audience</span><b className="num">{audience.toLocaleString("en-AU")} confirmed</b>
+              <span>Audience</span><b className="num">{detail?.campaign.listId ? `${audience.toLocaleString("en-AU")} of ${(detail.selected ?? audience).toLocaleString("en-AU")} selected` : `${audience.toLocaleString("en-AU")} confirmed`}</b>
               <span>Daily cap</span><span>{capLine}</span>
               <span>Test sent</span><span>{testedAt ? `Yes, ${new Date(testedAt).toLocaleTimeString("en-AU", { timeZone: "Australia/Brisbane", hour: "numeric", minute: "2-digit" })}` : "No"}</span>
             </div>

@@ -201,6 +201,17 @@ export default function Subscribers() {
     load();
   }
 
+  async function sendEmail() {
+    if (!selected.size) return;
+    setSaving(true);
+    setNote("");
+    const j = await post({ action: "createListCampaign", ids: [...selected] });
+    setSaving(false);
+    if (!j.ok) { setNote(j.error || "Could not open a draft for that selection."); return; }
+    flash(`${j.eligible} of ${j.selected} can be emailed. Opening draft.`);
+    window.location.href = `/saabai-admin/email/${j.campaignId}`;
+  }
+
   function exp() {
     const rows = data?.people || [];
     const body = ["email,status,consent_source,consent_at", ...rows.map((p) => [p.email, p.status, p.consent_source || "", p.consent_at || ""].join(","))].join("\n");
@@ -246,6 +257,11 @@ export default function Subscribers() {
             </select>
           </label>
           <button type="button" className="btn sm" onClick={() => { setQ(""); setStatus("all"); load("all", ""); }}>Clear</button>
+          {!!people.length && (
+            <button type="button" className="btn sm" onClick={() => setSelected(allOn ? new Set() : new Set(people.map((p) => p.id)))}>
+              {allOn ? "Clear selection" : "Select all shown"}
+            </button>
+          )}
           <span className="em-help" style={{ marginLeft: "auto" }}>{data ? `${data.people.length} shown` : ""}</span>
         </div>
         {selected.size > 0 && (
@@ -253,6 +269,7 @@ export default function Subscribers() {
             <b>{selected.size} selected</b>
             <button type="button" className="btn sm" onClick={() => setSelected(new Set())}>Clear selection</button>
             <button type="button" className="btn sm dg" onClick={() => setConfirmIds([...selected])}>Delete {selected.size}</button>
+            <button type="button" className="btn sm pri" disabled={saving} onClick={sendEmail}>{saving ? "Opening..." : "Send email"}</button>
           </div>
         )}
         {err && <div className="bd"><div className="em-alert bad">{err}</div></div>}

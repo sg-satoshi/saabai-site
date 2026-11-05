@@ -26,6 +26,7 @@ import { sendSes, sesConfigured, type SesMessage } from "./ses";
 import type { CampaignView, EmailAdminSnapshot, SeriesStepView } from "./types";
 import { readEmailToken } from "./tokens";
 import type { ContactEdit } from "./contact-admin";
+import { listCampaignName } from "./contact-admin";
 import { editLocked } from "./contact-copy";
 import { drainOutbox, tokenEmail, type Outbox, type OutboxRow } from "./worker";
 import type { TrackingEvent } from "./sns";
@@ -242,6 +243,7 @@ type CampaignRow = {
   scheduled_at: string | null;
   send_confirmed: boolean | null;
   typed_confirm?: boolean | null;
+  list_id?: string | null;
 };
 
 function campaignContent(row: CampaignRow): { subject: string; preheader: string; blocks: Block[] } | { error: string } {
@@ -341,15 +343,51 @@ async function deliverOne(db: SupabaseClient, tenantId: string, row: OutboxRow):
   return { ok: false, error: result.failed ? "The sending provider rejected the test. The send row is marked failed." : "The test did not send." };
 }
 
-async function audienceNow(db: SupabaseClient, tenantId: string) {
+type AudienceContact = { id: string; email: string; first_name: string | null; status: string; confirmed_at: string | null };
+
+/** Members of a static list that still exist for this tenant. Cross-tenant ids are dropped. */
+async function loadListContacts(db: SupabaseClient, tenantId: string, listId: string): Promise<AudienceContact[]> {
+  const list = await db.from("audience_lists").select("id").eq("id", listId).eq("tenant_id", tenantId).maybeSingle();
+  if (list.error) {
+    if (isMissingSchema(list.error)) throw new Error("Apply db/migrations/018_audience_lists.sql in the Supabase SQL editor, then refresh.");
+    throw new Error(list.error.message);
+  }
+  if (!list.data) throw new Error("That audience list was not found.");
+  const ids: string[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await db.from("audience_list_members").select("contact_id").eq("list_id", listId).range(from, from + 999);
+    if (error) throw new Error(error.message);
+    const rows = (data || []) as { contact_id: string }[];
+    for (const r of rows) ids.push(r.contact_id);
+    if (rows.length < 1000) break;
+  }
+  const out: AudienceContact[] = [];
+  for (let i = 0; i < ids.length; i += 200) {
+    const chunk = ids.slice(i, i + 200);
+    if (!chunk.length) continue;
+    const { data, error } = await db.from("email_contacts")
+      .select("id,email,first_name,status,confirmed_at")
+      .eq("tenant_id", tenantId)
+      .in("id", chunk);
+    if (error) throw new Error(error.message);
+    out.push(...((data || []) as AudienceContact[]));
+  }
+  return out;
+}
+
+/**
+ * Audience for a broadcast. listId null = all confirmed on the tenant.
+ * A list is a static snapshot; consent (subscribed + confirmed + not suppressed) is re-checked here.
+ */
+async function audienceNow(db: SupabaseClient, tenantId: string, listId: string | null = null) {
   const { error: syncError } = await db.rpc("email_sync_sunder");
   if (syncError) throw new Error(syncError.message);
-  const contacts = await listConfirmed(db, tenantId);
+  const contacts = listId ? await loadListContacts(db, tenantId, listId) : await listConfirmed(db, tenantId);
   const blocked = await suppressedEmails(db, tenantId, contacts.map((c) => c.email));
   const gate = mailableContacts(contacts.map((c) => ({ ...c, confirmedAt: c.confirmed_at })), blocked);
   const pending = await countStatus(db, tenantId, "pending");
   const unsubscribed = await countStatus(db, tenantId, "unsubscribed");
-  return { gate, pending, unsubscribed, suppressed: gate.suppressed };
+  return { gate, pending, unsubscribed, suppressed: gate.suppressed, selected: contacts.length, listId };
 }
 
 async function usedToday(db: SupabaseClient, tenantId: string, now = new Date()): Promise<number> {
@@ -368,14 +406,14 @@ export async function queueBroadcast(input: { campaignId: string; confirm?: stri
   const ready = await requireReady();
   if ("error" in ready) return { ok: false, error: ready.error };
   const paused = await sendingPaused(ready.db, ready.tenant);
-  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed,typed_confirm").eq("id", input.campaignId).eq("tenant_id", ready.tenant.id).maybeSingle();
+  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed,typed_confirm,list_id").eq("id", input.campaignId).eq("tenant_id", ready.tenant.id).maybeSingle();
   if (loaded.error || !loaded.data) return { ok: false, error: loaded.error?.message || "Campaign not found." };
   const row = loaded.data as CampaignRow;
   if (row.status !== "draft" && row.status !== "scheduled") return { ok: false, error: ALREADY };
   const content = campaignContent(row);
   if ("error" in content) return { ok: false, error: content.error };
   let audience;
-  try { audience = await audienceNow(ready.db, ready.tenant.id); }
+  try { audience = await audienceNow(ready.db, ready.tenant.id, row.list_id || null); }
   catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Could not read the list." }; }
   const fromName = cleanFromName(row.from_name || ready.tenant.from_name);
   const hash = contentHash({ ...content, fromName });
@@ -585,15 +623,16 @@ export function liveOutbox(db: SupabaseClient, tenant: TenantRow): Outbox {
 export async function campaignDetail(id: string) {
   const ready = await requireReady();
   if ("error" in ready) return { ok: false as const, error: ready.error };
-  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed").eq("id", id).eq("tenant_id", ready.tenant.id).maybeSingle();
+  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed,list_id").eq("id", id).eq("tenant_id", ready.tenant.id).maybeSingle();
   if (loaded.error || !loaded.data) return { ok: false as const, error: loaded.error?.message || "Campaign not found." };
   const row = loaded.data as CampaignRow;
   const blocks = parseBlocks(row.blocks) || [];
   let audience;
-  try { audience = await audienceNow(ready.db, ready.tenant.id); }
+  try { audience = await audienceNow(ready.db, ready.tenant.id, row.list_id || null); }
   catch (e) { return { ok: false as const, error: e instanceof Error ? e.message : "Could not read the list." }; }
   const used = await usedToday(ready.db, ready.tenant.id);
   const cap = ready.tenant.daily_cap ?? DEFAULT_DAILY_CAP;
+  const listId = row.list_id || null;
   return {
     ok: true as const,
     campaign: {
@@ -607,11 +646,13 @@ export async function campaignDetail(id: string) {
       testHash: row.test_hash,
       testSentAt: row.test_sent_at,
       scheduledAt: row.scheduled_at,
+      listId,
     },
     fromEmail: ready.tenant.from_email,
     defaultFromName: ready.tenant.from_name || SUNDER_FROM_NAME,
     paused: await sendingPaused(ready.db, ready.tenant),
     audience: audience.gate.recipients.length,
+    selected: listId ? audience.selected : null,
     pending: audience.pending,
     unsubscribed: audience.unsubscribed,
     suppressed: audience.suppressed,
@@ -772,6 +813,80 @@ export async function importContacts(csv: string): Promise<{ ok: true; added: nu
   return { ok: true, added, skipped };
 }
 
+/**
+ * From the subscribers page: save a static smart list of the selected contact ids
+ * and open a draft broadcast aimed only at that list. Consent is re-checked at send.
+ * The list is channel-agnostic (contact ids) so SMS can reuse it later.
+ */
+export async function createListCampaign(ids: string[]): Promise<
+  { ok: true; campaignId: string; listId: string; selected: number; eligible: number }
+  | { ok: false; error: string }
+> {
+  const ready = await requireReady();
+  if ("error" in ready) return { ok: false, error: ready.error };
+  const { db, tenant } = ready;
+  const found: AudienceContact[] = [];
+  for (let i = 0; i < ids.length; i += 200) {
+    const chunk = ids.slice(i, i + 200);
+    const { data, error } = await db.from("email_contacts")
+      .select("id,email,first_name,status,confirmed_at")
+      .eq("tenant_id", tenant.id)
+      .in("id", chunk);
+    if (error) {
+      if (isMissingSchema(error)) return { ok: false, error: "Apply db/migrations/018_audience_lists.sql in the Supabase SQL editor, then refresh." };
+      return { ok: false, error: error.message };
+    }
+    found.push(...((data || []) as AudienceContact[]));
+  }
+  if (!found.length) return { ok: false, error: "Those subscribers were not found. Refresh the list." };
+  const name = listCampaignName(found.length);
+  const createdList = await db.from("audience_lists").insert({
+    tenant_id: tenant.id,
+    name,
+    kind: "static",
+  }).select("id").single();
+  if (createdList.error || !createdList.data) {
+    if (isMissingSchema(createdList.error)) return { ok: false, error: "Apply db/migrations/018_audience_lists.sql in the Supabase SQL editor, then refresh." };
+    return { ok: false, error: createdList.error?.message || "Could not save the smart list." };
+  }
+  const listId = (createdList.data as { id: string }).id;
+  for (let i = 0; i < found.length; i += 200) {
+    const rows = found.slice(i, i + 200).map((c) => ({ list_id: listId, contact_id: c.id }));
+    const { error } = await db.from("audience_list_members").insert(rows);
+    if (error) {
+      await db.from("audience_lists").delete().eq("id", listId).eq("tenant_id", tenant.id);
+      return { ok: false, error: error.message };
+    }
+  }
+  const draft = await db.from("email_campaigns").insert({
+    tenant_id: tenant.id,
+    kind: "broadcast",
+    name,
+    subject: "",
+    preheader: "",
+    blocks: [],
+    from_name: cleanFromName(tenant.from_name),
+    status: "draft",
+    list_id: listId,
+  }).select("id").single();
+  if (draft.error || !draft.data) {
+    await db.from("audience_lists").delete().eq("id", listId).eq("tenant_id", tenant.id);
+    if (isMissingSchema(draft.error)) return { ok: false, error: "Apply db/migrations/018_audience_lists.sql in the Supabase SQL editor, then refresh." };
+    return { ok: false, error: draft.error?.message || "Could not open the draft campaign." };
+  }
+  let blocked: Set<string>;
+  try { blocked = await suppressedEmails(db, tenant.id, found.map((c) => c.email)); }
+  catch (e) { return { ok: true, campaignId: (draft.data as { id: string }).id, listId, selected: found.length, eligible: 0 }; }
+  const gate = mailableContacts(found.map((c) => ({ ...c, confirmedAt: c.confirmed_at })), blocked);
+  return {
+    ok: true,
+    campaignId: (draft.data as { id: string }).id,
+    listId,
+    selected: found.length,
+    eligible: gate.recipients.length,
+  };
+}
+
 export async function saveCampaign(input: { id?: string; name: string; subject: string; preheader: string; blocks: unknown; fromName?: string }): Promise<{ ok: true; id: string; hash: string } | { ok: false; error: string }> {
   const blocks = parseBlocks(input.blocks);
   if (!blocks) return { ok: false, error: "Those blocks are not valid." };
@@ -805,13 +920,13 @@ export async function scheduleBroadcast(input: { campaignId: string; when: strin
   const ready = await requireReady();
   if ("error" in ready) return { ok: false, error: ready.error };
   const paused = await sendingPaused(ready.db, ready.tenant);
-  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed").eq("id", input.campaignId).eq("tenant_id", ready.tenant.id).maybeSingle();
+  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed,list_id").eq("id", input.campaignId).eq("tenant_id", ready.tenant.id).maybeSingle();
   if (loaded.error || !loaded.data) return { ok: false, error: loaded.error?.message || "Campaign not found." };
   const row = loaded.data as CampaignRow;
   const content = campaignContent(row);
   if ("error" in content) return { ok: false, error: content.error };
   let audience;
-  try { audience = await audienceNow(ready.db, ready.tenant.id); }
+  try { audience = await audienceNow(ready.db, ready.tenant.id, row.list_id || null); }
   catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Could not read the list." }; }
   const fromName = cleanFromName(row.from_name || ready.tenant.from_name);
   const hash = contentHash({ ...content, fromName });
@@ -1172,9 +1287,10 @@ export async function updateContact(edit: ContactEdit): Promise<{ ok: true; chan
 }
 
 /**
- * Hard delete. The foreign keys have no cascade, so this runs in a safe order:
- * cancel pending sends, detach send history (kept for the audit trail), drop series
- * enrolments, delete the contact, then the linked waitlist row. Suppressions are kept.
+ * Hard delete. Runs in a safe order: cancel pending sends, detach send history
+ * (kept for the audit trail), drop series enrolments and smart-list membership,
+ * delete the contact, then the linked waitlist row. Suppressions are kept.
+ * List membership also cascades from the contact FK when migration 018 is applied.
  */
 export async function deleteContacts(ids: string[]): Promise<{ ok: true; deleted: number; cancelled: number; emails: string[] } | { ok: false; error: string }> {
   const ready = await requireReady();
@@ -1192,6 +1308,8 @@ export async function deleteContacts(ids: string[]): Promise<{ ok: true; deleted
   if (detach.error) return { ok: false, error: detach.error.message };
   const enr = await db.from("email_series_enrolments").delete().in("contact_id", rowIds);
   if (enr.error) return { ok: false, error: enr.error.message };
+  const mem = await db.from("audience_list_members").delete().in("contact_id", rowIds);
+  if (mem.error && !isMissingSchema(mem.error)) return { ok: false, error: mem.error.message };
   const del = await db.from("email_contacts").delete().eq("tenant_id", tenant.id).in("id", rowIds);
   if (del.error) return { ok: false, error: del.error.message };
   const wlIds = rows.filter((r) => r.source_table === "sunder_subscribers" && r.source_id).map((r) => r.source_id as string);
