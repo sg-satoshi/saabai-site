@@ -420,3 +420,10 @@ test("engagement migration is idempotent, tenant scoped and broadcast only", () 
   assert.match(sql, /revoke all on function email_track_event/);
   assert.doesNotMatch(sql, /\u2014|\u2013/);
 });
+
+test("footer unsubscribe and view links are excluded from SES click tracking", async () => {
+  const { footerHtml } = await import("../lib/email/message");
+  const html = footerHtml({ slug: "sunder", fromName: "S", fromEmail: "a@b.co", replyTo: "a@b.co", legalName: "L", abn: "1", postalAddress: "P", domain: "d", whyText: "w", sesTenantName: "", configSet: "" }, "https://x.test/u", "https://x.test/v");
+  assert.match(html, /<a ses:no-track href="https:\/\/x\.test\/u"/);
+  assert.match(html, /<a ses:no-track href="https:\/\/x\.test\/v"/);
+});
