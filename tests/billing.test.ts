@@ -143,7 +143,7 @@ test("setup discount: email shows original fee, discount and waiver", () => {
   assert.match(e.html, /down from \$2,000\.00/);
   assert.match(e.html, /\$1,600\.00/);
   const w = setupLinkEmail({ ...base, setupDiscount: { type: "percent", value: 100 }, discount: { type: "percent", value: 100 } });
-  assert.match(w.html, /setup fee is waived/);
+  assert.match(w.html, /website build and setup is waived/);
   for (const m of [e, w]) assert.ok(!/\u2014/.test(m.html + m.text + m.subject));
 });
 
@@ -219,12 +219,12 @@ test("future first payment: $0 today, discount months counted from the first cha
 test("checkout first payment text: exact amounts, matches the email", () => {
   const base = { monthlyCents: 20000, setupFeeCents: 400000, startDate: "2026-11-25", gst: false };
   assert.equal(checkoutFirstPaymentText({ ...base, discount: { type: "amount", value: 10000 } }),
-    "Nothing is charged today. First payment on 25 Nov: $4,100.00 ($4,000.00 setup + $100.00 first month), then monthly from that date.");
+    "Nothing is charged today. First payment on 25 Nov: $4,100.00 ($4,000.00 website build and setup + $100.00 first month), then monthly from that date.");
   assert.equal(checkoutFirstPaymentText({ ...base, discount: { type: "amount", value: 10000 }, setupDiscount: { type: "percent", value: 100 } }),
     "Nothing is charged today. First payment on 25 Nov: $100.00 (first month), then monthly from that date.");
   const sig = { monthlyCents: 30000, setupFeeCents: 650000, startDate: "2026-11-25", gst: false, discount: { type: "amount" as const, value: 3777 }, setupDiscount: { type: "percent" as const, value: 33.33 } };
   const txt = checkoutFirstPaymentText(sig);
-  assert.match(txt, /: \$4,595\.78 \(\$4,333\.55 setup \+ \$262\.23 first month\)/);
+  assert.match(txt, /: \$4,595\.78 \(\$4,333\.55 website build and setup \+ \$262\.23 first month\)/);
   assert.ok(txt.length <= CHECKOUT_TEXT_MAX);
   assert.ok(!/[\u2013\u2014]/.test(txt));
   const email = setupLinkEmail({ ...sig, contactName: "A", siteName: "S", planName: "Signature", payUrl: "u", now: Date.parse("2026-11-05T00:00:00Z") });

@@ -41,7 +41,7 @@ export interface SetupEmailInput {
   payUrl: string;
   /** Admin discount: shown as original price, discount line, new price */
   discount?: PlanDiscount;
-  /** Admin discount on the setup fee: shown as original fee, discount line (or Waived) */
+  /** Admin discount on website build and setup: shown as original fee, discount line (or Waived) */
   setupDiscount?: SetupDiscount;
 }
 
@@ -55,6 +55,15 @@ export function nextCycleLabel(startDate: string): string {
   return d.toLocaleDateString("en-AU", { day: "numeric", month: "short", timeZone: "Australia/Brisbane" });
 }
 
+/** Client-facing name for the one-off website build charge (email, Checkout, invoice). */
+export const SETUP_LINE_LABEL = "Website build and setup";
+
+/** Stripe / email line name. Optional admin description is appended after a colon. */
+export function setupLineName(description?: string): string {
+  const d = (description || "").trim();
+  return d ? `${SETUP_LINE_LABEL}: ${d}` : SETUP_LINE_LABEL;
+}
+
 /** Stripe custom_text limit (submit message). */
 export const CHECKOUT_TEXT_MAX = 1200;
 
@@ -66,7 +75,7 @@ export function checkoutFirstPaymentText(i: { monthlyCents: number; setupFeeCent
   const net = i.monthlyCents - discountOffCents(i.monthlyCents, i.discount);
   const setupNet = i.setupFeeCents - discountOffCents(i.setupFeeCents, i.setupDiscount);
   const t = upfrontTotals(net, setupNet, i.gst);
-  const parts = setupNet > 0 ? ` (${money(setupNet)} setup + ${money(net)} first month)` : " (first month)";
+  const parts = setupNet > 0 ? ` (${money(setupNet)} ${SETUP_LINE_LABEL.toLowerCase()} + ${money(net)} first month)` : " (first month)";
   return `Nothing is charged today. First payment on ${dateLabel(i.startDate)}: ${money(t.dueNow)}${parts}, then monthly from that date.${promoPossible ? " Amounts are before any promo code." : ""}`.slice(0, CHECKOUT_TEXT_MAX);
 }
 
@@ -79,8 +88,8 @@ export function setupLinkEmail(i: SetupEmailInput): BrandedEmail {
   const rows: [string, string, boolean?][] = [[`${i.planName}, first month`, money(i.monthlyCents)]];
   if (off && i.discount) rows.push([discountLabel(i.discount, money), `-${money(off)}`]);
   if (i.setupFeeCents > 0) {
-    rows.push([`Setup${i.setupFeeDescription ? `: ${i.setupFeeDescription}` : " fee"}`, money(i.setupFeeCents)]);
-    if (setupOff && i.setupDiscount) rows.push([setupNet ? discountLabel(i.setupDiscount, money) : `${discountLabel(i.setupDiscount, money)}, setup fee waived`, `-${money(setupOff)}`]);
+    rows.push([setupLineName(i.setupFeeDescription), money(i.setupFeeCents)]);
+    if (setupOff && i.setupDiscount) rows.push([setupNet ? discountLabel(i.setupDiscount, money) : `${discountLabel(i.setupDiscount, money)}, ${SETUP_LINE_LABEL.toLowerCase()} waived`, `-${money(setupOff)}`]);
   }
   if (i.gst) rows.push(["GST", money(t.gst)]);
   // Must match Checkout: today = charged now, renews monthly from the day they pay; future = $0 now, first payment on the date.
@@ -94,7 +103,7 @@ export function setupLinkEmail(i: SetupEmailInput): BrandedEmail {
       : `You're saving ${money(off)} every month. Normally ${money(full)} a month.`
     : "";
   const setupSaving = setupOff && i.setupDiscount
-    ? setupNet ? `Your setup fee is ${money(setupNet)}, down from ${money(i.setupFeeCents)}.` : `Your ${money(i.setupFeeCents)} setup fee is waived.`
+    ? setupNet ? `Your ${SETUP_LINE_LABEL.toLowerCase()} is ${money(setupNet)}, down from ${money(i.setupFeeCents)}.` : `Your ${money(i.setupFeeCents)} ${SETUP_LINE_LABEL.toLowerCase()} is waived.`
     : "";
   const where = i.siteDomain || i.siteName;
   return renderBrandedEmail({

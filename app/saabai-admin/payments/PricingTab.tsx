@@ -43,7 +43,7 @@ export function lineNet(l: Pick<Line, "unitAmount" | "quantity" | "discount">): 
 
 function itemToLines(it: Item): Line[] {
   const base: Line = { source: it.source, refId: it.refId, stripeProductId: it.stripeProductId, description: it.name, unitAmount: it.unitAmount, quantity: 1, interval: it.interval, gstMode: "none" };
-  return it.setupAmount ? [base, { ...base, source: "custom", refId: undefined, stripeProductId: undefined, description: `${it.name} setup fee`, unitAmount: it.setupAmount, interval: "once" }] : [base];
+  return it.setupAmount ? [base, { ...base, source: "custom", refId: undefined, stripeProductId: undefined, description: `${it.name} website build and setup`, unitAmount: it.setupAmount, interval: "once" }] : [base];
 }
 
 export function PricingTab() {

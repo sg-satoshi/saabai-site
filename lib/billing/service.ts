@@ -6,7 +6,7 @@ import crypto from "node:crypto";
 import { sendBrandedEmail } from "../email/branded-layout";
 import { enableFeature, disableFeature } from "../addons/flags";
 import { getCatalog } from "./catalog";
-import { DEFAULT_SENDER, isAllowedSender, paymentFailedEmail, setupLinkEmail, sitePausedEmail } from "./emails";
+import { DEFAULT_SENDER, isAllowedSender, paymentFailedEmail, setupLinkEmail, sitePausedEmail, SETUP_LINE_LABEL } from "./emails";
 import { discountOffCents, normaliseDiscount, normaliseSetupDiscount, type SetupDiscount, type PlanDiscount, dueDunningStep, dunningDays, isLinkExpired, LINK_TTL_DAYS, linkExpiresAt, shouldPause, isDuplicateSetupPayment, validateFirstPaymentDate, statusAfterFailure, statusFromSubscription } from "./state";
 import { findBySubscription, getSiteBilling, listSiteBilling, saveSiteBilling, setPayToken, type SiteBillingRecord } from "./store";
 import { addDeferredSetupFee, BILLING_SOURCE, GST_BLOCKED, expireCheckoutSession, periodOf, siteUrl, stripeConfigured } from "./stripe-ops";
@@ -167,13 +167,13 @@ export async function handleBillingEvent(event: { type: string; data: { object: 
         let setupNote = "";
         if (deferred > 0 && o.subscription && !rec.setupFeeQueued) {
           try {
-            await addDeferredSetupFee(String(o.customer), String(o.subscription), deferred, o.metadata.setup_name || "Setup fee", o.id);
-            setupNote = `. Setup fee ${(deferred / 100).toFixed(2)} added to the first invoice`;
+            await addDeferredSetupFee(String(o.customer), String(o.subscription), deferred, o.metadata.setup_name || SETUP_LINE_LABEL, o.id);
+            setupNote = `. ${SETUP_LINE_LABEL} ${(deferred / 100).toFixed(2)} added to the first invoice`;
           } catch (e) {
-            setupNote = `. Review: setup fee NOT added to the first invoice (${String((e as Error)?.message || e).slice(0, 120)})`;
+            setupNote = `. Review: ${SETUP_LINE_LABEL.toLowerCase()} NOT added to the first invoice (${String((e as Error)?.message || e).slice(0, 120)})`;
           }
         }
-        await saveSiteBilling({ ...rec, ...coupon, ...(setupNote.startsWith(". Setup") ? { setupFeeQueued: true } : {}), status: "active", stripeCustomerId: o.customer || rec.stripeCustomerId, stripeSubscriptionId: o.subscription || rec.stripeSubscriptionId, failedAt: undefined, dunningSent: 0 }, (red ? `Paid, subscription active (code ${coupon.couponCode})${useResult === "repeat" ? ". Review: this email had already used this one-per-customer code" : ""}` : "Paid, subscription active") + setupNote);
+        await saveSiteBilling({ ...rec, ...coupon, ...(setupNote.startsWith(`. ${SETUP_LINE_LABEL}`) ? { setupFeeQueued: true } : {}), status: "active", stripeCustomerId: o.customer || rec.stripeCustomerId, stripeSubscriptionId: o.subscription || rec.stripeSubscriptionId, failedAt: undefined, dunningSent: 0 }, (red ? `Paid, subscription active (code ${coupon.couponCode})${useResult === "repeat" ? ". Review: this email had already used this one-per-customer code" : ""}` : "Paid, subscription active") + setupNote);
         return "setup-active";
       }
       if (o.metadata.kind === "addon") {

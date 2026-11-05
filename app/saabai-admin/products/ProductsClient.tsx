@@ -38,7 +38,7 @@ const INTERVAL_LABEL: Record<Interval, string> = {
 };
 
 const FEE_LABEL: Record<FeeKey, string> = {
-  setup: "Setup fee",
+  setup: "Website build and setup",
   recurring: "Recurring",
   one_time: "One-time",
 };
@@ -83,7 +83,7 @@ function PriceBlock({ p }: { p: CatalogueProduct }) {
   } else {
     const per = p.interval ? INTERVAL_LABEL[p.interval] : "month";
     if (p.billingType === "setup_monthly") {
-      rows.push({ label: "Setup", fee: feeDisplay("setup", p.setupFee || 0, discounts), suffix: "" });
+      rows.push({ label: "Website build and setup", fee: feeDisplay("setup", p.setupFee || 0, discounts), suffix: "" });
     }
     rows.push({ label: p.billingType === "setup_monthly" ? "Then" : "", fee: feeDisplay("recurring", p.recurringAmount || 0, discounts), suffix: "/" + per });
   }
@@ -690,7 +690,7 @@ export default function ProductsClient({ publishableKey }: { publishableKey: str
 
             <Field label="Price type">
               <select style={inputStyle} value={form.billingType} onChange={(e) => patch({ billingType: e.target.value as BillingType })}>
-                <option value="setup_monthly">Setup fee + recurring</option>
+                <option value="setup_monthly">Website build and setup + recurring</option>
                 <option value="recurring">Recurring only</option>
                 <option value="one_time">One-time</option>
               </select>
@@ -705,7 +705,7 @@ export default function ProductsClient({ publishableKey }: { publishableKey: str
             {form.billingType !== "one_time" && (
               <>
                 {form.billingType === "setup_monthly" && (
-                  <Field label="Setup fee (AUD, one-off)">
+                  <Field label="Website build and setup (AUD, one-off)">
                     <input style={inputStyle} type="number" value={form.setup} onChange={(e) => patch({ setup: e.target.value })} placeholder="e.g. 1000" />
                   </Field>
                 )}

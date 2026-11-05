@@ -7,7 +7,7 @@
 import { getStripe } from "../stripe";
 import type { SiteBillingRecord } from "./store";
 import { formatAud } from "./catalog";
-import { checkoutFirstPaymentText } from "./emails";
+import { checkoutFirstPaymentText, setupLineName } from "./emails";
 import { brisbaneToday, couponDurationMonths, discountLabel, discountOffCents, firstChargeAt } from "./state";
 import { careProductFor, findActivePromo, promoCoversProducts } from "../coupons/stripe";
 import { normaliseCode, promoIsOnce, promoNotStartedMessage } from "../coupons/core";
@@ -88,7 +88,7 @@ export async function createSetupCheckout(rec: SiteBillingRecord, customerId: st
   // A fully waived setup fee is left off the Checkout entirely (no zero-amount line).
   const setupOff = discountOffCents(rec.setupFeeCents, rec.setupDiscount);
   const setupNet = rec.setupFeeCents - setupOff;
-  const setupName = `Setup${rec.setupFeeDescription ? `: ${rec.setupFeeDescription}` : " fee"}`;
+  const setupName = setupLineName(rec.setupFeeDescription);
   if (setupNet > 0 && first.mode === "now") {
     line_items.push({
       quantity: 1,
