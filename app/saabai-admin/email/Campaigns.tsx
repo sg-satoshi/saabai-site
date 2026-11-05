@@ -99,7 +99,7 @@ export default function Campaigns() {
         </div>
       </div>
 
-      <AutomatedList rows={snap?.automated} />
+      <AutomatedList rows={snap?.automated} error={err} onRetry={load} />
 
       <div className="card em-sender">
         <div className="hd"><h2>Default sender</h2><span className="em-help">Used by new broadcasts and the confirm and welcome emails</span></div>
@@ -184,14 +184,22 @@ function sourceLabel(source: AutomatedEmailView["source"]) {
   return "Not set up";
 }
 
-function AutomatedList({ rows }: { rows?: AutomatedEmailView[] }) {
-  if (!rows) return <div className="card" style={{ marginBottom: 16 }}><div className="bd"><div className="em-skel" /></div></div>;
+function AutomatedList({ rows, error, onRetry }: { rows?: AutomatedEmailView[]; error: string; onRetry: () => void }) {
   return (
     <div className="card" style={{ marginBottom: 16 }}>
       <div className="hd">
         <h2>Automated</h2>
-        <span className="em-help">Welcome, confirm and referral emails for SUNDER. Editing changes the next send. Nothing is sent from this list. Account, portal and billing emails are not edited here.</span>
+        <span className="em-help">Welcome, confirm and referral emails for SUNDER. Editing changes the next send. Nothing is sent from this list. Account, portal, password, billing, Lex and wholesale emails are not edited here.</span>
       </div>
+      {error ? (
+        <div className="bd">
+          <div className="em-alert bad" role="alert"><b>Could not load automated emails.</b><div>{error}</div></div>
+          <button type="button" className="btn" style={{ marginTop: 12 }} onClick={onRetry}>Try again</button>
+        </div>
+      ) : !rows ? (
+        <div className="bd"><div className="em-skel" /></div>
+      ) : (
+      <>
       <div className="em-mob">
         {rows.map((a) => (
           <Link key={a.key} className="oc" href={`/saabai-admin/email/auto/${a.key}`}>
@@ -222,6 +230,8 @@ function AutomatedList({ rows }: { rows?: AutomatedEmailView[] }) {
           ))}
         </tbody>
       </table>
+      </>
+      )}
     </div>
   );
 }

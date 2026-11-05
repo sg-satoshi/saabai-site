@@ -183,6 +183,41 @@ test("editing one welcome step does not rewrite the others", () => {
   if ("error" in missing) assert.match(missing.error, /not in the series/);
 });
 
+test("saved welcome HTML matches the dark shell the sender builds from the text", () => {
+  const body = "Hi {{firstName|there}},\n\nYou're on the SUNDER VIP list. Good call.";
+  const stored = seriesOutgoingHtml(body, "");
+  const sent = seriesOutgoingHtml(body, "<p>previous fallback</p>");
+  assert.equal(stored, sent);
+  assert.match(stored, /SPLIT THE GAME OPEN/);
+  assert.match(stored, /background:#0d0d0d/);
+  assert.doesNotMatch(stored, /border-radius:16px/);
+  assert.doesNotMatch(stored, /previous fallback/);
+  const ops = read("lib/email/ops.ts");
+  const seriesSave = ops.slice(ops.indexOf("export async function saveSeries"), ops.indexOf("export async function saveAutomated"));
+  const oneSave = ops.slice(ops.indexOf("export async function saveAutomated"), ops.indexOf("export async function automatedEditor"));
+  assert.match(seriesSave, /seriesOutgoingHtml\(body, ""\)/);
+  assert.match(oneSave, /seriesOutgoingHtml\(body, ""\)/);
+  assert.doesNotMatch(seriesSave, /buildSunderHtml\(body\)/);
+  assert.doesNotMatch(oneSave, /buildSunderHtml\(body\)/);
+});
+
+test("admin CI runs the automated safety suite, and rejected series URLs are not a broadcast composer", () => {
+  const yml = read(".github/workflows/admin-unit.yml");
+  const stepStart = yml.indexOf("SUNDER email marketing");
+  const step = yml.slice(stepStart, yml.indexOf("- name:", stepStart + 10));
+  assert.match(step, /tests\/email-marketing\.test\.ts/);
+  assert.match(step, /tests\/email-automated-campaigns\.test\.ts/);
+  const composer = read("app/saabai-admin/email/Composer.tsx");
+  const stopped = composer.slice(composer.indexOf('gate === "stopped"'), composer.indexOf('return (\n    <div className="em-page">'));
+  assert.match(stopped, /Edit the automated email/);
+  assert.match(stopped, /Send test, schedule and send now are off/);
+  assert.doesNotMatch(stopped, /setTestOpen|setConfirm\("send"\)|setConfirm\("schedule"\)/);
+  const campaigns = read("app/saabai-admin/email/Campaigns.tsx");
+  assert.match(campaigns, /Could not load automated emails/);
+  assert.match(campaigns, /Try again/);
+  assert.match(campaigns, /billing, Lex and wholesale/);
+});
+
 test("the sender and the save path share the template, and saving does not enqueue", () => {
   const ops = read("lib/email/ops.ts");
   const save = ops.slice(ops.indexOf("export async function saveAutomated"), ops.indexOf("export async function automatedEditor"));

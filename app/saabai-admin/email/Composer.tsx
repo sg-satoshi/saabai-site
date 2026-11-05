@@ -41,6 +41,7 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [banner, setBanner] = useState("");
   const [autoKey, setAutoKey] = useState<string | null>(null);
+  const [gate, setGate] = useState<"loading" | "edit" | "stopped">(campaignId ? "loading" : "edit");
   const [busy, setBusy] = useState("");
   const [width, setWidth] = useState<620 | 375>(620);
   const [mobilePreview, setMobilePreview] = useState(false);
@@ -67,7 +68,12 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
     fetch(`/api/admin/email?view=campaign&id=${campaignId}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((j) => {
-        if (!j.ok) { setBanner(j.error || "Could not open this campaign."); setAutoKey(typeof j.automationKey === "string" ? j.automationKey : null); return; }
+        if (!j.ok) {
+          setBanner(j.error || "Could not open this campaign.");
+          setAutoKey(typeof j.automationKey === "string" ? j.automationKey : null);
+          setGate("stopped");
+          return;
+        }
         setDetail(j);
         idRef.current = j.campaign.id;
         setId(j.campaign.id);
@@ -78,9 +84,10 @@ export default function Composer({ campaignId }: { campaignId?: string }) {
         setFromName(cleanFromName(j.campaign.fromName || j.defaultFromName || ""));
         setTestHash(j.campaign.testHash);
         setTestedAt(j.campaign.testSentAt);
+        setGate("edit");
         loaded.current = true;
       })
-      .catch(() => setBanner("Could not open this campaign."));
+      .catch(() => { setBanner("Could not open this campaign."); setGate("stopped"); });
   }, [campaignId]);
 
   const hash = contentHash({ subject, preheader, blocks, fromName });
@@ -200,6 +207,21 @@ function patch(blockId: string, next: Partial<Block>) {
   const today = Math.min(audience, room);
   const later = Math.max(0, audience - today);
   const capLine = later > 0 ? `${today.toLocaleString("en-AU")} today, the rest sends tomorrow from 7:00 AM` : `Within today's cap (${(detail?.usedToday || 0).toLocaleString("en-AU")} of ${(detail?.dailyCap || 0).toLocaleString("en-AU")} used)`;
+
+  if (gate === "loading") return <div className="em-page"><div className="em-skel" /></div>;
+  if (gate === "stopped") {
+    return (
+      <div className="em-page">
+        <h1>Not a broadcast</h1>
+        <div className="em-alert bad" role="alert">{banner || "This email cannot be sent from the broadcast editor."}</div>
+        <p className="em-help">Send test, schedule and send now are off. Nothing was sent or saved.</p>
+        <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+          {autoKey && <Link href={`/saabai-admin/email/auto/${autoKey}`} className="btn pri">Edit the automated email</Link>}
+          <Link href="/saabai-admin/email" className="btn">Back to campaigns</Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="em-page">

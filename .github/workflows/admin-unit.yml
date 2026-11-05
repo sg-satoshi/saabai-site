@@ -16,7 +16,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: SUNDER email marketing
-        run: npx tsx --test tests/email-marketing.test.ts
+        run: npx tsx --test tests/email-marketing.test.ts tests/email-automated-campaigns.test.ts
       - name: Invoice number input and line totals
         run: npx tsx --test tests/invoice-number-input.test.ts
       - name: Portal onboarding

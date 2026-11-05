@@ -17,6 +17,7 @@ import {
   parseAutomatedKey,
   cleanButtonLabel,
   replaceSeriesStep,
+  seriesOutgoingHtml,
   seriesQueuedHtml,
   systemButtonLabel,
   validateAutomatedEdit,
@@ -28,7 +29,7 @@ import {
 import {
   countStatus, countSuppressions, emailDb, identityFrom, isMissingSchema, listConfirmed, loadTenant, suppressedEmails, type TenantRow,
 } from "./db";
-import { buildSunderHtml, CONFIRM_COPY, REFERRAL_COPY, confirmMessage, referralLinkMessage, renderMarketingEmail, withReferralLine, type SystemCopy } from "./message";
+import { CONFIRM_COPY, REFERRAL_COPY, confirmMessage, referralLinkMessage, renderMarketingEmail, withReferralLine, type SystemCopy } from "./message";
 import { maskEmail, needsReferralReview, referralLineText, referralStatsFor, referralStatusUrl } from "../sunder-waitlist";
 import { brisbaneAt, brisbaneParts, isQuiet, seriesRunAt } from "./quiet";
 import { acquireSendSlot, type RateCounter } from "./rate";
@@ -273,7 +274,9 @@ export async function saveSeries(steps: SeriesStepInput[], status: "active" | "p
     const { error: templateError } = await db.from("email_templates").update({
       subject: step.subject.trim(),
       body_text: body,
-      html: buildSunderHtml(body),
+      // Same dark shell the sender builds from body_text. Other steps are updated
+      // only because this call saves the whole series. Unsaved rows are not rewritten.
+      html: seriesOutgoingHtml(body, ""),
       updated_at: new Date().toISOString(),
     }).eq("id", templateId);
     if (templateError) return { ok: false, error: templateError.message };
@@ -309,7 +312,9 @@ export async function saveAutomated(input: { key: string; subject: string; messa
     const { data: updated, error: templateError } = await db.from("email_templates").update({
       subject: step.subject.trim(),
       body_text: body,
-      html: buildSunderHtml(body),
+      // Fallback HTML matches the live send (documentHtml). Existing rows stay
+      // until this step is saved. An empty body_text elsewhere is not rewritten.
+      html: seriesOutgoingHtml(body, ""),
       updated_at: new Date().toISOString(),
     }).eq("id", templateId).eq("tenant_id", tenant.id).select("id");
     if (templateError || !updated?.length) return { ok: false, error: templateError?.message || "That welcome email is not in this tenant." };
