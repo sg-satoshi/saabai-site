@@ -29,6 +29,10 @@ export type EmailAdminSnapshot = {
   counts: { subscribed: number; pending: number; unsubscribed: number; suppressed: number };
   sent30: number;
   unsub30: number;
+  /** Broadcast sends in the last 30 days with a tracked delivery or open. */
+  delivered30: number;
+  opened30: number;
+  clicked30: number;
   series: { status: "active" | "paused"; steps: SeriesStepView[]; enrolled: number; active: number; completed: number; exited: number };
   campaigns: CampaignView[];
 };

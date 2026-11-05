@@ -1,5 +1,5 @@
-import { recordProviderEvent } from "../../../../lib/email/ops";
-import { certUrlAllowed, providerEventsFromSns, subscribeUrlAllowed, verifySnsSignature, type SnsMessage } from "../../../../lib/email/sns";
+import { recordProviderEvent, recordTrackingEvent } from "../../../../lib/email/ops";
+import { certUrlAllowed, providerEventsFromSns, subscribeUrlAllowed, trackingEventFromSns, verifySnsSignature, type SnsMessage } from "../../../../lib/email/sns";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -7,9 +7,12 @@ export const dynamic = "force-dynamic";
 const NO_STORE = { "Cache-Control": "no-store" };
 
 /**
- * Sending-provider events (bounce, complaint) via SNS HTTPS.
+ * Sending-provider events via SNS HTTPS: bounce and complaint (suppression),
+ * delivery, open and click (engagement stats, matched by SES message id).
  * Manual step, because the send-only key cannot create them:
- * 1. Create an SNS topic and a configuration set in ap-southeast-2.
+ * 1. Create an SNS topic and a configuration set in ap-southeast-2, with open and
+ *    click tracking on and an SNS event destination for Send, Delivery, Bounce,
+ *    Complaint, Open and Click.
  * 2. Subscribe this URL (https://saabai.ai/api/email/ses-events) to the topic.
  * 3. Set AWS_SES_SNS_TOPIC_ARN to that topic, and AWS_SES_CONFIGURATION_SET to the set name.
  * Until AWS_SES_SNS_TOPIC_ARN is set, every message is refused.
@@ -38,5 +41,13 @@ export async function POST(req: Request) {
     const result = await recordProviderEvent(event);
     if (result.ok) applied++;
   }
-  return Response.json({ ok: true, applied }, { headers: NO_STORE });
+  const tracking = trackingEventFromSns(msg.Message);
+  let tracked = false;
+  if (tracking) {
+    const result = await recordTrackingEvent(tracking);
+    // A database error returns 500 so SNS retries. The update is idempotent, so a retry is safe.
+    if (!result.ok) return Response.json({ error: "Could not record event" }, { status: 500, headers: NO_STORE });
+    tracked = result.matched;
+  }
+  return Response.json({ ok: true, applied, tracked }, { headers: NO_STORE });
 }
