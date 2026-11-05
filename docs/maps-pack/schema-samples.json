@@ -1,0 +1,287 @@
+{
+  "saabai": {
+    "@context": "https://schema.org",
+    "@type": [
+      "Organization",
+      "ProfessionalService"
+    ],
+    "@id": "https://www.saabai.ai/#business",
+    "name": "Saabai",
+    "url": "https://www.saabai.ai/",
+    "description": "Saabai builds, hosts and manages websites for small businesses, and delivers the Saabai Blueprint AI audit. Based in Merrimac on the Gold Coast, serving Brisbane, Queensland and Australia.",
+    "email": "hello@saabai.ai",
+    "areaServed": [
+      {
+        "@type": "City",
+        "name": "Gold Coast"
+      },
+      {
+        "@type": "City",
+        "name": "Brisbane"
+      },
+      {
+        "@type": "State",
+        "name": "Queensland"
+      },
+      {
+        "@type": "Country",
+        "name": "Australia"
+      }
+    ],
+    "sameAs": [
+      "https://www.linkedin.com/in/shanegoldberg-ai"
+    ],
+    "hasMap": "https://www.google.com/maps/search/?api=1&query=Merrimac%2C%20QLD%2C%204226%2C%20Australia",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Merrimac",
+      "addressRegion": "QLD",
+      "postalCode": "4226",
+      "addressCountry": "AU"
+    }
+  },
+  "cycle-repair": {
+    "@context": "https://schema.org",
+    "@type": [
+      "LocalBusiness",
+      "BicycleStore"
+    ],
+    "@id": "https://stuscyclerepairs.com/#business",
+    "name": "Stu's Cycle Repairs",
+    "url": "https://stuscyclerepairs.com/",
+    "description": "Mobile bike mechanic for the Gold Coast and Tweed Coast. Servicing, repairs, wheel builds and e-bikes at your home or work, from the Northern Rivers to Coomera and Ormeau. Services from $119.",
+    "telephone": "+61405225721",
+    "email": "stuscyclerepairs@gmail.com",
+    "image": "https://stuscyclerepairs.com/sites/cycle-repair/stu.webp",
+    "logo": "https://stuscyclerepairs.com/sites/cycle-repair/stus-logo.webp",
+    "priceRange": "$$",
+    "areaServed": [
+      {
+        "@type": "Place",
+        "name": "Gold Coast, Queensland, Australia"
+      },
+      {
+        "@type": "Place",
+        "name": "Tweed Coast, New South Wales, Australia"
+      },
+      {
+        "@type": "Place",
+        "name": "Northern Rivers, NSW"
+      }
+    ],
+    "sameAs": [
+      "https://www.facebook.com/140958506038130",
+      "https://www.google.com/search?kgmid=/g/1v_sndg3&q=Stu%27s+Cycle+Repairs#lrd=0x6b910205109b3c31:0xeb8e6ae34fc4af37,1,,,,"
+    ],
+    "hasMap": "https://www.google.com/search?kgmid=/g/1v_sndg3&q=Stu%27s+Cycle+Repairs#lrd=0x6b910205109b3c31:0xeb8e6ae34fc4af37,1,,,,",
+    "address": {
+      "@type": "PostalAddress",
+      "addressRegion": "QLD",
+      "addressCountry": "AU"
+    }
+  },
+  "lmm-site": {
+    "@context": "https://schema.org",
+    "@type": [
+      "FinancialService",
+      "ProfessionalService"
+    ],
+    "@id": "https://www.lifestylemoneymanagement.com.au/#business",
+    "name": "Lifestyle Money Management",
+    "url": "https://www.lifestylemoneymanagement.com.au/",
+    "description": "Ethical, evidence-led property wealth strategy, financial analysis and portfolio management for Australians.",
+    "telephone": "+611300799119",
+    "email": "nick@lifestylemoneymanagement.com.au",
+    "areaServed": [
+      {
+        "@type": "City",
+        "name": "Adelaide"
+      },
+      {
+        "@type": "City",
+        "name": "Brisbane"
+      },
+      {
+        "@type": "State",
+        "name": "Queensland"
+      },
+      {
+        "@type": "Country",
+        "name": "Australia"
+      }
+    ]
+  },
+  "wholesale-homes": {
+    "@context": "https://schema.org",
+    "@type": "RealEstateAgent",
+    "@id": "https://www.wholesalehomes.com.au/#business",
+    "name": "Wholesale Homes Australia",
+    "url": "https://www.wholesalehomes.com.au/",
+    "telephone": "+61488165908",
+    "email": "hello@wholesalehomes.com.au",
+    "areaServed": [
+      {
+        "@type": "Country",
+        "name": "Australia"
+      }
+    ]
+  },
+  "bo-consultancy": {
+    "@context": "https://schema.org",
+    "@type": "EmploymentAgency",
+    "@id": "https://www.boconsulting.com.au/#business",
+    "name": "BO Consulting",
+    "url": "https://www.boconsulting.com.au/",
+    "description": "Australia's specialist blue-collar workforce recruitment partner. Permanent placement, labour hire and workforce solutions across Construction, Mining, Manufacturing, Transport, Civil, Trades, Warehousing and Logistics.",
+    "email": "info@boconsulting.com.au",
+    "areaServed": [
+      {
+        "@type": "Country",
+        "name": "Australia"
+      }
+    ],
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday"
+        ],
+        "opens": "09:00",
+        "closes": "17:00"
+      }
+    ]
+  },
+  "tributum-law-v2": {
+    "@context": "https://schema.org",
+    "@type": "LegalService",
+    "@id": "https://tributumlaw.com/#business",
+    "name": "Tributum Law",
+    "url": "https://tributumlaw.com/",
+    "description": "Adelaide's dedicated tax and trust law firm. International tax, ATO disputes, trusts and family wealth, excise and duties.",
+    "telephone": "+61405014888",
+    "email": "contact@tributumlaw.com",
+    "areaServed": [
+      {
+        "@type": "Country",
+        "name": "Australia"
+      }
+    ],
+    "hasMap": "https://www.google.com/maps/search/?api=1&query=Level%201%2C%20195%20Victoria%20Square%2C%20Adelaide%20SA%205000%2C%20Australia",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Level 1, 195 Victoria Square",
+      "addressLocality": "Adelaide",
+      "addressRegion": "SA",
+      "postalCode": "5000",
+      "addressCountry": "AU"
+    },
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday"
+        ],
+        "opens": "09:00",
+        "closes": "18:00"
+      }
+    ]
+  },
+  "sunder": {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": "https://sunder.com.au/#business",
+    "name": "SUNDER",
+    "url": "https://sunder.com.au/",
+    "email": "hello@sunder.com.au",
+    "areaServed": [
+      {
+        "@type": "Country",
+        "name": "Australia"
+      }
+    ]
+  },
+  "nico-moretti": {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": "https://nicomoretti.au/#business",
+    "name": "Nico Moretti",
+    "url": "https://nicomoretti.au/",
+    "areaServed": [
+      {
+        "@type": "City",
+        "name": "Adelaide"
+      },
+      {
+        "@type": "AdministrativeArea",
+        "name": "South Australia"
+      },
+      {
+        "@type": "Country",
+        "name": "Australia"
+      }
+    ]
+  },
+  "inkfx-printing": {
+    "@context": "https://schema.org",
+    "@type": "PrintShop",
+    "@id": "https://www.inkfxprinting.com/#business",
+    "name": "InkFX Printing",
+    "url": "https://www.inkfxprinting.com/",
+    "description": "Multi-award winning photographic printing on the Gold Coast",
+    "telephone": "+611300903065",
+    "email": "info@inkfx.com.au",
+    "areaServed": [
+      {
+        "@type": "Country",
+        "name": "Australia"
+      }
+    ],
+    "sameAs": [
+      "https://www.instagram.com/inkfxprinting",
+      "https://www.facebook.com/inkfxprinting"
+    ],
+    "hasMap": "https://www.google.com/maps/search/?api=1&query=InkFX%20Printing%2C%203%2F17%20Indy%20Court%2C%20Carrara%20QLD%204211%2C%20Australia",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "3/17 Indy Court",
+      "addressLocality": "Carrara",
+      "addressRegion": "QLD",
+      "postalCode": "4211",
+      "addressCountry": "AU"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": -28.012169,
+      "longitude": 153.347325
+    },
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday"
+        ],
+        "opens": "09:00",
+        "closes": "17:00"
+      }
+    ]
+  },
+  "blue-sky-plumbing": {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "@id": "https://www.saabai.ai/sites/blue-sky-plumbing/#business",
+    "name": "Blue Sky Plumbing",
+    "url": "https://www.saabai.ai/sites/blue-sky-plumbing/"
+  }
+}
