@@ -99,8 +99,11 @@ export function renderBrandedEmail(input: LayoutInput): BrandedEmail {
       .email-body { background-color: #0b092e !important; }
       .email-card { background-color: #14123a !important; }
       .email-copy, .email-copy p, .email-copy li { color: #e8eaf8 !important; }
+      .email-copy .email-row { color: #ffffff !important; border-color: #3a3780 !important; }
+      .email-copy .email-table { border-color: #3a3780 !important; }
       .email-muted { color: #9aa0c8 !important; }
       .email-footer { color: #8f95c0 !important; }
+      .email-footer a { color: #7fd6e0 !important; }
     }
     @media only screen and (max-width: 620px) {
       .email-shell { width: 100% !important; }

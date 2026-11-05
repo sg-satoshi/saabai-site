@@ -180,27 +180,27 @@ export function SetupBillingModal({ site, onClose, onDone }: { site: SetupSite; 
                 <div className="bl-help">{isFuture ? `Card saved at checkout, nothing charged until ${firstLabel}. Renews monthly on the ${ordinal(startDay || 1)}.` : "Charged when the client pays, then monthly on that day."} Up to 90 days out.</div>
               </div>
               <div>
-                <div className="bl-lbl" style={{ marginTop: 0 }}><span>Setup fee<span className="opt">Optional</span></span></div>
+                <div className="bl-lbl" style={{ marginTop: 0 }}><span>Website build and setup<span className="opt">Optional</span></span></div>
                 <div className="bl-pre"><span>$</span><input className="bl-in num" inputMode="decimal" value={setupFee} onChange={(e) => { setSetupTouched(true); setSetupFee(e.target.value); }} placeholder="0.00" /></div>
                 <div className="bl-help">Site build, one-off, charged up front. Defaults to the published from price.</div>
               </div>
             </div>
             {setupCents > 0 && (
               <>
-                <div className="bl-sl" style={{ marginTop: 12 }}>Setup fee description</div>
+                <div className="bl-sl" style={{ marginTop: 12 }}>Website build and setup description</div>
                 <input className="bl-in" value={setupDesc} onChange={(e) => setSetupDesc(e.target.value)} placeholder="Domain transfer and email setup" />
-                <div className="bl-lbl"><span>Setup fee discount<span className="opt">Optional</span></span></div>
+                <div className="bl-lbl"><span>Website build and setup discount<span className="opt">Optional</span></span></div>
                 <div className="bl-g2">
                   <div><div className="bl-sl">Type</div>
-                    <select className="bl-in" value={sdType} onChange={(e) => setSdType(e.target.value as typeof sdType)} aria-label="Setup fee discount type">
+                    <select className="bl-in" value={sdType} onChange={(e) => setSdType(e.target.value as typeof sdType)} aria-label="Website build and setup discount type">
                       <option value="none">No discount</option>
-                      <option value="percent">% off setup fee</option>
-                      <option value="amount">$ off setup fee</option>
+                      <option value="percent">% off website build and setup</option>
+                      <option value="amount">$ off website build and setup</option>
                     </select>
                   </div>
                   {sdType !== "none" && (
                     <div><div className="bl-sl">{sdType === "percent" ? "Percent off (100 waives it)" : "Amount off"}</div>
-                      <div className="bl-pre"><span>{sdType === "percent" ? "%" : "$"}</span><input className="bl-in num" inputMode="decimal" value={sdValue} onChange={(e) => setSdValue(e.target.value)} placeholder={sdType === "percent" ? "50" : "500.00"} aria-label="Setup fee discount value" /></div>
+                      <div className="bl-pre"><span>{sdType === "percent" ? "%" : "$"}</span><input className="bl-in num" inputMode="decimal" value={sdValue} onChange={(e) => setSdValue(e.target.value)} placeholder={sdType === "percent" ? "50" : "500.00"} aria-label="Website build and setup discount value" /></div>
                     </div>
                   )}
                 </div>
@@ -218,7 +218,7 @@ export function SetupBillingModal({ site, onClose, onDone }: { site: SetupSite; 
             <div className="bl-sum">
               <div className="r"><span>First month, {planName}</span><span className="num">{discOff ? <><s style={{ opacity: 0.6, marginRight: 6 }}>{aud(monthly)}</s>{aud(net)}</> : aud(monthly)}</span></div>
               {discOff > 0 && <div className="r"><span>{discText}</span><span className="num">-{aud(discOff)}</span></div>}
-              {setupCents > 0 && <div className="r"><span>Setup fee</span><span className="num">{setupOff ? <><s style={{ opacity: 0.6, marginRight: 6 }}>{aud(setupCents)}</s>{setupNet ? aud(setupNet) : "Waived"}</> : aud(setupCents)}</span></div>}
+              {setupCents > 0 && <div className="r"><span>Website build and setup</span><span className="num">{setupOff ? <><s style={{ opacity: 0.6, marginRight: 6 }}>{aud(setupCents)}</s>{setupNet ? aud(setupNet) : "Waived"}</> : aud(setupCents)}</span></div>}
               {setupOff > 0 && <div className="r"><span>{sdText}</span><span className="num">-{aud(setupOff)}</span></div>}
               {gst && <div className="r"><span>GST</span><span className="num">{aud(gstCents)}</span></div>}
               <div className="r t"><span>{isFuture ? `First payment on ${firstLabel}` : "Due today"}</span><span className="num">{aud(net + setupNet + gstCents)}</span></div>

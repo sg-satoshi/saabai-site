@@ -6,10 +6,10 @@ import crypto from "node:crypto";
 import { sendBrandedEmail } from "../email/branded-layout";
 import { enableFeature, disableFeature } from "../addons/flags";
 import { getCatalog } from "./catalog";
-import { DEFAULT_SENDER, isAllowedSender, paymentFailedEmail, setupLinkEmail, sitePausedEmail } from "./emails";
+import { DEFAULT_SENDER, isAllowedSender, paymentFailedEmail, setupLinkEmail, sitePausedEmail, SETUP_LINE_LABEL } from "./emails";
 import { discountOffCents, normaliseDiscount, normaliseSetupDiscount, type SetupDiscount, type PlanDiscount, dueDunningStep, dunningDays, isLinkExpired, LINK_TTL_DAYS, linkExpiresAt, shouldPause, isDuplicateSetupPayment, validateFirstPaymentDate, statusAfterFailure, statusFromSubscription } from "./state";
 import { findBySubscription, getSiteBilling, listSiteBilling, saveSiteBilling, setPayToken, type SiteBillingRecord } from "./store";
-import { addDeferredSetupFee, BILLING_SOURCE, expireCheckoutSession, periodOf, siteUrl, stripeConfigured } from "./stripe-ops";
+import { addDeferredSetupFee, BILLING_SOURCE, GST_BLOCKED, expireCheckoutSession, periodOf, siteUrl, stripeConfigured } from "./stripe-ops";
 import { redemptionFrom } from "../coupons/core";
 import { recordRedemptionUse, resolveRedemptionCode } from "../coupons/stripe";
 
@@ -39,6 +39,7 @@ export async function buildSetup(input: SetupInput): Promise<{ ok: true; rec: Si
   const dateErr = validateFirstPaymentDate(input.startDate);
   if (dateErr) return { ok: false, error: dateErr };
   const catalog = await getCatalog();
+  if (input.gst && catalog.gstRegistered) return { ok: false, error: GST_BLOCKED };
   let planName: string, monthlyCents: number, priceVersion: number | undefined;
   if (input.planId === "custom") {
     monthlyCents = Math.round(Number(input.customCents) || 0);
@@ -101,6 +102,7 @@ export function previewSetupEmail(rec: SiteBillingRecord, siteDomain?: string, p
 
 /** Rotate a 7-day pay token and email the client. */
 export async function sendSetupLink(rec: SiteBillingRecord, siteDomain?: string): Promise<{ rec: SiteBillingRecord; emailed: boolean; payUrl: string }> {
+  if (rec.gst) throw new Error(GST_BLOCKED);
   // A new link may carry new prices, so never reuse the old Checkout Session.
   if (rec.checkoutSessionId && stripeConfigured()) await expireCheckoutSession(rec.checkoutSessionId);
   rec = { ...rec, checkoutSessionId: undefined };
@@ -165,13 +167,13 @@ export async function handleBillingEvent(event: { type: string; data: { object: 
         let setupNote = "";
         if (deferred > 0 && o.subscription && !rec.setupFeeQueued) {
           try {
-            await addDeferredSetupFee(String(o.customer), String(o.subscription), deferred, o.metadata.setup_name || "Setup fee", o.id);
-            setupNote = `. Setup fee ${(deferred / 100).toFixed(2)} added to the first invoice`;
+            await addDeferredSetupFee(String(o.customer), String(o.subscription), deferred, o.metadata.setup_name || SETUP_LINE_LABEL, o.id);
+            setupNote = `. ${SETUP_LINE_LABEL} ${(deferred / 100).toFixed(2)} added to the first invoice`;
           } catch (e) {
-            setupNote = `. Review: setup fee NOT added to the first invoice (${String((e as Error)?.message || e).slice(0, 120)})`;
+            setupNote = `. Review: ${SETUP_LINE_LABEL.toLowerCase()} NOT added to the first invoice (${String((e as Error)?.message || e).slice(0, 120)})`;
           }
         }
-        await saveSiteBilling({ ...rec, ...coupon, ...(setupNote.startsWith(". Setup") ? { setupFeeQueued: true } : {}), status: "active", stripeCustomerId: o.customer || rec.stripeCustomerId, stripeSubscriptionId: o.subscription || rec.stripeSubscriptionId, failedAt: undefined, dunningSent: 0 }, (red ? `Paid, subscription active (code ${coupon.couponCode})${useResult === "repeat" ? ". Review: this email had already used this one-per-customer code" : ""}` : "Paid, subscription active") + setupNote);
+        await saveSiteBilling({ ...rec, ...coupon, ...(setupNote.startsWith(`. ${SETUP_LINE_LABEL}`) ? { setupFeeQueued: true } : {}), status: "active", stripeCustomerId: o.customer || rec.stripeCustomerId, stripeSubscriptionId: o.subscription || rec.stripeSubscriptionId, failedAt: undefined, dunningSent: 0 }, (red ? `Paid, subscription active (code ${coupon.couponCode})${useResult === "repeat" ? ". Review: this email had already used this one-per-customer code" : ""}` : "Paid, subscription active") + setupNote);
         return "setup-active";
       }
       if (o.metadata.kind === "addon") {
