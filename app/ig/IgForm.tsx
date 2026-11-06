@@ -57,7 +57,8 @@ export default function IgForm() {
           </div>
         ) : null}
         {check.checked.length > 0 ? <p className="ig-checked">Checked: {check.checked.join(", ")}.</p> : null}
-        <a className="btn full" href="/blueprint">See the Blueprint audit</a>
+        <a className="btn full" href="/score">Get your free AI Readiness Score</a>
+        <a className="btn ghost full" href="/blueprint">See the Blueprint audit</a>
         {error ? <p className="ig-error" role="alert">{error}</p> : null}
         <p className="ig-fine">
           {saved
