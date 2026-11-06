@@ -110,3 +110,123 @@ export function upfrontTotals(monthlyCents: number, setupCents: number, gst: boo
 
 /** Status that should show the site as needing attention in admin. */
 export const NEEDS_ATTENTION: SiteBillingStatus[] = ["payment_failed", "past_due", "paused", "link_expired"];
+
+/** Admin-set discount on a site's care plan (shown to the client as original price, discount, new price). */
+export interface PlanDiscount {
+  type: "percent" | "amount";
+  /** Percent (1-100) or cents off per month */
+  value: number;
+  /** Months the discount lasts; omitted = forever */
+  months?: number;
+  /** Shown to the client, e.g. "Mates rates" */
+  label?: string;
+}
+
+/** Validate and normalise admin discount input. Null = no discount. */
+export function normaliseDiscount(d: Partial<PlanDiscount> | undefined | null, monthlyCents: number): { ok: true; discount?: PlanDiscount } | { ok: false; error: string } {
+  if (!d || !d.type || !d.value) return { ok: true };
+  if (d.type !== "percent" && d.type !== "amount") return { ok: false, error: "Unknown discount type" };
+  const value = d.type === "percent" ? Math.round(Number(d.value) * 100) / 100 : Math.round(Number(d.value));
+  if (!(value > 0)) return { ok: true };
+  if (d.type === "percent" && value > 100) return { ok: false, error: "Discount can't be more than 100%" };
+  if (d.type === "amount" && value > monthlyCents) return { ok: false, error: "Discount can't be more than the monthly price" };
+  const months = d.months ? Math.round(Number(d.months)) : undefined;
+  if (months !== undefined && (months < 1 || months > 36)) return { ok: false, error: "Discount months must be 1 to 36" };
+  const label = (d.label || "").trim().slice(0, 40) || undefined;
+  return { ok: true, discount: { type: d.type, value, ...(months ? { months } : {}), ...(label ? { label } : {}) } };
+}
+
+/** Cents off per month for a discount. */
+export function discountOffCents(monthlyCents: number, d?: PlanDiscount): number {
+  if (!d) return 0;
+  const off = d.type === "percent" ? Math.round((monthlyCents * d.value) / 100) : d.value;
+  return Math.min(monthlyCents, Math.max(0, off));
+}
+
+/** Client-facing discount label, e.g. "Mates rates (50% off)" or "Founding client ($100 off, 3 months)". */
+export function discountLabel(d: PlanDiscount, money: (c: number) => string): string {
+  const what = d.type === "percent" ? `${d.value}% off` : `${money(d.value)} off`;
+  const dur = d.months ? `, ${d.months === 1 ? "first month" : `${d.months} months`}` : "";
+  return `${d.label || "Discount"} (${what}${dur})`;
+}
+
+/** Admin discount on the one-off setup / site build fee (one charge, so no months). */
+export type SetupDiscount = Omit<PlanDiscount, "months">;
+
+/** Validate a setup fee discount. After it the fee is $0 (waived) or at least $1. */
+export function normaliseSetupDiscount(d: Partial<SetupDiscount> | undefined | null, setupCents: number): { ok: true; discount?: SetupDiscount } | { ok: false; error: string } {
+  if (!d || !d.type || !d.value || setupCents <= 0) return { ok: true };
+  const r = normaliseDiscount({ type: d.type, value: d.value, label: d.label }, setupCents);
+  if (!r.ok) return { ok: false, error: r.error.replace("monthly price", "setup fee") };
+  const left = r.discount ? setupCents - discountOffCents(setupCents, r.discount) : setupCents;
+  if (left > 0 && left < 100) return { ok: false, error: "After the discount the setup fee must be $0 (waived) or at least $1" };
+  return r;
+}
+
+/**
+ * Re-opening the pay link: reuse the still-open Checkout Session (so two tabs or
+ * a second click can't create two subscriptions or pile up admin coupons).
+ * A ?code= on the link needs a fresh session, so the open one is expired first.
+ */
+export function checkoutReuseAction(sessionStatus: string | null | undefined, hasCode: boolean): "reuse" | "expire_then_new" | "new" | "already_paid" {
+  if (sessionStatus === "complete") return "already_paid";
+  if (sessionStatus === "open") return hasCode ? "expire_then_new" : "reuse";
+  return "new";
+}
+
+/** A completed setup checkout whose subscription differs from the one already live on the record. */
+export function isDuplicateSetupPayment(rec: { status: SiteBillingStatus; stripeSubscriptionId?: string }, sessionSubscription?: string | null): boolean {
+  return !!rec.stripeSubscriptionId && !!sessionSubscription && rec.stripeSubscriptionId !== sessionSubscription && rec.status !== "pending" && rec.status !== "link_expired" && rec.status !== "cancelled";
+}
+
+// ---------- first payment date ----------
+
+export const FIRST_PAYMENT_MAX_DAYS = 90;
+
+/** Today's date (YYYY-MM-DD) in Brisbane. */
+export function brisbaneToday(now = Date.now()): string {
+  return new Date(now).toLocaleDateString("en-CA", { timeZone: "Australia/Brisbane" });
+}
+
+/** First payment date must be today up to 90 days out (Brisbane dates). */
+export function validateFirstPaymentDate(date: string, now = Date.now()): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date || "")) return "Pick a first payment date";
+  const today = brisbaneToday(now);
+  if (date < today) return "First payment date can't be in the past";
+  if (Date.parse(`${date}T00:00:00+10:00`) - Date.parse(`${today}T00:00:00+10:00`) > FIRST_PAYMENT_MAX_DAYS * DAY) return `First payment date must be within ${FIRST_PAYMENT_MAX_DAYS} days`;
+  return null;
+}
+
+/** When the first charge happens: at Checkout (today or a date already passed) or on a future date. */
+export function firstChargeAt(date: string, now = Date.now()): { mode: "now" } | { mode: "future"; at: number } {
+  if (date <= brisbaneToday(now)) return { mode: "now" };
+  return { mode: "future", at: Date.parse(`${date}T09:00:00+10:00`) };
+}
+
+function addMonths(ms: number, n: number): number {
+  const d = new Date(ms);
+  d.setUTCMonth(d.getUTCMonth() + n);
+  return d.getTime();
+}
+
+/**
+ * Stripe counts a repeating coupon's months from when it's redeemed (Checkout),
+ * not from the first charge. For N discounted charges starting at firstChargeMs,
+ * the coupon must still be running at the Nth charge and over by the (N+1)th.
+ */
+export function couponDurationMonths(months: number, nowMs: number, firstChargeMs?: number): number {
+  if (!firstChargeMs || firstChargeMs <= nowMs) return months;
+  let k = 0;
+  while (addMonths(nowMs, k) <= firstChargeMs) k++;
+  return months - 1 + k;
+}
+
+/** Monthly charge dates (ms) from the first charge, for tests and copy. */
+export function chargeDates(firstChargeMs: number, count: number): number[] {
+  return Array.from({ length: count }, (_, i) => addMonths(firstChargeMs, i));
+}
+
+/** Is a repeating coupon redeemed at nowMs still on at chargeMs? (Stripe: ends nowMs + months) */
+export function couponCovers(nowMs: number, durationMonths: number, chargeMs: number): boolean {
+  return chargeMs < addMonths(nowMs, durationMonths);
+}

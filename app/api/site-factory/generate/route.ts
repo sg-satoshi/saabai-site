@@ -7,6 +7,7 @@ import { buildChatWidget, getNicheColors } from "../../../../lib/chat-widget-tem
 import { seedPlatformSkin, widgetV2Enabled } from "../../../../lib/chatbot/seed";
 import { THEMES, NICHE_THEME_DEFAULTS } from "../../../../lib/site-themes";
 import { snapshotVersion } from "../../../../lib/site-versions";
+import { noDashesHtml } from "@/lib/no-dashes-html";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -210,7 +211,7 @@ SEO: JSON-LD LocalBusiness with most specific @type. Open Graph. Twitter Card. S
             ? html.replace("</body>", `${widget}\n</body>`)
             : html + `\n${widget}`;
 
-          await put(`sites/${slug}/index.html`, html, {
+          await put(`sites/${slug}/index.html`, noDashesHtml(html), {
             access: "public",
             contentType: "text/html",
             addRandomSuffix: false,

@@ -104,7 +104,7 @@ test("the PATCH route is admin-checked and keeps records; setSubscribersUnsubscr
 });
 
 test("the admin UI never calls the hard-delete route", () => {
-  for (const f of ["SubscriberDashboard.tsx", "Composer.tsx", "ui.tsx"]) {
+  for (const f of ["SubscriberDashboard.tsx", "ui.tsx"]) {
     const src = read(`app/saabai-admin/subscribers/${f}`);
     assert.doesNotMatch(src, /method:\s*"DELETE"/, `${f} has no DELETE`);
     assert.doesNotMatch(src, /deleteSelected|Delete \{|>Delete</, `${f} offers no Delete`);
@@ -145,20 +145,17 @@ test("fill counts use the server's clean() rule", () => {
   assert.equal(hasValue(undefined), false);
 });
 
-test("composer: test send carries only subject and html, send goes to the broadcast route, no-test warns but does not block", () => {
-  const c = read("app/saabai-admin/subscribers/Composer.tsx");
-  const testFn = c.slice(c.indexOf("async function sendTest"), c.indexOf("async function send()"));
-  assert.match(testFn, /fetch\("\/api\/subscribers\/broadcast\/test"/);
-  assert.doesNotMatch(testFn, /recipients|emails/);
-  assert.match(c, /fetch\("\/api\/subscribers\/broadcast",/);
-  assert.match(c, /No test sent yet\. You can still send/);
-  assert.match(c, /MERGE_FIELDS\.map/);
-  assert.match(c, /previewForRecipient\(/);
+test("SUNDER composer locks send until a test, and the preview is sandboxed", () => {
+  const c = read("app/saabai-admin/email/Composer.tsx");
+  assert.match(c, /Send a test first to unlock Send now and Schedule/);
+  assert.match(c, /action: "test"/);
+  assert.match(c, /action: "send"/);
   assert.match(c, /sandbox=""/);
+  assert.doesNotMatch(c, /No test sent yet\. You can still send/);
 });
 
 test("new UI copy has no em or en dashes and no old footer line", () => {
-  for (const f of ["app/saabai-admin/subscribers/SubscriberDashboard.tsx", "app/saabai-admin/subscribers/Composer.tsx", "app/saabai-admin/subscribers/ui.tsx", "lib/broadcast-template.ts", "lib/subscriber-rules.ts", "lib/subscriber-admin.ts"]) {
+  for (const f of ["app/saabai-admin/subscribers/SubscriberDashboard.tsx", "app/saabai-admin/subscribers/ui.tsx", "lib/broadcast-template.ts", "lib/subscriber-rules.ts", "lib/subscriber-admin.ts"]) {
     const src = read(f);
     assert.ok(!/[\u2013\u2014]/.test(src), `${f} has no dashes`);
     assert.doesNotMatch(src, /receiving this as a Saabai subscriber/i);

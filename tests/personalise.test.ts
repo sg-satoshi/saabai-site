@@ -96,19 +96,15 @@ test("zero-recipient and failure results read clearly", () => {
 // Updated for the #345 redesign: the modal became the full-screen composer (Composer.tsx), the
 // test button and Review and send sit in its header above the subject, and the selection bar
 // emails only the people who can be emailed.
-test("admin panel: composer on top, insert-field chips, test button in header, selection toolbar", () => {
+test("admin panel: selection toolbar still emails only people who can be emailed", () => {
   const ui = readFileSync("app/saabai-admin/subscribers/SubscriberDashboard.tsx", "utf8");
-  const comp = readFileSync("app/saabai-admin/subscribers/Composer.tsx", "utf8");
-  assert.match(comp, /Insert personalisation field/);
-  assert.match(comp, /MERGE_FIELDS\.map/);
+  const comp = readFileSync("app/saabai-admin/email/Composer.tsx", "utf8");
   assert.match(comp, /role="dialog"/);
   assert.match(comp, /aria-modal="true"/);
-  const head = comp.slice(comp.indexOf('className="s-shead"'));
-  assert.ok(head.indexOf("{!mobile && testBtn}") < head.indexOf("{write}"), "test button sits above the form");
-  assert.match(comp, /Send test to \$\{BROADCAST_TEST_TO\}/);
-  assert.doesNotMatch(comp, /Use \{"\{\{firstName\}\}"\} for personalisation/);
+  assert.match(comp, /Send test/);
   assert.match(ui, /role="toolbar" aria-label="Selected subscribers"/);
   assert.match(ui, /Email \{selCounts\.canEmail\}/);
+  assert.match(ui, /\/saabai-admin\/email\/new/);
   assert.match(read345("lib/broadcast-template.ts"), /broadcastEmail\(/);
   for (const src of [ui, comp]) assert.doesNotMatch(src, /—/, "no em dashes");
 });

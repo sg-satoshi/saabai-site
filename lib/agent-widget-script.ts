@@ -84,8 +84,22 @@ export function buildWidgetScript(cfg: WidgetConfig): string {
     '</div>';
   root.appendChild(panel);
 
-  function open(){ state.open=true; panel.style.opacity='1'; panel.style.transform='translateY(0) scale(1)'; panel.style.pointerEvents='all'; btn.style.display='none'; render(); setTimeout(function(){ var i=document.getElementById('sa-input'); if(i) i.focus(); },120); }
-  function close(){ state.open=false; panel.style.opacity='0'; panel.style.transform='translateY(12px) scale(0.98)'; panel.style.pointerEvents='none'; btn.style.display='flex'; }
+  function saabaiSheet(panelEl, open) {
+    var src = 'https://www.saabai.ai/chat-sheet.js?v=1';
+    function run() {
+      if (!window.SaabaiChatSheet) return;
+      if (!panelEl._saabaiSheet) panelEl._saabaiSheet = window.SaabaiChatSheet.attach(panelEl);
+      panelEl._saabaiSheet.setOpen(!!open);
+    }
+    if (window.SaabaiChatSheet) { run(); return; }
+    var existing = document.querySelector('script[data-saabai-sheet]');
+    if (existing) { existing.addEventListener('load', run); return; }
+    var s = document.createElement('script');
+    s.src = src; s.async = true; s.setAttribute('data-saabai-sheet', '1'); s.onload = run;
+    document.head.appendChild(s);
+  }
+  function open(){ state.open=true; panel.style.opacity='1'; panel.style.transform='translateY(0) scale(1)'; panel.style.pointerEvents='all'; btn.style.display='none'; render(); saabaiSheet(panel, true); setTimeout(function(){ var i=document.getElementById('sa-input'); if(i){ try { i.focus({preventScroll:true}); } catch(e) { i.focus(); } } },120); }
+  function close(){ saabaiSheet(panel, false); state.open=false; panel.style.opacity='0'; panel.style.transform='translateY(12px) scale(0.98)'; panel.style.pointerEvents='none'; btn.style.display='flex'; }
   btn.addEventListener('click', open);
   document.getElementById('sa-close').addEventListener('click', close);
   document.getElementById('sa-clear').addEventListener('click', function(){ if(!msgs.length) return; msgs=[{role:'bot',text:CONFIG.greeting}]; save(); render(); });
@@ -129,6 +143,7 @@ export function buildWidgetScript(cfg: WidgetConfig): string {
 
   // ---- mobile sizing ----
   function fit(){
+    if (panel._saabaiSheet && panel._saabaiSheet.isActive()) return;
     if (window.innerWidth <= 480){
       panel.style.width='calc(100vw - 24px)'; panel.style.right='12px'; panel.style.bottom='12px'; panel.style.height='72vh'; panel.style.maxHeight='620px';
       btn.style.right='12px'; btn.style.bottom='12px';

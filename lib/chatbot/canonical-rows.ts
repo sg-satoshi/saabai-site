@@ -6,10 +6,11 @@
 import type { SiteConfig } from "../site-registry";
 import { canonicalGroups, customDomains, type SiteLinks } from "../site-dedupe";
 import { BESPOKE_SLUGS, SEED_OFF } from "./core";
+import { getPersona } from "./personas";
 import type { Usage } from "./store";
 
 export function isChatbotListingSite(s: Pick<SiteConfig, "slug" | "chatbot">): boolean {
-  return !!s.chatbot?.enabled || SEED_OFF.includes(s.slug) || BESPOKE_SLUGS.includes(s.slug);
+  return !!s.chatbot?.enabled || SEED_OFF.includes(s.slug) || BESPOKE_SLUGS.includes(s.slug) || !!getPersona(s.slug);
 }
 
 export type FoldedCopy = { id: string; slug: string; name: string };

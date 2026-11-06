@@ -723,6 +723,19 @@
     }
   
 
+    /* Calculators dropdown */
+    .nav-dd { position: relative; }
+    .nav-dd summary { list-style: none; min-height: 40px; display: flex; align-items: center; gap: 6px; padding: 9px 12px; border: 1px solid transparent; border-radius: 8px; color: var(--muted); cursor: pointer; }
+    .nav-dd summary::-webkit-details-marker { display: none; }
+    .nav-dd summary::after { content: "\25BE"; font-size: .8em; color: var(--gold, #B48C54); }
+    .nav-dd[open] summary::after { content: "\25B4"; }
+    .nav-dd summary:hover, .nav-dd[open] summary { color: var(--text); border-color: var(--line); }
+    .nav-dd-menu { position: absolute; top: calc(100% + 6px); left: 0; min-width: 240px; display: grid; gap: 2px; padding: 8px; background: var(--bg-elevated); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 18px 40px rgba(0,0,0,0.14); z-index: 60; }
+    .nav-dd-menu a { display: block; white-space: nowrap; }
+    @media (max-width: 900px) {
+      .nav-dd summary { font-size: 1rem; color: var(--text); }
+      .nav-dd-menu { position: static; min-width: 0; box-shadow: none; border: 0; padding: 0 0 4px 14px; background: transparent; }
+    }
     /* Hero redesign (17 Oct 2026): rounded golden-hour panel, glass card, navy + gold */
     .button-navy { background: #101F34; border-color: #101F34; color: #fff; border-radius: 99px; box-shadow: 0 12px 28px -12px rgba(16,31,52,0.5); transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease; }
     .button-navy:hover { background: #1b3050; box-shadow: 0 16px 32px -12px rgba(16,31,52,0.55); }
@@ -776,7 +789,7 @@
     main section[id] { scroll-margin-top: 40px; }
   </style>
 <link rel="canonical" href="https://www.lifestylemoneymanagement.com.au/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": ["FinancialService", "ProfessionalService"], "@id": "https://www.lifestylemoneymanagement.com.au/#business", "name": "Lifestyle Money Management", "url": "https://www.lifestylemoneymanagement.com.au/", "description": "Ethical, evidence-led property wealth strategy, financial analysis and portfolio management for Australians.", "telephone": "+611300799119", "email": "nick@lifestylemoneymanagement.com.au", "founder": {"@type": "Person", "name": "Nick Foale", "jobTitle": "Managing Director"}, "areaServed": [{"@type": "City", "name": "Adelaide"}, {"@type": "City", "name": "Brisbane"}, {"@type": "State", "name": "Queensland"}, {"@type": "Country", "name": "Australia"}], "aggregateRating": {"@type": "AggregateRating", "ratingValue": 5, "reviewCount": 7, "bestRating": 5}, "hasOfferCatalog": {"@type": "OfferCatalog", "name": "Services", "itemListElement": [{"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Investment Strategy"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Financial Analysis"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Portfolio Management"}}]}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": ["FinancialService", "ProfessionalService"], "@id": "https://www.lifestylemoneymanagement.com.au/#business", "name": "Lifestyle Money Management", "url": "https://www.lifestylemoneymanagement.com.au/", "description": "Ethical, evidence-led property wealth strategy, financial analysis and portfolio management for Australians.", "telephone": "+611300799119", "email": "nick@lifestylemoneymanagement.com.au", "legalName": "Foale Group Pty Ltd", "taxID": "26 648 878 862", "identifier": {"@type": "PropertyValue", "name": "Australian Credit Licence", "value": "530067"}, "founder": {"@type": "Person", "name": "Nick Foale", "jobTitle": "Managing Director"}, "areaServed": [{"@type": "City", "name": "Adelaide"}, {"@type": "City", "name": "Brisbane"}, {"@type": "State", "name": "Queensland"}, {"@type": "Country", "name": "Australia"}], "aggregateRating": {"@type": "AggregateRating", "ratingValue": 5, "reviewCount": 7, "bestRating": 5}, "hasOfferCatalog": {"@type": "OfferCatalog", "name": "Services", "itemListElement": [{"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Investment Strategy"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Financial Analysis"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Portfolio Management"}}]}}</script>
 </head>
 <body>
   <header class="site-header">
@@ -789,6 +802,14 @@
         <a href="#reviews">Why Choose Us?</a>
         <a href="#services">Services</a>
         <a href="#approach">Approach</a>
+        <details class="nav-dd">
+          <summary>Calculators</summary>
+          <div class="nav-dd-menu">
+            <a href="/calculators/borrowing-power">How much can I borrow?</a>
+            <a href="/calculators/serviceability">Can I afford it?</a>
+            <a href="/calculators/repayments">Repayments</a>
+          </div>
+        </details>
         <a href="#meet-nick">Meet Nick</a>
         <a href="#contact">Contact</a>
       </nav>
@@ -1094,6 +1115,13 @@ Thank you for the outstanding service!</p>
       localStorage.setItem("lmm-theme", next);
     });
 
+    // Calculators dropdown: close on outside click or Escape
+    (function () {
+      const d = document.querySelector(".nav-dd"); if (!d) return;
+      document.addEventListener("click", (e) => { if (!d.contains(e.target)) d.open = false; });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") d.open = false; });
+    })();
+
     // Mobile menu
     (function () {
       const t = document.querySelector(".nav-toggle"), n = document.getElementById("primaryNav");
@@ -1167,6 +1195,6 @@ Thank you for the outstanding service!</p>
       button.textContent = "Submit enquiry";
     });
   </script>
-  <script src="/clients/lmm-site/assets/chat-widget.js?v=11" defer></script>
+  <script src="/clients/lmm-site/assets/chat-widget.js?v=14" defer></script>
 </body>
 </html>

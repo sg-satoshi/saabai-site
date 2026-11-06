@@ -1,14 +1,17 @@
 import { NextRequest } from "next/server";
 import { generateText } from "ai";
-import { getDefaultModel } from "../chat-config";
+import { DEFAULT_MODEL_FALLBACK, getDefaultModel, modelFromSpec, parseModelSpec } from "../chat-config";
 import { getSiteBySlug } from "../site-registry";
 import { SLUG_RE, allowedHosts, callerHost, cleanMessages, hostAllowed, logOriginMiss, mappedHostsFor, originMode, slugLimited } from "../chat-origin";
-import { offMessage, promptAdditions } from "./core";
+import { effectiveGoal, offMessage, promptAdditions } from "./core";
+import { effectiveEngage, engagePrompt, parseReview } from "./engage";
+import { goalPrompt, parseReply, resolveButtons } from "./goal";
 import { DISCLOSURE_ONCE_RULE, NOT_SURE_RULE } from "./disclosure";
 import { isNotSureReply } from "./events";
-import { buildSystemPrompt, domainsForBot, getPersona } from "./personas";
+import { buildSystemPrompt, domainsForBot, getPersona, noSpacedHyphen, capReplyWords, type BotPersona } from "./personas";
 import { NO_DASH_RULE, noDashes } from "../no-dashes";
 import { fallbackSessionId, getConfig, isEnabled, recordChatEvent, recordTokens, recordUsage } from "./store";
+import { chatLimited } from "./ratelimit";
 import { lastUserText, logChatTurn, modelIdFrom } from "../chat-log";
 
 export function cors(origin: string | null): Record<string, string> {
@@ -39,6 +42,50 @@ const say = (content: string, status: number, h: Record<string, string>, extra: 
 
 const clientIp = (req: NextRequest) => req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "unknown";
 
+/** Model string stored on the message. The provider prefix is how we record which provider answered. */
+export function loggedModel(provider: string, model: unknown): string {
+  const id = modelIdFrom(model);
+  const p = provider.trim().toLowerCase();
+  if (!p || id === "unknown") return id;
+  if (id.toLowerCase().startsWith(`${p}:`)) return id;
+  return `${p}:${id}`;
+}
+
+/** How long the persona's own model may take before the fallback model is used. */
+export const PERSONA_PRIMARY_TIMEOUT_MS = 12_000;
+
+/**
+ * Persona model first, when one is set in code. An error or a hang uses that persona's
+ * fallbackModel, or the platform default when the persona has none.
+ * Other bots have no persona model, so they never call DeepSeek.
+ */
+async function generateReply(system: string, messages: { role: "user" | "assistant"; content: string }[], persona?: BotPersona) {
+  const primary = persona?.model?.trim();
+  if (primary) {
+    try {
+      const model = modelFromSpec(primary, `persona:${persona?.slug ?? "bot"}`, primary);
+      const result = await generateText({
+        model,
+        system,
+        messages,
+        maxOutputTokens: 600,
+        maxRetries: 0,
+        abortSignal: AbortSignal.timeout(PERSONA_PRIMARY_TIMEOUT_MS),
+      });
+      return { result, model, provider: parseModelSpec(primary, primary).provider };
+    } catch (err) {
+      console.error("persona model failed, using fallback:", err instanceof Error ? err.message : err);
+    }
+  }
+  const pinned = persona?.fallbackModel?.trim();
+  const model = pinned ? modelFromSpec(pinned, `persona-fallback:${persona?.slug ?? "bot"}`, pinned) : getDefaultModel();
+  const provider = pinned
+    ? parseModelSpec(pinned, pinned).provider
+    : parseModelSpec(process.env.DEFAULT_CHAT_MODEL, DEFAULT_MODEL_FALLBACK).provider;
+  const result = await generateText({ model, system, messages, maxOutputTokens: 600 });
+  return { result, model, provider };
+}
+
 /**
  * The one chat handler for platform bots. Order matters:
  * slug and site, origin, ON/OFF (no model call and no usage when off), per-site limits,
@@ -65,6 +112,12 @@ export async function handleChat(req: NextRequest): Promise<Response> {
     const limited = await slugLimited(slug);
     if (limited) {
       return say("This chat is very busy right now. Please try again shortly, or contact the team directly.", 429, { ...h, "Retry-After": limited === "minute" ? "60" : "3600" });
+    }
+
+    const botLimits = getPersona(slug)?.chatLimits;
+    if (botLimits) {
+      const hit = await chatLimited(req, slug, botLimits);
+      if (hit) return say("This chat is very busy right now. Please try again later.", 429, { ...h, "Retry-After": hit === "ip-minute" ? "60" : "3600" });
     }
 
     const chatMessages = cleanMessages(body?.messages);
@@ -103,23 +156,39 @@ Keep responses under 120 words. End with a helpful next step when relevant.`;
     if (!system.toLowerCase().includes("not sure")) system = `${system}\n\n${NOT_SURE_RULE}`;
     // House rule for every Saabai chatbot: no em or en dashes.
     system = `${system}\n\n${NO_DASH_RULE}`;
+    // Goal-first settings go last and say they never override the rules above. Empty when no goal is set.
+    const goal = effectiveGoal(slug, config.goal);
+    const gp = goalPrompt(goal);
+    if (gp) system = `${system}\n\n${gp}`;
+    const engage = effectiveEngage(config.engage);
+    const ep = config.engage ? engagePrompt(engage, config.knowledge?.faqs.length ?? 0) : "";
+    if (ep) system = `${system}\n\n${ep}`;
 
-    const model = getDefaultModel();
-    const result = await generateText({ model, system, messages: chatMessages, maxOutputTokens: 600 });
+    const { result, model, provider } = await generateReply(system, chatMessages, persona);
     const u = result.usage as { inputTokens?: number; outputTokens?: number } | undefined;
     await recordTokens(slug, u?.inputTokens ?? 0, u?.outputTokens ?? 0);
-    const text = noDashes(result.text);
+    const parsed = parseReply(noDashes(result.text), goal);
+    if (persona?.noSpacedHyphen) parsed.content = noSpacedHyphen(parsed.content);
+    if (persona?.maxReplyWords) parsed.content = capReplyWords(parsed.content, persona.maxReplyWords);
+    const rv = parseReview(parsed.content, engage);
+    const text = rv.content;
     logChatTurn({
       bot: slug,
       siteId: slug,
       conversationId: sid,
-      model: modelIdFrom(model),
+      model: loggedModel(provider, model),
       usage: result.totalUsage ?? result.usage,
       userText: lastUserText(chatMessages),
       assistantText: text,
     });
     if (isNotSureReply(text)) await recordChatEvent(slug, "not_sure");
-    return Response.json({ content: noDashes(result.text) }, { headers: h });
+    if (rv.review) await recordChatEvent(slug, "review_shown");
+    const review = rv.review ? { url: engage.reviews.url } : undefined;
+    if (!gp) return Response.json({ content: text, ...(review ? { review } : {}) }, { headers: h });
+    const buttons = resolveButtons(goal);
+    const button = parsed.button === "cta" ? buttons.cta : parsed.button === "fallback" ? buttons.fallback : null;
+    if (button) await recordChatEvent(slug, "cta_shown");
+    return Response.json({ content: text, quickReplies: parsed.quickReplies, cta: button ? { ...button, kind: parsed.button } : null, ...(review ? { review } : {}) }, { headers: h });
   } catch (e) {
     console.error("chat handler error:", e);
     return say("Failed to respond", 500, h);

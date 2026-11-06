@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { listVersions, snapshotVersion } from "../../../../lib/site-versions";
 import { put } from "@vercel/blob";
+import { noDashesHtml } from "@/lib/no-dashes-html";
 
 export const runtime = "nodejs";
 
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
     }
   } catch { /* non-fatal */ }
 
-  await put(`sites/${slug}/index.html`, html, {
+  await put(`sites/${slug}/index.html`, noDashesHtml(html), {
     access: "public",
     contentType: "text/html",
     addRandomSuffix: false,

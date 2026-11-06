@@ -4,11 +4,11 @@
  */
 import { test, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import type { AddressInfo } from "node:net";
 import { NextRequest } from "next/server";
 import { createMockUpstash } from "../scripts/dev/mock-upstash.mjs";
-import { BESPOKE_SLUGS, CAPS, SEED_OFF, auditSummary, canRemovePoweredBy, capState, effectiveEnabled, monthKey, offMessage, poweredByVisible, resolveSkin, validateSkin } from "../lib/chatbot/core";
+import { BESPOKE_SLUGS, CAPS, SEED_OFF, auditSummary, canRemovePoweredBy, capState, effectiveEnabled, monthKey, offMessage, poweredByVisible, resolveSkin, toPublicConfig, validateSkin } from "../lib/chatbot/core";
 
 const mock = createMockUpstash();
 const realFetch = globalThis.fetch;
@@ -88,6 +88,26 @@ test("skin validation: hex colours, safe avatar URL, lengths, position", () => {
   }
   const v = validateSkin({ botName: "A<b>nnie</b>" });
   assert.ok(!(v.ok && /[<>]/.test(v.value.botName ?? "")));
+});
+
+test("a blank saved avatar keeps the photo the bot already had, including Zara", () => {
+  const zara = "/clients/lmm-site/assets/avatar-zara.png";
+  assert.equal(existsSync(new URL("../public/clients/lmm-site/assets/avatar-zara.png", import.meta.url)), true);
+  const site = { name: "Lifestyle Money Management" };
+  const pub = toPublicConfig({ slug: "lmm-site", active: true, config: { plan: "presence", skin: {} }, site });
+  assert.equal(pub.avatarUrl, zara, "the editor Look tab and the live widget read this public avatar");
+  const wiped = toPublicConfig({ slug: "lmm-site", active: true, config: { plan: "presence", skin: { avatarUrl: "  " } }, site });
+  assert.equal(wiped.avatarUrl, zara, "a blank saved avatar does not drop the default");
+  const custom = toPublicConfig({ slug: "lmm-site", active: true, config: { plan: "presence", skin: { avatarUrl: "https://cdn.example/zara.png" } }, site });
+  assert.equal(custom.avatarUrl, "https://cdn.example/zara.png");
+  const christina = resolveSkin({ plan: "presence", skin: { avatarUrl: "" } }, { avatarUrl: "/sites/bo-consultancy/christina-avatar.jpg" });
+  assert.equal(christina.avatarUrl, "/sites/bo-consultancy/christina-avatar.jpg");
+  const sofia = toPublicConfig({ slug: "nico-moretti", active: true, config: { plan: "presence", skin: { avatarUrl: "" } }, site: { name: "Nico Moretti" } });
+  assert.match(sofia.avatarUrl, /sofia-avatar\.png/);
+  const widget = readFileSync("public/clients/lmm-site/assets/chat-widget.js", "utf8");
+  assert.match(widget, /avatar-zara\.png/);
+  assert.match(widget, /c\.avatarUrl/);
+  assert.match(widget, /c\.avatarUrl\.trim\(\)/);
 });
 
 test("off message uses the business phone and email, month key is Brisbane, audit text", () => {
@@ -178,10 +198,12 @@ test("wiring: admin API writes need adminActor, bespoke sites cannot be toggled,
   assert.equal((proxy.match(/\/api\/chat-platform\/message/g) ?? []).length >= 2, true);
   assert.match(readFileSync(ROOT + "lib/chat-guard.ts", "utf8"), /\/api\/chat-platform\/message/);
   assert.ok(!BESPOKE_SLUGS.includes("bo-consultancy") && !BESPOKE_SLUGS.includes("lmm-site"), "Christina and Zara are on the platform");
-  for (const slug of ["tributum-law-v2", "nextinvestment", "nico-moretti"]) assert.ok(BESPOKE_SLUGS.includes(slug));
-  for (const f of ["tributum-chat", "nico-chat", "nextinvestment-chat"]) {
+  for (const slug of ["tributum-law-v2", "nextinvestment"]) assert.ok(BESPOKE_SLUGS.includes(slug));
+  assert.equal(BESPOKE_SLUGS.includes("nico-moretti"), false);
+  for (const f of ["tributum-chat", "nextinvestment-chat"]) {
     assert.doesNotMatch(readFileSync(ROOT + `app/api/${f}/route.ts`, "utf8"), /chatbot\/(store|handler)/, `${f} is untouched`);
   }
+  assert.match(readFileSync(ROOT + "app/api/nico-chat/route.ts", "utf8"), /handleChat/);
   for (const f of ["bo-chat", "lmm-chat"]) {
     const src = readFileSync(ROOT + `app/api/${f}/route.ts`, "utf8");
     assert.match(src, /Delete this route after 27 October 2026/, `${f} stays as a one-week fallback`);

@@ -1,10 +1,10 @@
 /** Monitoring events for a client bot. Stored as counts. Nothing here sends a message. */
 
-export const CHAT_EVENTS = ["conversation_started", "not_sure", "handoff"] as const;
+export const CHAT_EVENTS = ["conversation_started", "not_sure", "handoff", "cta_shown", "cta_click", "goal_reached", "fallback_click", "fallback_reached", "review_shown", "review_click", "nudge_shown", "nudge_click", "chat_ended", "new_chat", "form_opened", "field_name", "field_phone", "field_email", "form_submitted", "offer_click"] as const;
 export type ChatEventName = (typeof CHAT_EVENTS)[number];
 
 /** Events a widget may report. "not_sure" is decided from the reply on the server. */
-export const WIDGET_EVENTS = ["handoff"] as const;
+export const WIDGET_EVENTS = ["handoff", "cta_click", "fallback_click", "review_click", "nudge_shown", "nudge_click", "chat_ended", "new_chat", "form_opened", "field_name", "field_phone", "field_email", "offer_click"] as const;
 export type WidgetEventName = (typeof WIDGET_EVENTS)[number];
 
 export function isChatEvent(value: unknown): value is ChatEventName {
@@ -12,7 +12,7 @@ export function isChatEvent(value: unknown): value is ChatEventName {
 }
 
 export function isWidgetEvent(value: unknown): value is WidgetEventName {
-  return value === "handoff";
+  return typeof value === "string" && (WIDGET_EVENTS as readonly string[]).includes(value);
 }
 
 /** A reply that should be counted as "not sure". */

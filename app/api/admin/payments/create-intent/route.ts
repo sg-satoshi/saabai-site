@@ -5,7 +5,10 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "../../../../../lib/stripe";
-import { isAdminRequest } from "../../../../../lib/product-stripe";
+import { moneyAdmin, moneyDeny } from "../../../../../lib/billing/money-auth";
+import { logMoneyAction } from "../../../../../lib/billing/audit-log";
+import { idemKey, requireRequestId, stepKey } from "../../../../../lib/billing/idempotency";
+import { resolveMoneyCustomer } from "../../../../../lib/billing/money-customer";
 import { markUsed } from "../../../../../lib/coupons/once";
 import { resolveCouponForManual, couponOff } from "../../../../../lib/sell";
 
@@ -13,15 +16,21 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  // Auth — any admin session (env admin or directory-role admin), matching the page guard.
-  if (!(await isAdminRequest())) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  // Money route: full admins only (restricted staff are refused).
+  const actor = await moneyAdmin();
+  if (!actor) {
+    return moneyDeny();
   }
 
   const stripe = getStripe();
 
   try {
-    const { amount, description, customerName, customerEmail, promotionCode } = await req.json();
+    const body = await req.json();
+    const { amount, description, customerName, customerEmail, promotionCode, clientId } = body;
+    const rid = requireRequestId(body);
+    if ("error" in rid) return NextResponse.json({ error: rid.error }, { status: rid.status });
+    const { requestId } = rid;
+    const base = idemKey("create-intent", requestId, { actor, amount, description, customerEmail, promotionCode, clientId });
 
     // Validate
     if (!amount || typeof amount !== "number" || amount < 50) {
@@ -48,21 +57,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Create or find customer
-    let customerId: string | undefined;
-    if (customerEmail) {
-      const existing = await stripe.customers.list({ email: customerEmail, limit: 1 });
-      if (existing.data.length > 0) {
-        customerId = existing.data[0].id;
-      } else {
-        const customer = await stripe.customers.create({
-          name: customerName || undefined,
-          email: customerEmail,
-          metadata: { source: "saabai-admin-payments" },
-        });
-        customerId = customer.id;
-      }
-    }
+    // Linked billing client first, then email (no duplicate customers).
+    const { customerId, client } = await resolveMoneyCustomer(stripe, { clientId, email: customerEmail, name: customerName, source: "saabai-admin-payments", idemBase: base });
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: chargeAmount,
@@ -75,9 +71,11 @@ export async function POST(req: NextRequest) {
         customer_name: customerName || "",
         customer_email: customerEmail || "",
         coupon_code: appliedCode || "",
+        saabai_client_id: client?.id || "",
       },
       automatic_payment_methods: { enabled: true },
-    });
+    }, { idempotencyKey: stepKey(base, "pi") });
+    await logMoneyAction({ actor, action: "payment.create", amountCents: paymentIntent.amount, currency: "aud", clientId: client?.id, clientEmail: customerEmail, stripeIds: { payment_intent: paymentIntent.id, customer: customerId || "" }, ok: true, note: description });
 
     if (onceUse) await markUsed(onceUse, customerEmail, "admin:create-intent:" + Date.now());
     return NextResponse.json({
@@ -88,6 +86,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[payments/create-intent]", msg);
+    await logMoneyAction({ actor, action: "payment.create", ok: false, note: msg });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

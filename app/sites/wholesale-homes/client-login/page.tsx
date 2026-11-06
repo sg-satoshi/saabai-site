@@ -58,13 +58,13 @@ export default function ClientLogin() {
 
             <div style={{ position: "relative", maxWidth: 460 }}>
               <div style={{ display: "inline-flex", alignItems: "center", gap: 6, borderRadius: 999, background: "rgba(232,239,233,0.08)", padding: "6px 14px", fontSize: 11, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(103,197,214,0.9)" }}>
-                <Lock style={{ height: 12, width: 12 }} /> Members only — private access
+                <Lock style={{ height: 12, width: 12 }} /> Members only, private access
               </div>
               <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 500, fontSize: "clamp(30px,3.2vw,44px)", lineHeight: 1.08, letterSpacing: "-0.02em", margin: "18px 0 0" }}>
                 Property most buyers never see.
               </h1>
               <p style={{ marginTop: 14, fontSize: 14.5, lineHeight: 1.65, color: "rgba(232,239,233,0.68)" }}>
-                Sign in to browse pre-market house and land packages, run the numbers with our built-in calculators, and track your purchase — all reserved for approved clients only.
+                Sign in to browse pre-market house and land packages, run the numbers with our built-in calculators, and track your purchase, all reserved for approved clients only.
               </p>
               <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 14 }}>
                 {["Priced below bank valuation", "Pre-market inventory, never publicly listed", "Investment calculators built for every package"].map((f) => (

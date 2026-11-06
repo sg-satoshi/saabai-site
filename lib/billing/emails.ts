@@ -4,7 +4,7 @@
  */
 import { EMAIL_BRAND, escapeHtml, renderBrandedEmail, type BrandedEmail } from "../email/branded-layout";
 import { formatAud } from "./catalog";
-import { upfrontTotals } from "./state";
+import { discountLabel, discountOffCents, firstChargeAt, upfrontTotals, type PlanDiscount, type SetupDiscount } from "./state";
 
 export const SENDER_OPTIONS = [
   { value: EMAIL_BRAND.from, label: "Saabai default sender" },
@@ -17,8 +17,8 @@ const money = (c: number) => `${formatAud(c).replace(/^\$/, "$")}${c % 100 === 0
 const first = (name: string) => (name || "").trim().split(/\s+/)[0] || "there";
 
 function table(rows: [string, string, boolean?][]): string {
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_BRAND.border};border-radius:10px;border-collapse:separate;margin:18px 0;">${rows
-    .map(([l, v, strong], i) => `<tr><td style="padding:11px 14px;font-size:14px;color:${EMAIL_BRAND.text};${i ? `border-top:1px solid ${EMAIL_BRAND.border};` : ""}${strong ? "font-weight:700;" : ""}">${escapeHtml(l)}</td><td align="right" style="padding:11px 14px;font-size:14px;font-family:'Geist Mono',ui-monospace,Menlo,monospace;color:${EMAIL_BRAND.text};${i ? `border-top:1px solid ${EMAIL_BRAND.border};` : ""}${strong ? "font-weight:700;" : ""}">${escapeHtml(v)}</td></tr>`)
+  return `<table class="email-table" role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_BRAND.border};border-radius:10px;border-collapse:separate;margin:18px 0;">${rows
+    .map(([l, v, strong], i) => `<tr><td class="email-row" style="padding:11px 14px;font-size:14px;color:${EMAIL_BRAND.text};${i ? `border-top:1px solid ${EMAIL_BRAND.border};` : ""}${strong ? "font-weight:700;" : ""}">${escapeHtml(l)}</td><td class="email-row" align="right" style="padding:11px 14px;font-size:14px;font-family:'Geist Mono',ui-monospace,Menlo,monospace;color:${EMAIL_BRAND.text};${i ? `border-top:1px solid ${EMAIL_BRAND.border};` : ""}${strong ? "font-weight:700;" : ""}">${escapeHtml(v)}</td></tr>`)
     .join("")}</table>`;
 }
 const p = (s: string) => `<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:${EMAIL_BRAND.text};">${s}</p>`;
@@ -34,9 +34,19 @@ export interface SetupEmailInput {
   monthlyCents: number;
   setupFeeCents: number;
   setupFeeDescription?: string;
-  startDate: string; // YYYY-MM-DD
+  startDate: string; // YYYY-MM-DD, first payment date
+  /** Clock override for tests */
+  now?: number;
   gst: boolean;
   payUrl: string;
+  /** Admin discount: shown as original price, discount line, new price */
+  discount?: PlanDiscount;
+  /** Admin discount on website build and setup: shown as original fee, discount line (or Waived) */
+  setupDiscount?: SetupDiscount;
+}
+
+export function dateLabel(date: string): string {
+  return new Date(`${date}T00:00:00+10:00`).toLocaleDateString("en-AU", { day: "numeric", month: "short", timeZone: "Australia/Brisbane" });
 }
 
 export function nextCycleLabel(startDate: string): string {
@@ -45,12 +55,56 @@ export function nextCycleLabel(startDate: string): string {
   return d.toLocaleDateString("en-AU", { day: "numeric", month: "short", timeZone: "Australia/Brisbane" });
 }
 
+/** Client-facing name for the one-off website build charge (email, Checkout, invoice). */
+export const SETUP_LINE_LABEL = "Website build and setup";
+
+/** Stripe / email line name. Optional admin description is appended after a colon. */
+export function setupLineName(description?: string): string {
+  const d = (description || "").trim();
+  return d ? `${SETUP_LINE_LABEL}: ${d}` : SETUP_LINE_LABEL;
+}
+
+/** Stripe custom_text limit (submit message). */
+export const CHECKOUT_TEXT_MAX = 1200;
+
+/**
+ * Future first payment: the exact line shown on Stripe Checkout. Uses the same maths and
+ * money format as the setup email, so Checkout, email and Stripe's first invoice agree.
+ */
+export function checkoutFirstPaymentText(i: { monthlyCents: number; setupFeeCents: number; startDate: string; gst: boolean; discount?: PlanDiscount; setupDiscount?: SetupDiscount }, promoPossible = false): string {
+  const net = i.monthlyCents - discountOffCents(i.monthlyCents, i.discount);
+  const setupNet = i.setupFeeCents - discountOffCents(i.setupFeeCents, i.setupDiscount);
+  const t = upfrontTotals(net, setupNet, i.gst);
+  const parts = setupNet > 0 ? ` (${money(setupNet)} ${SETUP_LINE_LABEL.toLowerCase()} + ${money(net)} first month)` : " (first month)";
+  return `Nothing is charged today. First payment on ${dateLabel(i.startDate)}: ${money(t.dueNow)}${parts}, then monthly from that date.${promoPossible ? " Amounts are before any promo code." : ""}`.slice(0, CHECKOUT_TEXT_MAX);
+}
+
 export function setupLinkEmail(i: SetupEmailInput): BrandedEmail {
-  const t = upfrontTotals(i.monthlyCents, i.setupFeeCents, i.gst);
-  const rows: [string, string, boolean?][] = [[`${i.planName}, first month`, money(t.firstMonth)]];
-  if (t.setup) rows.push([`Setup${i.setupFeeDescription ? `: ${i.setupFeeDescription}` : " fee"}`, money(t.setup)]);
+  const off = discountOffCents(i.monthlyCents, i.discount);
+  const net = i.monthlyCents - off;
+  const setupOff = discountOffCents(i.setupFeeCents, i.setupDiscount);
+  const setupNet = i.setupFeeCents - setupOff;
+  const t = upfrontTotals(net, setupNet, i.gst);
+  const rows: [string, string, boolean?][] = [[`${i.planName}, first month`, money(i.monthlyCents)]];
+  if (off && i.discount) rows.push([discountLabel(i.discount, money), `-${money(off)}`]);
+  if (i.setupFeeCents > 0) {
+    rows.push([setupLineName(i.setupFeeDescription), money(i.setupFeeCents)]);
+    if (setupOff && i.setupDiscount) rows.push([setupNet ? discountLabel(i.setupDiscount, money) : `${discountLabel(i.setupDiscount, money)}, ${SETUP_LINE_LABEL.toLowerCase()} waived`, `-${money(setupOff)}`]);
+  }
   if (i.gst) rows.push(["GST", money(t.gst)]);
-  rows.push(["Due today", money(t.dueNow), true], [`Then monthly from ${nextCycleLabel(i.startDate)}`, money(t.monthly)]);
+  // Must match Checkout: today = charged now, renews monthly from the day they pay; future = $0 now, first payment on the date.
+  const future = firstChargeAt(i.startDate, i.now).mode === "future";
+  if (future) rows.push([`First payment on ${dateLabel(i.startDate)}`, money(t.dueNow), true], ["Due today (card saved only)", money(0)], [`Then monthly from ${nextCycleLabel(i.startDate)}`, money(t.monthly)]);
+  else rows.push(["Due today", money(t.dueNow), true], ["Then monthly, on the same day you pay", money(t.monthly)]);
+  const full = upfrontTotals(i.monthlyCents, 0, i.gst).monthly;
+  const saving = off && i.discount
+    ? i.discount.months
+      ? `You're saving ${money(off)} a month for ${i.discount.months === 1 ? "your first month" : `your first ${i.discount.months} months`}, then it's the usual ${money(full)} a month.`
+      : `You're saving ${money(off)} every month. Normally ${money(full)} a month.`
+    : "";
+  const setupSaving = setupOff && i.setupDiscount
+    ? setupNet ? `Your ${SETUP_LINE_LABEL.toLowerCase()} is ${money(setupNet)}, down from ${money(i.setupFeeCents)}.` : `Your ${money(i.setupFeeCents)} ${SETUP_LINE_LABEL.toLowerCase()} is waived.`
+    : "";
   const where = i.siteDomain || i.siteName;
   return renderBrandedEmail({
     subject: `Your ${i.planName} plan is ready to go`,
@@ -60,6 +114,8 @@ export function setupLinkEmail(i: SetupEmailInput): BrandedEmail {
     bodyHtml:
       p(`Your site's live and looking sharp. ${escapeHtml(i.planName)} keeps ${escapeHtml(where)} hosted, secure, backed up and updated. You run the business, we keep the website out of your way. Fair trade.`) +
       table(rows) +
+      (saving ? p(`<strong>${escapeHtml(saving)}</strong>`) : "") +
+      (setupSaving ? p(`<strong>${escapeHtml(setupSaving)}</strong>`) : "") +
       small(`${i.gst ? "Prices include GST." : "GST not applicable."} Takes about a minute. Card or bank debit, handled securely by Stripe. This link is valid for 7 days. ${CANCEL_COPY}`),
     cta: { href: i.payUrl, label: "Set up payment" },
     footnote: "Questions? Just reply. A real person reads these, usually me. Shane, Saabai",
@@ -67,6 +123,8 @@ export function setupLinkEmail(i: SetupEmailInput): BrandedEmail {
       `Hi ${first(i.contactName)},`,
       `Your site's live and looking sharp. ${i.planName} keeps ${where} hosted, secure, backed up and updated.`,
       ...rows.map(([l, v]) => `${l}: ${v}`),
+      ...(saving ? [saving] : []),
+      ...(setupSaving ? [setupSaving] : []),
       `Set up payment (valid 7 days): ${i.payUrl}`,
       `${i.gst ? "Prices include GST." : "GST not applicable."} ${CANCEL_COPY}`,
       "Questions? Just reply. Shane, Saabai",

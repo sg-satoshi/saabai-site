@@ -139,7 +139,7 @@ test("the greeting carries the disclaimer once and prompts do not ask for it on 
   const legal = voiceScript("legal");
   assert.equal(legal.intro, legalVoiceIntro());
   assert.equal(legal.intro, "Hi, I'm Lachie from Harbour Street Legal, an AI assistant. This chat is transcribed, not recorded.");
-  assert.equal(VOICE_COPY.consent, "You're talking to Lachie, a demo of Saabai's AI voice receptionist. This chat is transcribed, not recorded.");
+  assert.equal(VOICE_COPY.consent, "You're talking to Lachie, an AI voice demo in your browser. This chat is transcribed, not recorded.");
   assert.match(legal.instructions, /Do not repeat that disclaimer/);
   assert.match(legal.instructions, /one short natural redirect/);
   assert.doesNotMatch(legal.instructions, /You say you are an AI in your first sentence/);

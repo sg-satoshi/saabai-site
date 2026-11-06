@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import SbFooter from "../components/sb/SbFooter";
 import JsonLd from "../components/JsonLd";
-import { lawFirmChatbotServiceNode, schemaGraph, LEX_FIRM_MONTHLY } from "@/lib/seo-entity";
+import { lawFirmChatbotServiceNode, schemaGraph } from "@/lib/seo-entity";
 import { breadcrumbNode, faqNode } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
 import { LachieLegalDemo, LexWebsiteDemo } from "../components/legal-demos/HarbourDemos";
@@ -41,7 +41,7 @@ const SECTIONS: { title: string; body: string[]; features?: string[]; href?: str
     title: "Lex, an AI legal assistant for law firms",
     body: [
       "Lex is Saabai's AI legal assistant for research and drafting.",
-      `The Firm plan is $${LEX_FIRM_MONTHLY} a month.`,
+      "It starts with a 60-day free trial, no card needed.",
       "It is a different product from the website chatbot demo on this page.",
       "The demo answers a visitor. Lex searches public Australian government sources and drafts documents for lawyers.",
     ],
@@ -174,7 +174,7 @@ export default function AiChatbotLawFirmsPage() {
         </div>
       </section>
 
-      {/* Lachie voice demo. Live phone answering is coming soon. Same demo as /legal. */}
+      {/* Lachie voice demo. Browser demo only, not a phone line. Same demo as /legal. */}
       <section id="lachie" className="lx-demo-scope lx-lachie" style={{ paddingTop: 24 }}>
         <div className="wrap">
           <LachieLegalDemo ready={voiceDemoReady} />

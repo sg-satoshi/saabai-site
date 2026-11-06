@@ -8,7 +8,7 @@ import type { LexStep } from "../../../lib/lex-steps";
 import { type LexError, signInHref } from "../../../lib/lex-errors";
 import { Icon } from "./icons";
 
-/** Tax and ATO dispute samples for the empty state (Tributum Law is a tax firm). */
+/** Tax and ATO dispute samples for the empty state (tax firms are a core Lex audience). */
 export const SAMPLE_QUESTIONS: { tag: string; q: string }[] = [
   { tag: "ATO dispute", q: "What are the time limits for lodging an objection to an amended assessment?" },
   { tag: "Division 7A", q: "When will a journal entry count as a minimum yearly repayment under Division 7A?" },

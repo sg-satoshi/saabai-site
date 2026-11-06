@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 // City-page redirects are for saabai.ai only; client sites on their own domains must not inherit them.
-const CLIENT_HOST = [{ type: "host" as const, value: "(www\\.)?(stuscyclerepairs\\.com|boconsulting\\.com\\.au|wholesalehomes\\.com\\.au|lifestylemoneymanagement\\.com\\.au|tributumlaw\\.com|nicomoretti\\.au)" }];
+const CLIENT_HOST = [{ type: "host" as const, value: "(www\\.)?(stuscyclerepairs\\.com|boconsulting\\.com\\.au|wholesalehomes\\.com\\.au|lifestylemoneymanagement\\.com\\.au|tributumlaw\\.com|nicomoretti\\.au|sunder\\.com\\.au|sunderpickleball\\.com\\.au|sunderpickleball\\.com)" }];
 
 // Lex routes that run the open-source name model.
 const LEX_NER_ROUTES = ["/api/lex-chat", "/api/lex-research", "/api/lex-draft", "/api/lex-review", "/api/lex-compare", "/api/lex-extract", "/api/lex-threads", "/api/lex-settings", "/api/lex-ner-health"];
@@ -81,9 +81,18 @@ const nextConfig: NextConfig = {
   async headers() {
     const noindex = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
     const embed = [{ source: "/embed/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=300, stale-while-revalidate=86400" }] }];
+    // Versioned with ?v=. Classic script loads from client domains need no CORS preflight;
+    // Access-Control-Allow-Origin is set so a fetch of the same file is allowed too.
+    const chatSheet = [{
+      source: "/chat-sheet.js",
+      headers: [
+        { key: "Cache-Control", value: "public, max-age=300, s-maxage=86400, stale-while-revalidate=604800" },
+        { key: "Access-Control-Allow-Origin", value: "*" },
+      ],
+    }];
     const security = [{ source: "/:path*", headers: GLOBAL_SECURITY_HEADERS }]
       .concat(NO_FRAME_PATHS.map((source) => ({ source, headers: NO_FRAME_HEADERS })));
-    return security.concat(embed).concat(["/saabai-admin", "/saabai-admin/:path*", "/admin/:path*", "/login", "/login/:path*", "/dashboard/:path*", "/dashboard", "/client-portal", "/forgot-password", "/insights", "/ai-news", "/ig"].map(
+    return security.concat(embed).concat(chatSheet).concat(["/saabai-admin", "/saabai-admin/:path*", "/admin/:path*", "/login", "/login/:path*", "/dashboard/:path*", "/dashboard", "/client-portal", "/forgot-password", "/insights", "/ai-news", "/ig"].map(
       (source) => ({ source, headers: noindex })
     ));
   },

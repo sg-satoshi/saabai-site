@@ -52,6 +52,20 @@ test("deny by default: unmapped paths are admin only for restricted roles", () =
   }
 });
 
+test("chat history uses chatbot access and leadgen clients use customer access", () => {
+  const bots: AccessGrant = { role: "viewer", areas: { chatbots: "read" } };
+  const cust: AccessGrant = { role: "viewer", areas: { customers: "read" } };
+  assert.equal(areaForPath("/saabai-admin/chat-history"), "chatbots");
+  assert.equal(areaForPath("/saabai-admin/chat-history?bot=lmm-site"), "chatbots");
+  assert.equal(decide(bots, "GET", "/saabai-admin/chat-history").allow, true);
+  assert.equal(decide(bots, "POST", "/saabai-admin/chat-history").allow, false);
+  assert.equal(decide(cust, "GET", "/saabai-admin/chat-history").allow, false);
+  assert.equal(decide({ role: "admin" }, "GET", "/saabai-admin/chat-history").allow, true);
+  assert.equal(areaForPath("/saabai-admin/leadgen-clients"), "customers");
+  assert.equal(decide(cust, "GET", "/saabai-admin/leadgen-clients?id=client_1").allow, true);
+  assert.equal(decide(bots, "GET", "/saabai-admin/leadgen-clients").allow, false);
+});
+
 test("viewer: GET on granted areas only, never writes", () => {
   assert.equal(decide(viewer, "GET", "/api/admin/coupons").allow, true);
   assert.equal(decide(viewer, "HEAD", "/saabai-admin/marketing/offers").allow, true);

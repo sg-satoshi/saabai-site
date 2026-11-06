@@ -12,7 +12,10 @@ export const EMAIL_BRAND = {
   siteUrl: "https://www.saabai.ai",
   portalUrl: "https://www.saabai.ai/client-portal",
   supportEmail: "hello@saabai.ai",
-  abn: "71 889 082 572",
+  abn: "44 703 735 264",
+  acn: "703 735 264",
+  /** Legal sender line in every email footer: ONE config value. Saabai Pty Ltd trading as Saabai, not GST registered. */
+  senderIdentity: "Saabai Pty Ltd trading as Saabai · ABN 44 703 735 264",
   navy: "#0b092e",
   navyDeep: "#07061f",
   teal: "#62c5d1",
@@ -96,8 +99,11 @@ export function renderBrandedEmail(input: LayoutInput): BrandedEmail {
       .email-body { background-color: #0b092e !important; }
       .email-card { background-color: #14123a !important; }
       .email-copy, .email-copy p, .email-copy li { color: #e8eaf8 !important; }
+      .email-copy .email-row { color: #ffffff !important; border-color: #3a3780 !important; }
+      .email-copy .email-table { border-color: #3a3780 !important; }
       .email-muted { color: #9aa0c8 !important; }
       .email-footer { color: #8f95c0 !important; }
+      .email-footer a { color: #7fd6e0 !important; }
     }
     @media only screen and (max-width: 620px) {
       .email-shell { width: 100% !important; }
@@ -134,7 +140,7 @@ export function renderBrandedEmail(input: LayoutInput): BrandedEmail {
                 </tr>
                 <tr>
                   <td class="email-pad email-footer" style="padding:20px 32px 28px;border-top:1px solid ${EMAIL_BRAND.border};font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.55;color:${EMAIL_BRAND.muted};">
-                    <p style="margin:0;">Saabai · ABN ${EMAIL_BRAND.abn}</p>
+                    <p style="margin:0;">${escapeHtml(EMAIL_BRAND.senderIdentity)}</p>
                     <p style="margin:6px 0 0;">Questions? <a href="mailto:${EMAIL_BRAND.supportEmail}" style="color:${EMAIL_BRAND.tealDark};text-decoration:none;">${EMAIL_BRAND.supportEmail}</a> · <a href="${EMAIL_BRAND.siteUrl}" style="color:${EMAIL_BRAND.tealDark};text-decoration:none;">saabai.ai</a></p>
                   </td>
                 </tr>
@@ -161,7 +167,7 @@ export function renderBrandedEmail(input: LayoutInput): BrandedEmail {
     input.secondaryCta ? `${input.secondaryCta.label}: ${input.secondaryCta.href}` : "",
     input.footnote || "",
     "",
-    `Saabai · ABN ${EMAIL_BRAND.abn}`,
+    EMAIL_BRAND.senderIdentity,
     `Support: ${EMAIL_BRAND.supportEmail}`,
     EMAIL_BRAND.siteUrl,
   ]

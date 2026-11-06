@@ -82,13 +82,13 @@ export default function BorrowingPowerEstimator() {
   return (
     <ClientPortalShell>
       <PageWrap>
-        <Masthead label="Wholesale Homes — Borrowing Power" />
+        <Masthead label="Wholesale Homes: Borrowing Power" />
         <CalculatorNav current="borrowing-power" />
 
         <Hero
           eyebrow="Lending capacity"
           headline={<>You could borrow up to{" "}<span style={{ color: "#5fd4ab" }}><AnimatedNumber value={maxB} format={(n) => fmt$(Math.round(n))} /></span>.</>}
-          sub={<>On {fmt$(ti)}/yr income, stress-tested at {stress.toFixed(1)}% (APRA +3% buffer) — enough for a ~{fmt$(Math.round(pp))} purchase with your {fmt$(deposit)} deposit.</>}
+          sub={<>On {fmt$(ti)}/yr income, stress-tested at {stress.toFixed(1)}% (APRA +3% buffer), enough for a ~{fmt$(Math.round(pp))} purchase with your {fmt$(deposit)} deposit.</>}
           stats={[
             { label: "Est. property", value: <AnimatedNumber value={pp} format={(n) => fmt$(Math.round(n))} /> },
             { label: `${ltType === "interestOnly" ? "IO" : "Monthly"} repay`, value: <AnimatedNumber value={effectiveRepay} format={(n) => fmt$(Math.round(n))} /> },
@@ -108,10 +108,10 @@ export default function BorrowingPowerEstimator() {
           <Card>
             <Eyebrow>Assumptions</Eyebrow>
             <Title>Your position</Title>
-            <p style={{ fontSize: 12.5, color: UI.faintInk, margin: "4px 0 16px" }}>Income, deposit and rate — everything updates live.</p>
+            <p style={{ fontSize: 12.5, color: UI.faintInk, margin: "4px 0 16px" }}>Income, deposit and rate, everything updates live.</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div style={{ borderRadius: 12, border: `1px solid ${UI.hair}`, background: UI.bone, padding: "8px 12px", fontSize: 11.5, color: UI.faintInk }}>
-                Your income is set in the <strong style={{ color: UI.ink }}>Income &amp; tax</strong> section below — it's shared across every calculator.
+                Your income is set in the <strong style={{ color: UI.ink }}>Income &amp; tax</strong> section below, it's shared across every calculator.
               </div>
               <FieldGrid items={[
                 { label: "Partner Income", val: pi, set: setPi, suffix: "$/yr" },
@@ -205,7 +205,7 @@ export default function BorrowingPowerEstimator() {
             <Title>Loan-to-value</Title>
             <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 8 }}>
               <span style={{ fontFamily: FONT_DISPLAY, fontSize: 34, fontWeight: 500, color: lvrColor, fontVariantNumeric: "tabular-nums" }}>{lvr.toFixed(1)}%</span>
-              <span style={{ fontSize: 12, color: UI.faintInk }}>{lvr > 80 ? "LMI likely applies" : lvr > 70 ? "borderline — watch LMI" : "comfortably under 80%"}</span>
+              <span style={{ fontSize: 12, color: UI.faintInk }}>{lvr > 80 ? "LMI likely applies" : lvr > 70 ? "borderline, watch LMI" : "comfortably under 80%"}</span>
             </div>
             <div style={{ position: "relative", height: 10, marginTop: 12, borderRadius: 999, overflow: "hidden", background: "rgba(18,30,26,0.06)" }}>
               <div style={{ width: "70%", position: "absolute", inset: 0, background: UI.green, opacity: 0.12 }} />
@@ -219,7 +219,7 @@ export default function BorrowingPowerEstimator() {
             <div style={{ marginTop: 14 }}>
               <LedgerRow label="Loan amount" value={fmt$(Math.round(maxB))} valueColor={UI.teal} />
               <LedgerRow label="Deposit" value={fmt$(deposit)} />
-              <LedgerRow label="Stressed repayment" sub={`at ${stress.toFixed(1)}% — the lender's test`} value={fmt$(Math.round(stressedRepay))} valueColor={UI.faintInk} />
+              <LedgerRow label="Stressed repayment" sub={`at ${stress.toFixed(1)}%, the lender's test`} value={fmt$(Math.round(stressedRepay))} valueColor={UI.faintInk} />
               <LedgerRow strong last label="Est. property price" value={fmt$(Math.round(pp))} />
             </div>
             <p style={{ fontSize: 10.5, color: UI.faint, marginTop: 12 }}>Estimate only. Speak with a mortgage broker or Nick for pre-approval figures.</p>

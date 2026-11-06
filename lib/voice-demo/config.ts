@@ -57,9 +57,9 @@ export const VOICE_WRAP_INSTRUCTIONS =
 
 export const VOICE_COPY = {
   button: `Talk to ${VOICE_AGENT_NAME}`,
-  support: `Meet ${VOICE_AGENT_FULL_NAME}, a demo of Saabai's AI voice receptionist.`,
+  support: `Meet ${VOICE_AGENT_FULL_NAME}, Saabai's AI voice demo. You talk to it here in your browser.`,
   comingSoon: "Voice demo coming soon",
-  consent: "You're talking to Lachie, a demo of Saabai's AI voice receptionist. This chat is transcribed, not recorded.",
+  consent: "You're talking to Lachie, an AI voice demo in your browser. This chat is transcribed, not recorded.",
   consentTitle: "Before we start",
   start: "Start talking",
   cancel: "Not now",

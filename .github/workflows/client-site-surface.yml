@@ -15,5 +15,5 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx tsx --test tests/client-site-surface.test.ts tests/nico-privacy.test.ts
+      - run: npx tsx --test tests/client-site-surface.test.ts tests/nico-privacy.test.ts tests/sunder-factory.test.ts tests/sunder-waitlist.test.ts tests/sunder-referrals.test.ts
       - run: npx tsx --test tests/llms-terms.test.ts

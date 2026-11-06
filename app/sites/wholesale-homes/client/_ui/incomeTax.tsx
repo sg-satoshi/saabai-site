@@ -21,7 +21,7 @@ export function IncomeTaxCard({
     <div>
       <Eyebrow>Income & tax</Eyebrow>
       <Title>Your tax position</Title>
-      <p style={{ fontSize: 12.5, color: UI.faintInk, margin: "4px 0 16px" }}>Shared across calculators — enter once.</p>
+      <p style={{ fontSize: 12.5, color: UI.faintInk, margin: "4px 0 16px" }}>Shared across calculators, enter once.</p>
 
       <FieldGrid items={[
         { label: "Employment", val: profile.employmentType, set: (v: string) => setProfile({ employmentType: v as EmploymentType }), isSelect: true, opts: [{ label: "PAYG employee", value: "employee" }, { label: "Self-employed", value: "selfEmployed" }] },

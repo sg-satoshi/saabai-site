@@ -9,10 +9,10 @@ import { validEmail } from "./exit-popup";
 export const SCORE_LINK_URL = "https://www.saabai.ai/score?from=exit-email";
 export const SCORE_LINK_SUBJECT = "Your free AI score link";
 export const SCORE_LINK_RATE_SECONDS = 24 * 60 * 60;
-const ABN = "71 889 082 572";
+const ABN = "44 703 735 264";
 
 export function scoreLinkFooterHtml(unsubUrl: string): string {
-  return `<p style="font-size:12px;color:#8a8fa8;margin-top:28px;border-top:1px solid #e8e8ec;padding-top:14px;line-height:1.6">You're getting this because you asked for your AI score link on saabai.ai. Sent by Saabai, ABN ${ABN}, Merrimac QLD 4226, Australia (saabai.ai, hello@saabai.ai). <a href="${escapeHtml(unsubUrl)}" style="color:#1595a6">Unsubscribe</a> and we won't email you again.</p>`;
+  return `<p style="font-size:12px;color:#8a8fa8;margin-top:28px;border-top:1px solid #e8e8ec;padding-top:14px;line-height:1.6">You're getting this because you asked for your AI score link on saabai.ai. Sent by Saabai Pty Ltd trading as Saabai, ABN ${ABN}, Merrimac QLD 4226, Australia (saabai.ai, hello@saabai.ai). <a href="${escapeHtml(unsubUrl)}" style="color:#1595a6">Unsubscribe</a> and we won't email you again.</p>`;
 }
 
 export function scoreLinkEmailHtml(unsubUrl: string): string {
@@ -44,7 +44,7 @@ export function scoreLinkEmailText(unsubUrl: string): string {
     "",
     "Shane, Saabai",
     "",
-    `You're getting this because you asked for your AI score link on saabai.ai. Sent by Saabai, ABN ${ABN}, Merrimac QLD 4226, Australia. Unsubscribe: ${unsubUrl}`,
+    `You're getting this because you asked for your AI score link on saabai.ai. Sent by Saabai Pty Ltd trading as Saabai, ABN ${ABN}, Merrimac QLD 4226, Australia. Unsubscribe: ${unsubUrl}`,
   ].join("\n");
 }
 

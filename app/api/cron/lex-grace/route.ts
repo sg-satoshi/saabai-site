@@ -6,7 +6,10 @@ import { getRedis } from "../../../../lib/redis";
 import { listPortalUsers } from "../../../../lib/portal-users";
 import { getLexClients } from "../../../../lib/lex-config";
 import { lexAlert, lexMailer } from "../../../../lib/lex-subscription-emails";
+import { flushFeedbackDigest } from "../../../../lib/lex-feedback";
 import { getStripe } from "../../../../lib/stripe";
+import { sweepTrials } from "../../../../lib/lex-trial";
+import { sweepFoundingReservations } from "../../../../lib/lex-subscription";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -19,6 +22,9 @@ export async function GET(req: Request) {
   }
   try {
     const result = await sweepGrace(lexMailer, async (id) => (await getStripe().subscriptions.retrieve(id)).status);
+    // Free trials past day 60 with no subscription: lapse (trial_ended); the 30-day data clock starts at the trial end.
+    const trials = await sweepTrials(lexMailer);
+    const foundingReleased = await sweepFoundingReservations().catch(() => 0);
     const data = await sweepDataRetention(
       { matters: deleteFirmMatters, threads: async (e) => { await getRedis()?.del(`lex:threads:${e.toLowerCase()}`); } },
       firmKeyForEmail,
@@ -33,7 +39,8 @@ export async function GET(req: Request) {
       new Date(),
       { alert: lexAlert }, // mode from LEX_DATA_DELETION_MODE; unset means dry_run
     );
-    return Response.json({ ok: true, result, data });
+    const feedbackDigest = await flushFeedbackDigest(lexAlert).catch(() => 0);
+    return Response.json({ ok: true, result, trials, foundingReleased, data, feedbackDigest });
   } catch (err) {
     console.error("[lex grace]", err instanceof Error ? err.name : err);
     return Response.json({ error: "Sweep failed" }, { status: 500 });

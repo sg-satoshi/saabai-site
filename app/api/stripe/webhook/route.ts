@@ -6,7 +6,7 @@ import { attrFromMetadata } from "@/lib/growth/attribution";
 import { recordEvent, touchContact } from "@/lib/growth/events";
 import { markUpsellConverted, recordReferralPurchase } from "@/lib/growth/growth2";
 import { reportCheckoutPurchase } from "@/lib/marketing/report-purchase";
-import { handleLexLifecycle, provisionLexCheckout } from "@/lib/lex-subscription";
+import { handleLexLifecycle, provisionLexCheckout, releaseFoundingPlace } from "@/lib/lex-subscription";
 import { lexAlert, lexMailer } from "@/lib/lex-subscription-emails";
 
 export const runtime = "nodejs";
@@ -47,6 +47,15 @@ export async function POST(req: Request) {
     } catch (err) {
       console.error("[stripe webhook] lex lifecycle failed", event.type, err instanceof Error ? err.name : err);
       return Response.json({ error: "Handler failed" }, { status: 500 });
+    }
+  }
+
+  // Lex founding: an abandoned founding checkout gives its reserved place back (the hourly sweep is the fallback).
+  if (event.type === "checkout.session.expired") {
+    const md = (event.data.object as Stripe.Checkout.Session).metadata ?? {};
+    if (md.product === "lex" && md.founding === "1" && md.trialFirmId) {
+      const released = await releaseFoundingPlace(md.trialFirmId).catch(() => false);
+      return Response.json({ received: true, lex: released ? "founding-released" : "founding-none" });
     }
   }
 

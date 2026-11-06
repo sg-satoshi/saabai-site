@@ -10,7 +10,7 @@
     bgColor: '#FAF8F5',
     textColor: '#1A1A1A',
     apiEndpoint: '/api/tributum-chat',
-    greeting: "Hello. I'm Mike, Tributum Law's AI assistant. I can help with questions about tax law, ATO disputes, trusts, estate planning — or get you connected with the team. How can I help?",
+    greeting: "Hello. I'm Mike, Tributum Law's AI assistant. I can help with questions about tax law, ATO disputes, trusts, estate planning, or get you connected with the team. How can I help?",
     placeholder: "Ask about tax law, trusts, ATO disputes..."
   };
 
@@ -232,9 +232,29 @@
 
   // Show greeting on first open
   let firstOpen = true;
+  function saabaiSheet(panelEl, open) {
+    var src = 'https://www.saabai.ai/chat-sheet.js?v=1';
+    function run() {
+      if (!window.SaabaiChatSheet) return;
+      if (!panelEl._saabaiSheet) panelEl._saabaiSheet = window.SaabaiChatSheet.attach(panelEl);
+      panelEl._saabaiSheet.setOpen(!!open);
+    }
+    if (window.SaabaiChatSheet) { run(); return; }
+    var existing = document.querySelector('script[data-saabai-sheet]');
+    if (existing) { existing.addEventListener('load', run); return; }
+    var s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    s.setAttribute('data-saabai-sheet', '1');
+    s.onload = run;
+    document.head.appendChild(s);
+  }
+  saabaiSheet(panel, false);
+
   button.addEventListener('click', () => {
     isOpen = !isOpen;
     panel.classList.toggle('open', isOpen);
+    saabaiSheet(panel, isOpen);
     if (isOpen && firstOpen && messages.length === 0) {
       firstOpen = false;
       setTimeout(() => addMessage('assistant', CONFIG.greeting), 400);
@@ -244,6 +264,7 @@
   closeBtn.addEventListener('click', () => {
     isOpen = false;
     panel.classList.remove('open');
+    saabaiSheet(panel, false);
   });
 
   sendBtn.addEventListener('click', () => sendMessage(inputEl.value));

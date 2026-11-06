@@ -22,6 +22,8 @@ const PAGES: Array<{ path: string; priority: number; changeFrequency: Freq; upda
   { path: "/seo-ai-search", updated: "2026-10-26", priority: 0.8, changeFrequency: "monthly" },
   { path: "/custom-ai-agents", updated: "2026-10-26", priority: 0.8, changeFrequency: "monthly" },
   { path: "/legal", updated: "2026-10-25", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/legal/ai-trust-deed-drafting", updated: "2026-10-30", priority: 0.6, changeFrequency: "monthly" },
+  { path: "/legal/ai-legal-research", updated: "2026-10-30", priority: 0.6, changeFrequency: "monthly" },
   { path: "/legal/lex-vs-ai-legal-tools", updated: "2026-10-25", priority: 0.7, changeFrequency: "monthly" },
   { path: "/ai-chatbot-law-firms", updated: "2026-10-25", priority: 0.8, changeFrequency: "monthly" },
   { path: "/ai-chatbot-developer-queensland", updated: "2026-10-25", priority: 0.8, changeFrequency: "monthly" },

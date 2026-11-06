@@ -2,10 +2,12 @@ import { NextRequest } from "next/server";
 import { list } from "@vercel/blob";
 import { ensurePoweredBy } from "@/lib/client-site";
 import { readRepoClientHtml } from "@/lib/repo-client-html";
+import { noDashesHtml } from "@/lib/no-dashes-html";
 import { lmmLegalDocument, type LmmLegalPage } from "@/lib/lmm-legal";
 import { resolveGeoProfile } from "@/lib/geo/profiles";
 import { llmsFullTxt, llmsTxt, robotsTxt, sitemapXml } from "@/lib/geo";
 import { ensureFavicon, findSiteFavicon, SAABAI_FAVICON } from "@/lib/site-favicon";
+import { SUNDER_SLUG, sunderRobotsHeaders } from "@/lib/sunder-factory-seed";
 
 export const runtime = "nodejs";
 
@@ -45,6 +47,10 @@ async function generatedSeoFile(slug: string, page: string): Promise<string | nu
   if (page === "llms-full.txt") return llmsFullTxt(profile);
   return null;
 }
+function textResponse(slug: string, body: string, status: number, headers: Record<string, string>) {
+  return new Response(body, { status, headers: sunderRobotsHeaders(slug, headers) });
+}
+
 const FAVICON_EXTS: Record<string, string> = {
   "favicon.ico": "image/x-icon",
   "favicon.png": "image/png",
@@ -58,13 +64,10 @@ export async function GET(
   const { slug, page } = await params;
 
   if (slug === "lmm-site" && (page === "privacy" || page === "complaints")) {
-    const html = ensurePoweredBy(slug, lmmLegalDocument(page as LmmLegalPage));
-    return new Response(html, {
-      status: 200,
-      headers: {
-        "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "public, s-maxage=3600",
-      },
+    const html = noDashesHtml(ensurePoweredBy(slug, lmmLegalDocument(page as LmmLegalPage)));
+    return textResponse(slug, html, 200, {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "public, s-maxage=3600",
     });
   }
 
@@ -99,23 +102,30 @@ export async function GET(
       const blob = blobs.find((b) => b.pathname === `sites/${slug}/${page}`);
       if (!blob) {
         const generated = await generatedSeoFile(slug, page);
-        if (generated === null) return new Response("Not found", { status: 404 });
-        return new Response(generated, {
-          status: 200,
-          headers: { "Content-Type": seoFile.contentType, "Cache-Control": "public, s-maxage=3600" },
+        if (generated === null) return textResponse(slug, "Not found", 404, { "Content-Type": "text/plain; charset=utf-8" });
+        return textResponse(slug, generated, 200, {
+          "Content-Type": seoFile.contentType,
+          "Cache-Control": "public, s-maxage=3600",
         });
       }
       const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
       const text = await res.text();
-      return new Response(text, {
-        status: 200,
-        headers: {
-          "Content-Type": seoFile.contentType,
-          "Cache-Control": "public, s-maxage=3600",
-        },
+      return textResponse(slug, text, 200, {
+        "Content-Type": seoFile.contentType,
+        "Cache-Control": "public, s-maxage=3600",
       });
     } catch (e) {
       console.error("SEO file serve error:", e);
+      // Blob outage must not hide the SUNDER shell's generated SEO files.
+      if (slug === SUNDER_SLUG) {
+        const generated = await generatedSeoFile(slug, page).catch(() => null);
+        if (generated !== null) {
+          return textResponse(slug, generated, 200, {
+            "Content-Type": seoFile.contentType,
+            "Cache-Control": "no-store",
+          });
+        }
+      }
       return new Response("Error", { status: 500 });
     }
   }
@@ -128,13 +138,10 @@ export async function GET(
   try {
     const repoHtml = readRepoClientHtml(slug, `${page}.html`);
     if (repoHtml !== null) {
-      const html = ensurePoweredBy(slug, await ensureFavicon(slug, repoHtml));
-      return new Response(html, {
-        status: 200,
-        headers: {
-          "Content-Type": "text/html; charset=utf-8",
-          "Cache-Control": "no-store",
-        },
+      const html = noDashesHtml(ensurePoweredBy(slug, await ensureFavicon(slug, repoHtml)));
+      return textResponse(slug, html, 200, {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store",
       });
     }
 
@@ -143,13 +150,10 @@ export async function GET(
     if (!blob) return new Response("Page not found", { status: 404 });
 
     const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
-    const html = ensurePoweredBy(slug, await ensureFavicon(slug, await res.text()));
-    return new Response(html, {
-      status: 200,
-      headers: {
-        "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "no-store",
-      },
+    const html = noDashesHtml(ensurePoweredBy(slug, await ensureFavicon(slug, await res.text())));
+    return textResponse(slug, html, 200, {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
     });
   } catch (e) {
     console.error("Sub-page serve error:", e);

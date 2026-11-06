@@ -221,3 +221,15 @@ test("dashboard APIs and page are admin-gated, only the beacon is public", () =>
   const client = readFileSync("app/saabai-admin/experiments/ExperimentsClient.tsx", "utf8");
   assert.ok(!/SERVICE_ROLE|supabase/i.test(client), "no secrets or db access in the browser bundle");
 });
+
+test("delete_variant: never the control, keeps one non-control, running keeps two active", () => {
+  const e = base();
+  assert.equal(applyAction(e, { type: "delete_variant", variantId: "a" }).ok, false, "control");
+  assert.equal(applyAction(e, { type: "delete_variant", variantId: "z" }).ok, false, "missing");
+  const d = applyAction(e, { type: "delete_variant", variantId: "c" });
+  assert.ok(d.ok && d.action === "delete_variant"); if (!d.ok) return;
+  assert.deepEqual(d.exp.variants.map((v) => v.id), ["a", "b"]);
+  const last = applyAction(d.exp, { type: "delete_variant", variantId: "b" });
+  assert.equal(last.ok, false, "last non-control");
+  if (!last.ok) assert.match(last.error, /at least one variant besides the control/);
+});

@@ -3,6 +3,7 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import InShort from "../components/InShort";
 import JsonLd from "../components/JsonLd";
+import SecurityTrustStrip from "./SecurityTrustStrip";
 import SplitTestingSection from "./SplitTestingSection";
 import { schemaGraph, websitesServiceNode } from "@/lib/seo-entity";
 import { breadcrumbNode, faqNode } from "@/lib/seo-meta";
@@ -268,6 +269,7 @@ export default function WebsitesPage() {
             </div>
           ))}
         </div>
+        <SecurityTrustStrip />
         <p className="text-center text-xs text-saabai-text-dim mt-8">
           Build fees start from these figures. The price only goes above the
           &apos;from&apos; figure for custom integrations or other additional work,

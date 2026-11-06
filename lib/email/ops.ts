@@ -1,0 +1,1492 @@
+/**
+ * Admin and cron operations for the SUNDER email module.
+ * Routes stay thin. Nothing here talks to SES unless sendSes is called,
+ * and tests pass a mock sender into drainOutbox instead of calling these.
+ */
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { confirmEvidencePatch, EVIDENCE_COLUMNS, type Evidence, type RequestEvidence } from "../consent-evidence";
+import { getRedis } from "../redis";
+import { SUNDER_FROM_NAME, SUNDER_IDENTITY, SUNDER_SLUG, type SenderIdentity } from "./constants";
+import {
+  SYSTEM_CONFIRM,
+  SYSTEM_REFERRAL,
+  automationKeyFromRequest,
+  editorFromSources,
+  isBroadcastInventory,
+  listAutomatedEmails,
+  parseAutomatedKey,
+  cleanButtonLabel,
+  replaceSeriesStep,
+  seriesOutgoingHtml,
+  seriesQueuedHtml,
+  systemButtonLabel,
+  validateAutomatedEdit,
+} from "./automated";
+import { documentHtml, parseBlocks, textToBlocks, type Block } from "./blocks";
+import {
+  contentHash, copyProblem, DEFAULT_DAILY_CAP, rateDecision, sendBlocked, splitByDailyCap,
+} from "./gates";
+import {
+  countStatus, countSuppressions, emailDb, identityFrom, isMissingSchema, listConfirmed, loadTenant, suppressedEmails, type TenantRow,
+} from "./db";
+import { CONFIRM_COPY, REFERRAL_COPY, confirmMessage, referralLinkMessage, renderMarketingEmail, withReferralLine, type SystemCopy } from "./message";
+import { maskEmail, needsReferralReview, referralLineText, referralStatsFor, referralStatusUrl } from "../sunder-waitlist";
+import { brisbaneAt, brisbaneParts, isQuiet, seriesRunAt } from "./quiet";
+import { acquireSendSlot, type RateCounter } from "./rate";
+import {
+  cleanFromName, confirmationKey, fromDomainAllowed, mailableContacts, oneAddress, publicSesError,
+  shouldQueueConfirmation, validateSeriesSteps, type SeriesStepInput,
+} from "./rules";
+import { sendSes, sesConfigured, type SesMessage } from "./ses";
+import type { AutomatedEmailView, CampaignView, EmailAdminSnapshot, SeriesStepView } from "./types";
+import { readEmailToken } from "./tokens";
+import type { ContactEdit } from "./contact-admin";
+import { listCampaignName } from "./contact-admin";
+import { editLocked } from "./contact-copy";
+import { drainOutbox, tokenEmail, type Outbox, type OutboxRow } from "./worker";
+import type { TrackingEvent } from "./sns";
+
+const MIGRATION = "Apply db/migrations/009_email_marketing.sql in the Supabase SQL editor, then refresh.";
+
+function secret(): string {
+  // Prefer a dedicated secret so an unsubscribe token cannot be reused as a session.
+  // Falls back to the session secret when EMAIL_TOKEN_SECRET is not set.
+  return process.env.EMAIL_TOKEN_SECRET || process.env.SAABAI_SESSION_SECRET || "";
+}
+
+function rateCounter(): RateCounter | null {
+  const redis = getRedis();
+  if (!redis) return null;
+  return {
+    incr: async (key) => Number(await redis.incr(key)),
+    decr: async (key) => Number(await redis.decr(key)),
+    expire: (key, seconds) => redis.expire(key, seconds),
+  };
+}
+
+export async function sendingPaused(db: SupabaseClient, tenant: TenantRow | null): Promise<boolean> {
+  const { data, error } = await db.from("email_settings").select("paused").eq("id", "global").maybeSingle();
+  if (error) {
+    if (isMissingSchema(error)) return true;
+    throw new Error(error.message);
+  }
+  if (data?.paused || tenant?.status === "paused") return true;
+  const redis = getRedis();
+  if (!redis) return false;
+  try {
+    const v = await redis.get("email:paused");
+    return v === "1" || v === 1 || v === true;
+  } catch {
+    return true;
+  }
+}
+
+async function writePaused(db: SupabaseClient, tenantId: string, paused: boolean, reason = ""): Promise<void> {
+  const { error } = await db.from("email_settings").upsert({ id: "global", paused, pause_reason: paused ? reason.slice(0, 300) : null }, { onConflict: "id" });
+  if (error) throw new Error(error.message);
+  const { error: tenantError } = await db.from("email_tenants").update({ status: paused ? "paused" : "ready" }).eq("id", tenantId);
+  if (tenantError) throw new Error(tenantError.message);
+  const redis = getRedis();
+  if (redis) await redis.set("email:paused", paused ? "1" : "0");
+}
+
+export async function adminSnapshot(): Promise<EmailAdminSnapshot | { ok: false; migration: true; error: string }> {
+  let db: SupabaseClient;
+  try { db = emailDb(); } catch { return { ok: false, migration: true, error: "Supabase is not configured on this environment." }; }
+  const tenant = await loadTenant(db);
+  if (!tenant) return { ok: false, migration: true, error: MIGRATION };
+  const [subscribed, pending, unsubscribed, suppressed, paused] = await Promise.all([
+    countStatus(db, tenant.id, "subscribed"),
+    countStatus(db, tenant.id, "pending"),
+    countStatus(db, tenant.id, "unsubscribed"),
+    countSuppressions(db, tenant.id),
+    sendingPaused(db, tenant),
+  ]);
+  const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const [series, campaigns, sent30q, unsub30q, engagement] = await Promise.all([
+    loadSeries(db, tenant.id),
+    loadCampaigns(db, tenant.id),
+    db.from("email_sends").select("id", { count: "exact", head: true }).eq("tenant_id", tenant.id).eq("kind", "marketing").eq("status", "sent").gte("sent_at", since30),
+    db.from("email_suppressions").select("id", { count: "exact", head: true }).eq("tenant_id", tenant.id).ilike("reason", "%unsub%").gte("created_at", since30),
+    loadEngagement(db, tenant.id),
+  ]);
+  return {
+    ok: true,
+    paused,
+    fromName: tenant.from_name,
+    fromEmail: tenant.from_email,
+    configSet: tenant.config_set,
+    sesTenantName: tenant.ses_tenant_name,
+    counts: { subscribed, pending, unsubscribed, suppressed },
+    sent30: sent30q.count ?? 0,
+    unsub30: unsub30q.count ?? 0,
+    ...engagement,
+    series,
+    campaigns,
+    automated: await loadAutomated(db, tenant.id, series),
+  };
+}
+
+async function enrolmentCount(db: SupabaseClient, seriesId: string, status: string): Promise<number> {
+  const { count, error } = await db.from("email_series_enrolments").select("id", { count: "exact", head: true }).eq("series_id", seriesId).eq("status", status);
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+
+async function loadSeries(db: SupabaseClient, tenantId: string): Promise<EmailAdminSnapshot["series"]> {
+  const { data: series, error } = await db.from("email_series").select("id,status").eq("tenant_id", tenantId).eq("slug", "welcome").maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!series) return { status: "paused", steps: [], enrolled: 0, active: 0, completed: 0, exited: 0 };
+  const { data: steps, error: stepError } = await db.from("email_series_steps").select("position,delay_minutes,template_id").eq("series_id", series.id).order("position");
+  if (stepError) throw new Error(stepError.message);
+  const ids = (steps || []).map((s) => (s as { template_id: string }).template_id);
+  const { data: templates, error: templateError } = ids.length
+    ? await db.from("email_templates").select("id,subject,body_text").in("id", ids)
+    : { data: [], error: null };
+  if (templateError) throw new Error(templateError.message);
+  const byId = new Map((templates || []).map((t) => [(t as { id: string }).id, t as { subject: string; body_text: string }]));
+  const [active, completed, exited] = await Promise.all([
+    enrolmentCount(db, series.id, "active"),
+    enrolmentCount(db, series.id, "completed"),
+    enrolmentCount(db, series.id, "exited"),
+  ]);
+  return {
+    status: series.status === "paused" ? "paused" : "active",
+    enrolled: active + completed + exited,
+    active,
+    completed,
+    exited,
+    steps: (steps || []).map((s) => {
+      const row = s as { position: number; delay_minutes: number; template_id: string };
+      const template = byId.get(row.template_id);
+      return {
+        position: row.position,
+        delayDays: Math.round(row.delay_minutes / (24 * 60)),
+        subject: template?.subject || "",
+        body: template?.body_text || "",
+      };
+    }),
+  };
+}
+
+async function loadCampaigns(db: SupabaseClient, tenantId: string): Promise<CampaignView[]> {
+  const { data, error } = await db.rpc("email_recent_campaigns", { p_tenant: SUNDER_SLUG });
+  if (error) throw new Error(error.message);
+  const rows = (data || []) as { id: string; name: string; status: string; created_at: string; scheduled_at: string | null; queued: number; sent: number; failed: number; skipped: number; pending: number; unsubscribed: number }[];
+  const ids = rows.map((c) => c.id);
+  const meta = new Map<string, { kind: string; request_key: string | null }>();
+  if (ids.length) {
+    const found = await db.from("email_campaigns").select("id,kind,request_key").eq("tenant_id", tenantId).in("id", ids);
+    if (found.error) throw new Error(found.error.message);
+    for (const raw of found.data || []) {
+      const row = raw as { id: string; kind: string; request_key: string | null };
+      meta.set(row.id, row);
+    }
+  }
+  return rows.filter((c) => {
+    const row = meta.get(c.id);
+    return !!row && isBroadcastInventory({ kind: row.kind, requestKey: row.request_key });
+  }).map((c) => ({
+    id: c.id,
+    name: c.name,
+    status: c.status,
+    createdAt: c.created_at,
+    scheduledAt: c.scheduled_at,
+    queued: c.queued,
+    sent: c.sent,
+    failed: c.failed,
+    skipped: c.skipped,
+    pending: c.pending,
+    unsubscribed: c.unsubscribed || 0,
+  }));
+}
+
+async function savedSystemRows(db: SupabaseClient, tenantId: string): Promise<Map<string, { subject: string; body_text: string; html: string }>> {
+  const out = new Map<string, { subject: string; body_text: string; html: string }>();
+  const { data, error } = await db.from("email_templates").select("name,subject,body_text,html").eq("tenant_id", tenantId).in("name", [SYSTEM_CONFIRM, SYSTEM_REFERRAL]);
+  if (error) {
+    console.error("email system template read failed:", error.message);
+    return out;
+  }
+  for (const raw of data || []) {
+    const row = raw as { name: string; subject: string; body_text: string; html: string };
+    out.set(row.name, row);
+  }
+  return out;
+}
+
+async function savedSystemCopy(db: SupabaseClient, tenantId: string, name: typeof SYSTEM_CONFIRM | typeof SYSTEM_REFERRAL): Promise<SystemCopy | null> {
+  const row = (await savedSystemRows(db, tenantId)).get(name);
+  if (!row?.body_text.trim()) return null;
+  const fallback = name === SYSTEM_CONFIRM ? CONFIRM_COPY : REFERRAL_COPY;
+  return { subject: row.subject, body: row.body_text, buttonLabel: systemButtonLabel(row.html, fallback.buttonLabel) };
+}
+
+async function loadAutomated(db: SupabaseClient, tenantId: string, series: EmailAdminSnapshot["series"]): Promise<AutomatedEmailView[]> {
+  const saved = await savedSystemRows(db, tenantId);
+  const confirm = saved.get(SYSTEM_CONFIRM);
+  const referral = saved.get(SYSTEM_REFERRAL);
+  return listAutomatedEmails({
+    seriesStatus: series.steps.length ? series.status : "missing",
+    steps: series.steps,
+    confirmSaved: !!confirm?.body_text.trim(),
+    confirmSubject: confirm?.subject || "",
+    referralSaved: !!referral?.body_text.trim(),
+    referralSubject: referral?.subject || "",
+  });
+}
+
+const NOT_BROADCAST = "This is an automated email. Edit it from Campaigns. Nothing was sent.";
+
+export async function setSendingPaused(paused: boolean): Promise<{ ok: true } | { ok: false; error: string }> {
+  const db = emailDb();
+  const tenant = await loadTenant(db);
+  if (!tenant) return { ok: false, error: MIGRATION };
+  await writePaused(db, tenant.id, paused, paused ? "Paused by an admin." : "");
+  return { ok: true };
+}
+
+export async function saveFromName(name: string): Promise<{ ok: true; fromName: string } | { ok: false; error: string }> {
+  const db = emailDb();
+  const tenant = await loadTenant(db);
+  if (!tenant) return { ok: false, error: MIGRATION };
+  const fromName = cleanFromName(name);
+  const { error } = await db.from("email_tenants").update({ from_name: fromName }).eq("id", tenant.id);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, fromName };
+}
+
+export async function saveSeries(steps: SeriesStepInput[], status: "active" | "paused"): Promise<{ ok: true } | { ok: false; error: string }> {
+  const problem = validateSeriesSteps(steps);
+  if (problem) return { ok: false, error: problem };
+  const db = emailDb();
+  const tenant = await loadTenant(db);
+  if (!tenant) return { ok: false, error: MIGRATION };
+  const { data: series, error } = await db.from("email_series").select("id").eq("tenant_id", tenant.id).eq("slug", "welcome").maybeSingle();
+  if (error || !series) return { ok: false, error: error?.message || "Welcome series is missing. Apply migration 009." };
+  const { data: existing, error: stepError } = await db.from("email_series_steps").select("position,template_id").eq("series_id", series.id);
+  if (stepError) return { ok: false, error: stepError.message };
+  const byPosition = new Map((existing || []).map((s) => [(s as { position: number }).position, (s as { template_id: string }).template_id]));
+  for (const step of steps) {
+    const templateId = byPosition.get(step.position);
+    if (!templateId) return { ok: false, error: `Step ${step.position + 1} is not in the series.` };
+    const body = step.body.replace(/\r\n/g, "\n");
+    const { error: templateError } = await db.from("email_templates").update({
+      subject: step.subject.trim(),
+      body_text: body,
+      // Same dark shell the sender builds from body_text. Other steps are updated
+      // only because this call saves the whole series. Unsaved rows are not rewritten.
+      html: seriesOutgoingHtml(body, ""),
+      updated_at: new Date().toISOString(),
+    }).eq("id", templateId);
+    if (templateError) return { ok: false, error: templateError.message };
+    const { error: delayError } = await db.from("email_series_steps").update({ delay_minutes: step.delayDays * 24 * 60 }).eq("series_id", series.id).eq("position", step.position);
+    if (delayError) return { ok: false, error: delayError.message };
+  }
+  const { error: statusError } = await db.from("email_series").update({ status }).eq("id", series.id);
+  if (statusError) return { ok: false, error: statusError.message };
+  return { ok: true };
+}
+
+/** Save one automated message. Does not enqueue, enrol, or create a broadcast. */
+export async function saveAutomated(input: { key: string; subject: string; message: string; buttonLabel?: string }): Promise<{ ok: true } | { ok: false; error: string }> {
+  const key = parseAutomatedKey(input.key);
+  if (!key) return { ok: false, error: "That email is not in the SUNDER list." };
+  const problem = validateAutomatedEdit(key, input);
+  if (problem) return { ok: false, error: problem };
+  const db = emailDb();
+  const tenant = await loadTenant(db);
+  if (!tenant) return { ok: false, error: MIGRATION };
+  if (key.kind === "series") {
+    const series = await loadSeries(db, tenant.id);
+    const next = replaceSeriesStep(series.steps, key.position, input.subject, input.message);
+    if ("error" in next) return { ok: false, error: next.error };
+    const step = next.find((s) => s.position === key.position);
+    if (!step) return { ok: false, error: "That welcome email is not in the series." };
+    const { data: seriesRow, error } = await db.from("email_series").select("id").eq("tenant_id", tenant.id).eq("slug", "welcome").maybeSingle();
+    if (error || !seriesRow) return { ok: false, error: error?.message || "Welcome series is missing. Apply migration 009." };
+    const { data: existing, error: stepError } = await db.from("email_series_steps").select("template_id").eq("series_id", (seriesRow as { id: string }).id).eq("position", key.position).maybeSingle();
+    if (stepError || !existing) return { ok: false, error: stepError?.message || "That welcome email is not in the series." };
+    const templateId = (existing as { template_id: string }).template_id;
+    const body = step.body.replace(/\r\n/g, "\n");
+    const { data: updated, error: templateError } = await db.from("email_templates").update({
+      subject: step.subject.trim(),
+      body_text: body,
+      // Fallback HTML matches the live send (documentHtml). Existing rows stay
+      // until this step is saved. An empty body_text elsewhere is not rewritten.
+      html: seriesOutgoingHtml(body, ""),
+      updated_at: new Date().toISOString(),
+    }).eq("id", templateId).eq("tenant_id", tenant.id).select("id");
+    if (templateError || !updated?.length) return { ok: false, error: templateError?.message || "That welcome email is not in this tenant." };
+    return { ok: true };
+  }
+  const fallback = key.mode === "confirm" ? CONFIRM_COPY : REFERRAL_COPY;
+  const label = cleanButtonLabel(input.buttonLabel ?? "", fallback.buttonLabel);
+  if (typeof label !== "string") return { ok: false, error: label.error };
+  const { error } = await db.from("email_templates").upsert({
+    tenant_id: tenant.id,
+    name: key.templateName,
+    subject: input.subject.trim(),
+    body_text: input.message.replace(/\r\n/g, "\n"),
+    html: label,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: "tenant_id,name" });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+export async function automatedEditor(keyRaw: string) {
+  const key = parseAutomatedKey(keyRaw);
+  if (!key) return { ok: false as const, error: "That email is not in the SUNDER list." };
+  const ready = await requireReady();
+  if ("error" in ready) return { ok: false as const, error: ready.error };
+  if (key.kind === "series") {
+    const { data: series, error } = await ready.db.from("email_series").select("id,status").eq("tenant_id", ready.tenant.id).eq("slug", "welcome").maybeSingle();
+    if (error) return { ok: false as const, error: error.message };
+    if (!series) {
+      const built = editorFromSources({ key, seriesStatus: "missing", step: null, saved: null });
+      return "error" in built ? { ok: false as const, error: built.error } : built;
+    }
+    const seriesId = (series as { id: string; status: string }).id;
+    const status = (series as { status: string }).status === "paused" ? "paused" as const : "active" as const;
+    const { data: steps, error: stepError } = await ready.db.from("email_series_steps").select("position,delay_minutes,template_id").eq("series_id", seriesId).order("position");
+    if (stepError) return { ok: false as const, error: stepError.message };
+    const ordered = (steps || []) as { position: number; delay_minutes: number; template_id: string }[];
+    const step = ordered.find((s) => s.position === key.position);
+    if (!step) {
+      const built = editorFromSources({ key, seriesStatus: ordered.length ? status : "missing", step: null, saved: null });
+      return "error" in built ? { ok: false as const, error: built.error } : built;
+    }
+    const { data: template, error: templateError } = await ready.db.from("email_templates").select("subject,body_text,html").eq("id", step.template_id).eq("tenant_id", ready.tenant.id).maybeSingle();
+    if (templateError || !template) return { ok: false as const, error: templateError?.message || "That welcome email is not in the series." };
+    const row = template as { subject: string; body_text: string; html: string };
+    const previous = ordered.filter((s) => s.position < key.position).reduce((max, s) => Math.max(max, Math.round(s.delay_minutes / (24 * 60))), 0);
+    const built = editorFromSources({
+      key,
+      seriesStatus: status,
+      step: { subject: row.subject, body: row.body_text, html: row.html, delayDays: Math.round(step.delay_minutes / (24 * 60)), previousDelay: previous },
+      saved: null,
+    });
+    return "error" in built ? { ok: false as const, error: built.error } : built;
+  }
+  const saved = (await savedSystemRows(ready.db, ready.tenant.id)).get(key.templateName) || null;
+  const built = editorFromSources({
+    key,
+    seriesStatus: "missing",
+    step: null,
+    saved: saved ? { subject: saved.subject, body: saved.body_text, html: saved.html } : null,
+  });
+  return "error" in built ? { ok: false as const, error: built.error } : built;
+}
+
+async function requireReady(): Promise<{ db: SupabaseClient; tenant: TenantRow; identity: SenderIdentity } | { error: string }> {
+  let db: SupabaseClient;
+  try { db = emailDb(); } catch { return { error: "Supabase is not configured." }; }
+  const tenant = await loadTenant(db);
+  if (!tenant) return { error: MIGRATION };
+  if (!fromDomainAllowed(tenant.from_email)) return { error: "The from address is not one the send key is allowed to use." };
+  if (!secret()) return { error: "SAABAI_SESSION_SECRET is not set, so unsubscribe links cannot be signed." };
+  return { db, tenant, identity: identityFrom(tenant) };
+}
+
+type CampaignRow = {
+  id: string;
+  name: string;
+  subject: string;
+  preheader: string | null;
+  blocks: unknown;
+  from_name: string | null;
+  status: string;
+  content_hash: string | null;
+  test_hash: string | null;
+  test_sent_at: string | null;
+  scheduled_at: string | null;
+  send_confirmed: boolean | null;
+  typed_confirm?: boolean | null;
+  list_id?: string | null;
+  kind?: string | null;
+  request_key?: string | null;
+};
+
+function campaignContent(row: CampaignRow): { subject: string; preheader: string; blocks: Block[] } | { error: string } {
+  const blocks = parseBlocks(row.blocks) || textToBlocks("");
+  const content = { subject: row.subject || "", preheader: row.preheader || "", blocks };
+  const problem = copyProblem(content);
+  if (problem) return { error: problem };
+  return content;
+}
+
+export async function sendTest(input: { campaignId: string; to: string }): Promise<{ ok: true; subject: string; messageId: string; testedAt: string } | { ok: false; error: string }> {
+  const to = oneAddress(input.to);
+  if (!to) return { ok: false, error: "Enter one email address." };
+  const ready = await requireReady();
+  if ("error" in ready) return { ok: false, error: ready.error };
+  if (await sendingPaused(ready.db, ready.tenant)) return { ok: false, error: "Sending is paused." };
+  if (!sesConfigured()) return { ok: false, error: "Sending is not configured on this environment." };
+  const blocked = await suppressedEmails(ready.db, ready.tenant.id, [to]);
+  if (blocked.has(to)) return { ok: false, error: "That address is on the suppression list." };
+  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed,kind,request_key").eq("id", input.campaignId).eq("tenant_id", ready.tenant.id).maybeSingle();
+  if (loaded.error || !loaded.data) return { ok: false, error: loaded.error?.message || "Campaign not found." };
+  const row = loaded.data as CampaignRow;
+  if (!isBroadcastInventory({ kind: row.kind, requestKey: row.request_key })) return { ok: false, error: NOT_BROADCAST };
+  const content = campaignContent(row);
+  if ("error" in content) return { ok: false, error: content.error };
+  const fromName = cleanFromName(row.from_name || ready.tenant.from_name);
+  const html = documentHtml({ preheader: content.preheader, blocks: content.blocks });
+  const hash = contentHash({ ...content, fromName });
+  const sent = await deliverOne(ready.db, ready.tenant.id, {
+    id: "test",
+    toEmail: to,
+    kind: "test",
+    subject: content.subject,
+    html,
+    fromName,
+    respectQuiet: false,
+    contactStatus: "subscribed",
+    confirmedAt: new Date().toISOString(),
+    firstName: "Sam",
+    campaignId: row.id,
+    identity: { ...ready.identity, fromName },
+  });
+  if (!sent.ok) return sent;
+  const testedAt = new Date().toISOString();
+  await ready.db.from("email_campaigns").update({ test_hash: hash, content_hash: hash, test_sent_at: testedAt }).eq("id", row.id);
+  return { ok: true, subject: sent.subject, messageId: sent.messageId, testedAt };
+}
+
+async function deliverOne(db: SupabaseClient, tenantId: string, row: OutboxRow): Promise<{ ok: true; subject: string; messageId: string } | { ok: false; error: string }> {
+  const idempotency = `test:${row.campaignId}:${row.toEmail}:${Date.now()}`;
+  const { data: inserted, error } = await db.from("email_sends").insert({
+    tenant_id: tenantId,
+    campaign_id: row.campaignId,
+    to_email: row.toEmail,
+    kind: "test",
+    idempotency_key: idempotency,
+    status: "sending",
+    subject: row.subject,
+    html: row.html,
+    from_name: row.fromName,
+    respect_quiet: false,
+    claimed_at: new Date().toISOString(),
+  }).select("id").single();
+  if (error || !inserted) return { ok: false, error: error?.message || "Could not record the test." };
+  const id = (inserted as { id: string }).id;
+  let messageId = "";
+  let subject = row.subject;
+  let once = true;
+  const outbox: Outbox = {
+    claim: async () => {
+      if (!once) return [];
+      once = false;
+      return [{ ...row, id }];
+    },
+    markSent: async (sendId, mid) => {
+      messageId = mid;
+      await db.from("email_sends").update({ status: "sent", ses_message_id: mid, sent_at: new Date().toISOString() }).eq("id", sendId);
+    },
+    markFailed: async (sendId, err) => { await db.from("email_sends").update({ status: "failed", error: err }).eq("id", sendId); },
+    markSkipped: async (sendId, reason) => { await db.from("email_sends").update({ status: "skipped", error: reason }).eq("id", sendId); },
+    release: async (sendId) => { await db.from("email_sends").update({ status: "pending", claimed_at: null }).eq("id", sendId); },
+    suppressed: async () => new Set(),
+  };
+  const result = await drainOutbox({
+    outbox,
+    send: async (msg: SesMessage) => {
+      subject = msg.subject;
+      return sendSes(msg);
+    },
+    acquire: async () => ({ ok: true, waitMs: 0 }),
+    paused: false,
+    quiet: false,
+    secret: secret(),
+    limit: 1,
+    deadlineMs: 20_000,
+  });
+  if (result.sent === 1 && messageId) return { ok: true, subject, messageId };
+  return { ok: false, error: result.failed ? "The sending provider rejected the test. The send row is marked failed." : "The test did not send." };
+}
+
+type AudienceContact = { id: string; email: string; first_name: string | null; status: string; confirmed_at: string | null };
+
+/** Members of a static list that still exist for this tenant. Cross-tenant ids are dropped. */
+async function loadListContacts(db: SupabaseClient, tenantId: string, listId: string): Promise<AudienceContact[]> {
+  const list = await db.from("audience_lists").select("id").eq("id", listId).eq("tenant_id", tenantId).maybeSingle();
+  if (list.error) {
+    if (isMissingSchema(list.error)) throw new Error("Apply db/migrations/018_audience_lists.sql in the Supabase SQL editor, then refresh.");
+    throw new Error(list.error.message);
+  }
+  if (!list.data) throw new Error("That audience list was not found.");
+  const ids: string[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await db.from("audience_list_members").select("contact_id").eq("list_id", listId).range(from, from + 999);
+    if (error) throw new Error(error.message);
+    const rows = (data || []) as { contact_id: string }[];
+    for (const r of rows) ids.push(r.contact_id);
+    if (rows.length < 1000) break;
+  }
+  const out: AudienceContact[] = [];
+  for (let i = 0; i < ids.length; i += 200) {
+    const chunk = ids.slice(i, i + 200);
+    if (!chunk.length) continue;
+    const { data, error } = await db.from("email_contacts")
+      .select("id,email,first_name,status,confirmed_at")
+      .eq("tenant_id", tenantId)
+      .in("id", chunk);
+    if (error) throw new Error(error.message);
+    out.push(...((data || []) as AudienceContact[]));
+  }
+  return out;
+}
+
+/**
+ * Audience for a broadcast. listId null = all confirmed on the tenant.
+ * A list is a static snapshot; consent (subscribed + confirmed + not suppressed) is re-checked here.
+ */
+async function audienceNow(db: SupabaseClient, tenantId: string, listId: string | null = null) {
+  const { error: syncError } = await db.rpc("email_sync_sunder");
+  if (syncError) throw new Error(syncError.message);
+  const contacts = listId ? await loadListContacts(db, tenantId, listId) : await listConfirmed(db, tenantId);
+  const blocked = await suppressedEmails(db, tenantId, contacts.map((c) => c.email));
+  const gate = mailableContacts(contacts.map((c) => ({ ...c, confirmedAt: c.confirmed_at })), blocked);
+  const pending = await countStatus(db, tenantId, "pending");
+  const unsubscribed = await countStatus(db, tenantId, "unsubscribed");
+  return { gate, pending, unsubscribed, suppressed: gate.suppressed, selected: contacts.length, listId };
+}
+
+async function usedToday(db: SupabaseClient, tenantId: string, now = new Date()): Promise<number> {
+  const p = brisbaneParts(now);
+  const start = brisbaneAt(p.year, p.month, p.day, 0).toISOString();
+  const sent = await db.from("email_sends").select("id", { count: "exact", head: true }).eq("tenant_id", tenantId).eq("kind", "marketing").eq("status", "sent").gte("sent_at", start);
+  const queued = await db.from("email_sends").select("id", { count: "exact", head: true }).eq("tenant_id", tenantId).eq("kind", "marketing").in("status", ["pending", "sending"]).is("not_before", null);
+  if (sent.error) throw new Error(sent.error.message);
+  if (queued.error) throw new Error(queued.error.message);
+  return (sent.count ?? 0) + (queued.count ?? 0);
+}
+
+const ALREADY = "This campaign is already sending or has been sent.";
+
+export async function queueBroadcast(input: { campaignId: string; confirm?: string }): Promise<{ ok: true; queued: number; today: number; later: number; suppressed: number; campaignId: string } | { ok: false; error: string }> {
+  const ready = await requireReady();
+  if ("error" in ready) return { ok: false, error: ready.error };
+  const paused = await sendingPaused(ready.db, ready.tenant);
+  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed,typed_confirm,list_id,kind,request_key").eq("id", input.campaignId).eq("tenant_id", ready.tenant.id).maybeSingle();
+  if (loaded.error || !loaded.data) return { ok: false, error: loaded.error?.message || "Campaign not found." };
+  const row = loaded.data as CampaignRow;
+  if (!isBroadcastInventory({ kind: row.kind, requestKey: row.request_key })) return { ok: false, error: NOT_BROADCAST };
+  if (row.status !== "draft" && row.status !== "scheduled") return { ok: false, error: ALREADY };
+  const content = campaignContent(row);
+  if ("error" in content) return { ok: false, error: content.error };
+  let audience;
+  try { audience = await audienceNow(ready.db, ready.tenant.id, row.list_id || null); }
+  catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Could not read the list." }; }
+  const fromName = cleanFromName(row.from_name || ready.tenant.from_name);
+  const hash = contentHash({ ...content, fromName });
+  const blocked = sendBlocked({ paused, audience: audience.gate.recipients.length, testHash: row.test_hash, contentHash: hash, confirm: input.confirm });
+  if (blocked) return { ok: false, error: blocked };
+  // One winner. A second click finds the row already sending and inserts nothing.
+  const claim = await ready.db.from("email_campaigns").update({
+    status: "sending",
+    content_hash: hash,
+    send_confirmed: true,
+    typed_confirm: input.confirm === "SEND",
+  }).eq("id", row.id).in("status", ["draft", "scheduled"]).select("id");
+  if (claim.error) return { ok: false, error: claim.error.message };
+  if (!claim.data?.length) return { ok: false, error: ALREADY };
+  const cap = ready.tenant.daily_cap ?? DEFAULT_DAILY_CAP;
+  let used = 0;
+  try { used = await usedToday(ready.db, ready.tenant.id); }
+  catch (e) {
+    await ready.db.from("email_campaigns").update({ status: "draft" }).eq("id", row.id).eq("status", "sending");
+    return { ok: false, error: e instanceof Error ? e.message : "Could not read today's cap." };
+  }
+  const split = splitByDailyCap(audience.gate.recipients.length, used, cap);
+  const laterAt = (() => { const p = brisbaneParts(new Date()); return brisbaneAt(p.year, p.month, p.day + 1, 7).toISOString(); })();
+  const html = documentHtml({ preheader: content.preheader, blocks: content.blocks });
+  const rows = audience.gate.recipients.map((c, i) => ({
+    tenant_id: ready.tenant.id,
+    campaign_id: row.id,
+    contact_id: c.id,
+    to_email: c.email,
+    kind: "marketing" as const,
+    idempotency_key: `broadcast:${row.id}:${c.id}`,
+    status: "pending",
+    subject: content.subject,
+    html,
+    from_name: fromName,
+    respect_quiet: false,
+    not_before: i < split.today ? null : laterAt,
+  }));
+  for (let i = 0; i < rows.length; i += 200) {
+    const { error } = await ready.db.from("email_sends").upsert(rows.slice(i, i + 200), { onConflict: "idempotency_key", ignoreDuplicates: true });
+    if (error && error.code !== "23505") {
+      await ready.db.from("email_campaigns").update({ status: "draft" }).eq("id", row.id).eq("status", "sending");
+      return { ok: false, error: error.message };
+    }
+  }
+  await ready.db.from("email_campaigns").update({
+    counts: { queued: rows.length, today: split.today, later: split.later, suppressed: audience.suppressed },
+  }).eq("id", row.id);
+  return { ok: true, queued: rows.length, today: split.today, later: split.later, suppressed: audience.suppressed, campaignId: row.id };
+}
+
+type DueRow = {
+  enrolment_id: string;
+  next_step: number;
+  enrolled_at: string;
+  contact_id: string;
+  contact_email: string;
+  first_name: string | null;
+  contact_status: string;
+  confirmed_at: string | null;
+  tenant_id: string;
+  from_name: string;
+  subject: string;
+  body_text: string;
+  html: string;
+  delay_minutes: number;
+  next_delay_minutes: number | null;
+};
+
+/** SUNDER referral line for one subscriber, or null. Never blocks a send. */
+async function referralLineFor(db: SupabaseClient, email: string): Promise<[string | null, string | null]> {
+  try {
+    const r = (await referralStatsFor(db, [email])).get(email);
+    return r ? [referralLineText(r), referralStatusUrl(r.code)] : [null, null];
+  } catch {
+    return [null, null];
+  }
+}
+
+export async function enqueueDueSeries(db: SupabaseClient): Promise<number> {
+  const { data, error } = await db.rpc("email_due_enrolments", { p_limit: 40 });
+  if (error) throw new Error(error.message);
+  let n = 0;
+  for (const raw of (data || []) as DueRow[]) {
+    const email = raw.contact_email;
+    if (raw.contact_status !== "subscribed" || !raw.confirmed_at) {
+      await db.from("email_series_enrolments").update({ status: "exited" }).eq("id", raw.enrolment_id).eq("status", "active");
+      continue;
+    }
+    const blocked = await suppressedEmails(db, raw.tenant_id, [email]);
+    if (blocked.has(email)) {
+      await db.from("email_series_enrolments").update({ status: "exited" }).eq("id", raw.enrolment_id).eq("status", "active");
+      continue;
+    }
+    const campaignId = await seriesCampaign(db, raw);
+    const referral = await referralLineFor(db, email);
+    const html = seriesQueuedHtml(raw.body_text, raw.html, referral[0], referral[1]);
+    const { error: insertError } = await db.from("email_sends").insert({
+      tenant_id: raw.tenant_id,
+      campaign_id: campaignId,
+      contact_id: raw.contact_id,
+      to_email: email,
+      kind: "marketing",
+      idempotency_key: `series:${raw.enrolment_id}:${raw.next_step}`,
+      status: "pending",
+      subject: raw.subject,
+      html,
+      from_name: raw.from_name,
+      respect_quiet: true,
+    });
+    if (insertError && insertError.code !== "23505") throw new Error(insertError.message);
+    const now = new Date();
+    if (raw.next_delay_minutes === null || raw.next_delay_minutes === undefined) {
+      await db.from("email_series_enrolments").update({ status: "completed", next_run_at: null }).eq("id", raw.enrolment_id).eq("next_step", raw.next_step).eq("status", "active");
+    } else {
+      const runAt = seriesRunAt(new Date(raw.enrolled_at), raw.next_delay_minutes, now);
+      await db.from("email_series_enrolments").update({
+        next_step: raw.next_step + 1,
+        next_run_at: runAt.toISOString(),
+      }).eq("id", raw.enrolment_id).eq("next_step", raw.next_step).eq("status", "active");
+    }
+    n++;
+  }
+  return n;
+}
+
+async function seriesCampaign(db: SupabaseClient, row: DueRow): Promise<string> {
+  const requestKey = `series:${SUNDER_SLUG}:welcome:${row.next_step}`;
+  const existing = await db.from("email_campaigns").select("id").eq("request_key", requestKey).maybeSingle();
+  if (existing.error) throw new Error(existing.error.message);
+  if (existing.data) return (existing.data as { id: string }).id;
+  const created = await db.from("email_campaigns").insert({
+    tenant_id: row.tenant_id,
+    kind: "series_step",
+    name: row.subject.slice(0, 120),
+    subject: row.subject,
+    status: "sending",
+    request_key: requestKey,
+  }).select("id").single();
+  if (created.error?.code === "23505") {
+    const again = await db.from("email_campaigns").select("id").eq("request_key", requestKey).maybeSingle();
+    if (again.data) return (again.data as { id: string }).id;
+  }
+  if (created.error || !created.data) throw new Error(created.error?.message || "Could not record the series step.");
+  return (created.data as { id: string }).id;
+}
+
+function mapClaimed(row: Record<string, unknown>, contact: { status: string; confirmed_at: string | null; first_name: string | null } | undefined, identity: SenderIdentity): OutboxRow {
+  return {
+    id: String(row.id),
+    toEmail: String(row.to_email),
+    kind: row.kind as OutboxRow["kind"],
+    subject: String(row.subject),
+    html: String(row.html),
+    fromName: String(row.from_name),
+    respectQuiet: !!row.respect_quiet,
+    contactStatus: contact?.status || "missing",
+    confirmedAt: contact?.confirmed_at || null,
+    firstName: contact?.first_name || null,
+    campaignId: row.campaign_id ? String(row.campaign_id) : null,
+    identity: { ...identity, fromName: String(row.from_name || identity.fromName) },
+  };
+}
+
+export function liveOutbox(db: SupabaseClient, tenant: TenantRow): Outbox {
+  const identity = identityFrom(tenant);
+  return {
+    async claim(limit, skipQuiet) {
+      const { data, error } = await db.rpc("email_claim_sends", { p_limit: limit, p_quiet: skipQuiet });
+      if (error) throw new Error(error.message);
+      const rows = (data || []) as Record<string, unknown>[];
+      for (const other of rows.filter((r) => String(r.tenant_id) !== tenant.id)) {
+        await db.from("email_sends").update({ status: "pending", claimed_at: null }).eq("id", String(other.id)).is("ses_message_id", null);
+      }
+      const mine = rows.filter((r) => String(r.tenant_id) === tenant.id);
+      const contactIds = [...new Set(mine.map((r) => r.contact_id).filter(Boolean).map(String))];
+      const contacts = new Map<string, { status: string; confirmed_at: string | null; first_name: string | null }>();
+      if (contactIds.length) {
+        const { data: found, error: contactError } = await db.from("email_contacts").select("id,status,confirmed_at,first_name").in("id", contactIds);
+        if (contactError) throw new Error(contactError.message);
+        for (const c of found || []) {
+          const row = c as { id: string; status: string; confirmed_at: string | null; first_name: string | null };
+          contacts.set(row.id, row);
+        }
+      }
+      return mine.map((r) => mapClaimed(r, contacts.get(String(r.contact_id || "")), identity));
+    },
+    async markSent(id, messageId) {
+      const { error } = await db.from("email_sends").update({ status: "sent", ses_message_id: messageId, sent_at: new Date().toISOString(), error: null }).eq("id", id).eq("status", "sending");
+      if (error) throw new Error(error.message);
+    },
+    async markFailed(id, err) {
+      const { error } = await db.from("email_sends").update({ status: "failed", error: err.slice(0, 300) }).eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    async markSkipped(id, reason) {
+      const { error } = await db.from("email_sends").update({ status: "skipped", error: reason }).eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    async release(id) {
+      const { error } = await db.from("email_sends").update({ status: "pending", claimed_at: null }).eq("id", id).eq("status", "sending").is("ses_message_id", null);
+      if (error) throw new Error(error.message);
+    },
+    suppressed(emails) { return suppressedEmails(db, tenant.id, emails); },
+  };
+}
+
+export async function campaignDetail(id: string) {
+  const ready = await requireReady();
+  if ("error" in ready) return { ok: false as const, error: ready.error };
+  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed,list_id,kind,request_key").eq("id", id).eq("tenant_id", ready.tenant.id).maybeSingle();
+  if (loaded.error || !loaded.data) return { ok: false as const, error: loaded.error?.message || "Campaign not found." };
+  const row = loaded.data as CampaignRow;
+  if (!isBroadcastInventory({ kind: row.kind, requestKey: row.request_key })) {
+    return { ok: false as const, error: "This row is a send record, not the message. Open it under Automated on the Campaigns page.", automationKey: automationKeyFromRequest(row.request_key) };
+  }
+  const blocks = parseBlocks(row.blocks) || [];
+  let audience;
+  try { audience = await audienceNow(ready.db, ready.tenant.id, row.list_id || null); }
+  catch (e) { return { ok: false as const, error: e instanceof Error ? e.message : "Could not read the list." }; }
+  const used = await usedToday(ready.db, ready.tenant.id);
+  const cap = ready.tenant.daily_cap ?? DEFAULT_DAILY_CAP;
+  const listId = row.list_id || null;
+  return {
+    ok: true as const,
+    campaign: {
+      id: row.id,
+      name: row.name,
+      subject: row.subject,
+      preheader: row.preheader || "",
+      blocks,
+      fromName: row.from_name || ready.tenant.from_name,
+      status: row.status,
+      testHash: row.test_hash,
+      testSentAt: row.test_sent_at,
+      scheduledAt: row.scheduled_at,
+      listId,
+    },
+    fromEmail: ready.tenant.from_email,
+    defaultFromName: ready.tenant.from_name || SUNDER_FROM_NAME,
+    paused: await sendingPaused(ready.db, ready.tenant),
+    audience: audience.gate.recipients.length,
+    selected: listId ? audience.selected : null,
+    pending: audience.pending,
+    unsubscribed: audience.unsubscribed,
+    suppressed: audience.suppressed,
+    dailyCap: cap,
+    usedToday: used,
+  };
+}
+
+export async function healthReport() {
+  const ready = await requireReady();
+  if ("error" in ready) return { ok: false as const, error: ready.error };
+  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const [sends, bounces, complaints, paused] = await Promise.all([
+    ready.db.from("email_sends").select("id", { count: "exact", head: true }).eq("tenant_id", ready.tenant.id).eq("kind", "marketing").eq("status", "sent").gte("sent_at", since),
+    ready.db.from("email_suppressions").select("id", { count: "exact", head: true }).eq("tenant_id", ready.tenant.id).ilike("reason", "%bounce%").gte("created_at", since),
+    ready.db.from("email_suppressions").select("id", { count: "exact", head: true }).eq("tenant_id", ready.tenant.id).ilike("reason", "%complaint%").gte("created_at", since),
+    sendingPaused(ready.db, ready.tenant),
+  ]);
+  if (sends.error || bounces.error || complaints.error) return { ok: false as const, error: "Could not read sending health." };
+  const decision = rateDecision(sends.count ?? 0, bounces.count ?? 0, complaints.count ?? 0);
+  const settings = await ready.db.from("email_settings").select("pause_reason").eq("id", "global").maybeSingle();
+  const used = await usedToday(ready.db, ready.tenant.id);
+  return {
+    ok: true as const,
+    paused,
+    pauseReason: (settings.data as { pause_reason?: string } | null)?.pause_reason || "",
+    sends7d: sends.count ?? 0,
+    rates: decision.rates,
+    sentToday: used,
+    dailyCap: ready.tenant.daily_cap ?? DEFAULT_DAILY_CAP,
+    configSet: ready.tenant.config_set,
+  };
+}
+
+export async function saveDailyCap(cap: number): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!Number.isInteger(cap) || cap < 0 || cap > 100000) return { ok: false, error: "Daily cap is a whole number from 0 to 100000." };
+  const ready = await requireReady();
+  if ("error" in ready) return { ok: false, error: ready.error };
+  const { error } = await ready.db.from("email_tenants").update({ daily_cap: cap }).eq("id", ready.tenant.id);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+export async function listContacts(filter: { q?: string; status?: string }) {
+  const ready = await requireReady();
+  if ("error" in ready) return { ok: false as const, error: ready.error };
+  let query = ready.db.from("email_contacts").select("id,email,first_name,status,consent_source,consent_text,consent_version,consent_at,confirmed_at").eq("tenant_id", ready.tenant.id).order("created_at", { ascending: false }).limit(300);
+  const status = filter.status || "all";
+  if (status === "confirmed") query = query.eq("status", "subscribed");
+  else if (status === "pending" || status === "unsubscribed") query = query.eq("status", status);
+  const { data, error } = await query;
+  if (error) return { ok: false as const, error: error.message };
+  const rows = (data || []) as { id: string; email: string; first_name: string | null; status: string; consent_source: string | null; consent_text: string | null; consent_version: string | null; consent_at: string | null; confirmed_at: string | null }[];
+  const emails = rows.map((r) => r.email);
+  const suppressed = emails.length ? await suppressedEmails(ready.db, ready.tenant.id, emails) : new Set<string>();
+  const reasons = new Map<string, string>();
+  if (emails.length) {
+    const found = await ready.db.from("email_suppressions").select("email,reason").eq("tenant_id", ready.tenant.id).in("email", emails.slice(0, 200));
+    for (const r of (found.data || []) as { email: string; reason: string }[]) reasons.set(r.email, r.reason);
+  }
+  const q = (filter.q || "").trim().toLowerCase();
+  const refs: Awaited<ReturnType<typeof referralStatsFor>> = await referralStatsFor(ready.db, emails).catch(() => new Map());
+  const mobiles = new Map<string, string>();
+  const evidence = new Map<string, Evidence>();
+  if (emails.length) {
+    const some = emails.slice(0, 300);
+    const pick = (cols: string) => ready.db.from("sunder_subscribers").select(cols).in("email", some) as unknown as Promise<{ data: unknown[] | null; error: { message: string } | null }>;
+    let wl = await pick(["email", "mobile", ...EVIDENCE_COLUMNS].join(","));
+    // Before migration 015 the new columns do not exist: fall back to the pre-015 set.
+    if (wl.error) wl = await pick(["email", "mobile", ...EVIDENCE_COLUMNS.filter((c) => !c.startsWith("signup_") && !c.startsWith("confirm_") && c !== "page_url" && c !== "form_id")].join(","));
+    if (wl.error) wl = await pick("email,mobile");
+    for (const r of (wl.data || []) as unknown as ({ email: string; mobile: string | null } & Evidence)[]) {
+      if (r.mobile) mobiles.set(r.email, r.mobile);
+      const { email, mobile: _m, ...ev } = r;
+      evidence.set(email, ev);
+    }
+  }
+  const people = rows.filter((r) => !q || r.email.includes(q) || (r.first_name || "").toLowerCase().includes(q)).filter((r) => status !== "suppressed" || suppressed.has(r.email) || r.status === "bounced" || r.status === "complained").map((r) => ({
+    ...r,
+    suppressed: suppressed.has(r.email) || r.status === "bounced" || r.status === "complained",
+    reason: reasons.get(r.email) || (r.status === "bounced" || r.status === "complained" ? r.status : ""),
+    referrals: refs.get(r.email)?.friends ?? 0,
+    referral_entries: refs.get(r.email)?.entries ?? 0,
+    review: needsReferralReview(refs.get(r.email)?.entries),
+    referred_by: maskEmail(refs.get(r.email)?.referredByEmail),
+    mobile: mobiles.get(r.email) || null,
+    evidence: evidence.get(r.email) || null,
+  }));
+  return {
+    ok: true as const,
+    people,
+    counts: {
+      confirmed: await countStatus(ready.db, ready.tenant.id, "subscribed"),
+      pending: await countStatus(ready.db, ready.tenant.id, "pending"),
+      unsubscribed: await countStatus(ready.db, ready.tenant.id, "unsubscribed"),
+      suppressed: await countSuppressions(ready.db, ready.tenant.id),
+    },
+  };
+}
+
+export function parseImportCsv(text: string): { email: string; firstName: string; consentSource: string }[] | { error: string } {
+  const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (lines.length < 2) return { error: "The file needs a header and at least one row." };
+  const head = lines[0].toLowerCase().split(",").map((c) => c.trim());
+  const emailAt = head.indexOf("email");
+  const nameAt = head.indexOf("first_name");
+  const sourceAt = head.indexOf("consent_source");
+  if (emailAt < 0 || sourceAt < 0) return { error: "The header must include email and consent_source." };
+  const out: { email: string; firstName: string; consentSource: string }[] = [];
+  for (const line of lines.slice(1, 501)) {
+    const cells = line.split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
+    const email = oneAddress(cells[emailAt] || "");
+    const consentSource = (cells[sourceAt] || "").slice(0, 120);
+    if (!email) return { error: `A row has an invalid email: ${line.slice(0, 80)}` };
+    if (!consentSource) return { error: `Every row needs a consent source. Missing for ${email}.` };
+    out.push({ email, firstName: (nameAt >= 0 ? cells[nameAt] : "").replace(/[<>]/g, "").slice(0, 60), consentSource });
+  }
+  if (lines.length > 501) return { error: "Import up to 500 rows at a time." };
+  return out;
+}
+
+export async function importContacts(csv: string): Promise<{ ok: true; added: number; skipped: number } | { ok: false; error: string }> {
+  const parsed = parseImportCsv(csv);
+  if ("error" in parsed) return { ok: false, error: parsed.error };
+  const ready = await requireReady();
+  if ("error" in ready) return { ok: false, error: ready.error };
+  let added = 0;
+  let skipped = 0;
+  for (const row of parsed) {
+    const existing = await ready.db.from("email_contacts").select("id").eq("tenant_id", ready.tenant.id).eq("email", row.email).maybeSingle();
+    if (existing.data) { skipped++; continue; }
+    const inserted = await ready.db.from("email_contacts").insert({
+      tenant_id: ready.tenant.id,
+      email: row.email,
+      first_name: row.firstName || null,
+      status: "pending",
+      consent_source: row.consentSource,
+      consent_text: "Imported with a declared consent source. Marketing waits until they confirm.",
+      consent_version: "import",
+      consent_at: new Date().toISOString(),
+    }).select("id").single();
+    if (inserted.error || !inserted.data) return { ok: false, error: inserted.error?.message || "Import stopped." };
+    const msg = confirmMessage(await savedSystemCopy(ready.db, ready.tenant.id, SYSTEM_CONFIRM));
+    await ready.db.from("email_sends").insert({
+      tenant_id: ready.tenant.id,
+      contact_id: (inserted.data as { id: string }).id,
+      to_email: row.email,
+      kind: "confirm",
+      idempotency_key: confirmationKey(row.email, new Date()),
+      status: "pending",
+      subject: msg.subject,
+      html: msg.html,
+      from_name: ready.tenant.from_name,
+      respect_quiet: false,
+    });
+    added++;
+  }
+  return { ok: true, added, skipped };
+}
+
+/**
+ * From the subscribers page: save a static smart list of the selected contact ids
+ * and open a draft broadcast aimed only at that list. Consent is re-checked at send.
+ * The list is channel-agnostic (contact ids) so SMS can reuse it later.
+ */
+export async function createListCampaign(ids: string[]): Promise<
+  { ok: true; campaignId: string; listId: string; selected: number; eligible: number }
+  | { ok: false; error: string }
+> {
+  const ready = await requireReady();
+  if ("error" in ready) return { ok: false, error: ready.error };
+  const { db, tenant } = ready;
+  const found: AudienceContact[] = [];
+  for (let i = 0; i < ids.length; i += 200) {
+    const chunk = ids.slice(i, i + 200);
+    const { data, error } = await db.from("email_contacts")
+      .select("id,email,first_name,status,confirmed_at")
+      .eq("tenant_id", tenant.id)
+      .in("id", chunk);
+    if (error) {
+      if (isMissingSchema(error)) return { ok: false, error: "Apply db/migrations/018_audience_lists.sql in the Supabase SQL editor, then refresh." };
+      return { ok: false, error: error.message };
+    }
+    found.push(...((data || []) as AudienceContact[]));
+  }
+  if (!found.length) return { ok: false, error: "Those subscribers were not found. Refresh the list." };
+  const name = listCampaignName(found.length);
+  const createdList = await db.from("audience_lists").insert({
+    tenant_id: tenant.id,
+    name,
+    kind: "static",
+  }).select("id").single();
+  if (createdList.error || !createdList.data) {
+    if (isMissingSchema(createdList.error)) return { ok: false, error: "Apply db/migrations/018_audience_lists.sql in the Supabase SQL editor, then refresh." };
+    return { ok: false, error: createdList.error?.message || "Could not save the smart list." };
+  }
+  const listId = (createdList.data as { id: string }).id;
+  for (let i = 0; i < found.length; i += 200) {
+    const rows = found.slice(i, i + 200).map((c) => ({ list_id: listId, contact_id: c.id }));
+    const { error } = await db.from("audience_list_members").insert(rows);
+    if (error) {
+      await db.from("audience_lists").delete().eq("id", listId).eq("tenant_id", tenant.id);
+      return { ok: false, error: error.message };
+    }
+  }
+  const draft = await db.from("email_campaigns").insert({
+    tenant_id: tenant.id,
+    kind: "broadcast",
+    name,
+    subject: "",
+    preheader: "",
+    blocks: [],
+    from_name: cleanFromName(tenant.from_name),
+    status: "draft",
+    list_id: listId,
+  }).select("id").single();
+  if (draft.error || !draft.data) {
+    await db.from("audience_lists").delete().eq("id", listId).eq("tenant_id", tenant.id);
+    if (isMissingSchema(draft.error)) return { ok: false, error: "Apply db/migrations/018_audience_lists.sql in the Supabase SQL editor, then refresh." };
+    return { ok: false, error: draft.error?.message || "Could not open the draft campaign." };
+  }
+  let blocked: Set<string>;
+  try { blocked = await suppressedEmails(db, tenant.id, found.map((c) => c.email)); }
+  catch (e) { return { ok: true, campaignId: (draft.data as { id: string }).id, listId, selected: found.length, eligible: 0 }; }
+  const gate = mailableContacts(found.map((c) => ({ ...c, confirmedAt: c.confirmed_at })), blocked);
+  return {
+    ok: true,
+    campaignId: (draft.data as { id: string }).id,
+    listId,
+    selected: found.length,
+    eligible: gate.recipients.length,
+  };
+}
+
+export async function saveCampaign(input: { id?: string; name: string; subject: string; preheader: string; blocks: unknown; fromName?: string }): Promise<{ ok: true; id: string; hash: string } | { ok: false; error: string }> {
+  const blocks = parseBlocks(input.blocks);
+  if (!blocks) return { ok: false, error: "Those blocks are not valid." };
+  const content = { subject: String(input.subject || ""), preheader: String(input.preheader || ""), blocks };
+  const ready = await requireReady();
+  if ("error" in ready) return { ok: false, error: ready.error };
+  const fromName = cleanFromName(input.fromName || ready.tenant.from_name);
+  const hash = contentHash({ ...content, fromName });
+  const patch = {
+    name: (input.name || content.subject || "Untitled").trim().slice(0, 120),
+    subject: content.subject.trim().slice(0, 200),
+    preheader: content.preheader.trim().slice(0, 200),
+    blocks,
+    from_name: fromName,
+    content_hash: hash,
+    kind: "broadcast",
+  };
+  if (input.id) {
+    const existing = await ready.db.from("email_campaigns").select("kind,request_key").eq("id", input.id).eq("tenant_id", ready.tenant.id).maybeSingle();
+    if (existing.error || !existing.data) return { ok: false, error: existing.error?.message || "Campaign not found." };
+    const current = existing.data as { kind: string; request_key: string | null };
+    if (!isBroadcastInventory({ kind: current.kind, requestKey: current.request_key })) return { ok: false, error: NOT_BROADCAST };
+    const { error } = await ready.db.from("email_campaigns").update(patch).eq("id", input.id).eq("tenant_id", ready.tenant.id).eq("kind", "broadcast");
+    if (error) return { ok: false, error: error.message };
+    return { ok: true, id: input.id, hash };
+  }
+  const created = await ready.db.from("email_campaigns").insert({ ...patch, tenant_id: ready.tenant.id, status: "draft" }).select("id").single();
+  if (created.error || !created.data) return { ok: false, error: created.error?.message || "Could not save the draft." };
+  return { ok: true, id: (created.data as { id: string }).id, hash };
+}
+
+export async function scheduleBroadcast(input: { campaignId: string; when: string; confirm?: string }): Promise<{ ok: true } | { ok: false; error: string }> {
+  const when = new Date(input.when);
+  if (Number.isNaN(when.getTime()) || when.getTime() < Date.now() - 60_000) return { ok: false, error: "Pick a time in the future." };
+  const ready = await requireReady();
+  if ("error" in ready) return { ok: false, error: ready.error };
+  const paused = await sendingPaused(ready.db, ready.tenant);
+  const loaded = await ready.db.from("email_campaigns").select("id,name,subject,preheader,blocks,from_name,status,content_hash,test_hash,test_sent_at,scheduled_at,send_confirmed,list_id,kind,request_key").eq("id", input.campaignId).eq("tenant_id", ready.tenant.id).maybeSingle();
+  if (loaded.error || !loaded.data) return { ok: false, error: loaded.error?.message || "Campaign not found." };
+  const row = loaded.data as CampaignRow;
+  if (!isBroadcastInventory({ kind: row.kind, requestKey: row.request_key })) return { ok: false, error: NOT_BROADCAST };
+  const content = campaignContent(row);
+  if ("error" in content) return { ok: false, error: content.error };
+  let audience;
+  try { audience = await audienceNow(ready.db, ready.tenant.id, row.list_id || null); }
+  catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Could not read the list." }; }
+  const fromName = cleanFromName(row.from_name || ready.tenant.from_name);
+  const hash = contentHash({ ...content, fromName });
+  const blocked = sendBlocked({ paused, audience: audience.gate.recipients.length, testHash: row.test_hash, contentHash: hash, confirm: input.confirm });
+  if (blocked) return { ok: false, error: blocked };
+  const { data, error } = await ready.db.from("email_campaigns").update({
+    status: "scheduled",
+    scheduled_at: when.toISOString(),
+    content_hash: hash,
+    send_confirmed: true,
+    typed_confirm: input.confirm === "SEND",
+  }).eq("id", row.id).in("status", ["draft", "scheduled"]).select("id");
+  if (error) return { ok: false, error: error.message };
+  if (!data?.length) return { ok: false, error: ALREADY };
+  return { ok: true };
+}
+
+async function promoteScheduled(db: SupabaseClient, tenant: TenantRow): Promise<number> {
+  const { data, error } = await db.from("email_campaigns").select("id,typed_confirm").eq("tenant_id", tenant.id).eq("status", "scheduled").lte("scheduled_at", new Date().toISOString()).limit(5);
+  if (error || !data?.length) return 0;
+  let n = 0;
+  for (const row of data as { id: string; typed_confirm: boolean | null }[]) {
+    const result = await queueBroadcast({ campaignId: row.id, confirm: row.typed_confirm ? "SEND" : undefined });
+    if (result.ok) n++;
+    else if (!/already sending or has been sent/i.test(result.error)) {
+      await db.from("email_campaigns").update({ status: "draft", counts: { error: result.error } }).eq("id", row.id).eq("status", "scheduled");
+    }
+  }
+  return n;
+}
+
+async function maybeAutoPause(db: SupabaseClient, tenant: TenantRow): Promise<string | null> {
+  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const sends = await db.from("email_sends").select("id", { count: "exact", head: true }).eq("tenant_id", tenant.id).eq("kind", "marketing").eq("status", "sent").gte("sent_at", since);
+  const bounces = await db.from("email_suppressions").select("id", { count: "exact", head: true }).eq("tenant_id", tenant.id).ilike("reason", "%bounce%").gte("created_at", since);
+  const complaints = await db.from("email_suppressions").select("id", { count: "exact", head: true }).eq("tenant_id", tenant.id).ilike("reason", "%complaint%").gte("created_at", since);
+  if (sends.error || bounces.error || complaints.error) return null;
+  const decision = rateDecision(sends.count ?? 0, bounces.count ?? 0, complaints.count ?? 0);
+  if (!decision.pause) return null;
+  await writePaused(db, tenant.id, true, decision.pause);
+  return decision.pause;
+}
+
+export async function runEmailCron(): Promise<Record<string, unknown>> {
+  let db: SupabaseClient;
+  try { db = emailDb(); } catch { return { ok: false, error: "no database" }; }
+  const tenant = await loadTenant(db);
+  if (!tenant) return { ok: false, error: "migration 009 not applied" };
+  if (await sendingPaused(db, tenant)) return { ok: true, paused: true, sent: 0 };
+  const auto = await maybeAutoPause(db, tenant);
+  if (auto) return { ok: true, paused: true, autoPaused: auto, sent: 0 };
+  if (!sesConfigured()) return { ok: true, paused: false, configured: false, sent: 0 };
+  if (!secret()) return { ok: true, paused: false, configured: false, reason: "no token secret", sent: 0 };
+  const sync = await db.rpc("email_sync_sunder");
+  if (sync.error) return { ok: false, error: sync.error.message };
+  const promoted = await promoteScheduled(db, tenant);
+  const enqueued = await enqueueDueSeries(db);
+  const stuck = await db.rpc("email_fail_stuck_sends");
+  const drained = await drainOutbox({
+    outbox: liveOutbox(db, tenant),
+    send: (msg) => sendSes(msg),
+    acquire: () => acquireSendSlot(rateCounter()),
+    paused: false,
+    quiet: isQuiet(new Date()),
+    secret: secret(),
+  });
+  return { ok: true, configured: true, enqueued, promoted, stuck: stuck.data ?? 0, ...drained };
+}
+
+export async function afterSunderSignup(input: { email: string; firstName: string; created: boolean }): Promise<void> {
+  const db = emailDb();
+  const email = input.email.trim().toLowerCase();
+  const { data, error } = await db.from("sunder_subscribers").select("marketing_status").eq("email", email).maybeSingle();
+  if (error) {
+    if (isMissingSchema(error)) return;
+    throw new Error(error.message);
+  }
+  const status = (data as { marketing_status?: string } | null)?.marketing_status ?? null;
+  if (!shouldQueueConfirmation(input.created, status)) return;
+  const tenant = await loadTenant(db);
+  if (!tenant) return;
+  const sync = await db.rpc("email_sync_sunder");
+  if (sync.error) throw new Error(sync.error.message);
+  const contact = await db.from("email_contacts").select("id,status").eq("tenant_id", tenant.id).eq("email", email).maybeSingle();
+  if (contact.error) throw new Error(contact.error.message);
+  const base = confirmMessage(await savedSystemCopy(db, tenant.id, SYSTEM_CONFIRM));
+  const msg = { ...base, html: withReferralLine(base.html, ...(await referralLineFor(db, email))) };
+  const key = confirmationKey(email, new Date());
+  const { error: insertError } = await db.from("email_sends").insert({
+    tenant_id: tenant.id,
+    contact_id: (contact.data as { id: string } | null)?.id ?? null,
+    to_email: email,
+    kind: "confirm",
+    idempotency_key: key,
+    status: "pending",
+    subject: msg.subject,
+    html: msg.html,
+    from_name: tenant.from_name || SUNDER_IDENTITY.fromName,
+    respect_quiet: false,
+  });
+  if (insertError && insertError.code !== "23505") throw new Error(insertError.message);
+  if (await sendingPaused(db, tenant) || !sesConfigured() || !secret()) return;
+  const { data: pending, error: pendingError } = await db.from("email_sends").select("id,subject,html,from_name,contact_id").eq("idempotency_key", key).eq("status", "pending").maybeSingle();
+  if (pendingError || !pending) return;
+  const claimed = await db.from("email_sends").update({ status: "sending", claimed_at: new Date().toISOString() }).eq("id", (pending as { id: string }).id).eq("status", "pending").select("id");
+  if (claimed.error || !claimed.data?.length) return;
+  const row = mapClaimed({
+    ...(pending as Record<string, unknown>),
+    to_email: email,
+    kind: "confirm",
+    respect_quiet: false,
+    campaign_id: null,
+  }, { status: "pending", confirmed_at: null, first_name: input.firstName }, identityFrom(tenant));
+  let once = true;
+  await drainOutbox({
+    outbox: {
+      claim: async () => {
+        if (!once) return [];
+        once = false;
+        return [row];
+      },
+      markSent: async (id, messageId) => { await db.from("email_sends").update({ status: "sent", ses_message_id: messageId, sent_at: new Date().toISOString() }).eq("id", id); },
+      markFailed: async (id, err) => { await db.from("email_sends").update({ status: "failed", error: err.slice(0, 300) }).eq("id", id); },
+      markSkipped: async (id, reason) => { await db.from("email_sends").update({ status: "skipped", error: reason }).eq("id", id); },
+      release: async (id) => { await db.from("email_sends").update({ status: "pending", claimed_at: null }).eq("id", id).is("ses_message_id", null); },
+      suppressed: (emails) => suppressedEmails(db, tenant.id, emails),
+    },
+    send: (msg) => sendSes(msg),
+    acquire: () => acquireSendSlot(rateCounter()),
+    paused: false,
+    quiet: false,
+    secret: secret(),
+    limit: 1,
+    deadlineMs: 15_000,
+  });
+}
+
+/** Per email: at most one referral-link email per 8 hours (idempotency key). */
+export function referralLinkKey(email: string, now: Date): string {
+  return `reflink:sunder:${email.trim().toLowerCase()}:${now.toISOString().slice(0, 10)}:${Math.floor(now.getUTCHours() / 8)}`;
+}
+
+/**
+ * "Check my referrals": email a confirmed subscriber their status link.
+ * Silent no-op for anyone else, so the route can always answer the same way.
+ */
+export async function sendSunderReferralLink(rawEmail: string): Promise<void> {
+  const db = emailDb();
+  const email = rawEmail.trim().toLowerCase();
+  const { data, error } = await db.from("sunder_subscribers").select("marketing_status,referral_code,first_name").eq("email", email).maybeSingle();
+  if (error) {
+    if (isMissingSchema(error)) return;
+    throw new Error(error.message);
+  }
+  const sub = data as { marketing_status?: string; referral_code?: string; first_name?: string | null } | null;
+  if (!sub || sub.marketing_status !== "confirmed" || !sub.referral_code) return;
+  const tenant = await loadTenant(db);
+  if (!tenant) return;
+  const contact = await db.from("email_contacts").select("id,status,confirmed_at,first_name").eq("tenant_id", tenant.id).eq("email", email).maybeSingle();
+  if (contact.error) throw new Error(contact.error.message);
+  const c = contact.data as { id: string; status: string; confirmed_at: string | null; first_name: string | null } | null;
+  if (!c || c.status !== "subscribed") return;
+  const msg = referralLinkMessage(referralStatusUrl(sub.referral_code), await savedSystemCopy(db, tenant.id, SYSTEM_REFERRAL));
+  const key = referralLinkKey(email, new Date());
+  const { data: inserted, error: insertError } = await db.from("email_sends").insert({
+    tenant_id: tenant.id, contact_id: c.id, to_email: email, kind: "confirm", idempotency_key: key,
+    status: "pending", subject: msg.subject, html: msg.html, from_name: tenant.from_name || SUNDER_IDENTITY.fromName, respect_quiet: false,
+  }).select("id").maybeSingle();
+  if (insertError) {
+    if (insertError.code === "23505") return; // already sent in this window
+    throw new Error(insertError.message);
+  }
+  if (!inserted || await sendingPaused(db, tenant) || !sesConfigured() || !secret()) return;
+  const id = (inserted as { id: string }).id;
+  const claimed = await db.from("email_sends").update({ status: "sending", claimed_at: new Date().toISOString() }).eq("id", id).eq("status", "pending").select("id");
+  if (claimed.error || !claimed.data?.length) return;
+  const row = mapClaimed({ id, to_email: email, kind: "confirm", subject: msg.subject, html: msg.html, from_name: tenant.from_name || SUNDER_IDENTITY.fromName, respect_quiet: false, campaign_id: null },
+    { status: c.status, confirmed_at: c.confirmed_at, first_name: c.first_name || sub.first_name || null }, identityFrom(tenant));
+  let once = true;
+  await drainOutbox({
+    outbox: {
+      claim: async () => { if (!once) return []; once = false; return [row]; },
+      markSent: async (rid, messageId) => { await db.from("email_sends").update({ status: "sent", ses_message_id: messageId, sent_at: new Date().toISOString() }).eq("id", rid); },
+      markFailed: async (rid, err) => { await db.from("email_sends").update({ status: "failed", error: err.slice(0, 300) }).eq("id", rid); },
+      markSkipped: async (rid, reason) => { await db.from("email_sends").update({ status: "skipped", error: reason }).eq("id", rid); },
+      release: async (rid) => { await db.from("email_sends").update({ status: "pending", claimed_at: null }).eq("id", rid).is("ses_message_id", null); },
+      suppressed: (emails) => suppressedEmails(db, tenant.id, emails),
+    },
+    send: (m) => sendSes(m),
+    acquire: () => acquireSendSlot(rateCounter()),
+    paused: false, quiet: false, secret: secret(), limit: 1, deadlineMs: 15_000,
+  });
+}
+
+export async function viewByToken(token: string): Promise<{ subject: string; html: string } | null> {
+  const parsed = readEmailToken(token, secret(), "view");
+  if (!parsed?.id) return null;
+  let db: SupabaseClient;
+  try { db = emailDb(); } catch { return null; }
+  const { data } = await db.from("email_sends").select("to_email,subject,html,from_name,contact_id").eq("id", parsed.id).maybeSingle();
+  const row = data as { to_email: string; subject: string; html: string; from_name: string; contact_id: string | null } | null;
+  if (!row || row.to_email !== parsed.e) return null;
+  let firstName: string | null = null;
+  if (row.contact_id) {
+    const contact = await db.from("email_contacts").select("first_name").eq("id", row.contact_id).maybeSingle();
+    firstName = (contact.data as { first_name?: string } | null)?.first_name || null;
+  }
+  const tenant = await loadTenant(db, parsed.t);
+  if (!tenant) return null;
+  const rendered = renderMarketingEmail({
+    subject: row.subject,
+    html: row.html,
+    fromName: row.from_name,
+    identity: { ...identityFrom(tenant), fromName: row.from_name },
+    unsubUrl: "https://saabai.ai/email/u",
+    values: { firstName },
+  });
+  return { subject: rendered.subject, html: rendered.html };
+}
+
+export async function confirmByToken(token: string, evidence?: RequestEvidence): Promise<{ status: "confirmed" | "already" | "unsubscribed" | "missing" | "invalid" }> {
+  const parsed = tokenEmail(token, secret(), "confirm");
+  if (!parsed || parsed.tenant !== SUNDER_SLUG) return { status: "invalid" };
+  const db = emailDb();
+  const { data, error } = await db.rpc("email_confirm_sunder", { p_email: parsed.email });
+  if (error) {
+    if (isMissingSchema(error)) return { status: "missing" };
+    throw new Error(error.message);
+  }
+  const status = String(data || "missing");
+  if (status === "confirmed" && evidence) {
+    // First confirm click only (confirm_evidence_at is null). Best effort: migration 015.
+    const up = await db.from("sunder_subscribers").update(confirmEvidencePatch(evidence)).eq("email", parsed.email).is("confirm_evidence_at", null);
+    if (up.error) console.error("sunder confirm evidence save failed:", up.error.message);
+  }
+  if (status === "confirmed" || status === "already" || status === "unsubscribed" || status === "missing") return { status };
+  return { status: "missing" };
+}
+
+export async function unsubscribeByToken(token: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const parsed = readEmailToken(token, secret(), "unsub");
+  if (!parsed) return { ok: false, error: "This link isn't valid" };
+  const db = emailDb();
+  const { error } = await db.rpc("email_unsubscribe", { p_tenant: parsed.t, p_email: parsed.e, p_reason: "unsubscribe" });
+  if (error) {
+    if (isMissingSchema(error)) return { ok: false, error: "Unsubscribe is not available yet." };
+    throw new Error(error.message);
+  }
+  if (parsed.c) {
+    const tenant = await loadTenant(db, parsed.t);
+    if (tenant) await db.from("email_suppressions").update({ campaign_id: parsed.c }).eq("tenant_id", tenant.id).eq("email", parsed.e);
+  }
+  return { ok: true };
+}
+
+/** Delivery, open or click from the sending provider. Idempotent; unknown message ids are ignored. */
+export async function recordTrackingEvent(event: TrackingEvent): Promise<{ ok: true; matched: boolean } | { ok: false; error: string }> {
+  let db: SupabaseClient;
+  try { db = emailDb(); } catch { return { ok: false, error: "no database" }; }
+  const { data, error } = await db.rpc("email_track_event", { p_message_id: event.messageId, p_type: event.type, p_at: event.at, p_tenant: event.tenant });
+  if (error) {
+    // Before migration 017 is applied, accept and drop the event rather than make SNS retry forever.
+    if (isMissingSchema(error)) return { ok: true, matched: false };
+    return { ok: false, error: error.message };
+  }
+  return { ok: true, matched: data === true };
+}
+
+async function loadEngagement(db: SupabaseClient, tenantId: string): Promise<{ delivered30: number; opened30: number; clicked30: number }> {
+  const { data, error } = await db.rpc("email_engagement", { p_tenant: tenantId, p_days: 30 });
+  if (error) {
+    if (isMissingSchema(error)) return { delivered30: 0, opened30: 0, clicked30: 0 };
+    throw new Error(error.message);
+  }
+  const row = (Array.isArray(data) ? data[0] : data) as { delivered?: number | string; opened?: number | string; clicked?: number | string } | null;
+  return { delivered30: Number(row?.delivered || 0), opened30: Number(row?.opened || 0), clicked30: Number(row?.clicked || 0) };
+}
+
+/** Hard bounce or complaint from the sending provider. Feeds suppression, series exit, and auto-pause. */
+export async function recordProviderEvent(input: { email: string; reason: "bounce" | "complaint"; tenant?: string; campaignId?: string | null }): Promise<{ ok: true } | { ok: false; error: string }> {
+  const email = input.email.trim().toLowerCase();
+  if (!email.includes("@")) return { ok: false, error: "Missing address" };
+  let db: SupabaseClient;
+  try { db = emailDb(); } catch { return { ok: false, error: "no database" }; }
+  const slug = input.tenant && /^[a-z0-9][a-z0-9-]{0,30}$/.test(input.tenant) ? input.tenant : SUNDER_SLUG;
+  const { error } = await db.rpc("email_unsubscribe", { p_tenant: slug, p_email: email, p_reason: input.reason });
+  if (error) return { ok: false, error: error.message };
+  const tenant = await loadTenant(db, slug);
+  if (!tenant) return { ok: true };
+  const status = input.reason === "complaint" ? "complained" : "bounced";
+  await db.from("email_contacts").update({ status, updated_at: new Date().toISOString() }).eq("tenant_id", tenant.id).eq("email", email);
+  if (input.campaignId && /^[0-9a-f-]{36}$/i.test(input.campaignId)) {
+    await db.from("email_suppressions").update({ campaign_id: input.campaignId }).eq("tenant_id", tenant.id).eq("email", email);
+  }
+  await maybeAutoPause(db, tenant);
+  return { ok: true };
+}
+
+export function safeError(err: unknown): string {
+  return publicSesError(err);
+}
+
+type ContactRow = { id: string; email: string; first_name: string | null; status: string; source_table: string | null; source_id: string | null };
+
+/** Admin edit of one contact. Mirrors name, email and mobile onto the linked waitlist row. Never re-subscribes anyone. */
+export async function updateContact(edit: ContactEdit): Promise<{ ok: true; changed: string[] } | { ok: false; error: string; fields?: Record<string, string> }> {
+  const ready = await requireReady();
+  if ("error" in ready) return { ok: false, error: ready.error };
+  const { db, tenant } = ready;
+  const cur = await db.from("email_contacts").select("id,email,first_name,status,source_table,source_id").eq("tenant_id", tenant.id).eq("id", edit.id).maybeSingle();
+  if (cur.error) return { ok: false, error: cur.error.message };
+  const row = cur.data as ContactRow | null;
+  if (!row) return { ok: false, error: "That subscriber was not found. Refresh the list." };
+  const suppressed = (await suppressedEmails(db, tenant.id, [row.email])).has(row.email);
+  if (editLocked(row.status, suppressed)) return { ok: false, error: "Bounced or complained people are read only. You can still delete them." };
+  const changed: string[] = [];
+  const patch: Record<string, unknown> = {};
+  if (edit.email !== row.email) {
+    const clash = await db.from("email_contacts").select("id").eq("tenant_id", tenant.id).eq("email", edit.email).maybeSingle();
+    if (clash.data) return { ok: false, error: "Some fields need fixing.", fields: { email: "Another subscriber already uses this email." } };
+    if ((await suppressedEmails(db, tenant.id, [edit.email])).has(edit.email)) return { ok: false, error: "Some fields need fixing.", fields: { email: "That address is suppressed after a bounce or complaint." } };
+    patch.email = edit.email; changed.push("email");
+  }
+  if ((edit.firstName || null) !== (row.first_name || null)) { patch.first_name = edit.firstName; changed.push("name"); }
+  if (edit.unsubscribe && row.status !== "unsubscribed") { patch.status = "unsubscribed"; patch.unsubscribed_at = new Date().toISOString(); changed.push("status"); }
+  const linked = row.source_table === "sunder_subscribers" && row.source_id
+    ? await db.from("sunder_subscribers").select("id,mobile").eq("id", row.source_id).maybeSingle()
+    : await db.from("sunder_subscribers").select("id,mobile").eq("email", row.email).maybeSingle();
+  const wl = linked.data as { id: string; mobile: string | null } | null;
+  const wlPatch: Record<string, unknown> = {};
+  if (wl) {
+    if (patch.email) wlPatch.email = edit.email;
+    if (edit.firstName && patch.first_name !== undefined) wlPatch.first_name = edit.firstName;
+    if (edit.mobile !== undefined && (edit.mobile || null) !== (wl.mobile || null)) {
+      wlPatch.mobile = edit.mobile;
+      if (!edit.mobile) { wlPatch.sms_consent = false; }
+      changed.push("mobile");
+    }
+  } else if (edit.mobile) {
+    return { ok: false, error: "Some fields need fixing.", fields: { mobile: "This person has no waitlist row, so a mobile cannot be stored." } };
+  }
+  if (!changed.length) return { ok: true, changed };
+  if (Object.keys(patch).length) {
+    patch.updated_at = new Date().toISOString();
+    const up = await db.from("email_contacts").update(patch).eq("tenant_id", tenant.id).eq("id", row.id);
+    if (up.error) return { ok: false, error: up.error.message };
+  }
+  if (wl && Object.keys(wlPatch).length) {
+    wlPatch.updated_at = new Date().toISOString();
+    const up = await db.from("sunder_subscribers").update(wlPatch).eq("id", wl.id);
+    if (up.error) return { ok: false, error: `Saved the email list, but the waitlist row did not update: ${up.error.message}` };
+  }
+  if (patch.status === "unsubscribed" || patch.email) {
+    // Queued mail was rendered for the old state. Cancel it rather than send it.
+    await db.from("email_sends").update({ status: "skipped", error: "admin_edit" }).eq("tenant_id", tenant.id).eq("contact_id", row.id).eq("status", "pending");
+  }
+  return { ok: true, changed };
+}
+
+/**
+ * Hard delete. Runs in a safe order: cancel pending sends, detach send history
+ * (kept for the audit trail), drop series enrolments and smart-list membership,
+ * delete the contact, then the linked waitlist row. Suppressions are kept.
+ * List membership also cascades from the contact FK when migration 018 is applied.
+ */
+export async function deleteContacts(ids: string[]): Promise<{ ok: true; deleted: number; cancelled: number; emails: string[] } | { ok: false; error: string }> {
+  const ready = await requireReady();
+  if ("error" in ready) return { ok: false, error: ready.error };
+  const { db, tenant } = ready;
+  const found = await db.from("email_contacts").select("id,email,first_name,status,source_table,source_id").eq("tenant_id", tenant.id).in("id", ids);
+  if (found.error) return { ok: false, error: found.error.message };
+  const rows = (found.data || []) as ContactRow[];
+  if (!rows.length) return { ok: false, error: "Those subscribers were not found. Refresh the list." };
+  const rowIds = rows.map((r) => r.id);
+  const emails = rows.map((r) => r.email);
+  const cancel = await db.from("email_sends").update({ status: "skipped", error: "contact_deleted" }).eq("tenant_id", tenant.id).eq("status", "pending").or(`contact_id.in.(${rowIds.join(",")}),to_email.in.(${emails.map((e) => `"${e.replace(/"/g, "")}"`).join(",")})`).select("id");
+  if (cancel.error) return { ok: false, error: cancel.error.message };
+  const detach = await db.from("email_sends").update({ contact_id: null }).eq("tenant_id", tenant.id).in("contact_id", rowIds);
+  if (detach.error) return { ok: false, error: detach.error.message };
+  const enr = await db.from("email_series_enrolments").delete().in("contact_id", rowIds);
+  if (enr.error) return { ok: false, error: enr.error.message };
+  const mem = await db.from("audience_list_members").delete().in("contact_id", rowIds);
+  if (mem.error && !isMissingSchema(mem.error)) return { ok: false, error: mem.error.message };
+  const del = await db.from("email_contacts").delete().eq("tenant_id", tenant.id).in("id", rowIds);
+  if (del.error) return { ok: false, error: del.error.message };
+  const wlIds = rows.filter((r) => r.source_table === "sunder_subscribers" && r.source_id).map((r) => r.source_id as string);
+  const wl = await db.from("sunder_subscribers").delete().or(`email.in.(${emails.map((e) => `"${e.replace(/"/g, "")}"`).join(",")})${wlIds.length ? `,id.in.(${wlIds.join(",")})` : ""}`);
+  if (wl.error) console.error("waitlist delete failed:", wl.error.message);
+  return { ok: true, deleted: rows.length, cancelled: (cancel.data || []).length, emails };
+}

@@ -4,7 +4,7 @@ const PORTRAIT_1X = "/brand/lachie/avatar/lachie-headset-avatar-button-96.png";
 const PORTRAIT_2X = "/brand/lachie/avatar/lachie-headset-avatar-button-192.png";
 
 export function LachiePortrait({
-  alt = "Lachie, Saabai's AI voice receptionist",
+  alt = "Lachie, Saabai's AI voice demo",
   size = 96,
 }: {
   alt?: string;

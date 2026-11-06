@@ -3,6 +3,7 @@ import { streamText, generateText } from "ai";
 import { getPremiumModel } from "../../../../lib/chat-config";
 import { buildDesignerPersona } from "../../../../lib/site-factory-prompt";
 import { put, list } from "@vercel/blob";
+import { noDashesHtml } from "@/lib/no-dashes-html";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -117,6 +118,7 @@ Rules:
 
 function buildSystemPrompt(siteName?: string, niche?: string): string {
   return buildDesignerPersona(siteName, niche) + `
+HOUSE RULE: never use em dashes (—) anywhere in page copy, titles, meta or alt text. Use a comma, full stop, colon, or "to" for ranges.
 
 ---
 
@@ -350,7 +352,7 @@ ${minHtml}`;
               if (opsApplied > 0) {
                 let newHtml = result;
                 if (!newHtml.toLowerCase().includes("<!doctype")) newHtml = `<!DOCTYPE html>\n${newHtml}`;
-                await put(`sites/${slug}/draft.html`, newHtml, { access: "public", contentType: "text/html", addRandomSuffix: false, allowOverwrite: true });
+                await put(`sites/${slug}/draft.html`, noDashesHtml(newHtml), { access: "public", contentType: "text/html", addRandomSuffix: false, allowOverwrite: true });
                 updatedHtml = newHtml;
               }
             }
@@ -369,7 +371,7 @@ ${minHtml}`;
                 opsApplied = 1;
                 let newHtml = result;
                 if (!newHtml.toLowerCase().includes("<!doctype")) newHtml = `<!DOCTYPE html>\n${newHtml}`;
-                await put(`sites/${slug}/draft.html`, newHtml, { access: "public", contentType: "text/html", addRandomSuffix: false, allowOverwrite: true });
+                await put(`sites/${slug}/draft.html`, noDashesHtml(newHtml), { access: "public", contentType: "text/html", addRandomSuffix: false, allowOverwrite: true });
                 updatedHtml = newHtml;
               }
             } catch (e) {

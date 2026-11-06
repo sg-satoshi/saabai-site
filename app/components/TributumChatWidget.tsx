@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import type { UIMessage } from "ai";
 import { noteVisitorMessage } from "@/lib/conversation-activity";
 import { useChatOpen } from "./useChatOpen";
+import { scrollChatToEnd, useMobileChatSheet } from "@/lib/use-mobile-chat-sheet";
 
 const STORAGE_KEY = "tributum-law-v2-conversation";
 const STORAGE_TTL = 7 * 24 * 60 * 60 * 1000;
@@ -54,6 +55,8 @@ export default function TributumChatWidget() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useMobileChatSheet(isOpen, panelRef);
 
   useEffect(() => {
     const stored = loadStored();
@@ -62,7 +65,7 @@ export default function TributumChatWidget() {
 
   useEffect(() => {
     saveStored(messages);
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    scrollChatToEnd(endRef.current);
   }, [messages]);
 
   async function send() {
@@ -102,6 +105,7 @@ export default function TributumChatWidget() {
       {/* Chat Panel */}
       {isOpen && (
         <div
+          ref={panelRef}
           className="w-[380px] max-w-[calc(100vw-48px)] rounded-2xl overflow-hidden flex flex-col"
           style={{ background: IVORY, boxShadow: "0 24px 80px rgba(15,27,46,0.3)", height: "520px", maxHeight: "calc(100vh - 120px)" }}
         >

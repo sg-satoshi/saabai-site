@@ -3,6 +3,7 @@ import { notify } from "../ui/Feedback";
 
 import { useState, useEffect } from "react";
 import AdminShell from "../AdminSidebar";
+import { LEX_PICKER_MODELS, LEX_COMING_SOON_MODELS } from "@/lib/lex-models";
 
 // ── Provider registry ──────────────────────────────────────────────────────────
 
@@ -18,12 +19,8 @@ const PROVIDERS = [
     apiKeyUrl: "https://console.anthropic.com/settings/keys",
     keyPrefix: "sk-ant-",
     available: true,
-    models: [
-      { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5", cost: "~$0.80/M tokens", badge: "Fastest · cheapest", context: "200K" },
-      { id: "claude-sonnet-4-6",         name: "Claude Sonnet 4.6", cost: "~$3/M tokens",   badge: "Recommended",      context: "200K" },
-      { id: "claude-opus-4-6",           name: "Claude Opus 4.6",   cost: "~$15/M tokens",  badge: "Most capable",     context: "200K" },
-    ],
-    pricing: "Est. $5–40/mo for most firms",
+    models: LEX_PICKER_MODELS.anthropic,
+    pricing: "Est. $5-40/mo for most firms",
   },
   {
     id: "openai",
@@ -36,11 +33,8 @@ const PROVIDERS = [
     apiKeyUrl: "https://platform.openai.com/api-keys",
     keyPrefix: "sk-",
     available: true,
-    models: [
-      { id: "gpt-4o-mini", name: "GPT-4o Mini", cost: "~$0.15/M tokens", badge: "Best value",  context: "128K" },
-      { id: "gpt-4o",      name: "GPT-4o",      cost: "~$2.50/M tokens", badge: "Recommended", context: "128K" },
-    ],
-    pricing: "Est. $2–20/mo for most firms",
+    models: LEX_PICKER_MODELS.openai,
+    pricing: "Est. $2-20/mo for most firms",
   },
   {
     id: "google",
@@ -54,12 +48,8 @@ const PROVIDERS = [
     keyPrefix: "AIza",
     available: true,
     hasFree: true,
-    models: [
-      { id: "gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite", cost: "Free tier + very low", badge: "Free tier",    context: "1M" },
-      { id: "gemini-2.0-flash",      name: "Gemini 2.0 Flash",      cost: "~$0.10/M tokens",       badge: "Recommended", context: "1M" },
-      { id: "gemini-1.5-pro",        name: "Gemini 1.5 Pro",        cost: "~$1.25/M tokens",       badge: "",            context: "2M" },
-    ],
-    pricing: "Est. $0–10/mo · Free tier available",
+    models: LEX_PICKER_MODELS.google,
+    pricing: "Est. $0-10/mo · Free tier available",
   },
   {
     id: "xai",
@@ -72,10 +62,7 @@ const PROVIDERS = [
     apiKeyUrl: "https://console.x.ai",
     keyPrefix: "xai-",
     available: true,
-    models: [
-      { id: "grok-3-mini", name: "Grok 3 Mini", cost: "Competitive", badge: "Recommended",  context: "131K" },
-      { id: "grok-3",      name: "Grok 3",      cost: "Competitive", badge: "Most capable", context: "131K" },
-    ],
+    models: LEX_PICKER_MODELS.xai,
     pricing: "See console.x.ai for pricing",
   },
   {
@@ -90,10 +77,7 @@ const PROVIDERS = [
     keyPrefix: "gsk_",
     available: false,
     hasFree: true,
-    models: [
-      { id: "llama-3.1-8b-instant",    name: "Llama 3.1 8B",  cost: "Free tier", badge: "Free",         context: "128K" },
-      { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", cost: "Very low",  badge: "More capable", context: "128K" },
-    ],
+    models: LEX_COMING_SOON_MODELS.groq,
     pricing: "Free tier · very low cost",
     comingSoon: true,
   },
@@ -108,9 +92,7 @@ const PROVIDERS = [
     apiKeyUrl: "https://platform.moonshot.cn",
     keyPrefix: "sk-",
     available: false,
-    models: [
-      { id: "kimi-k2", name: "Kimi K2", cost: "Competitive", badge: "Recommended", context: "128K" },
-    ],
+    models: LEX_COMING_SOON_MODELS.moonshot,
     pricing: "Competitive pricing",
     comingSoon: true,
   },
@@ -140,13 +122,13 @@ const LEGAL_FIT: Record<string, LegalFit> = {
     summary:
       "The strongest choice for a legal AI. Claude is built for careful, verifiable reasoning and follows complex instruction sets with higher consistency than any other provider tested in this context.",
     strengths: [
-      "Most reliable multi-step tool chains — rarely skips checkCitation or verifySection calls",
+      "Most reliable multi-step tool chains, rarely skips checkCitation or verifySection calls",
       "Follows the 'never fabricate citations' rule more tightly than any other provider",
-      "200K context window handles even the longest contracts or transcripts without truncation",
-      "Prompt caching reduces cost on long system prompts — a Lex-specific optimisation built in",
+      "Sonnet and Opus 4.6 have a 1M token context window, so even the longest contracts or transcripts fit without truncation",
+      "Prompt caching reduces cost on long system prompts, a Lex-specific optimisation built in",
     ],
     watchOut:
-      "Haiku is too lightweight for complex research chains. Use it only for intake chat or simple Q&A — not for legislation verification or multi-hop case law research. Sonnet is the minimum for anything that touches section citations or document drafting.",
+      "Haiku is too lightweight for complex research chains. Use it only for intake chat or simple Q&A, not for legislation verification or multi-hop case law research. Sonnet is the minimum for anything that touches section citations or document drafting.",
   },
   openai: {
     rating: "good",
@@ -154,14 +136,14 @@ const LEGAL_FIT: Record<string, LegalFit> = {
     ratingColor: "#16a34a",
     scores: { toolCalling: 4, accuracy: 4, instructions: 4 },
     summary:
-      "A proven, enterprise-grade option. GPT-4o is reliable for legal research workflows and handles tool calling well — though it can occasionally be more confident than its accuracy warrants on Australian-specific law and ATO rulings.",
+      "A proven, enterprise-grade option. OpenAI's GPT models are reliable for legal research workflows and handle tool calling well, though they can occasionally be more confident than their accuracy warrants on Australian-specific law and ATO rulings.",
     strengths: [
-      "Battle-tested reliability — GPT-4o is widely deployed in legal tech globally",
+      "Battle-tested reliability. OpenAI models are widely deployed in legal tech globally",
       "Consistent tool calling across most query types and jurisdictions",
       "Strong comprehension of structured legal documents, contracts, and agreements",
     ],
     watchOut:
-      "GPT-4o Mini may skip tool steps on complex multi-jurisdiction queries — only suitable for intake and simple Q&A, not for research chains. Use GPT-4o as the minimum for anything touching case law, ATO guidance, or section citations.",
+      "The lower-cost OpenAI model may skip tool steps on complex multi-jurisdiction queries. Only suitable for intake and simple Q&A, not for research chains. Use the Recommended OpenAI model as the minimum for anything touching case law, ATO guidance, or section citations.",
   },
   google: {
     rating: "caution",
@@ -169,14 +151,14 @@ const LEGAL_FIT: Record<string, LegalFit> = {
     ratingColor: "#f59e0b",
     scores: { toolCalling: 3, accuracy: 3, instructions: 3 },
     summary:
-      "Best-in-class context window (1M–2M tokens) makes Gemini attractive for large document work, but it is less consistent on multi-step legal research chains and has a higher rate of confident errors on Australian-specific law and ATO rulings.",
+      "Best-in-class context window (1M tokens) makes Gemini attractive for large document work, but it is less consistent on multi-step legal research chains and has a higher rate of confident errors on Australian-specific law and ATO rulings.",
     strengths: [
-      "1M–2M token context window — can process entire client files, judgments, or contracts in one pass",
-      "Free tier available via Google AI Studio — useful for initial piloting",
+      "1M token context window, so it can process entire client files, judgments, or contracts in one pass",
+      "Free tier available via Google AI Studio, useful for initial piloting",
       "Fast and cost-effective for document summarisation and intake tasks",
     ],
     watchOut:
-      "Gemini can be confidently wrong on Australian-specific legislation, state law nuances, and ATO interpretations — areas where Claude and GPT-4o are more carefully calibrated. It may also over-call tools, generating excessive searches that slow responses. Test thoroughly on your practice areas before using for client-facing research.",
+      "Gemini can be confidently wrong on Australian-specific legislation, state law nuances, and ATO interpretations, areas where Claude and OpenAI's models are more carefully calibrated. It may also over-call tools, generating excessive searches that slow responses. Test thoroughly on your practice areas before using for client-facing research.",
     restriction:
       "Not recommended as the primary research model without thorough testing. Better suited for document summarisation or intake chat than for legislative citation work or advice memos.",
   },
@@ -186,14 +168,14 @@ const LEGAL_FIT: Record<string, LegalFit> = {
     ratingColor: "#f59e0b",
     scores: { toolCalling: 3, accuracy: 3, instructions: 3 },
     summary:
-      "Grok is strong for general knowledge and real-time awareness, but multi-step legal research chains are where it becomes inconsistent — specifically the verifySection step that prevents hallucinated citations appearing in documents.",
+      "Grok is strong for general knowledge and real-time awareness, but multi-step legal research chains are where it becomes inconsistent, specifically the verifySection step that prevents hallucinated citations appearing in documents.",
     strengths: [
       "Strong general reasoning and broad up-to-date world knowledge",
       "Competitive pricing relative to capability",
       "Good for conversational intake and general client-facing Q&A",
     ],
     watchOut:
-      "On complex research chains, Grok may skip the verifySection call and cite legislation from memory — producing plausible but incorrect section numbers. If those numbers appear in a drafted document or advice memo, the firm carries the exposure. This is the single biggest risk of using a less-reliable model in a legal AI context.",
+      "On complex research chains, Grok may skip the verifySection call and cite legislation from memory, producing plausible but incorrect section numbers. If those numbers appear in a drafted document or advice memo, the firm carries the exposure. This is the single biggest risk of using a less-reliable model in a legal AI context.",
     restriction:
       "If using xAI, restrict this client's Lex to intake and general Q&A only. Do not use for legislation research, section citations, or document drafting workflows without extensive testing first.",
   },
@@ -395,10 +377,10 @@ export default function LexSettingsClient() {
       });
       const res = await r.json();
       setTestStatus(res.ok ? "ok" : "fail");
-      setTestMsg(res.ok ? `Connected — model replied: "${res.response}"` : (res.error ?? "Connection failed"));
+      setTestMsg(res.ok ? `Connected, model replied: "${res.response}"` : (res.error ?? "Connection failed"));
     } catch (err) {
       setTestStatus("fail");
-      setTestMsg(err instanceof Error ? err.message : "Network error — could not reach server");
+      setTestMsg(err instanceof Error ? err.message : "Network error, could not reach server");
     }
   }
 
@@ -427,7 +409,7 @@ export default function LexSettingsClient() {
       }
     } catch (err) {
       setSaving(false);
-      setSaveMsg(err instanceof Error ? `Error: ${err.message}` : "Error: Network error — could not reach server");
+      setSaveMsg(err instanceof Error ? `Error: ${err.message}` : "Error: Network error, could not reach server");
     }
   }
 
@@ -444,7 +426,7 @@ export default function LexSettingsClient() {
             LLM Configuration
           </h1>
           <p className="mc-sub">
-            Each client can use their own API key and preferred model. Keys are encrypted at rest — never stored in plaintext.
+            Each client can use their own API key and preferred model. Keys are encrypted at rest, never stored in plaintext.
           </p>
           </div>
         </div>
@@ -467,7 +449,7 @@ export default function LexSettingsClient() {
                 Federal Register of Legislation, then verifies every section reference before including it in a response. AustLII is not searched. That verification
                 step is what stops a fabricated section number from appearing in a drafted document or client advice
                 memo. The step only runs reliably if the model handles multi-step tool chains consistently under
-                legal constraints. Not all models do this equally well — and the difference is not about being
+                legal constraints. Not all models do this equally well, and the difference is not about being
                 "better" in a general sense. The assessments below reflect each provider's real-world reliability
                 for this specific use case.
               </p>
@@ -494,7 +476,7 @@ export default function LexSettingsClient() {
               <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(8,145,178,0.08)", border: "1px solid rgba(8,145,178,0.2)", borderRadius: 8, padding: "7px 14px" }}>
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.teal }} />
                 <span style={{ fontSize: 12, color: C.teal, fontWeight: 600 }}>
-                  Configured — {currentConfig.provider}/{currentConfig.model} — key {currentConfig.keyHint}
+                  Configured, {currentConfig.provider}/{currentConfig.model}, key {currentConfig.keyHint}
                 </span>
               </div>
             )}
@@ -632,7 +614,7 @@ export default function LexSettingsClient() {
                 type={showKey ? "text" : "password"}
                 value={apiKey}
                 onChange={e => setApiKey(e.target.value)}
-                placeholder={currentConfig?.provider === selectedProv ? `Current key: ${currentConfig.keyHint} — enter new key to replace` : `Paste your ${provider.name} API key`}
+                placeholder={currentConfig?.provider === selectedProv ? `Current key: ${currentConfig.keyHint}, enter new key to replace` : `Paste your ${provider.name} API key`}
                 style={{
                   width: "100%", background: C.surface, color: C.text,
                   border: `1px solid ${C.borderHi}`, borderRadius: 10,
@@ -704,7 +686,7 @@ export default function LexSettingsClient() {
             {[
               "The client's API key is encrypted with AES-256-GCM and stored in Redis. Saabai never has access to the plaintext key.",
               "When Lex receives a conversation, it looks up the client's stored config and routes the request through their key and chosen model.",
-              "If no config is saved, Lex falls back to Saabai's default model — useful during onboarding.",
+              "If no config is saved, Lex falls back to Saabai's default model, useful during onboarding.",
               "The client's AI usage costs go directly to their provider account. Saabai's monthly fee covers everything else.",
             ].map((item, i) => (
               <li key={i} style={{ fontSize: 12, color: C.muted, lineHeight: 1.6 }}>{item}</li>

@@ -16,6 +16,7 @@
   };
 
   let greeting = '';
+  let goal = null;
 
   const STORAGE_KEY = 'lmm-chat-history';
   let messages = [];
@@ -30,6 +31,11 @@
       if (!c) return;
       if (typeof c.greeting === 'string') greeting = c.greeting;
       if (c.handoff && c.handoff.href && c.handoff.label) showHandoff(c.handoff);
+      if (c.goal) goal = c.goal;
+      if (typeof c.avatarUrl === 'string' && c.avatarUrl.trim()) {
+        CONFIG.avatar = c.avatarUrl.trim();
+        document.querySelectorAll('.lmm-chat-button img, .lmm-chat-header img, .lmm-chat-message-avatar').forEach(function (img) { img.src = CONFIG.avatar; });
+      }
       if (c.active === false) {
         chatbotOff = true;
         offMessage = c.offMessage || "Our chat assistant is taking a break. Please call or email the team directly and they'll be happy to help.";
@@ -182,14 +188,72 @@
     handoffRow.appendChild(a);
   }
 
+  // Quick replies and the CTA button. Shown under the latest bot message only, never saved.
+  function safeLink(u) {
+    if (typeof u !== 'string') return '';
+    if (/^mailto:[^\s@]+@[^\s@]+/i.test(u) || /^tel:\+?[0-9]{6,20}$/i.test(u)) return u;
+    try { const x = new URL(u); return x.protocol === 'https:' ? x.href : ''; } catch (e) { return ''; }
+  }
+  function track(ev) {
+    fetch(CONFIG.eventEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: CONFIG.slug, event: ev }) }).catch(function () {});
+  }
+  function showExtras(replies, btn) {
+    const old = messagesContainer.querySelector('.lmm-extras');
+    if (old) old.remove();
+    if ((!replies || !replies.length) && !btn) return;
+    const row = document.createElement('div');
+    row.className = 'lmm-extras';
+    row.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px 40px;';
+    const href = btn ? safeLink(btn.url) : '';
+    if (btn && href) {
+      const a = document.createElement('a');
+      a.href = href; a.textContent = btn.label;
+      if (href.indexOf('https:') === 0) { a.target = '_blank'; a.rel = 'noopener'; }
+      const fb = btn.kind === 'fallback';
+      a.style.cssText = 'flex-basis:100%;width:fit-content;padding:9px 14px;border-radius:10px;font-weight:600;font-size:14px;text-decoration:none;' + (fb ? 'background:#fff;color:#0b5d55;border:1.5px solid #0b5d55;' : 'background:#0b5d55;color:#fff;border:1.5px solid #0b5d55;');
+      a.addEventListener('click', function () { track(fb ? 'fallback_click' : 'cta_click'); });
+      row.appendChild(a);
+    }
+    (replies || []).slice(0, 4).forEach(function (t) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = t;
+      b.style.cssText = 'border:1.5px solid #0b5d55;background:#fff;color:#0b5d55;border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer;min-height:34px;';
+      b.addEventListener('click', function () { input.value = t; sendMessage(); });
+      row.appendChild(b);
+    });
+    messagesContainer.appendChild(row);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  function saabaiSheet(panelEl, open) {
+    var src = 'https://www.saabai.ai/chat-sheet.js?v=1';
+    function run() {
+      if (!window.SaabaiChatSheet) return;
+      if (!panelEl._saabaiSheet) panelEl._saabaiSheet = window.SaabaiChatSheet.attach(panelEl);
+      panelEl._saabaiSheet.setOpen(!!open);
+    }
+    if (window.SaabaiChatSheet) { run(); return; }
+    var existing = document.querySelector('script[data-saabai-sheet]');
+    if (existing) { existing.addEventListener('load', run); return; }
+    var s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    s.setAttribute('data-saabai-sheet', '1');
+    s.onload = run;
+    document.head.appendChild(s);
+  }
+
   function togglePanel() {
     isOpen = !isOpen;
     panel.classList.toggle('open', isOpen);
+    saabaiSheet(panel, isOpen);
     if (isOpen && messages.length === 0 && greeting) {
       addMessage('bot', greeting);
+      if (goal && goal.quickReplies) showExtras(goal.quickReplies, null);
     }
-    if (isOpen) setTimeout(() => input.focus(), 100);
+    if (isOpen) setTimeout(() => { try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); } }, 100);
   }
+  saabaiSheet(panel, false);
 
   button.addEventListener('click', togglePanel);
   closeBtn.addEventListener('click', togglePanel);
@@ -261,6 +325,7 @@
   }
 
   async function sendMessage() {
+    showExtras(null, null);
     const text = input.value.trim();
     if (!text || isTyping) return;
     input.value = '';
@@ -295,6 +360,7 @@
         }
         const reply = data.content || data.text || data.message?.content || "I'm sorry, I didn't catch that. Could you rephrase?";
         addMessage('bot', reply);
+        showExtras(data.quickReplies, data.cta && data.cta.label ? data.cta : null);
       } else if (response.status >= 500) {
         addMessage('bot', "I'm having trouble thinking right now. Please try again!");
       } else {

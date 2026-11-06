@@ -31,13 +31,13 @@ export async function suppress(email: string, channel: "email" | "sms" | "all" =
 
 /** Footer for marketing email: identifies the sender and gives a working unsubscribe. */
 export function marketingFooterHtml(email: string): string {
-  return `<p style="font-size:12px;color:#5f6580;margin-top:28px;border-top:1px solid #eceef4;padding-top:14px">You're getting this because you bought a Saabai Blueprint. Sent by Saabai, ABN 71 889 082 572, Merrimac QLD 4226, Australia (saabai.ai, hello@saabai.ai). <a href="${unsubUrl(email)}" style="color:#1595a6">Unsubscribe</a> from marketing emails. You'll still get receipts and service messages.</p>`;
+  return `<p style="font-size:12px;color:#5f6580;margin-top:28px;border-top:1px solid #eceef4;padding-top:14px">You're getting this because you bought a Saabai Blueprint. Sent by Saabai Pty Ltd trading as Saabai, ABN 44 703 735 264, Merrimac QLD 4226, Australia (saabai.ai, hello@saabai.ai). <a href="${unsubUrl(email)}" style="color:#1595a6">Unsubscribe</a> from marketing emails. You'll still get receipts and service messages.</p>`;
 }
 export const SMS_STOP = "Reply STOP to opt out";
 
 /** Footer for Mia chat follow-up and nurture emails (Spam Act: identify sender, say why, functional unsubscribe). */
 export function miaFooterHtml(email: string): string {
-  return `<p style="font-size:12px;color:#8a8fa8;margin-top:28px;border-top:1px solid #e8e8ec;padding-top:14px;line-height:1.6">You're getting this because you chatted with Mia on saabai.ai and gave us your email so we could follow up. Sent by Saabai, ABN 71 889 082 572, Merrimac QLD 4226, Australia (saabai.ai, hello@saabai.ai). <a href="${unsubUrl(email)}" style="color:#1595a6">Unsubscribe</a> and we won't email you again.</p>`;
+  return `<p style="font-size:12px;color:#8a8fa8;margin-top:28px;border-top:1px solid #e8e8ec;padding-top:14px;line-height:1.6">You're getting this because you chatted with Mia on saabai.ai and gave us your email so we could follow up. Sent by Saabai Pty Ltd trading as Saabai, ABN 44 703 735 264, Merrimac QLD 4226, Australia (saabai.ai, hello@saabai.ai). <a href="${unsubUrl(email)}" style="color:#1595a6">Unsubscribe</a> and we won't email you again.</p>`;
 }
 
 /** RFC 8058 one-click unsubscribe headers. */

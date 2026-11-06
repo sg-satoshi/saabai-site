@@ -11,15 +11,29 @@ export const metadata: Metadata = publicPageMeta.legalCompare;
 
 const DEMO_URL = "https://calendly.com/shanegoldberg/30min";
 const CHECKED = "25 October 2026";
+const CHECKED_AU = "30 October 2026";
+
+/** Australian legal AI tools compared on this page. Wording is from each vendor's own public page (checked 30 Oct). */
+const AU_TOOLS: { name: string; eyebrow: string; what: string; price: string; href: string }[] = [
+  { name: "Quillio", eyebrow: "Quillio", what: "Quillio's homepage describes it as an AI legal assistant built for Australian lawyers, covering research, document review, chronologies, drafting and file notes. The same page mentions Australian data sovereignty.", price: "Quillio publishes per-user pricing with a free trial on its pricing page. No figure is copied here; check the page for current prices.", href: "https://quillio.au/pricing/" },
+  { name: "Smokeball Archie AI", eyebrow: "Smokeball", what: "Smokeball's Archie page describes Archie as an AI legal assistant for Australian law firms that works with Smokeball, listing document and matter summaries, matter analysis and document comparison.", price: "Smokeball publishes per-user plan pricing, and lists Archie AI as an add-on, on its pricing page. No figure is copied here.", href: "https://www.smokeball.com.au/pricing" },
+  { name: "LEAP legal AI", eyebrow: "LEAP", what: "LEAP's legal AI page describes AI built into its practice management system to summarise matters, draft documents and research the law. The page also states that answers can be verified by qualified Australian lawyers; that is LEAP's statement, not verified here.", price: "LEAP's Australian pricing URL returned a 404 on the check date, so no LEAP price is shown here.", href: "https://www.leaplegalsoftware.com/au/features/legal-ai/" },
+  { name: "Clio", eyebrow: "Clio", what: "Clio's Australian homepage describes an AI platform across Clio Work (analysis and drafting), Clio Manage (practice management), Clio Grow (intake) and Clio Draft (document automation), for solo firms through to large law.", price: "Clio's pricing page could not be read on the check date, so no Clio price is shown here.", href: "https://www.clio.com/au/" },
+  { name: "Habeas", eyebrow: "Habeas", what: "Habeas's homepage describes it as an AI legal research platform for Australian lawyers, founded in 2023, for research, querying the law and first drafts in one interface.", price: "Habeas publishes monthly plan pricing on its pricing page. No figure is copied here.", href: "https://www.habeas.ai/pricing" },
+];
 
 const FAQS = [
   {
     q: "How much does Lex cost?",
-    a: "The Firm plan is $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited research and 20 documents a month. Larger firms can ask about a custom Enterprise plan.",
+    a: "Free 60-day trial; pricing after trial. No card is needed. It includes 3 lawyer seats, legal research and 20 documents a month. Larger firms can ask about a custom Enterprise plan.",
   },
   {
     q: "Which sources does Lex search?",
     a: "Public Australian government sources: ATO rulings and interpretive decisions, the Federal Register of Legislation (including whether an Act is in force), ASIC and the Fair Work Commission. Case citations are checked against a licensed snapshot of NSW Caselaw, Federal Court and High Court decisions (cutoff 10 March 2025). Other courts are not in that snapshot.",
+  },
+  {
+    q: "What other AI legal tools are available to Australian firms?",
+    a: "This page covers Quillio, Smokeball Archie, LEAP, Clio, Habeas, Harvey, CoCounsel and Lexis+ AI, using each company's own public pages. It is not a ranking. Lex is a research and drafting workspace with a free 60-day trial (pricing after trial), 3 lawyer seats, legal research and 20 documents a month.",
   },
   {
     q: "Where does Lex host data?",
@@ -32,9 +46,8 @@ const FAQS = [
 ];
 
 const SOURCES: { name: string; href: string; note: string }[] = [
-  { name: "Lex on saabai.ai", href: "https://www.saabai.ai/legal", note: "Price, sources, privacy wording and the licensed case-law snapshot limits." },
+  { name: "Lex on saabai.ai", href: "https://www.saabai.ai/legal", note: "Free trial, sources, privacy wording and the licensed case-law snapshot limits." },
   { name: "Harvey homepage", href: "https://www.harvey.ai/", note: "Product description. No price is listed on this page." },
-  { name: "Harvey pricing URL", href: "https://www.harvey.ai/pricing", note: "Returned 404 on the check date. Not used as a price." },
   { name: "Harvey security", href: "https://www.harvey.ai/security", note: "Hosting and data localisation wording." },
   { name: "Harvey security addendum", href: "https://www.harvey.ai/legal/security-addendum", note: "Hosting region is the region on the order form." },
   { name: "CoCounsel Legal, Australia", href: "https://www.thomsonreuters.com.au/en-au/products/cocounsel-legal.html", note: "What the product does, and the sources Thomson Reuters names." },
@@ -58,7 +71,7 @@ export default function LexComparePage() {
         "@type": "WebPage",
         url: "https://www.saabai.ai/legal/lex-vs-ai-legal-tools",
         name: "Lex vs other AI legal tools 2026 | Saabai",
-        dateModified: "2026-10-25",
+        dateModified: "2026-10-30",
       }} />
       <Nav activePage="/legal" />
 
@@ -67,8 +80,8 @@ export default function LexComparePage() {
           <span className="lx-badge">Lex by Saabai<span className="lx-hm"> &middot; AI legal assistant</span></span>
           <h1>Lex vs other AI legal tools 2026</h1>
           <p className="lx-lead">
-            This page compares Lex with Harvey, CoCounsel and Lexis+ AI on price, sources and data location.
-            Lex facts come from saabai.ai. The other facts are quoted from each company&apos;s public pages, checked on {CHECKED}.
+            This page compares Lex with Quillio, Smokeball Archie, LEAP, Clio, Habeas, Harvey, CoCounsel and Lexis+ AI.
+            Lex facts come from saabai.ai. The other facts are quoted from each company&apos;s public pages, checked on {CHECKED} (Harvey, CoCounsel, Lexis+ AI) and {CHECKED_AU} (the Australian tools).
           </p>
           <p className="lx-lead" style={{ marginTop: 16 }}>
             It is not a ranking. Where a public page does not state a price or a source list, this page says so.
@@ -100,7 +113,7 @@ export default function LexComparePage() {
           <div className="lx-feats">
             <div className="lx-card">
               <h3>Price</h3>
-              <p>The Firm plan is $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited research and 20 documents a month.</p>
+              <p>Free 60-day trial; pricing after trial. No card needed. It includes 3 lawyer seats, legal research and 20 documents a month.</p>
               <p style={{ marginTop: 12 }}>Enterprise is custom. Source: the <a href="/legal#pricing" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Lex pricing section</a>.</p>
             </div>
             <div className="lx-card">
@@ -117,6 +130,28 @@ export default function LexComparePage() {
         </div>
       </section>
 
+      {AU_TOOLS.map((t) => (
+        <section className="lx-sec lx-pt0" key={t.name}>
+          <div className="lx-wrap">
+            <div className="lx-head">
+              <div className="lx-eyebrow">{t.eyebrow}</div>
+              <h2>{t.name}</h2>
+              <p className="lx-lead">{t.what}</p>
+            </div>
+            <div className="lx-feats">
+              <div className="lx-card">
+                <h3>Price</h3>
+                <p>{t.price}</p>
+              </div>
+              <div className="lx-card">
+                <h3>Source</h3>
+                <p><a href={t.href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>{t.href.replace("https://", "")}</a>, checked {CHECKED_AU}. Their wording, not a Saabai claim about their product.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      ))}
+
       <section className="lx-sec lx-pt0">
         <div className="lx-wrap">
           <div className="lx-head">
@@ -127,7 +162,7 @@ export default function LexComparePage() {
           <div className="lx-feats">
             <div className="lx-card">
               <h3>Price</h3>
-              <p>The homepage does not list a price. On {CHECKED}, harvey.ai/pricing returned a 404, so no Harvey price is shown here.</p>
+              <p>Harvey&apos;s homepage does not list a price, so no Harvey price is shown here.</p>
             </div>
             <div className="lx-card">
               <h3>Sources</h3>

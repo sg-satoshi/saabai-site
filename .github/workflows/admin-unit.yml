@@ -15,6 +15,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: SUNDER email marketing
+        run: npx tsx --test tests/email-marketing.test.ts tests/email-automated-campaigns.test.ts
       - name: Invoice number input and line totals
         run: npx tsx --test tests/invoice-number-input.test.ts
       - name: Portal onboarding
@@ -27,3 +29,9 @@ jobs:
         run: npx tsx --test tests/wholesale-login-limit.test.ts
       - name: Security headers
         run: npx tsx --test tests/security-headers.test.ts
+      - name: Lex free trial and signup
+        run: npx tsx --test tests/lex-trial.test.ts tests/lex-signup.test.ts
+      - name: Lex feedback
+        run: npx tsx --test tests/lex-feedback.test.ts
+      - name: Lex help assistant
+        run: npx tsx --test tests/lex-help.test.ts

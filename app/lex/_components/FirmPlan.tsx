@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 
 type Plan = {
-  plan: "firm" | null; firmName?: string; isAdmin?: boolean; status?: "active" | "grace" | "lapsed"; lapseReason?: "unpaid" | "cancelled" | null;
+  plan: "firm" | null; firmName?: string; isAdmin?: boolean; status?: "active" | "grace" | "lapsed" | "trial"; lapseReason?: "unpaid" | "cancelled" | "trial_ended" | null;
+  trial?: { daysLeft: number; endsAt: string } | null;
   graceUntil?: string | null; cancelAtPeriodEnd?: boolean; periodEnd?: string | null;
   seats?: { used: number; cap: number }; admin?: string; members?: string[]; error?: string; cap?: boolean;
 };
@@ -56,11 +57,14 @@ export default function FirmPlan({ fallback = null }: { fallback?: React.ReactNo
       <h3 style={{ fontSize: 14, fontWeight: 600, color: "#1b2559", margin: "0 0 8px" }}>Firm plan</h3>
       {plan.status === "lapsed" ? (
         <p style={{ fontSize: 13, color: "#b42318", margin: "0 0 8px" }}>
-          {plan.lapseReason === "cancelled"
+          {plan.lapseReason === "trial_ended"
+            ? <>Your free trial has ended and Lex is switched off. {plan.isAdmin ? <><a href="/lex/signup" style={{ color: "#1b2559" }}>Subscribe</a> with this email within 30 days of the trial end to keep your firm&apos;s Lex data.</> : <>Ask {plan.admin} to subscribe.</>}</>
+            : plan.lapseReason === "cancelled"
             ? <>Your Firm plan has ended. {plan.isAdmin ? <a href="/lex/signup" style={{ color: "#1b2559" }}>Start a new plan</a> : <>Ask {plan.admin} to restart it.</>}</>
             : <>Lex is paused because a payment didn&apos;t go through. {plan.isAdmin ? "Use Manage billing to pay the open invoice and Lex comes back on straight away." : <>Ask {plan.admin} to update billing.</>}</>}
         </p>
       ) : null}
+      {plan.status === "trial" && plan.trial ? <p style={{ fontSize: 13, color: "#555d6e", margin: "0 0 8px" }}>Free trial: <strong>{plan.trial.daysLeft} {plan.trial.daysLeft === 1 ? "day" : "days"} left</strong> (ends {day(plan.trial.endsAt)}). {plan.isAdmin ? <a href="/lex/signup" style={{ color: "#1b2559", fontWeight: 600 }}>Subscribe now</a> : null}</p> : null}
       {plan.status === "grace" ? <p style={{ fontSize: 13, color: "#b42318", margin: "0 0 8px" }}>Your last payment didn&apos;t go through. {plan.graceUntil ? <>Please update your card by {day(plan.graceUntil)} to keep Lex on.</> : <>Please update your card within 7 days to keep Lex on.</>}</p> : null}
       {plan.cancelAtPeriodEnd ? <p style={{ fontSize: 13, color: "#555d6e", margin: "0 0 8px" }}>Cancelled. {plan.periodEnd ? <>Lex stays on until {day(plan.periodEnd)}.</> : <>Lex stays on until the end of your current billing period.</>}</p> : null}
       <p style={{ fontSize: 13, color: "#555d6e", margin: "0 0 8px" }}>Seats used: <strong>{used} of {cap}</strong></p>
@@ -80,10 +84,10 @@ export default function FirmPlan({ fallback = null }: { fallback?: React.ReactNo
           ) : (
             <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="colleague@yourfirm.com.au" aria-label="Colleague's email" style={{ flex: 1 }} />
-              <button type="button" style={navy} disabled={busy || !email.trim() || plan.status !== "active"} onClick={() => act("invite", email.trim())}>Invite</button>
+              <button type="button" style={navy} disabled={busy || !email.trim() || (plan.status !== "active" && plan.status !== "trial")} onClick={() => act("invite", email.trim())}>Invite</button>
             </div>
           )}
-          <button type="button" style={navy} disabled={busy} onClick={billing}>Manage billing</button>
+          {plan.status === "trial" || plan.lapseReason === "trial_ended" ? null : <button type="button" style={navy} disabled={busy} onClick={billing}>Manage billing</button>}
         </>
       ) : (
         <p style={{ fontSize: 13, color: "#555d6e", margin: 0 }}>Seats and billing are managed by {plan.admin}.</p>

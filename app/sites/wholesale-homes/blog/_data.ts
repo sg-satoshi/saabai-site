@@ -73,7 +73,7 @@ The wholesale advantage amplifies this further. By accessing packages at below-r
     readTime: "8 min read",
     tags: ["Investor Guides", "Pricing", "Wholesale Advantage"],
     metaDesc: "Understanding the 8-12% gap between wholesale and retail pricing on house and land packages, and how buying wholesale creates immediate equity.",
-    content: `Most property buyers never see the wholesale price. They walk into a display village, fall in love with a design, and pay the retail price listed on the brochure. What they don't know is that a completely different price exists — and it's 8-12% lower.
+    content: `Most property buyers never see the wholesale price. They walk into a display village, fall in love with a design, and pay the retail price listed on the brochure. What they don't know is that a completely different price exists, and it's 8-12% lower.
 
 ## How Wholesale Pricing Works
 
@@ -85,7 +85,7 @@ This volume allows builders to:
 - Lock in bulk pricing on materials and trades
 - Move inventory faster, reducing holding costs
 
-The savings are passed through as a wholesale discount. It's the same home, same inclusions, same builder warranty — but at a fundamentally lower price.
+The savings are passed through as a wholesale discount. It's the same home, same inclusions, same builder warranty, but at a fundamentally lower price.
 
 ## The 8-12% Gap in Practice
 
@@ -210,10 +210,10 @@ The current level of builder incentive is not permanent. As interest rates stabi
 A house and land package combines the purchase of land with a building contract for your new home. Instead of buying an established property, you're buying a new home built to modern standards with a builder's warranty.
 
 The advantages for first home buyers are significant:
-- **No stamp duty on the build component** — you only pay duty on the land
+- **No stamp duty on the build component**: you only pay duty on the land
 - **Full builder's structural warranty** (typically 6 years in most states)
-- **Modern energy efficiency** — lower utility bills
-- **No immediate maintenance** — everything is new and covered
+- **Modern energy efficiency**: lower utility bills
+- **No immediate maintenance**: everything is new and covered
 - **Access to first home owner grants** that often require new construction
 
 ## Government Support Available
@@ -272,10 +272,10 @@ Once you've selected a package, pay a holding deposit to reserve the lot and des
 
 ## Common Mistakes to Avoid
 
-- **Not budgeting for additional costs** — conveyancing, inspections, and connection fees add 3-5K
-- **Overlooking the land title timeline** — delays can affect your finance pre-approval expiry
-- **Choosing design over location** — the estate matters more than the facade
-- **Ignoring yield potential** — even as an owner-occupier, future resale value matters`,
+- **Not budgeting for additional costs**: conveyancing, inspections, and connection fees add 3-5K
+- **Overlooking the land title timeline**: delays can affect your finance pre-approval expiry
+- **Choosing design over location**: the estate matters more than the facade
+- **Ignoring yield potential**: even as an owner-occupier, future resale value matters`,
   },
   {
     slug: "depreciation-schedules",
@@ -312,7 +312,7 @@ Consider a new build house and land package with a construction cost of $450,000
 | Year 5 | $2,000-$3,500 | $11,250 | $13,250-$14,750 |
 | Year 10 | $1,000-$2,000 | $11,250 | $12,250-$13,250 |
 
-Over the first 5 years, total deductions can exceed $70,000 — most of which is non-cash. You don't spend this money; you simply claim the reduction in value against your taxable income.
+Over the first 5 years, total deductions can exceed $70,000, most of which is non-cash. You don't spend this money; you simply claim the reduction in value against your taxable income.
 
 ## How Depreciation Improves Cash Flow
 
@@ -346,7 +346,7 @@ The cost of a depreciation schedule ($500-$800) is fully tax deductible in the y
 
 ## The Bottom Line
 
-For new build investors, a depreciation schedule is not optional — it's an essential part of the investment strategy. The $500-$800 cost is recovered in the first month of deductions, and the ongoing benefit continues for decades.
+For new build investors, a depreciation schedule is not optional, it's an essential part of the investment strategy. The $500-$800 cost is recovered in the first month of deductions, and the ongoing benefit continues for decades.
 
 When evaluating a wholesale package, factor in the depreciation potential. A higher-quality build with premium inclusions typically delivers better depreciation outcomes than a basic specification, making the upgrade inclusions worthwhile from a tax perspective.`,
   },

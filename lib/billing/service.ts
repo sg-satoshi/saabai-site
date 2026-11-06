@@ -6,10 +6,10 @@ import crypto from "node:crypto";
 import { sendBrandedEmail } from "../email/branded-layout";
 import { enableFeature, disableFeature } from "../addons/flags";
 import { getCatalog } from "./catalog";
-import { DEFAULT_SENDER, isAllowedSender, paymentFailedEmail, setupLinkEmail, sitePausedEmail } from "./emails";
-import { dueDunningStep, dunningDays, isLinkExpired, LINK_TTL_DAYS, linkExpiresAt, shouldPause, statusAfterFailure, statusFromSubscription } from "./state";
+import { DEFAULT_SENDER, isAllowedSender, paymentFailedEmail, setupLinkEmail, sitePausedEmail, SETUP_LINE_LABEL } from "./emails";
+import { discountOffCents, normaliseDiscount, normaliseSetupDiscount, type SetupDiscount, type PlanDiscount, dueDunningStep, dunningDays, isLinkExpired, LINK_TTL_DAYS, linkExpiresAt, shouldPause, isDuplicateSetupPayment, validateFirstPaymentDate, statusAfterFailure, statusFromSubscription } from "./state";
 import { findBySubscription, getSiteBilling, listSiteBilling, saveSiteBilling, setPayToken, type SiteBillingRecord } from "./store";
-import { BILLING_SOURCE, periodOf, siteUrl } from "./stripe-ops";
+import { addDeferredSetupFee, BILLING_SOURCE, GST_BLOCKED, expireCheckoutSession, periodOf, siteUrl, stripeConfigured } from "./stripe-ops";
 import { redemptionFrom } from "../coupons/core";
 import { recordRedemptionUse, resolveRedemptionCode } from "../coupons/stripe";
 
@@ -27,6 +27,8 @@ export interface SetupInput {
   startDate: string;
   gst?: boolean;
   sender?: string;
+  discount?: Partial<PlanDiscount>;
+  setupDiscount?: Partial<SetupDiscount>;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -34,8 +36,10 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export async function buildSetup(input: SetupInput): Promise<{ ok: true; rec: SiteBillingRecord } | { ok: false; error: string }> {
   if (!input.siteId) return { ok: false, error: "Missing site" };
   if (!EMAIL_RE.test(input.contactEmail || "")) return { ok: false, error: "Enter a valid client email" };
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.startDate || "")) return { ok: false, error: "Pick a start date" };
+  const dateErr = validateFirstPaymentDate(input.startDate);
+  if (dateErr) return { ok: false, error: dateErr };
   const catalog = await getCatalog();
+  if (input.gst && catalog.gstRegistered) return { ok: false, error: GST_BLOCKED };
   let planName: string, monthlyCents: number, priceVersion: number | undefined;
   if (input.planId === "custom") {
     monthlyCents = Math.round(Number(input.customCents) || 0);
@@ -46,6 +50,15 @@ export async function buildSetup(input: SetupInput): Promise<{ ok: true; rec: Si
     if (!plan) return { ok: false, error: "Unknown plan" };
     planName = plan.name; monthlyCents = plan.priceCents; priceVersion = plan.priceVersion;
   }
+  const disc = normaliseDiscount(input.discount, monthlyCents);
+  if (!disc.ok) return { ok: false, error: disc.error };
+  const netMonthly = disc.discount ? monthlyCents - discountOffCents(monthlyCents, disc.discount) : monthlyCents;
+  if (netMonthly > 0 && netMonthly < 100) {
+    return { ok: false, error: "After the discount the monthly price must be $0 (waived) or at least $1" };
+  }
+  const setupFeeCents = Math.max(0, Math.round(Number(input.setupFeeCents) || 0));
+  const sdisc = normaliseSetupDiscount(input.setupDiscount, setupFeeCents);
+  if (!sdisc.ok) return { ok: false, error: sdisc.error };
   const existing = await getSiteBilling(input.siteId);
   if (existing && !["link_expired", "cancelled", "pending"].includes(existing.status)) {
     return { ok: false, error: "This site already has billing set up" };
@@ -60,7 +73,9 @@ export async function buildSetup(input: SetupInput): Promise<{ ok: true; rec: Si
     planName,
     monthlyCents,
     priceVersion,
-    setupFeeCents: Math.max(0, Math.round(Number(input.setupFeeCents) || 0)),
+    discount: disc.discount,
+    setupFeeCents,
+    setupDiscount: sdisc.discount,
     setupFeeDescription: input.setupFeeDescription?.slice(0, 80),
     startDate: input.startDate,
     gst: !!input.gst && catalog.gstRegistered,
@@ -81,12 +96,16 @@ export function payUrlFor(token: string) {
 export function previewSetupEmail(rec: SiteBillingRecord, siteDomain?: string, payUrl = `${siteUrl()}/pay/preview`) {
   return setupLinkEmail({
     contactName: rec.contact.name, siteName: rec.siteName, siteDomain, planName: rec.planName, monthlyCents: rec.monthlyCents,
-    setupFeeCents: rec.setupFeeCents, setupFeeDescription: rec.setupFeeDescription, startDate: rec.startDate, gst: rec.gst, payUrl,
+    setupFeeCents: rec.setupFeeCents, setupFeeDescription: rec.setupFeeDescription, startDate: rec.startDate, gst: rec.gst, payUrl, discount: rec.discount, setupDiscount: rec.setupDiscount,
   });
 }
 
 /** Rotate a 7-day pay token and email the client. */
 export async function sendSetupLink(rec: SiteBillingRecord, siteDomain?: string): Promise<{ rec: SiteBillingRecord; emailed: boolean; payUrl: string }> {
+  if (rec.gst) throw new Error(GST_BLOCKED);
+  // A new link may carry new prices, so never reuse the old Checkout Session.
+  if (rec.checkoutSessionId && stripeConfigured()) await expireCheckoutSession(rec.checkoutSessionId);
+  rec = { ...rec, checkoutSessionId: undefined };
   const token = crypto.randomBytes(24).toString("hex");
   await setPayToken(token, rec.siteId, LINK_TTL_DAYS * 86400 + 3600);
   const sentAt = new Date().toISOString();
@@ -136,10 +155,25 @@ export async function handleBillingEvent(event: { type: string; data: { object: 
       const rec = await getSiteBilling(o.metadata.siteId);
       if (!rec) return "no-record";
       if (o.metadata.kind === "setup") {
+        if (isDuplicateSetupPayment(rec, o.subscription)) {
+          await saveSiteBilling(rec, `Review: second setup payment received (session ${o.id}, subscription ${o.subscription}). Cancel and refund the duplicate in Stripe`);
+          return "duplicate-setup";
+        }
         const red = await resolveRedemptionCode(redemptionFrom(o));
         const useResult = await recordRedemptionUse(red, o.customer_details?.email || rec.contact?.email, o.id);
-        const coupon = red ? { couponCode: red.code ?? red.promotionCodeId, discountCents: red.discountCents } : {};
-        await saveSiteBilling({ ...rec, ...coupon, status: "active", stripeCustomerId: o.customer || rec.stripeCustomerId, stripeSubscriptionId: o.subscription || rec.stripeSubscriptionId, failedAt: undefined, dunningSent: 0 }, red ? `Paid, subscription active (code ${coupon.couponCode})${useResult === "repeat" ? ". Review: this email had already used this one-per-customer code" : ""}` : "Paid, subscription active");
+        const coupon = red ? { couponCode: red.code ?? red.promotionCodeId ?? (o.metadata.admin_coupon ? `Admin: ${rec.discount?.label || "Discount"}` : undefined), discountCents: red.discountCents } : {};
+        // Future first payment: the setup fee goes on the first real invoice (at trial end).
+        const deferred = Number(o.metadata.deferred_setup_cents || 0);
+        let setupNote = "";
+        if (deferred > 0 && o.subscription && !rec.setupFeeQueued) {
+          try {
+            await addDeferredSetupFee(String(o.customer), String(o.subscription), deferred, o.metadata.setup_name || SETUP_LINE_LABEL, o.id);
+            setupNote = `. ${SETUP_LINE_LABEL} ${(deferred / 100).toFixed(2)} added to the first invoice`;
+          } catch (e) {
+            setupNote = `. Review: ${SETUP_LINE_LABEL.toLowerCase()} NOT added to the first invoice (${String((e as Error)?.message || e).slice(0, 120)})`;
+          }
+        }
+        await saveSiteBilling({ ...rec, ...coupon, ...(setupNote.startsWith(`. ${SETUP_LINE_LABEL}`) ? { setupFeeQueued: true } : {}), status: "active", stripeCustomerId: o.customer || rec.stripeCustomerId, stripeSubscriptionId: o.subscription || rec.stripeSubscriptionId, failedAt: undefined, dunningSent: 0 }, (red ? `Paid, subscription active (code ${coupon.couponCode})${useResult === "repeat" ? ". Review: this email had already used this one-per-customer code" : ""}` : "Paid, subscription active") + setupNote);
         return "setup-active";
       }
       if (o.metadata.kind === "addon") {

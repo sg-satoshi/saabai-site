@@ -7,6 +7,7 @@ import { lexServiceSchema } from "@/lib/seo-entity";
 import { publicPageMeta } from "@/lib/seo-pages";
 import { LachieLegalDemo, LexWebsiteDemo } from "../components/legal-demos/HarbourDemos";
 import { OALC_SOURCE_PANEL } from "@/lib/oalc-disclosure";
+import LiteYouTube from "../components/LiteYouTube";
 import "./legal.css";
 
 export const metadata: Metadata = publicPageMeta.legal;
@@ -55,6 +56,10 @@ const DOC_TYPES = [
 ];
 
 const LEX_FAQS = [
+  { q: "Is Lex an AI legal drafting tool for small Australian law firms?", a: "Yes. Lex is built for small and mid-sized Australian firms: Lex includes 3 lawyer seats, legal research and 20 documents a month, and you can start with a 60-day free trial. It drafts from structured templates for Australian law, runs a QA pass on every draft, and a lawyer reviews and finalises the work. It is drafting and research assistance only, not legal advice." },
+  { q: "Can Lex draft trust deeds?", a: "Yes. Lex drafts discretionary (family) trust deeds and unit trust deeds, and annual trust distribution resolutions, with notes on the Commonwealth tax rules and state stamp duty positions that apply. Every draft must be checked by a lawyer before it is used." },
+  { q: "Can Lex do Australian legal research?", a: "Yes. Legal research is included. Lex searches ATO rulings and interpretive decisions, the Federal Register of Legislation, ASIC and the Fair Work Commission, and cites each source so you can check it. Case citations are checked against a licensed snapshot, not live case law." },
+  { q: "Does Lex draft wills or conveyancing documents?", a: "Not as a built-in document type today. Lex's templates cover trusts, family law agreements and orders, and commercial agreements. You can draft a custom document from your own instructions, which a lawyer must review." },
   { q: "What is Lex?", a: "Lex is an AI legal assistant for research and drafting at Australian law firms. It searches public Australian government sources, including ATO rulings and Commonwealth legislation, and every answer cites its source." },
   { q: "Is the website chatbot the same as Lex?", a: "No. Lex is the AI legal assistant for research and drafting. The chat demo on this page is a separate website chatbot for a fictional firm. It answers visitor questions. It does not search legislation or draft documents." },
   { q: "Can I rely on Lex's answers without checking?", a: "No. Lex cites the legislation and rulings it relies on and says when the law is uncertain. A case citation can be checked against a licensed snapshot of NSW Caselaw, Federal Court and High Court decisions (cutoff 10 March 2025). That snapshot is not live case law and does not cover every court. Always check primary sources before advising a client." },
@@ -63,7 +68,7 @@ const LEX_FAQS = [
   { q: "What documents can Lex draft?", a: "Eleven document types: discretionary and unit trust deeds, trust distribution resolutions, BFAs for married and de facto couples, financial settlement consent orders, separation agreements, service agreements, shareholders agreements, employment contracts and commercial leases. You can also draft a custom document from your own instructions, and every draft gets a QA pass." },
   { q: "Does my client's information reach the AI model?", a: "Not in readable form. Names, business names, phone numbers, emails and ABNs or ACNs are swapped for placeholders before anything is sent, and the real details are put back only in the answer you see." },
   { q: "Can a firm switch the privacy masking off?", a: "No. Every Lex AI request goes through the same privacy checkpoint for every firm, including firms that use their own AI key, and if masking fails nothing is sent." },
-  { q: "How much does Lex cost?", a: "The Firm plan is $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited research and 20 documents a month. Larger firms can ask about a custom Enterprise plan." },
+  { q: "How much does Lex cost?", a: "Start with a 60-day free trial, no card needed. It includes 3 lawyer seats, legal research and 20 documents a month. Pricing is set after the trial; you choose whether to subscribe. Larger firms can ask about a custom Enterprise plan." },
   { q: "How do I get started?", a: "Book a free 30-minute demo. We will show you Lex on your own practice area, and if it suits your firm we set up your logins." },
 ];
 
@@ -72,15 +77,21 @@ const lexSchema = {
   "@type": "SoftwareApplication",
   name: "Lex",
   applicationCategory: "BusinessApplication",
+  applicationSubCategory: "AI legal research and drafting",
   operatingSystem: "Web",
   url: "https://www.saabai.ai/legal",
+  description: "AI legal research and drafting assistant for small Australian law firms: cited research across public Australian government sources, and drafts of trust deeds, trust distribution resolutions, family law agreements and commercial agreements for lawyer review. Drafting assistance only, not legal advice.",
+  areaServed: { "@type": "Country", name: "Australia" },
+  audience: { "@type": "BusinessAudience", audienceType: "Australian law firms" },
   publisher: orgRef,
   offers: {
     "@type": "Offer",
-    name: "Firm",
-    price: 299,
+    name: "Lex 60-day free trial",
+    price: 0,
+    eligibleDuration: { "@type": "QuantitativeValue", value: 60, unitCode: "DAY" },
     priceCurrency: "AUD",
-    priceSpecification: { "@type": "UnitPriceSpecification", price: 299, priceCurrency: "AUD", unitText: "MONTH" },
+    areaServed: { "@type": "Country", name: "Australia" },
+    description: "60-day free trial, no card needed. 3 lawyer seats, legal research and 20 documents a month. Pricing is set after the trial. Enterprise plans for larger firms.",
   },
 };
 
@@ -132,12 +143,27 @@ function AnswerIllustration() {
   );
 }
 
+const LEX_VIDEO_ID = "CRmE1wp6aWs";
+const LEX_VIDEO_TITLE = "Lex: AI drafting for Australian law firms";
+const LEX_VIDEO_SCHEMA = {
+  "@context": "https://schema.org",
+  "@type": "VideoObject",
+  name: LEX_VIDEO_TITLE,
+  description: "Lex drafts a trust distribution resolution from an uploaded trust deed, and the lawyer checks and signs off. Drafting assistance only, not legal advice.",
+  thumbnailUrl: "https://www.saabai.ai/video/lex-explainer-poster-light.png",
+  uploadDate: "2026-10-30",
+  duration: "PT1M16S",
+  embedUrl: `https://www.youtube-nocookie.com/embed/${LEX_VIDEO_ID}`,
+  contentUrl: `https://www.youtube.com/watch?v=${LEX_VIDEO_ID}`,
+};
+
 export default function LegalPage() {
   return (
     <div className="lx">
       <JsonLd data={lexServiceSchema} />
       <JsonLd data={lexSchema} />
       <JsonLd data={faqSchema(LEX_FAQS)} />
+      <JsonLd data={LEX_VIDEO_SCHEMA} />
       <JsonLd data={breadcrumbSchema([{ name: "Lex", path: "/legal" }])} />
       <JsonLd data={{ "@context": "https://schema.org", "@type": "WebPage", url: "https://www.saabai.ai/legal", name: "Lex AI Legal Assistant | Saabai, Gold Coast", dateModified: "2026-10-26" }} />
       <Nav activePage="/legal" />
@@ -155,9 +181,15 @@ export default function LegalPage() {
             <a href="/legal/lex-vs-ai-legal-tools" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Lex vs other AI legal tools 2026</a>
           </p>
           <div className="lx-ctas">
-            <a className="lx-btn lx-pri" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Book a free 30-min demo</a>
-            <a className="lx-btn lx-ghost" href="#demo">Try the website demo</a>
+            <a className="lx-btn lx-pri" href="/lex/signup/trial">Start your 60-day FREE trial</a>
+            <a className="lx-btn lx-ghost" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Book a free 30-min demo</a>
           </div>
+          <p className="lx-lead" style={{ marginTop: 12, fontSize: 15 }}>
+            Don&apos;t pay a cent until you&apos;ve tried it. No card needed.{" · "}
+            <a href="#demo" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Try the website demo</a>
+            {" · "}
+            Already a Lex firm? <a href="/login?redirect=/lex" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Sign in to Lex</a>
+          </p>
           <div className="lx-proof">
             <span>Every answer cites its sources</span>
             <span>Built for Australian law</span>
@@ -168,7 +200,21 @@ export default function LegalPage() {
         </div>
       </section>
 
-      <section className="lx-sec" id="workspace">
+      {/* Lex explainer video */}
+      <section className="lx-sec" id="video">
+        <div className="lx-wrap">
+          <div className="lx-head">
+            <div className="lx-eyebrow">Watch Lex draft</div>
+            <h2>See Lex in under 90 seconds.</h2>
+          </div>
+          <div className="lx-video">
+            <LiteYouTube id={LEX_VIDEO_ID} title={LEX_VIDEO_TITLE} poster="/video/lex-explainer-poster-light.png" />
+            <p className="lx-lead lx-video-cap">Lex drafts a trust distribution resolution from your trust deed, and you check and sign off. Drafting assistance only, not legal advice.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="lx-sec lx-pt0" id="workspace">
         <div className="lx-wrap">
           <div className="lx-head">
             <div className="lx-eyebrow">Two products</div>
@@ -186,7 +232,7 @@ export default function LegalPage() {
         </div>
       </section>
 
-      {/* Phone demo. Lex is the assistant on this page. Lachie is the voice demo. Live phone answering is coming soon. */}
+      {/* Phone demo. Lex is the assistant on this page. Lachie is the voice demo. Browser demo only, not a phone line. */}
       <section id="lachie" className="lx-sec lx-pt0 lx-lachie">
         <div className="lx-wrap">
           <LachieLegalDemo ready={voiceDemoReady} />
@@ -198,7 +244,7 @@ export default function LegalPage() {
         <div className="lx-wrap">
           <div className="lx-head">
             <div className="lx-eyebrow">How it works</div>
-            <h2>From question to cited answer to draft.</h2>
+            <h2>From question to cited draft.</h2>
             <p className="lx-lead">Lex lists its sources with the answer, so checking takes seconds, not a second search.</p>
           </div>
           <div className="lx-steps">
@@ -231,7 +277,7 @@ export default function LegalPage() {
         <div className="lx-wrap">
           <div className="lx-head">
             <div className="lx-eyebrow">Sources</div>
-            <h2>Searches Australian legal sources together.</h2>
+            <h2>Research with cited Australian sources.</h2>
             <p className="lx-lead">No tab switching, no manual cross-referencing.</p>
           </div>
           <div className="lx-srcs">
@@ -256,7 +302,7 @@ export default function LegalPage() {
         <div className="lx-wrap">
           <div className="lx-head">
             <div className="lx-eyebrow">Features</div>
-            <h2>One workspace for research and drafting.</h2>
+            <h2>Drafting for small firms: trust deeds, family law and commercial agreements.</h2>
           </div>
           <div className="lx-feats">
             <div className="lx-card lx-feat">
@@ -335,27 +381,28 @@ export default function LegalPage() {
         <div className="lx-wrap">
           <div className="lx-head lx-center">
             <div className="lx-eyebrow">Pricing</div>
-            <h2>Simple, transparent pricing.</h2>
-            <p className="lx-lead">Firm is $299 a month. Enterprise is custom.</p>
+            <h2>Lex pricing for small firms.</h2>
+            <p className="lx-lead">Don&apos;t pay a cent until you&apos;ve tried it. Enterprise is custom.</p>
           </div>
           <div className="lx-plans">
             <div className="lx-plan lx-hi">
               <div className="lx-tier">Firm</div>
-              <div className="lx-price">$299<small> per month</small></div>
+              <div className="lx-price">Free<small> for 60 days</small></div>
               <p>Perfect for small-to-mid sized firms.</p>
               <ul>
-                {["Unlimited legal research", "20 documents per month", "3 lawyer seats", "Government sources and a licensed case-law snapshot", "QA verification on every draft", "Thread memory and history"].map((i) => (
+                {["Legal research included", "20 documents per month", "3 lawyer seats", "Government sources and a licensed case-law snapshot", "QA verification on every draft", "Thread memory and history"].map((i) => (
                   <li key={i}><Check />{i}</li>
                 ))}
               </ul>
-              <a className="lx-btn lx-pri" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Book a demo</a>
+              <a className="lx-btn lx-pri" href="/lex/signup/trial">Sign up now</a>
+              <p className="lx-plan-note">No credit card required. Cancel anytime.</p>
             </div>
             <div className="lx-plan">
               <div className="lx-tier">Enterprise</div>
               <div className="lx-price">Custom</div>
               <p>For larger firms and legal networks.</p>
               <ul>
-                {["Unlimited research and documents", "Unlimited lawyer seats", "Custom clientId embedding", "White-label widget option", "Dedicated onboarding", "Priority support and SLA"].map((i) => (
+                {["Research and documents included", "Unlimited lawyer seats", "Custom clientId embedding", "White-label widget option", "Dedicated onboarding", "Priority support and SLA"].map((i) => (
                   <li key={i}><Check />{i}</li>
                 ))}
               </ul>
@@ -363,8 +410,7 @@ export default function LegalPage() {
             </div>
           </div>
           <div className="lx-fine">
-            <p>Prices in AUD. GST not applicable.</p>
-            <p>We confirm billing with you before a firm starts.</p>
+            <p>60-day free trial. Pricing is set after the trial; you choose whether to subscribe.</p>
           </div>
         </div>
       </section>

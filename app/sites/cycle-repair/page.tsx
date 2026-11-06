@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { tiers, additionalServiceWork, specialist } from "./services";
 import { Logo } from "./Logo";
+import { MobileMenu } from "./MobileMenu";
 import { ReviewsCarousel } from "./ReviewsCarousel";
 import PoweredBySaabai from "../../components/PoweredBySaabai";
 import { googleBusinessUrl, googleRating, googleReviewCount } from "./reviews";
@@ -64,7 +65,7 @@ export default function Index() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       {/* Sticky mobile CTA */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md md:hidden">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md md:hidden cr-sticky-cta">
         <a
           href="tel:0405225721"
           className="flex items-center justify-between bg-brand text-brand-foreground px-4 py-3 rounded-xl shadow-2xl ring-1 ring-brand font-semibold text-sm tracking-tight"
@@ -100,6 +101,18 @@ export default function Index() {
               0405 225 721
             </a>
           </div>
+          <MobileMenu
+            links={[
+              { href: "#services", label: "Services" },
+              { href: "#how", label: "How it Works" },
+              { href: "#about", label: "About" },
+              { href: "/sites/cycle-repair/gold-coast", label: "Gold Coast" },
+              { href: "/sites/cycle-repair/e-bike-repair-gold-coast", label: "E-bikes" },
+              { href: "/sites/cycle-repair/puncture-repair-gold-coast", label: "Punctures" },
+              { href: "/sites/cycle-repair/faq", label: "FAQ" },
+              { href: "/sites/cycle-repair/contact", label: "Contact" },
+            ]}
+          />
         </nav>
       </header>
 

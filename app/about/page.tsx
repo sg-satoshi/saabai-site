@@ -46,7 +46,7 @@ export default function About() {
 
         <div className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed text-left flex flex-col gap-6">
           <p>
-            Saabai is a sole trader business operated by Shane Goldberg, based in {NAP.addressLine}.
+            Saabai is operated by Saabai Pty Ltd (ABN 44 703 735 264, ACN 703 735 264), founded by Shane Goldberg, based in {NAP.addressLine}.
             We work with Australian small businesses, including law firms and accounting firms, on the Gold Coast, in Brisbane and across Queensland, and with clients Australia-wide online.
             Saabai is an online business. We do not operate a public shopfront, and visits are by appointment only.
           </p>
@@ -64,9 +64,9 @@ export default function About() {
         <InShort>
           <p>Saabai is a Gold Coast, Queensland AI business founded by Shane Goldberg.</p>
           <p>
-            Shane operates it as a sole trader from {NAP.addressLine} (ABN {NAP.abn}).
+            It is operated by {NAP.legalName} (ABN {NAP.abn}, ACN {NAP.acn}) from {NAP.addressLine}.
             Website care starts from <strong>$100 a month</strong>, and builds start from <strong>$2,000</strong>.
-            The Blueprint starts from <strong>$497</strong>. Lex Firm is <strong>$299 a month</strong>.
+            The Blueprint starts from <strong>$497</strong>. Lex starts with a <strong>60-day free trial</strong>.
           </p>
           <p>Email {NAP.email}. We usually reply within 1 business day.</p>
         </InShort>
@@ -105,8 +105,8 @@ export default function About() {
 
           <div className="flex flex-col gap-6">
             <p className="text-xl md:text-2xl text-saabai-text-muted leading-relaxed">
-              Shane Goldberg founded Saabai and operates it as a sole trader.
-              The public address is {NAP.addressLine}. The ABN on this site, {NAP.abn}, is the sole trader ABN.
+              Shane Goldberg founded Saabai. It is operated by {NAP.legalName} (ABN {NAP.abn}, ACN {NAP.acn}).
+              The public address is {NAP.addressLine}.
               The contact email is {NAP.email}.
             </p>
             <p className="text-lg text-saabai-text-muted leading-relaxed">
@@ -222,14 +222,14 @@ export default function About() {
               The chatbot answers visitors and keeps a log of each chat. It is trained on your services, hours and policies, and it should say so rather than invent an answer.
               It should not give clinical, financial or legal advice, and it does not price jobs. Quoting is separate work, scoped and quoted.
               Enquiry alerts are coming soon.
-              Phone answering with Lachie is coming soon. It is not live. A voice demo runs in the browser, not on a phone line.
+              A Lachie voice demo runs in the browser, not on a phone line.
             </p>
 
             <h3 className="text-lg font-semibold tracking-tight">Lex, for law firms</h3>
             <p className="text-lg text-saabai-text-muted leading-relaxed">
               Lex is an AI legal assistant for research and drafting at Australian law firms.
-              Firm is $299 a month: unlimited legal research, 20 documents a month, 3 lawyer seats, a licensed case-law snapshot, QA verification on every draft, and thread memory.
-              Enterprise is custom. We confirm billing with you before a firm starts.
+              It starts with a 60-day free trial, no card needed: legal research included, 20 documents a month, 3 lawyer seats, a licensed case-law snapshot, QA verification on every draft, and thread memory.
+              Pricing is set after the trial; you choose whether to subscribe. Enterprise is custom.
               <a href="/legal" className={linkClass}>The Lex page</a> has the detail, and the workspace sits behind a login.
             </p>
             <p className="text-lg text-saabai-text-muted leading-relaxed">

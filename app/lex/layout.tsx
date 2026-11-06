@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { OG_IMAGE, pageUrl } from "@/lib/seo-meta";
 import "./lex.css";
+import FeedbackButton from "./_components/FeedbackButton";
+import HelpAssistantMount from "./_components/HelpAssistantMount";
 
 const inter = localFont({ src: "../fonts/inter-latin-wght-normal.woff2", weight: "100 900", variable: "--font-lex-sans", display: "swap" });
 const mono = localFont({ src: "../fonts/geist-mono-latin-wght-normal.woff2", weight: "100 900", variable: "--font-lex-mono", display: "swap" });
@@ -12,12 +14,13 @@ const LEX_TITLE = "Lex, Australian Legal Research | Saabai";
 
 export const metadata: Metadata = {
   title: { absolute: LEX_TITLE },
-  alternates: { canonical: pageUrl("/lex") },
+  // Canonical points at /legal, the one indexed Lex page.
+  alternates: { canonical: pageUrl("/legal") },
   openGraph: {
     type: "website",
     locale: "en_AU",
     siteName: "Saabai",
-    url: pageUrl("/lex"),
+    url: pageUrl("/legal"),
     title: LEX_TITLE,
     images: [OG_IMAGE],
   },
@@ -30,6 +33,10 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+import TrialBanner from "./_components/TrialBanner";
+import Watermark from "./_components/Watermark";
+
 export default function LexLayout({ children }: { children: React.ReactNode }) {
-  return <div className={`${inter.variable} ${mono.variable} ${serif.variable}`}>{children}</div>;
+  return <div className={`${inter.variable} ${mono.variable} ${serif.variable}`}><TrialBanner />{children}<Watermark /><FeedbackButton />
+      <HelpAssistantMount /></div>;
 }

@@ -6,6 +6,7 @@ import { LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "../..
 import { LexGateway } from "../../../lib/lex-privacy/gateway";
 import { lexFirmFromActor } from "../../../lib/lex-privacy/firm";
 import { logChatTurn } from "../../../lib/chat-log";
+import { LEX_SONNET } from "../../../lib/lex-models";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -154,7 +155,7 @@ async function runReview(request: Request, actor: LexReviewActor): Promise<Respo
     // Privacy: always on. Uploaded document text and party names are masked before the model sees them. Fail closed.
     // The matter's known parties, plus the party the firm acts for, are masked in every variant.
     const parties = [...(await matterPartiesFor(request, body.matterId)), ...(typeof actingFor === "string" ? parsePartiesText(actingFor) : [])];
-    const gw = await LexGateway.open({ route: "lex-review", firm: lexFirmFromActor(actor), model: { kind: "saabai", modelId: "claude-sonnet-4-6" }, parties });
+    const gw = await LexGateway.open({ route: "lex-review", firm: lexFirmFromActor(actor), model: { kind: "saabai", modelId: LEX_SONNET }, parties });
     if (!gw) return privacyFailResponse();
     // Open-source name model, inside this function (no external API). Best effort: patterns and matter parties always run.
     await gw.scanNames([documentText, actingFor]);

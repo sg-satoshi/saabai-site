@@ -6,6 +6,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getStripe } from "../stripe";
 import type { SiteBillingRecord } from "./store";
+import { formatAud } from "./catalog";
+import { checkoutFirstPaymentText, setupLineName } from "./emails";
+import { brisbaneToday, couponDurationMonths, discountLabel, discountOffCents, firstChargeAt } from "./state";
 import { careProductFor, findActivePromo, promoCoversProducts } from "../coupons/stripe";
 import { normaliseCode, promoIsOnce, promoNotStartedMessage } from "../coupons/core";
 import { hasUsed } from "../coupons/once";
@@ -14,11 +17,7 @@ export const BILLING_SOURCE = "saabai-billing";
 export const stripeConfigured = () => !!process.env.STRIPE_SECRET_KEY;
 export const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL || "https://www.saabai.ai";
 
-function monthAfter(date: string): number {
-  const d = new Date(`${date}T09:00:00+10:00`);
-  d.setMonth(d.getMonth() + 1);
-  return Math.floor(d.getTime() / 1000);
-}
+export const GST_BLOCKED = "GST billing links are switched off until Stripe tax is set up. Untick GST for this site.";
 
 export async function ensureCustomer(rec: SiteBillingRecord): Promise<string> {
   const stripe = getStripe();
@@ -37,11 +36,35 @@ export async function ensureCustomer(rec: SiteBillingRecord): Promise<string> {
  * Customers can type a promo code on Stripe's page, or a ?code= on the pay
  * link pre-applies one (Stripe doesn't allow both on one session).
  */
-export async function createSetupCheckout(rec: SiteBillingRecord, customerId: string, code?: string): Promise<string> {
+export async function createSetupCheckout(rec: SiteBillingRecord, customerId: string, code?: string): Promise<{ url: string; id: string }> {
+  // GST on would undercharge vs the email (Checkout has no tax rates yet), so refuse.
+  if (rec.gst) throw new Error(GST_BLOCKED);
   const stripe = getStripe();
   // Fixed per-plan product (set up from Marketing > Offers & Coupons) so product-restricted codes match.
-  const fixedProduct = await careProductFor(rec.planId);
-  let promo = code ? await findActivePromo(normaliseCode(code)) : null;
+  let fixedProduct = await careProductFor(rec.planId);
+  // Admin discount: a one-use coupon scoped to the care plan product only (not the setup fee).
+  // It replaces customer promo codes on this session (Stripe allows one or the other).
+  let adminCoupon: string | null = null;
+  // First payment today: charged at Checkout. Future date: card saved now, first invoice on that date (trial until then).
+  const first = firstChargeAt(rec.startDate);
+  const nowMs = Date.now();
+  if (rec.discount) {
+    if (!fixedProduct) {
+      const prod = await stripe.products.create({ name: `${rec.planName} website care`, metadata: { planId: rec.planId, siteId: rec.siteId, source: BILLING_SOURCE } });
+      fixedProduct = prod.id;
+    }
+    const d = rec.discount;
+    const coupon = await stripe.coupons.create({
+      name: (d.label || "Discount").slice(0, 40),
+      ...(d.type === "percent" ? { percent_off: d.value } : { amount_off: d.value, currency: "aud" }),
+      ...(d.months ? { duration: "repeating" as const, duration_in_months: couponDurationMonths(d.months, nowMs, first.mode === "future" ? first.at : undefined) } : { duration: "forever" as const }),
+      applies_to: { products: [fixedProduct] },
+      max_redemptions: 1,
+      metadata: { source: BILLING_SOURCE, siteId: rec.siteId, kind: "admin_discount" },
+    });
+    adminCoupon = coupon.id;
+  }
+  let promo = code && !adminCoupon ? await findActivePromo(normaliseCode(code)) : null;
   // A product-restricted code (one or several products) only pre-applies if it covers this care plan.
   // Otherwise skip the pre-apply so the customer still reaches Stripe, where they can retry a code.
   if (promo && !promoCoversProducts(promo, [fixedProduct])) promo = null;
@@ -61,31 +84,75 @@ export async function createSetupCheckout(rec: SiteBillingRecord, customerId: st
       } as any,
     },
   ];
-  if (rec.setupFeeCents > 0) {
+  // Setup fee discount: charged as a reduced one-off price (no coupon, so the monthly coupon is untouched).
+  // A fully waived setup fee is left off the Checkout entirely (no zero-amount line).
+  const setupOff = discountOffCents(rec.setupFeeCents, rec.setupDiscount);
+  const setupNet = rec.setupFeeCents - setupOff;
+  const setupName = setupLineName(rec.setupFeeDescription);
+  if (setupNet > 0 && first.mode === "now") {
     line_items.push({
       quantity: 1,
-      price_data: { currency: "aud", unit_amount: rec.setupFeeCents, product_data: { name: `Setup${rec.setupFeeDescription ? `: ${rec.setupFeeDescription}` : " fee"}` } },
+      price_data: {
+        currency: "aud",
+        unit_amount: setupNet,
+        product_data: {
+          name: setupName,
+          ...(setupOff && rec.setupDiscount ? { description: `Normally ${formatAud(rec.setupFeeCents)}. ${discountLabel(rec.setupDiscount, formatAud)}.` } : {}),
+        },
+      },
     });
   }
-  const anchor = monthAfter(rec.startDate);
   const meta: Record<string, string> = { source: BILLING_SOURCE, kind: "setup", siteId: rec.siteId, planId: rec.planId };
   if (promo) meta.coupon_code = promo.code;
+  if (adminCoupon) meta.admin_coupon = adminCoupon;
+  if (setupOff) meta.setup_discount_cents = String(setupOff);
+  if (first.mode === "future") {
+    meta.first_payment = rec.startDate;
+    if (setupNet > 0) { meta.deferred_setup_cents = String(setupNet); meta.setup_name = setupName.slice(0, 450); }
+  }
+  // Stripe Checkout needs trial_end at least 2 days out; closer dates use whole Brisbane calendar
+  // days, so the charge still lands on the stated date (rounding hours could land a day early).
+  const trial = first.mode === "future"
+    ? first.at - nowMs >= 49 * 3600_000 ? { trial_end: Math.floor(first.at / 1000) } : { trial_period_days: Math.max(1, Math.round((Date.parse(rec.startDate) - Date.parse(brisbaneToday(nowMs))) / 86_400_000)) }
+    : {};
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
     line_items,
-    // First month + setup charged now; renewals from start date + 1 month.
+    // Today: setup + first month charged now, renews monthly from today. Future: nothing now,
+    // first invoice (first month + setup fee, added by the webhook) on that date, monthly from it.
     subscription_data: {
       metadata: { ...meta, product_type: "website_care", description: rec.siteName },
-      ...(anchor > Date.now() / 1000 + 3600 ? { billing_cycle_anchor: anchor, proration_behavior: "none" as const } : {}),
+      ...trial,
     },
+    ...(first.mode === "future" ? { custom_text: { submit: { message: checkoutFirstPaymentText(rec, !adminCoupon) } } } : {}),
     metadata: meta,
-    ...(promo ? { discounts: [{ promotion_code: promo.id }] } : { allow_promotion_codes: true }),
+    ...(adminCoupon ? { discounts: [{ coupon: adminCoupon }] } : promo ? { discounts: [{ promotion_code: promo.id }] } : { allow_promotion_codes: true }),
     payment_method_collection: "always",
     success_url: `${siteUrl()}/pay/done?site=${encodeURIComponent(rec.siteName)}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${siteUrl()}/pay/${rec.payToken}`,
   });
-  return session.url!;
+  return { url: session.url!, id: session.id };
+}
+
+/** Future first payment: put the setup fee on the subscription's first invoice. Idempotent per session. */
+export async function addDeferredSetupFee(customer: string, subscription: string, cents: number, description: string, sessionId: string) {
+  await getStripe().invoiceItems.create(
+    { customer, subscription, amount: cents, currency: "aud", description, metadata: { source: BILLING_SOURCE, kind: "setup_fee" } },
+    { idempotencyKey: `setupfee-${sessionId}` },
+  );
+}
+
+/** Status and URL of an earlier setup Checkout Session (null if it can't be read). */
+export async function getCheckoutSession(id: string): Promise<{ status: string | null; url: string | null } | null> {
+  try {
+    const s = await getStripe().checkout.sessions.retrieve(id);
+    return { status: s.status ?? null, url: s.url ?? null };
+  } catch { return null; }
+}
+
+export async function expireCheckoutSession(id: string) {
+  try { await getStripe().checkout.sessions.expire(id); } catch { /* already expired or completed */ }
 }
 
 export async function billingPortalUrl(customerId: string, returnUrl: string, updateCard = false, configuration?: string): Promise<string> {

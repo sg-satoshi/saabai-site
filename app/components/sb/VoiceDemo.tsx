@@ -342,7 +342,7 @@ export default function VoiceDemo({
           <LachieAvatar size={44} />
           <div>
             <b id={titleId}>{agentName || VOICE_AGENT_NAME}</b>
-            <small>AI receptionist</small>
+            <small>AI voice demo</small>
           </div>
           {phase === "connecting" || phase === "live" ? (
             <span className="voice-tm" aria-label="Call time">{clock}</span>
@@ -413,7 +413,7 @@ export default function VoiceDemo({
             </span>
             <span className="ttl__wave" aria-hidden="true"><i /><i /><i /><i /><i /><i /></span>
           </button>
-          {showSupport ? <LachieLockup second="Legend" descriptor="A demo of Saabai's AI voice receptionist." /> : null}
+          {showSupport ? <LachieLockup second="Legend" descriptor="An AI voice demo you talk to in your browser." /> : null}
         </span>
       ) : (
         <button type="button" className="btn ghost" disabled style={{ cursor: "not-allowed" }}>{VOICE_COPY.comingSoon}</button>

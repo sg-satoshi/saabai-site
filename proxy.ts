@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ATTR_COOKIE, ATTR_MAX_AGE, mergeTouch, parseAttr, serialiseAttr, touchFrom } from "./lib/growth/attribution";
 import { Redis } from "@upstash/redis";
-import { verifySessionToken, COOKIE_NAME, resolveStaff } from "./lib/auth";
+import { COOKIE_NAME, resolveStaff } from "./lib/auth";
 import { ACL_HEADER, ADMIN_AUDIT_KEY, ADMIN_AUDIT_MAX, aclHeaderValue, gate } from "./lib/access";
-import { verifySession } from "./lib/portal-session";
+import { getRequestSession } from "./lib/request-session";
 import { CHAT_API, chatGuard } from "./lib/chat-guard";
 import { formGuard } from "./lib/form-guard";
-import { lmmBrandAsset } from "./lib/lmm-brand";
+import { lmmBrandAsset, lmmCalculatorPath } from "./lib/lmm-brand";
 import { EXP_COOKIE, EXP_HEADER, EXP_MAX_AGE, EXP_OFF_COOKIE, EXP_TRACK_HEADER, assignAll, enabledSites, parseExpCookie, privacySignal, siteKeyForHost } from "./lib/exp/core";
 import { getExperiments } from "./lib/exp/config";
+import { isSiteEnabled } from "./lib/exp/sites";
 import { SLOTS } from "./lib/exp/seed";
 import { CHIEF_COOKIE, chiefAllowed, chiefAudit, chiefHostOk, verifyChiefToken } from "./lib/chief";
 import { OV_COOKIE, encodeOverlay, liveOverlays, overlayPathOk } from "./lib/exp/overlay";
+import { SUNDER_ROBOTS, SUNDER_SLUG, sunderAppRoute, sunderLegalRoute, sunderReferralRoute } from "./lib/sunder-factory-seed";
 import {
   NOINDEX_ROBOTS,
   ROBOTS_REQUEST_HEADER,
@@ -20,6 +22,7 @@ import {
   canonicalHostForSlug,
   clientSiteRequestDecision,
   apexWwwRedirect,
+  hostRedirect,
   isAdminSitePreview,
   isSaabaiProductionHost,
   parseSitesPath,
@@ -52,6 +55,7 @@ const PROTECTED_PAGES = [
 // Anonymous, unauthenticated endpoints: embedded widgets, public lead/contact
 // forms, payment flows, auth, content, and cron (cron self-checks CRON_SECRET).
 const PUBLIC_API = [
+  "/api/sunder-waitlist",    // SUNDER waitlist signup + /update (validates, honeypot, rate limited in form-guard)
   "/api/auth/login",
   "/api/chief-auth",         // Chief read-only QA login (own env password, rate limited, master host only)
   "/api/auth/logout",
@@ -106,6 +110,7 @@ const PUBLIC_API = [
   "/api/audit/onboarding",
   // Payments (Stripe verifies its own webhook signatures)
   "/api/lex/signup",         // Lex Firm plan signup -> Stripe Checkout (validated, honeypot, rate limited in form-guard)
+  "/api/lex/trial",          // Lex self-serve free trial: request + /verify (email confirm, honeypot, rate limited in form-guard; no Stripe)
   "/api/blueprint/checkout", // Saabai Blueprint one-off Stripe Checkout (public buyers)
   "/api/blueprint/score",    // AI Readiness Score results email (public quiz)
   "/api/site-scan",          // website scan step of /score: self-gates (404 unless flag on or admin), rate limited.
@@ -137,6 +142,9 @@ const PUBLIC_API = [
   // Scheduled jobs (each route checks Authorization: Bearer ${CRON_SECRET}
   "/api/cron",
   "/api/unsubscribe",       // one-click marketing unsubscribe (signed token)
+  "/api/email/unsubscribe", // SUNDER RFC 8058 one-click (signed token, POST only)
+  "/api/email/confirm",     // SUNDER double opt-in confirm (signed token)
+  "/api/email/ses-events",  // sending-provider bounce/complaint webhook (SNS signature inside)
   "/api/testimonial",       // client testimonial form (unguessable token)
   "/api/instagram/cron",
   // MCP gateway — self-authenticated. The route enforces Authorization: Bearer
@@ -185,6 +193,7 @@ const CUSTOM_DOMAIN_PUBLIC_API = [
   "/api/chat-platform/message",
   "/api/chat-platform/config",
   "/api/chat-platform/event",
+  "/api/sunder-waitlist",
 ];
 
 
@@ -193,21 +202,7 @@ function matches(pathname: string, prefixes: string[]): boolean {
 }
 
 async function getSession(req: NextRequest): Promise<{ clientId: string } | null> {
-  // Primary: Saabai admin/client session (clientId can equal SAABAI_ADMIN_ID).
-  const token = req.cookies.get(COOKIE_NAME)?.value;
-  if (token) {
-    const session = await verifySessionToken(token);
-    if (session) return session;
-  }
-  // Portal session (law-firm clients via magic link). Never admin — the
-  // clientId is namespaced so it can't match SAABAI_ADMIN_ID. Portal/Lex
-  // routes still do their own per-user checks on top of this.
-  const portal = req.cookies.get("portal_session")?.value;
-  if (portal) {
-    const s = verifySession(portal);
-    if (s?.email) return { clientId: `portal:${s.email}` };
-  }
-  return null;
+  return getRequestSession(req);
 }
 
 async function apiAuth(req: NextRequest, pathname: string): Promise<NextResponse> {
@@ -287,6 +282,10 @@ export async function proxy(req: NextRequest) {
   const apex = apexWwwRedirect(hostname, req.nextUrl.pathname, req.nextUrl.search);
   if (apex) return NextResponse.redirect(apex.location, apex.status);
 
+  // Old SUNDER hosts 301 to https://sunder.com.au before any site rewrite.
+  const aliased = hostRedirect(hostname, req.nextUrl.pathname, req.nextUrl.search);
+  if (aliased) return NextResponse.redirect(aliased.location, aliased.status);
+
   // Custom domain routing — rewrite to /sites/${slug}
   if (
     hostname !== "saabai.ai" &&
@@ -331,6 +330,47 @@ export async function proxy(req: NextRequest) {
         url.search = "";
         return NextResponse.rewrite(url);
       }
+      // LMM calculators: static pages beside the LMM site.
+      if (slug === "lmm-site") {
+        const calc = lmmCalculatorPath(pathname);
+        if (calc) {
+          url.hostname = "www.saabai.ai";
+          url.pathname = calc;
+          url.search = "";
+          return NextResponse.rewrite(url);
+        }
+      }
+      // SUNDER ships its own icons beside its static page (not the Saabai fallback).
+      if (slug === SUNDER_SLUG && /^\/(favicon\.ico|apple-touch-icon(-precomposed)?\.png)$/.test(pathname)) {
+        url.hostname = "www.saabai.ai";
+        url.pathname = pathname === "/favicon.ico" ? "/clients/sunder/favicon.ico" : "/clients/sunder/apple-touch-icon-180.png";
+        return NextResponse.rewrite(url);
+      }
+      // SUNDER legal pages live at /privacy and /giveaway-terms; the old /clients/sunder/*.html paths 301 there.
+      if (slug === SUNDER_SLUG) {
+        // Double opt-in confirm page: the app route itself, noindex.
+        if (sunderAppRoute(pathname)) {
+          const res = NextResponse.next();
+          res.headers.set("X-Robots-Tag", "noindex");
+          return res;
+        }
+        const refPage = sunderReferralRoute(pathname);
+        if (refPage) {
+          url.pathname = refPage;
+          const res = NextResponse.rewrite(url);
+          res.headers.set("X-Robots-Tag", "noindex");
+          return res;
+        }
+        const legal = sunderLegalRoute(pathname);
+        if (legal && "redirect" in legal) return NextResponse.redirect(new URL(legal.redirect + url.search, `https://${hostname}`), 301);
+        if (legal) {
+          url.hostname = "www.saabai.ai";
+          url.pathname = legal.rewrite;
+          const res = NextResponse.rewrite(url);
+          res.headers.set("X-Robots-Tag", "noindex");
+          return res;
+        }
+      }
       // Custom-domain favicon: the site's own Site Factory favicon, else Saabai's.
       if (pathname === "/favicon.ico") {
         url.hostname = "www.saabai.ai";
@@ -348,6 +388,8 @@ export async function proxy(req: NextRequest) {
       if (pathname.startsWith("/api/")) {
         if (matches(pathname, CUSTOM_DOMAIN_PUBLIC_API)) {
           // Public here, but still size- and rate-limited like every other chat endpoint.
+          const limited = await formGuard(req, redis);
+          if (limited) return limited;
           if (matches(pathname, CHAT_API)) {
             const blocked = await chatGuard(req, redis);
             if (blocked) return blocked;
@@ -377,7 +419,10 @@ export async function proxy(req: NextRequest) {
         return NextResponse.next();
       }
       url.pathname = pathname === "/" || pathname === "" ? siteBase : `${siteBase}${pathname}`;
-      return NextResponse.rewrite(url);
+      // Split testing for this client site (off unless Shane switched it on), else the plain rewrite.
+      const rewritten = (await clientExperimentsRoute(req, pathname, slug, url)) ?? NextResponse.rewrite(url);
+      if (slug === SUNDER_SLUG) rewritten.headers.set("X-Robots-Tag", SUNDER_ROBOTS);
+      return rewritten;
     }
   }
 
@@ -434,7 +479,7 @@ export async function proxy(req: NextRequest) {
   // ── API routes: deny-by-default ──────────────────────────────────────
   if (pathname.startsWith("/api/")) return apiAuth(req, pathname);
 
-  // ── Split testing (saabai.ai only; custom client domains returned above) ──
+  // ── Split testing on saabai.ai (custom client domains are handled in their own branch above) ──
   const exp = await experimentsRoute(req, pathname, hostname);
   if (exp) return withAttribution(req, exp);
 
@@ -456,49 +501,69 @@ async function experimentsRoute(req: NextRequest, pathname: string, hostname: st
     if (!SLOT_PATHS.has(key) && !maybeOverlay) return null;
     const siteKey = siteKeyForHost(hostname);
     if (!siteKey || !enabledSites().includes(siteKey)) return null;
-    const headers = new Headers(req.headers);
-    headers.delete(EXP_HEADER);
-    headers.delete(EXP_TRACK_HEADER);
-    const optParam = req.nextUrl.searchParams.get("exp_off");
-    const optedOut = optParam === "1" || req.cookies.get(EXP_OFF_COOKIE)?.value === "1";
-    const forPage = (await getExperiments(siteKey)).filter((e) => e.path === key);
-    const exps = forPage.filter((e) => e.status === "running");
-    const nativeIds = new Set(SLOTS.map((s) => s.id));
-    const wonOv = liveOverlays(forPage.filter((e) => e.status === "won"), nativeIds, key);
-    if (maybeOverlay && !exps.length && !wonOv.length) return null;
-    const cookie = parseExpCookie(req.cookies.get(EXP_COOKIE)?.value);
-    let setCookie: string | undefined;
-    let tracked = false;
-    if (exps.length) {
-      const r = assignAll(exps, {
-        ua: req.headers.get("user-agent"),
-        privacy: privacySignal(req.headers),
-        admin: !!req.cookies.get(COOKIE_NAME)?.value,
-        optedOut,
-        cookie,
-        newVisitorId: () => crypto.randomUUID(),
-      });
-      headers.set(EXP_HEADER, r.header);
-      if (r.track) { headers.set(EXP_TRACK_HEADER, "1"); tracked = true; }
-      setCookie = r.cookie;
-    }
-    const res = NextResponse.next({ request: { headers } });
-    // Runtime overlay: only for counted humans (bots, GPC/DNT, admins and opt-outs always get the untouched control HTML).
-    const ovExps = liveOverlays(exps, nativeIds, key);
-    const assigned = (parseExpCookie(setCookie ?? req.cookies.get(EXP_COOKIE)?.value)?.a) ?? {};
-    // A finished test keeps showing its winner to everyone (the overlay stands in until the wrap PR is merged).
-    const ovCookie = encodeOverlay(key, [...(tracked ? ovExps : []), ...wonOv], assigned);
-    if (ovCookie) res.cookies.set(OV_COOKIE, ovCookie, { maxAge: 600, path: "/", sameSite: "lax", secure: req.nextUrl.protocol === "https:", httpOnly: false });
-    else if (req.cookies.get(OV_COOKIE)) res.cookies.delete(OV_COOKIE);
-    if (setCookie && tracked) {
-      res.cookies.set(EXP_COOKIE, setCookie, { maxAge: EXP_MAX_AGE, path: "/", sameSite: "lax", secure: req.nextUrl.protocol === "https:", httpOnly: true });
-    }
-    if (optParam === "1") res.cookies.set(EXP_OFF_COOKIE, "1", { maxAge: 365 * 24 * 3600, path: "/", sameSite: "lax", secure: req.nextUrl.protocol === "https:", httpOnly: true });
-    if (optParam === "0") res.cookies.delete(EXP_OFF_COOKIE);
-    return res;
+    return await assignExperiments(req, key, siteKey, maybeOverlay, (headers) => NextResponse.next({ request: { headers } }));
   } catch {
     return null;
   }
+}
+
+/**
+ * Split testing on a Site Factory client domain. Runtime-overlay tests only (client pages have no code slots).
+ * Runs only when Shane has switched the site on (every client site defaults OFF). Fails open to the plain rewrite.
+ */
+async function clientExperimentsRoute(req: NextRequest, pathname: string, slug: string, url: URL): Promise<NextResponse | null> {
+  try {
+    if (req.method !== "GET") return null;
+    const key = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+    if (!overlayPathOk(key) || !(await isSiteEnabled(slug))) return null;
+    return await assignExperiments(req, key, slug, true, (headers) => NextResponse.rewrite(url, { request: { headers } }));
+  } catch {
+    return null;
+  }
+}
+
+/** Shared assignment: one sb_exp cookie per host, the sb_ov overlay cookie, opt-out handling. Null when nothing applies. */
+async function assignExperiments(req: NextRequest, key: string, siteKey: string, overlayOnly: boolean, build: (headers: Headers) => NextResponse): Promise<NextResponse | null> {
+  const headers = new Headers(req.headers);
+  headers.delete(EXP_HEADER);
+  headers.delete(EXP_TRACK_HEADER);
+  const optParam = req.nextUrl.searchParams.get("exp_off");
+  const optedOut = optParam === "1" || req.cookies.get(EXP_OFF_COOKIE)?.value === "1";
+  const forPage = (await getExperiments(siteKey)).filter((e) => e.path === key);
+  const exps = forPage.filter((e) => e.status === "running");
+  const nativeIds = new Set(SLOTS.map((s) => s.id));
+  const wonOv = liveOverlays(forPage.filter((e) => e.status === "won"), nativeIds, key);
+  if (overlayOnly && !exps.length && !wonOv.length) return null;
+  const cookie = parseExpCookie(req.cookies.get(EXP_COOKIE)?.value);
+  let setCookie: string | undefined;
+  let tracked = false;
+  if (exps.length) {
+    const r = assignAll(exps, {
+      ua: req.headers.get("user-agent"),
+      privacy: privacySignal(req.headers),
+      admin: !!req.cookies.get(COOKIE_NAME)?.value,
+      optedOut,
+      cookie,
+      newVisitorId: () => crypto.randomUUID(),
+    });
+    headers.set(EXP_HEADER, r.header);
+    if (r.track) { headers.set(EXP_TRACK_HEADER, "1"); tracked = true; }
+    setCookie = r.cookie;
+  }
+  const res = build(headers);
+  // Runtime overlay: only for counted humans (bots, GPC/DNT, admins and opt-outs always get the untouched control HTML).
+  const ovExps = liveOverlays(exps, nativeIds, key);
+  const assigned = (parseExpCookie(setCookie ?? req.cookies.get(EXP_COOKIE)?.value)?.a) ?? {};
+  // A finished test keeps showing its winner to everyone (the overlay stands in until the wrap PR is merged).
+  const ovCookie = encodeOverlay(key, [...(tracked ? ovExps : []), ...wonOv], assigned);
+  if (ovCookie) res.cookies.set(OV_COOKIE, ovCookie, { maxAge: 600, path: "/", sameSite: "lax", secure: req.nextUrl.protocol === "https:", httpOnly: false });
+  else if (req.cookies.get(OV_COOKIE)) res.cookies.delete(OV_COOKIE);
+  if (setCookie && tracked) {
+    res.cookies.set(EXP_COOKIE, setCookie, { maxAge: EXP_MAX_AGE, path: "/", sameSite: "lax", secure: req.nextUrl.protocol === "https:", httpOnly: true });
+  }
+  if (optParam === "1") res.cookies.set(EXP_OFF_COOKIE, "1", { maxAge: 365 * 24 * 3600, path: "/", sameSite: "lax", secure: req.nextUrl.protocol === "https:", httpOnly: true });
+  if (optParam === "0") res.cookies.delete(EXP_OFF_COOKIE);
+  return res;
 }
 
 /** Sets the first-party sb_attr cookie (first + last touch) on public page views. */
@@ -518,8 +583,17 @@ async function pageRoute(req: NextRequest, pathname: string): Promise<NextRespon
   // The admin login page itself must stay reachable while signed out.
   if (pathname === "/saabai-admin/login" || pathname === "/saabai-admin/login/verify") return NextResponse.next();
   if (!matches(pathname, PROTECTED_PAGES)) return NextResponse.next();
-  // Public Lex signup pages (new firms have no login yet).
-  if (matches(pathname, ["/lex/signup"])) return NextResponse.next();
+  // /lex/signup (paid checkout page) is reachable only by:
+  //  - the Stripe return page (/lex/signup/done), which new firms reach before they have a login;
+  //  - the public 60-day free trial start page (/lex/signup/trial, PR 423), open to any firm, with or without ?code=;
+  //  - signed-in users (trial firms converting, lapsed firm admins restarting a plan).
+  // Everyone else gets a 307 to the public Lex page. The paid checkout API is gated separately in its route.
+  if (matches(pathname, ["/lex/signup"])) {
+    if (pathname === "/lex/signup/done" || pathname === "/lex/signup/done/") return NextResponse.next();
+    if (pathname === "/lex/signup/trial" || pathname === "/lex/signup/trial/") return NextResponse.next();
+    if (await getSession(req)) return NextResponse.next();
+    return NextResponse.redirect(new URL("/legal", req.url), 307);
+  }
 
   const session = await getSession(req);
   if (session) {
@@ -531,6 +605,10 @@ async function pageRoute(req: NextRequest, pathname: string): Promise<NextRespon
     }
     return NextResponse.next();
   }
+
+  // Signed-out visitors (and crawlers) to bare /lex get the public Lex page, not a login wall.
+  // Deep links (/lex?q=..., /lex/billing) still go to sign-in so firm users land back where they were.
+  if (pathname === "/lex" && !req.nextUrl.search) return NextResponse.redirect(new URL("/legal", req.url), 307);
 
   // Admin areas use the separate admin sign-in; everything else uses /login.
   const isAdminArea = matches(pathname, ["/saabai-admin", "/admin", "/mission-control", "/atlas-memory-control", "/edge", "/pulse"]);

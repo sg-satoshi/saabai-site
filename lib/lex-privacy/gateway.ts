@@ -28,6 +28,7 @@ import { LexMasker, LexPrivacyError, MASKER_VERSION, PRIVACY_SYSTEM_NOTE, lexThr
 import { recordRedaction, type RedactionOutcome } from "./redaction-log";
 import type { MatterParty } from "./parties";
 import { detectNames, type NerStatus } from "./ner";
+import { LEX_SONNET, LEX_HAIKU } from "../lex-models";
 
 /** Test seam (same module instance the gateway uses). */
 export { __setTokenizerForTests, LexPrivacyError } from "./mask";
@@ -41,7 +42,8 @@ export type LexRoute =
   | "lex-review"
   | "lex-compare"
   | "lex-doc-extract"
-  | "lex-settings-test";
+  | "lex-settings-test"
+  | "lex-help";
 
 /** Where the model comes from. Routes describe it; only the gateway builds it. */
 export type LexModelSource =
@@ -50,7 +52,7 @@ export type LexModelSource =
   /** The firm's own saved key and model when a clientId is given, else Claude Haiku (intake chat). */
   | { kind: "chat"; clientId?: string }
   /** A fixed Saabai model (review and compare). */
-  | { kind: "saabai"; modelId: "claude-sonnet-4-6" | "claude-haiku-4-5-20251001" }
+  | { kind: "saabai"; modelId: typeof LEX_SONNET | typeof LEX_HAIKU }
   /** A firm config being tested from LLM settings (never saved by the gateway). */
   | { kind: "config"; config: ClientLLMConfig };
 
@@ -68,7 +70,7 @@ async function resolveModel(src: LexModelSource): Promise<LanguageModel | null> 
           // Broken saved config: use the default.
         }
       }
-      return anthropic("claude-haiku-4-5-20251001");
+      return anthropic(LEX_HAIKU);
     }
     case "saabai":
       return anthropic(src.modelId);
@@ -175,7 +177,7 @@ export class LexGateway {
 
   /** Test seam only: a gateway around a mock model. Production code uses open(). */
   static __forTests(model: LanguageModel, init: Omit<LexGatewayInit, "model">): LexGateway {
-    return new LexGateway({ ...init, model: { kind: "saabai", modelId: "claude-sonnet-4-6" } }, model);
+    return new LexGateway({ ...init, model: { kind: "saabai", modelId: LEX_SONNET } }, model);
   }
 
   /** "provider:model" style id for logs. Never includes a key. */
@@ -185,7 +187,7 @@ export class LexGateway {
 
   /** A gateway for a second call in the same request, sharing placeholders (e.g. the confidence check). */
   child(route: LexRoute): LexGateway {
-    return new LexGateway({ route, firm: this.firm, model: { kind: "saabai", modelId: "claude-sonnet-4-6" }, masker: this.masker }, this.model, this.requestId);
+    return new LexGateway({ route, firm: this.firm, model: { kind: "saabai", modelId: LEX_SONNET }, masker: this.masker }, this.model, this.requestId);
   }
 
   /**

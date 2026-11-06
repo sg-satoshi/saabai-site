@@ -2,7 +2,7 @@
  * Per-site billing record (one billing setup per site), stored in Redis.
  */
 import { getRedis } from "../redis";
-import type { SiteBillingStatus } from "./state";
+import type { PlanDiscount, SetupDiscount, SiteBillingStatus } from "./state";
 
 export const SITE_BILLING_PREFIX = "saabai:billing:site:";
 export const SITE_BILLING_INDEX = "saabai:billing:sites";
@@ -26,8 +26,12 @@ export interface SiteBillingRecord {
   planName: string;
   monthlyCents: number;
   priceVersion?: number;
+  /** Admin discount on the plan (monthlyCents stays the list price) */
+  discount?: PlanDiscount;
   setupFeeCents: number;
   setupFeeDescription?: string;
+  /** Admin discount on the setup fee (setupFeeCents stays the list price) */
+  setupDiscount?: SetupDiscount;
   startDate: string; // YYYY-MM-DD
   gst: boolean;
   contact: { name: string; email: string };
@@ -37,6 +41,10 @@ export interface SiteBillingRecord {
   linkExpiresAt?: string;
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
+  /** Latest setup Checkout Session, reused while still open */
+  checkoutSessionId?: string;
+  /** Future first payment: setup fee already added to the first invoice */
+  setupFeeQueued?: boolean;
   currentPeriodStart?: string;
   currentPeriodEnd?: string;
   pendingPlan?: { planId: string; planName: string; monthlyCents: number; effectiveAt: string };

@@ -5,7 +5,7 @@
 import { requireAdminSession } from "../../../../../lib/admin-guard";
 import { buildSetup, previewSetupEmail, sendCardUpdateLink, sendSetupLink, type SetupInput } from "../../../../../lib/billing/service";
 import { getSiteBilling, saveSiteBilling } from "../../../../../lib/billing/store";
-import { billingPortalUrl, cancelAtPeriodEnd, siteUrl, stripeConfigured } from "../../../../../lib/billing/stripe-ops";
+import { billingPortalUrl, cancelAtPeriodEnd, GST_BLOCKED, siteUrl, stripeConfigured } from "../../../../../lib/billing/stripe-ops";
 import { SENDER_OPTIONS } from "../../../../../lib/billing/emails";
 
 export const runtime = "nodejs";
@@ -38,6 +38,7 @@ export async function POST(req: Request) {
 
   if (action === "resend") {
     if (!["pending", "link_expired"].includes(rec.status)) return Response.json({ error: "Only pending or expired links can be resent" }, { status: 400 });
+    if (rec.gst) return Response.json({ error: GST_BLOCKED }, { status: 400 });
     const out = await sendSetupLink(rec, body.siteDomain);
     return Response.json({ ok: true, emailed: out.emailed, payUrl: out.payUrl, status: out.rec.status, linkExpiresAt: out.rec.linkExpiresAt });
   }

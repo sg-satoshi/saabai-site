@@ -74,8 +74,9 @@ test("/api/lex-send is not public and requires a session + rate limit", () => {
 });
 
 test("subscriber names are escaped in preview and broadcast; subscribe alert escapes input", () => {
-  // #345: the preview is built by the server's own broadcastEmail() (which calls personaliseHtml).
-  assert.match(read("app/saabai-admin/subscribers/Composer.tsx"), /previewForRecipient\(/);
+  // SUNDER preview uses the same personaliseHtml path as the send.
+  assert.match(read("lib/email/message.ts"), /personaliseHtml\(/);
+  assert.match(read("app/saabai-admin/email/Composer.tsx"), /renderMarketingEmail\(/);
   assert.match(read("lib/broadcast-template.ts"), /return broadcastEmail\(/);
   assert.match(read("lib/broadcast.ts"), /personaliseHtml\(msg\.html/);
   assert.match(read("lib/personalise.ts"), /escapeHtml\(resolve\(/);

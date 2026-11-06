@@ -5,6 +5,7 @@ import { publicPageMeta } from "@/lib/seo-pages";
 import BreadcrumbLd from "../components/BreadcrumbLd";
 import { lexBlobUploadsEnabled } from "@/lib/lex-upload";
 import { LEX_BLOB_PRIVACY_COPY, LEX_MATTERS_PRIVACY_COPY } from "@/lib/lex-upload-copy";
+import { LEX_TRIAL_CONTACT_COPY, LEX_TRIAL_MARKER_COPY } from "@/lib/lex-trial-copy";
 
 
 export const metadata: Metadata = publicPageMeta.privacy;
@@ -12,7 +13,7 @@ export const metadata: Metadata = publicPageMeta.privacy;
 const SECTIONS: { heading: string; body: string }[] = [
   {
     heading: "1. About this policy",
-    body: `${NAP.name} (ABN ${NAP.abn}, ${NAP.addressLine}) ("we", "us") is a sole trader business operated by Shane Goldberg. This policy explains what we collect when you use saabai.ai or buy our services, and what we do with it.`,
+    body: `${NAP.legalName} (ABN ${NAP.abn}, ACN ${NAP.acn}), ${NAP.addressLine}, trading as ${NAP.name} ("we", "us"). This policy explains what we collect when you use saabai.ai or buy our services, and what we do with it.`,
   },
   {
     heading: "2. What we collect",
@@ -32,7 +33,7 @@ const SECTIONS: { heading: string; body: string }[] = [
   },
   {
     heading: "6. Lex matters, research chats and masking logs",
-    body: LEX_MATTERS_PRIVACY_COPY,
+    body: LEX_MATTERS_PRIVACY_COPY + ` Lex free trials: ${LEX_TRIAL_CONTACT_COPY} ${LEX_TRIAL_MARKER_COPY}`,
   },
   {
     heading: "7. How we use it",

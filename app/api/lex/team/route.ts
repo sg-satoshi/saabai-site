@@ -5,6 +5,7 @@
 import { resolveSessionEmail } from "@/lib/lex-review-access";
 import { LEX_SEAT_CAP, firmByEmail, inviteMember, revokeMember, seatsUsed } from "@/lib/lex-subscription";
 import { lexMailer } from "@/lib/lex-subscription-emails";
+import { trialInfo } from "@/lib/lex-trial";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,12 +18,14 @@ async function load(req: Request) {
   return firm ? { firm, email, isAdmin: firm.adminEmail === email } : { firm: null, email, isAdmin: false };
 }
 
-function view(f: NonNullable<Awaited<ReturnType<typeof firmByEmail>>>, isAdmin: boolean) {
+function view(f: NonNullable<Awaited<ReturnType<typeof firmByEmail>>>, isAdmin: boolean, me?: string) {
   return {
+    me: me ?? null,
     plan: "firm", firmName: f.firmName, isAdmin, status: f.status, lapseReason: f.lapseReason ?? null, graceUntil: f.graceUntil ?? null,
     cancelAtPeriodEnd: !!f.cancelAtPeriodEnd, periodEnd: f.periodEnd ?? null,
     seats: { used: seatsUsed(f), cap: LEX_SEAT_CAP },
     admin: f.adminEmail, members: isAdmin ? f.members : [],
+    trial: f.status === "trial" ? trialInfo(f) : null,
   };
 }
 
@@ -31,7 +34,7 @@ export async function GET(req: Request) {
     const ctx = await load(req);
     if (!ctx) return Response.json({ plan: null }, { status: 401 });
     if (!ctx.firm) return Response.json({ plan: null });
-    return Response.json(view(ctx.firm, ctx.isAdmin));
+    return Response.json(view(ctx.firm, ctx.isAdmin, ctx.email));
   } catch (err) {
     console.error("[lex team]", err instanceof Error ? err.name : err);
     return Response.json({ error: "Could not load your plan" }, { status: 500 });

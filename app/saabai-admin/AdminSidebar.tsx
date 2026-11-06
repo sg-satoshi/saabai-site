@@ -87,6 +87,15 @@ const NAV: NavGroup[] = [
     ],
   },
   {
+    section: "Email",
+    items: [
+      { label: "Campaigns", href: "/saabai-admin/email", icon: "mail" },
+      { label: "Series", href: "/saabai-admin/email/series", icon: "flow" },
+      { label: "Subscribers", href: "/saabai-admin/email/subscribers", icon: "users" },
+      { label: "Sending health", href: "/saabai-admin/email/health", icon: "chart" },
+    ],
+  },
+  {
     section: "Marketing",
     items: [
       { label: "Drafts", href: "/saabai-admin/marketing", icon: "mail" },
@@ -106,7 +115,7 @@ const NAV: NavGroup[] = [
       { label: "Testimonials", href: "/saabai-admin/growth/testimonials", icon: "doc" },
       { label: "Referrals", href: "/saabai-admin/growth/referrals", icon: "users" },
       { label: "Attribution", href: "/saabai-admin/growth/attribution", icon: "layers" },
-      { label: "Subscribers", href: "/saabai-admin/subscribers", icon: "mail" },
+      { label: "Subscribers (legacy)", href: "/saabai-admin/subscribers", icon: "mail" },
       { label: "Wholesale Leads", href: "/saabai-admin/wholesale-leads", icon: "home" },
       { label: "LinkedIn", href: "/saabai-admin/social/linkedin", icon: "in" },
       { label: "Instagram", href: "/saabai-admin/social/instagram", icon: "ig" },
@@ -117,6 +126,8 @@ const NAV: NavGroup[] = [
     collapsible: true,
     items: [
       { label: "Lex Clients", href: "/saabai-admin/lex-clients", icon: "scale" },
+      { label: "Lex Trials", href: "/saabai-admin/lex-trials", icon: "users" },
+      { label: "Lex Feedback", href: "/saabai-admin/lex-feedback", icon: "bell" },
       { label: "Lex Orders", href: "/saabai-admin/orders?kind=lex", icon: "list" },
       { label: "LLM Config", href: "/saabai-admin/lex-settings", icon: "cpu" },
       { label: "Privacy Log", href: "/saabai-admin/lex-privacy", icon: "lock" },
@@ -135,7 +146,7 @@ const NAV: NavGroup[] = [
 
 function isActive(pathname: string, href: string) {
   const path = href.split("?")[0];
-  if (path === "/saabai-admin" || path === "/saabai-admin/marketing") return pathname === path;
+  if (path === "/saabai-admin" || path === "/saabai-admin/marketing" || path === "/saabai-admin/email") return pathname === path;
   return pathname === path || pathname.startsWith(path + "/");
 }
 

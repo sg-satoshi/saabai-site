@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { listExperiments, loadView } from "@/lib/exp/admin";
+import { listExpSites, listExperiments, loadView } from "@/lib/exp/admin";
 import { serviceDb } from "@/lib/exp/track";
 import { listSuggestions } from "@/lib/exp/suggest-server";
 import { addDays, brisbaneDate, buildNote, renderNote, sumWeek, type WeekNote } from "@/lib/exp/weekly";
@@ -12,19 +12,23 @@ export const maxDuration = 60;
 export async function GET(req: Request) {
   if (req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) return Response.json({ error: "Unauthorized" }, { status: 401 });
   if (process.env.EXP_WEEKLY_ENABLED === "false") return Response.json({ ok: true, skipped: "disabled" });
-  const dry = new URL(req.url).searchParams.get("dry") === "1";
+  const params = new URL(req.url).searchParams;
+  const dry = params.get("dry") === "1";
+  // Every site that has split testing switched on (saabai.ai plus any client site Shane turned on). ?site=<key> narrows it to one.
+  const only = params.get("site");
+  const sites = (await listExpSites()).filter((s) => s.enabled && (!only || s.key === only));
   const db = serviceDb();
   if (!db) return Response.json({ ok: true, skipped: "no database" });
 
   const end = addDays(brisbaneDate(new Date()), -1); // yesterday (Sunday): the last full day
   const since = addDays(end, -6);
   const notes: WeekNote[] = [];
-  for (const exp of await listExperiments("saabai")) {
+  for (const site of sites) for (const exp of await listExperiments(site.key)) {
     if (exp.status === "draft") continue;
     const { data } = await db.rpc("exp_stats_daily", { p_experiment: exp.id });
     const week = sumWeek((data ?? []) as { day: string; variant_key: string; impressions: number; converters: number }[], since);
     const [view, sugg] = await Promise.all([loadView(exp), listSuggestions(exp.id)]);
-    const note = buildNote({ exp, analysis: view.analysis, daysRunning: view.daysRunning, week, pendingSuggestions: sugg.filter((s) => s.status === "pending").length });
+    const note = buildNote({ exp, analysis: view.analysis, daysRunning: view.daysRunning, week, pendingSuggestions: sugg.filter((s) => s.status === "pending").length }, undefined, { key: site.key, label: site.label });
     if (note) notes.push(note);
   }
   if (!notes.length) return Response.json({ ok: true, skipped: "no meaningful traffic" });

@@ -103,7 +103,7 @@ export default function FaqBulkAdd({ existing, onAppend }: { existing: Faq[]; on
         onClick={() => { setNote(""); setOpen((v) => !v); }}
         data-testid="faq-bulk-open"
       >
-        {open ? "Close bulk add" : "Bulk add"}
+        {open ? "Close paste" : "Paste a list"}
       </button>
       {note && <span role="status" data-testid="faq-bulk-note" className="hint" style={{ margin: 0 }}>{note}</span>}
       {open && (

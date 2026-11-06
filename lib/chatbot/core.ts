@@ -1,5 +1,9 @@
+import type { BotLock } from "./bot-lock";
+import { stripGoalLocks, toPublicGoal, type GoalConfig, type PublicGoal } from "./goal";
+import { effectiveEngage, toPublicEngage, type EngageConfig, type PublicEngage } from "./engage";
+import { leadCaptureEnabled } from "./lead-capture";
 import { handoffTarget, type HandoffLink } from "./disclosure";
-import { greetingForSlug } from "./personas";
+import { getPersona, greetingForSlug, privacyUrlFor } from "./personas";
 /** Pure rules for the central chatbot platform. No I/O, easy to test. */
 
 export const PLANS = ["presence", "growth", "signature"] as const;
@@ -13,7 +17,7 @@ export const CAPS: Record<Plan, number> = { presence: 200, growth: 600, signatur
 export const SEED_OFF = ["cycle-repair"];
 
 /** Sites that still use their own chat route. The platform switch does not control them yet. */
-export const BESPOKE_SLUGS = ["tributum-law-v2", "nextinvestment", "nico-moretti"];
+export const BESPOKE_SLUGS = ["tributum-law-v2", "nextinvestment"];
 
 export const POSITIONS = ["right", "left"] as const;
 export type Position = (typeof POSITIONS)[number];
@@ -22,6 +26,8 @@ export interface Skin {
   botName: string;
   greeting: string;
   avatarUrl: string;
+  /** Optional mark in the chat header. Clients set this with an https link. Empty means none. */
+  logoUrl?: string;
   primary: string;
   accent: string;
   bg: string;
@@ -52,6 +58,12 @@ export interface ChatbotConfig {
   skin: Partial<Skin>;
   tone?: Tone;
   knowledge?: Knowledge;
+  /** Goal-first settings. Missing means the persona default, or no goal. */
+  goal?: GoalConfig;
+  /** Conversion playbook toggles. Missing means the tasteful defaults. */
+  engage?: Partial<EngageConfig>;
+  /** Whole-bot lock. Missing means the client can still edit. Admins set this. */
+  botLock?: BotLock;
   updatedAt?: string;
   updatedBy?: string;
 }
@@ -128,6 +140,11 @@ export function validateSkin(input: unknown): SkinResult {
     if (u === null) errors.avatarUrl = "Use an https link (or a /path on this site).";
     else out.avatarUrl = u;
   }
+  if (o.logoUrl !== undefined) {
+    const u = safeUrl(o.logoUrl);
+    if (u === null) errors.logoUrl = "Use an https link (or a /path on this site).";
+    else out.logoUrl = u;
+  }
   if (o.position !== undefined) {
     if ((POSITIONS as readonly unknown[]).includes(o.position)) out.position = o.position as Position;
     else errors.position = "Pick left or right.";
@@ -139,14 +156,27 @@ export function validateSkin(input: unknown): SkinResult {
   return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value: out };
 }
 
-/** Skin as the widget should see it: defaults, then site values, then saved skin, with plan rules applied. */
-export function resolveSkin(config: Pick<ChatbotConfig, "plan" | "skin">, site?: { botName?: string; greeting?: string; avatarUrl?: string }): Skin & { poweredBy: boolean } {
+/**
+ * Skin as the widget should see it: defaults, then persona look, then the site
+ * chatbot avatar, then saved skin. A blank saved avatar does not wipe a photo
+ * the bot already has. A saved https (or /path) avatar still wins.
+ */
+export function resolveSkin(
+  config: Pick<ChatbotConfig, "plan" | "skin">,
+  site?: { botName?: string; greeting?: string; avatarUrl?: string },
+  base?: Partial<Skin>,
+): Skin & { poweredBy: boolean } {
+  const skin: Partial<Skin> = { ...(config.skin ?? {}) };
+  const savedAvatar = typeof skin.avatarUrl === "string" ? skin.avatarUrl.trim() : "";
+  if (savedAvatar) skin.avatarUrl = savedAvatar;
+  else delete skin.avatarUrl;
   const merged: Skin = {
     ...DEFAULT_SKIN,
-    ...(site?.botName ? { botName: site.botName } : {}),
+    ...base,
+    ...(site?.botName && !base?.botName ? { botName: site.botName } : {}),
     ...(site?.greeting ? { greeting: site.greeting } : {}),
-    ...(site?.avatarUrl ? { avatarUrl: site.avatarUrl } : {}),
-    ...config.skin,
+    ...(site?.avatarUrl && !base?.avatarUrl ? { avatarUrl: site.avatarUrl } : {}),
+    ...skin,
   };
   return { ...merged, poweredBy: poweredByVisible(config.plan, merged.showPoweredBy) };
 }
@@ -228,6 +258,7 @@ export interface PublicWidgetConfig {
   botName: string;
   greeting: string;
   avatarUrl: string;
+  logoUrl?: string;
   primary: string;
   accent: string;
   bg: string;
@@ -238,10 +269,25 @@ export interface PublicWidgetConfig {
   offMessage: string;
   /** Call or email link. Null when the site has neither. Clicking it is a handoff event, not a lead post. */
   handoff: HandoffLink | null;
+  /** Quick replies and buttons. Null when the bot has no goal. */
+  goal: PublicGoal | null;
+  /** Widget features and nudges. */
+  engage: PublicEngage;
+  /** Small Privacy link. Empty unless this bot sets one in code. */
+  privacyUrl: string;
+  /** Opt-in widget accessibility fixes, set in code per bot. */
+  a11y?: true;
+  /** Link text after "Powered by", only when a bot sets it in code. */
+  poweredByLabel?: string;
 }
 
-export function toPublicConfig(opts: { slug?: string; active: boolean; config: Pick<ChatbotConfig, "plan" | "skin">; site: { name: string; business?: { name?: string; phone?: string; email?: string }; chatbot?: { name?: string; greeting?: string; avatarUrl?: string } } }): PublicWidgetConfig {
-  const sk = resolveSkin(opts.config, { botName: opts.site.chatbot?.name, greeting: opts.site.chatbot?.greeting, avatarUrl: opts.site.chatbot?.avatarUrl });
+export function toPublicConfig(opts: { slug?: string; active: boolean; config: Pick<ChatbotConfig, "plan" | "skin" | "goal" | "engage">; site: { name: string; business?: { name?: string; phone?: string; email?: string }; chatbot?: { name?: string; greeting?: string; avatarUrl?: string } } }): PublicWidgetConfig {
+  const persona = opts.slug ? getPersona(opts.slug) : undefined;
+  const sk = resolveSkin(
+    opts.config,
+    { botName: opts.site.chatbot?.name, greeting: opts.site.chatbot?.greeting, avatarUrl: opts.site.chatbot?.avatarUrl },
+    persona?.appearance,
+  );
   const businessName = opts.site.business?.name || opts.site.name;
   const bot = sk.botName || businessName;
   return {
@@ -250,6 +296,7 @@ export function toPublicConfig(opts: { slug?: string; active: boolean; config: P
     botName: bot,
     greeting: greetingForSlug(opts.slug, bot, businessName, sk.greeting),
     avatarUrl: sk.avatarUrl,
+    ...(sk.logoUrl ? { logoUrl: sk.logoUrl } : {}),
     primary: sk.primary,
     accent: sk.accent,
     bg: sk.bg,
@@ -259,5 +306,16 @@ export function toPublicConfig(opts: { slug?: string; active: boolean; config: P
     placeholder: `Ask about ${businessName}...`,
     offMessage: offMessage(opts.site.business),
     handoff: handoffTarget(opts.site.business),
+    goal: toPublicGoal(effectiveGoal(opts.slug, opts.config.goal)),
+    engage: toPublicEngage(effectiveEngage(opts.config.engage), { leadCapture: leadCaptureEnabled() }),
+    privacyUrl: privacyUrlFor(opts.slug),
+    ...(persona?.widgetA11y ? { a11y: true as const } : {}),
+    ...(persona?.poweredByLabel ? { poweredByLabel: persona.poweredByLabel } : {}),
   };
+}
+
+/** Stored goal wins, then the persona default, else none. */
+export function effectiveGoal(slug: string | undefined, stored: GoalConfig | undefined): GoalConfig | undefined {
+  const goal = stored ?? (slug ? getPersona(slug)?.goal : undefined);
+  return goal ? stripGoalLocks(goal) : undefined;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import type { DocUsage } from "../../../lib/lex-doc-allowance-shared";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DOCUMENT_TYPES, fillPartiesTemplate } from "../../../lib/lex-document-types";
 import type { LexError } from "../../../lib/lex-errors";
@@ -32,6 +33,7 @@ export type DraftingProps = {
   onResearch: (q: string) => void;
   prep: PrepState; setPrep: (s: PrepState) => void;
   savedAt?: number | null; onReset?: () => void;
+  docUsage?: DocUsage | null;
 };
 
 function brisbaneTime(d: Date) {
@@ -189,7 +191,7 @@ export function DraftingView(p: DraftingProps) {
         jurisdictions={JURISDICTIONS} parties={p.parties} setParties={p.setParties} length={p.length} setLength={p.setLength}
         instructions={p.instructions} setInstructions={p.setInstructions} prep={p.prep} setPrep={p.setPrep}
         savedAt={p.savedAt} onReset={p.onReset} busy={busy} thinkLabel={p.thinkLabel} error={p.error}
-        initialStage={editing ? "form" : undefined}
+        initialStage={editing ? "form" : undefined} docUsage={p.docUsage}
         onDraft={() => { setEditing(false); p.onDraft(); }} />
     );
   }

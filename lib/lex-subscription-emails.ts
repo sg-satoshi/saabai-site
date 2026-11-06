@@ -23,12 +23,26 @@ export const lexMailer: Mailer = {
   },
 };
 
+/** Lex free trial: confirm-your-email link to the owner (sent once per trial request; the trial starts only from this link). */
+export async function sendTrialVerifyEmail(o: { email: string; name: string; url: string }): Promise<void> {
+  const first = o.name.split(" ")[0] || "there";
+  await sendBrandedEmail({
+    to: o.email, from: EMAIL_BRAND.from,
+    email: renderBrandedEmail({
+      subject: "Confirm your email to start your Lex free trial",
+      title: "Start your 60-day Lex free trial",
+      bodyHtml: `<p>Hi ${escapeHtml(first)},</p><p>Confirm your email to start your firm's 60-day Lex free trial. No card, and you don't pay a cent unless you choose to subscribe.</p><p><a href="${escapeHtml(o.url)}">Confirm and start my trial</a></p><p>This link works once and expires in 24 hours. If you didn't ask for this, ignore this email.</p>`,
+      textBody: [`Hi ${first},`, "Confirm your email to start your firm's 60-day Lex free trial. No card, and you don't pay a cent unless you choose to subscribe.", o.url, "This link works once and expires in 24 hours. If you didn't ask for this, ignore this email."],
+    }),
+  });
+}
+
 /** Internal alert to Saabai. Never throws. */
-export async function lexAlert(message: string): Promise<void> {
+export async function lexAlert(message: string, opts: { prefix?: string; title?: string } = {}): Promise<void> {
   try {
     await sendBrandedEmail({
       to: "hello@saabai.ai", from: EMAIL_BRAND.from,
-      email: renderBrandedEmail({ subject: `Stripe: ${message.slice(0, 80)}`, title: "Stripe checkout needs a look", bodyHtml: `<p>${escapeHtml(message)}</p>`, textBody: [message] }),
+      email: renderBrandedEmail({ subject: `${opts.prefix ?? "Stripe"}: ${message.slice(0, 80)}`, title: opts.title ?? "Stripe checkout needs a look", bodyHtml: `<p>${escapeHtml(message)}</p>`, textBody: [message] }),
     });
   } catch (err) { console.error("[lex alert]", err instanceof Error ? err.name : err); }
 }

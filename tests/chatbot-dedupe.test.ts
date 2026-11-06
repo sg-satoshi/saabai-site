@@ -138,7 +138,7 @@ test("live screenshot: one Nico row, one Tributum row, singles for Cycle Repair 
   assert.notEqual(nameKey(nicoA), nameKey(nicoB));
   assert.notEqual(nameKey(tribSpace), nameKey(tribA));
   assert.notEqual(nameKey(tribA), nameKey(tribB));
-  assert.ok(BESPOKE_SLUGS.includes("nico-moretti"));
+  assert.equal(BESPOKE_SLUGS.includes("nico-moretti"), false);
   assert.ok(BESPOKE_SLUGS.includes("tributum-law-v2"));
 
   const rows = chatbotCanonicalRows(
@@ -155,7 +155,7 @@ test("live screenshot: one Nico row, one Tributum row, singles for Cycle Repair 
   assert.equal(nico.site.slug, "nico-moretti");
   assert.deepEqual(nico.slugs, ["nico-moretti"]);
   assert.equal(nico.folded.length, 1);
-  assert.equal(BESPOKE_SLUGS.includes(nico.site.slug), true);
+  assert.equal(BESPOKE_SLUGS.includes(nico.site.slug), false);
 
   assert.equal(covers("Tributum Law").length, 1);
   assert.equal(covers("tributum-law").length, 1);

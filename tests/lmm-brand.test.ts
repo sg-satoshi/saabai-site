@@ -70,3 +70,17 @@ test("LMM home and legal pages link the LMM icon set", async () => {
     assert.match(html, /rel="manifest" href="\/clients\/lmm-site\/assets\/site\.webmanifest\?v=/);
   }
 });
+
+import { readFileSync } from "node:fs";
+import { lmmCalculatorPath, LMM_CALCULATORS } from "../lib/lmm-brand";
+test("LMM calculator paths map to existing pages with required copy", () => {
+  assert.equal(lmmCalculatorPath("/calculators"), "/clients/lmm-site/calculators/borrowing-power.html");
+  assert.equal(lmmCalculatorPath("/calculators/nope"), null);
+  for (const slug of LMM_CALCULATORS) {
+    const rel = lmmCalculatorPath(`/calculators/${slug}/`)!;
+    const file = path.join(__dirname, "..", "public", rel);
+    assert.ok(existsSync(file), rel);
+    const html = readFileSync(file, "utf8");
+    for (const s of ["Talk to Nick", 'href="/#contact"', "Estimate only, not credit advice", "Email me my estimate", "ABN 26 648 878 862", "530067", "NAB standard variable"]) assert.ok(html.includes(s), `${slug}: ${s}`);
+  }
+});

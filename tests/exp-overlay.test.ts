@@ -71,3 +71,17 @@ test("anti-flicker script only hides non-control targets and has a failsafe", ()
   assert.match(ANTI_FLICKER_SCRIPT, /setTimeout/);
   assert.doesNotThrow(() => new Function(ANTI_FLICKER_SCRIPT));
 });
+
+test("encodeOverlay: edited control copy is applied to control visitors; untouched control is not", async () => {
+  const { encodeOverlay, decodeOverlay, unwrapCookie } = await import("../lib/exp/overlay");
+  const mk = (aText: string) => ({ id: "t1", siteKey: "sunder", slot: "sunder-home.t.text", path: "/", status: "running", defaultVariantId: "a", kind: "text",
+    overlay: { sel: "p", fp: "original page text.", tag: "p" },
+    variants: [{ id: "a", text: aText, active: true }, { id: "b", text: "B copy", active: true }] }) as never;
+  const edited = decodeOverlay(encodeOverlay("/", [mk("Edited control.")], { t1: "a" }))!;
+  assert.equal(edited.o[0].x, "Edited control.");
+  const plain = decodeOverlay(encodeOverlay("/", [mk("Original page text.")], { t1: "a" }))!;
+  assert.equal(plain.o[0].x, undefined);
+  const raw = encodeOverlay("/", [mk("Edited control.")], { t1: "b" })!;
+  assert.equal(decodeOverlay(encodeURIComponent(raw))!.o[0].x, "B copy", "double-encoded cookie still parses");
+  assert.equal(unwrapCookie(encodeURIComponent(encodeURIComponent("{}"))), "{}");
+});

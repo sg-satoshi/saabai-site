@@ -226,9 +226,9 @@ export default function InvestmentAnalyzer() {
     if (lvr <= 70) ins.push({ type: "positive", title: "Strong Equity Position", detail: `At **${lvr.toFixed(0)}% LVR**, ${(100 - lvr).toFixed(0)}% equity from day one. No LMI. Better rates.` });
     else if (lvr <= 80) ins.push({ type: "info", title: "Standard LVR", detail: `${lvr.toFixed(0)}% LVR is within standard lending. LMI may apply over 80%.` });
     else ins.push({ type: "warning", title: "High LVR", detail: `${lvr.toFixed(0)}% is high-LVR. Limited equity buffer. A 5% dip puts you underwater.` });
-    if (gy >= 5) ins.push({ type: "positive", title: "Strong Yield", detail: `${gy.toFixed(1)}% gross yield — well above market average.` });
+    if (gy >= 5) ins.push({ type: "positive", title: "Strong Yield", detail: `${gy.toFixed(1)}% gross yield, well above market average.` });
     else if (gy >= 3.5) ins.push({ type: "info", title: "Average Yield", detail: `${gy.toFixed(1)}% gross yield. Returns come from growth, not income.` });
-    else ins.push({ type: "warning", title: "Below-Average Yield", detail: `${gy.toFixed(1)}% — below typical range. Ensure growth prospects justify this.` });
+    else ins.push({ type: "warning", title: "Below-Average Yield", detail: `${gy.toFixed(1)}%, below typical range. Ensure growth prospects justify this.` });
     if (cgr >= 5) ins.push({ type: "positive", title: `$${fmt(yr5.pv)} in 5 years`, detail: `At ${cgr}% growth, +$${fmt(yr5.pv - pp)} appreciation. Strong wealth building.` });
     else ins.push({ type: "info", title: "Modest Growth", detail: `${cgr}% growth is steady but modest. Hold 10+ years for compound effect.` });
     if (yr5.roi >= 40) ins.push({ type: "positive", title: `${yr5.roi}% 5-Year ROI`, detail: `$${fmt(initInv)} outlay → ${yr5.roi}% total return (${yr5.aroi}% annualized).` });
@@ -243,7 +243,7 @@ export default function InvestmentAnalyzer() {
     if (rentGapWeekly > 0) {
       ins.push({ type: "warning", title: `Need $${Math.round(rentGapWeekly)}/wk More Rent to Break Even`, detail: `You need **$${Math.round(breakEvenRentWeekly)}/wk** total rent to cover all costs ($${Math.round(breakEvenRentAnnual).toLocaleString()}/yr). Currently at $${currentRentWeekly}/wk. ${breakEvenYear !== null ? `At 3% annual rent growth, this property reaches break-even in **${breakEvenYear} years**.` : "Even with 3% annual rent growth, this property won't break even within 30 years."} Every $$50/week in rent adds $${Math.round(50 * 52 * (1 - vr / 100) / 12).toLocaleString()}/mo to your bottom line.` });
     } else {
-      ins.push({ type: "positive", title: "Already Break-Even", detail: `Your current rent of **$${currentRentWeekly}/wk** exceeds the $${Math.round(breakEvenRentWeekly)}/wk needed to break even. You're cash flow positive from day one — rent is covering all costs including the loan.` });
+      ins.push({ type: "positive", title: "Already Break-Even", detail: `Your current rent of **$${currentRentWeekly}/wk** exceeds the $${Math.round(breakEvenRentWeekly)}/wk needed to break even. You're cash flow positive from day one, rent is covering all costs including the loan.` });
     }
     if (gf) {
       const wgf = mr * 52 / pp * 100;
@@ -310,7 +310,7 @@ export default function InvestmentAnalyzer() {
 
       <div style={{ maxWidth: 1160, margin: "0 auto", fontFamily: FONT_UI, color: UI.ink }}>
 
-        <Masthead label="Wholesale Homes — Investment Analysis" />
+        <Masthead label="Wholesale Homes: Investment Analysis" />
         <CalculatorNav current="investment-analyzer" />
 
         {selectedProperty && (
@@ -381,7 +381,7 @@ export default function InvestmentAnalyzer() {
             <Card>
               <Eyebrow>Assumptions</Eyebrow>
               <Title>Your numbers</Title>
-              <p style={{ fontSize: 12.5, color: UI.faintInk, margin: "4px 0 16px" }}>Adjust anything — everything updates live.</p>
+              <p style={{ fontSize: 12.5, color: UI.faintInk, margin: "4px 0 16px" }}>Adjust anything, everything updates live.</p>
 
               {/* LVR control */}
               <div style={{ borderRadius: 16, border: `1px solid ${UI.hair}`, background: UI.bone, padding: 16 }}>
@@ -571,7 +571,7 @@ export default function InvestmentAnalyzer() {
               <LedgerRow label={taxDelta >= 0 ? "Tax benefit (negative gearing)" : "Tax payable on profit"} sub={`${(taxRate * 100).toFixed(1)}% marginal rate`} value={`${taxDelta >= 0 ? "+" : "−"}${fmt$(Math.abs(Math.round(taxDelta)))}`} valueColor={taxDelta >= 0 ? UI.green : UI.red} />
               <LedgerRow strong last label="After-tax cash flow" sub={`${afterTaxWeekly >= 0 ? "+" : "−"}$${Math.abs(Math.round(afterTaxWeekly))}/wk`} value={`${afterTaxAnnual >= 0 ? "+" : "−"}${fmt$(Math.abs(Math.round(afterTaxAnnual)))}`} valueColor={afterTaxAnnual >= 0 ? UI.green : UI.red} />
             </div>
-            <p style={{ fontSize: 10.5, color: UI.faint, marginTop: 12 }}>Assumes your marginal rate applies to the property's full result. Indicative only — confirm with your accountant.</p>
+            <p style={{ fontSize: 10.5, color: UI.faint, marginTop: 12 }}>Assumes your marginal rate applies to the property's full result. Indicative only, confirm with your accountant.</p>
           </Card>
         </div>
 

@@ -4,9 +4,13 @@ import { readFileSync } from "fs";
 import path from "path";
 import { ensurePoweredBy } from "@/lib/client-site";
 import { readRepoClientHtml } from "@/lib/repo-client-html";
+import { noDashesHtml } from "@/lib/no-dashes-html";
 import { prepareLmmHomeHtml } from "@/lib/lmm-legal";
 import { ensureFavicon } from "@/lib/site-favicon";
 import { ensureSchema } from "@/lib/site-schema";
+import { sunderRobotsHeaders } from "@/lib/sunder-factory-seed";
+import { injectStaticExp } from "@/lib/exp/static-overlay";
+import { isSiteEnabled } from "@/lib/exp/sites";
 
 export const runtime = "nodejs";
 
@@ -27,24 +31,29 @@ function prepareStoredHtml(slug: string, html: string): string {
   return slug === "lmm-site" ? prepareLmmHomeHtml(html) : html;
 }
 
+function siteResponse(slug: string, body: string, status: number, headers: Record<string, string>) {
+  return new Response(body, { status, headers: sunderRobotsHeaders(slug, headers) });
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
+  // Split-testing runtime only when this site is switched on. Off sites get byte-identical HTML and headers.
+  // Pages carrying the runtime are never shared-cached.
+  const exp = await isSiteEnabled(slug).catch(() => false);
+  const cc = (normal: string) => (exp ? "private, no-store" : normal);
 
   try {
     // Nico's HTML in this repo is the copy visitors should see. Blob is only
     // the fallback, so the privacy policy ships with the deploy.
     const repoHtml = readRepoClientHtml(slug, "index.html");
     if (repoHtml !== null) {
-      const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, repoHtml))));
-      return new Response(html, {
-        status: 200,
-        headers: {
-          "Content-Type": "text/html; charset=utf-8",
-          "Cache-Control": "no-store",
-        },
+      const html = injectStaticExp(noDashesHtml(ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, repoHtml))))), exp);
+      return siteResponse(slug, html, 200, {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": cc("no-store"),
       });
     }
 
@@ -63,40 +72,38 @@ export async function GET(
     }
 
     if (blobHtml !== null) {
-      const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, applyCssPatch(slug, prepareStoredHtml(slug, blobHtml)))));
-      return new Response(html, {
-        status: 200,
-        headers: {
-          "Content-Type": "text/html; charset=utf-8",
-          "Cache-Control": "no-store",
-        },
+      const html = injectStaticExp(noDashesHtml(ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, applyCssPatch(slug, prepareStoredHtml(slug, blobHtml)))))), exp);
+      return siteResponse(slug, html, 200, {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": cc("no-store"),
       });
     }
 
     // 2. Fall back to legacy static sites in public/clients/
     try {
       const filePath = path.join(process.cwd(), "public", "clients", slug, "index.html");
-      const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, readFileSync(filePath, "utf-8")))));
-      return new Response(html, {
-        status: 200,
-        headers: {
-          "Content-Type": "text/html; charset=utf-8",
-          "Cache-Control": "public, s-maxage=3600",
-        },
+      const html = injectStaticExp(noDashesHtml(ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, readFileSync(filePath, "utf-8")))))), exp);
+      return siteResponse(slug, html, 200, {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": cc("public, s-maxage=3600"),
       });
     } catch {
       // not a legacy site either
     }
 
-    return new Response(
+    return siteResponse(
+      slug,
       `<!DOCTYPE html><html><head><title>Site not found</title></head><body style="font-family:sans-serif;text-align:center;padding:80px 20px"><h1>Site not found</h1><p>The site <strong>${slug}</strong> doesn't exist yet.</p></body></html>`,
-      { status: 404, headers: { "Content-Type": "text/html; charset=utf-8" } }
+      404,
+      { "Content-Type": "text/html; charset=utf-8" },
     );
   } catch (e) {
     console.error("Site serve error:", e);
-    return new Response(
+    return siteResponse(
+      slug,
       `<!DOCTYPE html><html><body style="font-family:sans-serif;text-align:center;padding:80px"><h1>Error loading site</h1></body></html>`,
-      { status: 500, headers: { "Content-Type": "text/html; charset=utf-8" } }
+      500,
+      { "Content-Type": "text/html; charset=utf-8" },
     );
   }
 }

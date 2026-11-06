@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { dunningDays, dueDunningStep, isLinkExpired, linkExpiresAt, planChangeKind, prorate, shouldPause, statusAfterFailure, statusFromSubscription, upfrontTotals } from "../lib/billing/state";
+import { dunningDays, dueDunningStep, isLinkExpired, linkExpiresAt, planChangeKind, prorate, shouldPause, statusAfterFailure, statusFromSubscription, upfrontTotals, normaliseDiscount, discountOffCents, discountLabel, normaliseSetupDiscount } from "../lib/billing/state";
 import { isRetiredPortalAddon, normaliseCatalog, omitRetiredPortalAddons, SEED_CATALOG, type Addon } from "../lib/billing/catalog";
-import { paymentFailedEmail, setupLinkEmail } from "../lib/billing/emails";
+import { checkoutFirstPaymentText, CHECKOUT_TEXT_MAX, paymentFailedEmail, setupLinkEmail } from "../lib/billing/emails";
 
 const DAY = 86_400_000;
 
@@ -97,4 +97,148 @@ test("emails have no em dashes and the key copy", () => {
   assert.match(e1.text, /GST not applicable/);
   const e2 = paymentFailedEmail({ contactName: "Tom", siteName: "bulimbapetwash.com.au", planName: "Presence", amountCents: 10000, updateUrl: "https://x/pay/a?update=1", day: 0 });
   for (const e of [e1, e2]) assert.ok(!/\u2014/.test(e.html + e.text + e.subject));
+});
+
+// ---------- admin discount ----------
+
+test("discount: percent and amount off", () => {
+  assert.equal(discountOffCents(20000, { type: "percent", value: 50 }), 10000);
+  assert.equal(discountOffCents(20000, { type: "amount", value: 10000 }), 10000);
+  assert.equal(discountOffCents(20000, undefined), 0);
+});
+
+test("discount: validation", () => {
+  assert.deepEqual(normaliseDiscount(undefined, 20000), { ok: true });
+  assert.equal(normaliseDiscount({ type: "percent", value: 150 }, 20000).ok, false);
+  assert.equal(normaliseDiscount({ type: "amount", value: 30000 }, 20000).ok, false);
+  const r = normaliseDiscount({ type: "percent", value: 50, months: 3, label: " Mates rates " }, 20000);
+  assert.deepEqual(r, { ok: true, discount: { type: "percent", value: 50, months: 3, label: "Mates rates" } });
+});
+
+test("discount: label and setup email show original, discount and new price", () => {
+  assert.equal(discountLabel({ type: "percent", value: 50, label: "Mates rates" }, (c) => `$${c / 100}`), "Mates rates (50% off)");
+  const e = setupLinkEmail({ contactName: "Jess", siteName: "Harbour Physio", planName: "Growth", monthlyCents: 20000, setupFeeCents: 0, startDate: "2026-11-10", gst: false, payUrl: "https://x/pay/a", discount: { type: "amount", value: 10000, label: "Founding client" } });
+  assert.match(e.html, /\$200\.00/);
+  assert.match(e.html, /Founding client \(\$100\.00 off\)/);
+  assert.match(e.html, /-\$100\.00/);
+  assert.match(e.html, /saving \$100\.00 every month/);
+});
+
+// ---------- setup fee discount ----------
+
+test("setup discount: validation, waiver and sub-$1 guard", () => {
+  assert.deepEqual(normaliseSetupDiscount(undefined, 200000), { ok: true });
+  assert.deepEqual(normaliseSetupDiscount({ type: "percent", value: 50 }, 0), { ok: true });
+  assert.equal(normaliseSetupDiscount({ type: "percent", value: 100 }, 200000).ok, true);
+  assert.equal(normaliseSetupDiscount({ type: "amount", value: 200000 }, 200000).ok, true);
+  assert.equal(normaliseSetupDiscount({ type: "amount", value: 199950 }, 200000).ok, false);
+  assert.equal(normaliseSetupDiscount({ type: "amount", value: 300000 }, 200000).ok, false);
+});
+
+test("setup discount: email shows original fee, discount and waiver", () => {
+  const base = { contactName: "Jess", siteName: "Harbour Physio", planName: "Presence", monthlyCents: 10000, setupFeeCents: 200000, startDate: "2026-11-10", gst: false, payUrl: "https://x/pay/a" };
+  const e = setupLinkEmail({ ...base, setupDiscount: { type: "percent", value: 25, label: "Founding client" } });
+  assert.match(e.html, /\$2,000\.00/);
+  assert.match(e.html, /-\$500\.00/);
+  assert.match(e.html, /down from \$2,000\.00/);
+  assert.match(e.html, /\$1,600\.00/);
+  const w = setupLinkEmail({ ...base, setupDiscount: { type: "percent", value: 100 }, discount: { type: "percent", value: 100 } });
+  assert.match(w.html, /website build and setup is waived/);
+  for (const m of [e, w]) assert.ok(!/\u2014/.test(m.html + m.text + m.subject));
+});
+
+test("pay link re-open reuses an open Checkout Session; a code forces a fresh one", async () => {
+  const { checkoutReuseAction } = await import("../lib/billing/state");
+  assert.equal(checkoutReuseAction("open", false), "reuse");
+  assert.equal(checkoutReuseAction("open", true), "expire_then_new");
+  assert.equal(checkoutReuseAction("complete", false), "already_paid");
+  assert.equal(checkoutReuseAction("expired", false), "new");
+  assert.equal(checkoutReuseAction(null, false), "new");
+});
+
+test("a second paid setup checkout never overwrites the live subscription", async () => {
+  const { isDuplicateSetupPayment } = await import("../lib/billing/state");
+  assert.equal(isDuplicateSetupPayment({ status: "active", stripeSubscriptionId: "sub_1" }, "sub_2"), true);
+  assert.equal(isDuplicateSetupPayment({ status: "active", stripeSubscriptionId: "sub_1" }, "sub_1"), false);
+  assert.equal(isDuplicateSetupPayment({ status: "pending" }, "sub_1"), false);
+  assert.equal(isDuplicateSetupPayment({ status: "cancelled", stripeSubscriptionId: "sub_1" }, "sub_2"), false);
+});
+
+// ---------- first payment date (4a + future date) ----------
+const NOW = Date.parse("2026-11-05T00:30:00Z"); // 10:30 Brisbane, 5 Nov
+const BASE = { contactName: "Jess", siteName: "Harbour Physio", planName: "Presence", gst: false, payUrl: "https://x/pay/a", now: NOW };
+
+test("first payment date: today to 90 days, not past", async () => {
+  const { validateFirstPaymentDate, firstChargeAt } = await import("../lib/billing/state");
+  assert.equal(validateFirstPaymentDate("2026-11-05", NOW), null);
+  assert.equal(validateFirstPaymentDate("2027-02-03", NOW), null);
+  assert.match(validateFirstPaymentDate("2027-02-04", NOW)!, /90 days/);
+  assert.match(validateFirstPaymentDate("2026-11-04", NOW)!, /past/);
+  assert.deepEqual(firstChargeAt("2026-11-05", NOW), { mode: "now" });
+  assert.equal(firstChargeAt("2026-12-01", NOW).mode, "future");
+});
+
+test("setup waived + $100/mo today: $100 due today", () => {
+  const e = setupLinkEmail({ ...BASE, monthlyCents: 10000, setupFeeCents: 200000, startDate: "2026-11-05", setupDiscount: { type: "percent", value: 100 } });
+  assert.match(e.html, /Due today[\s\S]*?\$100\.00/);
+  assert.doesNotMatch(e.html, /First payment on/);
+});
+
+test("no discounts today: setup + first month due today", () => {
+  const e = setupLinkEmail({ ...BASE, monthlyCents: 10000, setupFeeCents: 200000, startDate: "2026-11-05" });
+  assert.match(e.html, /Due today[\s\S]*?\$2,100\.00/);
+});
+
+test("setup discounted + monthly 50% for 3 months today: exactly 3 discounted charges", async () => {
+  const { couponDurationMonths, couponCovers, chargeDates } = await import("../lib/billing/state");
+  const e = setupLinkEmail({ ...BASE, monthlyCents: 10000, setupFeeCents: 200000, startDate: "2026-11-05", setupDiscount: { type: "amount", value: 100000 }, discount: { type: "percent", value: 50, months: 3 } });
+  assert.match(e.html, /Due today[\s\S]*?\$1,050\.00/);
+  const dur = couponDurationMonths(3, NOW);
+  assert.equal(dur, 3);
+  assert.deepEqual(chargeDates(NOW, 5).map((c) => couponCovers(NOW, dur, c)), [true, true, true, false, false]);
+});
+
+test("future first payment: $0 today, discount months counted from the first charge", async () => {
+  const { couponDurationMonths, couponCovers, chargeDates, firstChargeAt } = await import("../lib/billing/state");
+  const e = setupLinkEmail({ ...BASE, monthlyCents: 10000, setupFeeCents: 200000, startDate: "2026-12-20", setupDiscount: { type: "amount", value: 100000 }, discount: { type: "percent", value: 50, months: 3 } });
+  assert.match(e.html, /First payment on 20 Dec[\s\S]*?\$1,050\.00/);
+  assert.match(e.html, /Due today \(card saved only\)[\s\S]*?\$0\.00/);
+  for (const date of ["2026-11-06", "2026-12-05", "2026-12-20", "2027-02-03"]) {
+    const f = firstChargeAt(date, NOW);
+    assert.equal(f.mode, "future");
+    const at = (f as { at: number }).at;
+    for (const n of [1, 3, 6]) {
+      const dur = couponDurationMonths(n, NOW, at);
+      const covered = chargeDates(at, n + 3).map((c) => couponCovers(NOW, dur, c));
+      assert.equal(covered.filter(Boolean).length, n, `${date} x${n}`);
+      assert.equal(covered.slice(0, n).every(Boolean), true);
+    }
+  }
+});
+
+test("checkout first payment text: exact amounts, matches the email", () => {
+  const base = { monthlyCents: 20000, setupFeeCents: 400000, startDate: "2026-11-25", gst: false };
+  assert.equal(checkoutFirstPaymentText({ ...base, discount: { type: "amount", value: 10000 } }),
+    "Nothing is charged today. First payment on 25 Nov: $4,100.00 ($4,000.00 website build and setup + $100.00 first month), then monthly from that date.");
+  assert.equal(checkoutFirstPaymentText({ ...base, discount: { type: "amount", value: 10000 }, setupDiscount: { type: "percent", value: 100 } }),
+    "Nothing is charged today. First payment on 25 Nov: $100.00 (first month), then monthly from that date.");
+  const sig = { monthlyCents: 30000, setupFeeCents: 650000, startDate: "2026-11-25", gst: false, discount: { type: "amount" as const, value: 3777 }, setupDiscount: { type: "percent" as const, value: 33.33 } };
+  const txt = checkoutFirstPaymentText(sig);
+  assert.match(txt, /: \$4,595\.78 \(\$4,333\.55 website build and setup \+ \$262\.23 first month\)/);
+  assert.ok(txt.length <= CHECKOUT_TEXT_MAX);
+  assert.ok(!/[\u2013\u2014]/.test(txt));
+  const email = setupLinkEmail({ ...sig, contactName: "A", siteName: "S", planName: "Signature", payUrl: "u", now: Date.parse("2026-11-05T00:00:00Z") });
+  assert.ok(email.text.includes("First payment on 25 Nov: $4,595.78"));
+});
+
+test("GST on: setup link and checkout are blocked", async () => {
+  const { createSetupCheckout, GST_BLOCKED } = await import("../lib/billing/stripe-ops");
+  await assert.rejects(createSetupCheckout({ gst: true } as unknown as Parameters<typeof createSetupCheckout>[0], "cus_x"), new RegExp(GST_BLOCKED.slice(0, 20)));
+  const { sendSetupLink } = await import("../lib/billing/service");
+  await assert.rejects(sendSetupLink({ gst: true, checkoutSessionId: "cs_x" } as unknown as Parameters<typeof sendSetupLink>[0]), /GST billing links/);
+});
+
+test("checkout text flags promo codes when the customer can still add one", () => {
+  const t = checkoutFirstPaymentText({ monthlyCents: 20000, setupFeeCents: 0, startDate: "2026-11-25", gst: false }, true);
+  assert.equal(t, "Nothing is charged today. First payment on 25 Nov: $200.00 (first month), then monthly from that date. Amounts are before any promo code.");
 });

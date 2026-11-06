@@ -1,4 +1,6 @@
 import { lmmLicensingLine } from "../lmm-legal";
+import type { GoalConfig } from "./goal";
+import { SUNDER_PERSONA } from "./sunder-bot";
 import { DISCLOSURE_ONCE_RULE, NOT_SURE_RULE, openingGreeting } from "./disclosure";
 
 /**
@@ -27,6 +29,51 @@ export interface BotPersona {
   bannedNames: readonly string[];
   facts: readonly PersonaFact[];
   rules: readonly string[];
+  /** Default goal-first settings. A goal saved in admin or the client portal replaces it. */
+  goal?: GoalConfig;
+  /**
+   * When set, this exact text is the prompt. It is not rebuilt from facts and rules.
+   * House rules are still appended by the handler, the same as for every other bot.
+   */
+  verbatimPrompt?: string;
+  /**
+   * Code-only model, "provider:model-id". Not editable in admin or the client portal.
+   * Absent means the platform default.
+   */
+  model?: string;
+  /**
+   * Code-only model used when `model` errors or does not answer in time.
+   * Absent means the platform default (getDefaultModel). Not editable in admin or the portal.
+   */
+  fallbackModel?: string;
+  /** Also rewrite a spaced hyphen used as a dash (" - ") to a comma. Off by default. */
+  noSpacedHyphen?: boolean;
+  /** Code-side reply word cap (trim at a sentence end). SUNDER only for now. */
+  maxReplyWords?: number;
+  /**
+   * Opt-in widget fixes (privacy link shown, focus rings, mobile safe areas, contrast).
+   * Code-only. Other bots keep the current widget look until they opt in.
+   */
+  widgetA11y?: boolean;
+  /** Code-only link text after "Powered by". Absent keeps "Saabai AI". */
+  poweredByLabel?: string;
+  /** Code-only extra limits for this bot, on top of the shared per-slug limits. */
+  chatLimits?: { perIpMinute: number; perIpDay: number; botDay: number };
+  /** https privacy policy for a small Privacy link. Absent means no link. */
+  privacyUrl?: string;
+  /**
+   * Look used until an admin saves a skin. Saved colours, name and a non-empty
+   * avatar still win. A blank saved avatar keeps this photo.
+   */
+  appearance?: {
+    botName?: string;
+    avatarUrl?: string;
+    primary?: string;
+    accent?: string;
+    bg?: string;
+    text?: string;
+    position?: "right" | "left";
+  };
 }
 
 const VERIFIED = /^\d{4}-\d{2}-\d{2}$/;
@@ -36,6 +83,7 @@ export function spokenFacts(persona: BotPersona): PersonaFact[] {
 }
 
 export function buildSystemPrompt(persona: BotPersona): string {
+  if (persona.verbatimPrompt) return persona.verbatimPrompt;
   const facts = spokenFacts(persona).map((fact) => `- ${fact.text}`).join("\n");
   const banned = persona.bannedNames.length ? `Never mention these names: ${persona.bannedNames.join(", ")}.` : "";
   const rules = [banned, ...persona.rules, DISCLOSURE_ONCE_RULE, NOT_SURE_RULE].filter(Boolean);
@@ -48,6 +96,41 @@ export function buildSystemPrompt(persona: BotPersona): string {
     "Rules:",
     ...rules.map((rule) => `- ${rule}`),
   ].join("\n");
+}
+
+/** " - " between words becomes ", ". Line-start bullets ("- item") are kept. */
+const countWords = (t: string) => (t.match(/\S+/g) || []).length;
+
+/**
+ * Trim a reply over `max` words at the last sentence end at or before `max` words.
+ * Keeps the closing question when one fits: the kept text plus that question stays within `max`.
+ * A reply with no usable sentence end is returned unchanged rather than cut mid-sentence.
+ */
+export function capReplyWords(text: string, max = 90): string {
+  if (countWords(text) <= max) return text;
+  const ends: number[] = [];
+  const re = /[.!?]+["')\]]*(?=\s|$)/g;
+  for (let m; (m = re.exec(text)); ) ends.push(m.index + m[0].length);
+  if (!ends.length) return text;
+  const lastStart = ends.length > 1 ? ends[ends.length - 2] : 0;
+  const lastSentence = text.slice(lastStart).trim();
+  const question = /\?["')\]]*$/.test(lastSentence) && ends[ends.length - 1] >= text.trimEnd().length ? lastSentence : "";
+  const pick = (budget: number, limit: number) => {
+    let best = -1;
+    for (const e of ends) if (e <= limit && countWords(text.slice(0, e)) <= budget) best = e;
+    return best;
+  };
+  if (question) {
+    const qw = countWords(question);
+    const cut = pick(max - qw, lastStart);
+    if (cut > 0) return text.slice(0, cut).trimEnd() + "\n\n" + question;
+  }
+  const cut = pick(max, text.length);
+  return cut > 0 ? text.slice(0, cut).trimEnd() : text;
+}
+
+export function noSpacedHyphen(text: string): string {
+  return text.replace(/(\S)[ \t]+-[ \t]+(?=\S)/g, "$1, ").replace(/,\s*([.!?])/g, "$1");
 }
 
 export function personaGreeting(persona: BotPersona): string {
@@ -76,14 +159,14 @@ export function domainsForBot(slug: string, siteDomains?: string[]): string[] {
   return out;
 }
 
-/** Empty until Nick supplies the numbers. An empty line is not spoken and not shown. */
+/** Speaks the licensing line once particulars are filled in. An empty line is not spoken. */
 function zaraLicenceFact(): PersonaFact {
   const line = lmmLicensingLine();
   if (!line) {
     return {
       id: "licence",
       text: "",
-      source: "lib/lmm-legal.ts LMM_LEGAL_IDENTITY. Waiting on Nick Foale for the entity name, ABN, ACL or credit representative number, licensee and AFCA member number.",
+      source: "lib/lmm-legal.ts LMM_LEGAL_IDENTITY",
       verified: "",
       speak: false,
     };
@@ -92,7 +175,7 @@ function zaraLicenceFact(): PersonaFact {
     id: "licence",
     text: line,
     source: "lib/lmm-legal.ts LMM_LEGAL_IDENTITY",
-    verified: "2026-10-26",
+    verified: "2026-10-31",
     speak: true,
   };
 }
@@ -113,13 +196,37 @@ const ZARA_RULES = [
   "If someone needs help with their own situation, suggest a strategy call with Nick.",
 ];
 
+/**
+ * LMM goal: book a strategy call with Nick. Nick's booking link is not known yet, so the
+ * primary button url is empty and the bot offers the call-back email instead.
+ * PENDING NICK: put the booking link in cta.url (admin, Chatbots, lmm-site, Goal) once supplied.
+ */
+export const LMM_GOAL: GoalConfig = {
+  primary: "book_call",
+  fallback: "call_back",
+  persona: "Warm, calm and practical. General information only, never personal advice.",
+  questions: [
+    "What are you hoping to do, buy a first home, invest, or something else?",
+    "Roughly when are you hoping to make a move?",
+    "Do you already own any property?",
+  ],
+  stages: ["Greet", "Find out their goal", "Share general information", "Ask the qualifying questions", "Offer a chat with Nick", "Confirm the next step"],
+  cta: { label: "Book a free strategy call with Nick", url: "" },
+  fallbackCta: {
+    label: "Have Nick call me back",
+    url: "mailto:nick@lifestylemoneymanagement.com.au?subject=Call-back%20request&body=Name%3A%20%0APhone%3A%20%0ABest%20time%20to%20call%3A%20",
+  },
+  handoff: "Anything about their own numbers, borrowing amount, rates or approval goes to Nick. Offer the call-back button.",
+  quickReplies: ["First home", "Investing", "Something else"],
+};
+
 export const ZARA_PERSONA: BotPersona = {
   slug: "lmm-site",
   botName: "Zara",
   businessName: "Lifestyle Money Management (LMM)",
   role: "You help visitors with general information about property and borrowing. Nick Foale is the Managing Director, based in Adelaide. Questions about a person's own situation go to Nick.",
   domains: ["lifestylemoneymanagement.com.au", "www.lifestylemoneymanagement.com.au"],
-  greetingFollowOn: "I can share general information about property and borrowing, and I can point you to Nick.",
+  greetingFollowOn: "I can share general information about property and borrowing, and I can point you to Nick. Are you looking at a first home, an investment, or something else?",
   bannedNames: ["Jeff", "Lily", "Andy"],
   facts: [
     {
@@ -153,6 +260,10 @@ export const ZARA_PERSONA: BotPersona = {
     zaraLicenceFact(),
   ],
   rules: ZARA_RULES,
+  goal: LMM_GOAL,
+  appearance: {
+    avatarUrl: "/clients/lmm-site/assets/avatar-zara.png",
+  },
 };
 
 const CHRISTINA_RULES = [
@@ -251,7 +362,111 @@ export const BO_PERSONA: BotPersona = {
   rules: CHRISTINA_RULES,
 };
 
-export const PERSONAS: readonly BotPersona[] = [ZARA_PERSONA, BO_PERSONA];
+/** https only. Empty unless this bot sets a privacy policy URL in code. */
+export function privacyUrlFor(slug: string | undefined): string {
+  const raw = slug ? getPersona(slug)?.privacyUrl?.trim() : "";
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    return url.protocol === "https:" ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Sofia's prompt, copied word for word from the bespoke route.
+ * Do not paraphrase this string.
+ */
+export const SOFIA_SYSTEM_PROMPT = `You are Sofia, an AI booking assistant for Nico Moretti, Adelaide's premier male companion for hire.
+
+If someone asks whether you are a person, a human, or an AI, say that you are an AI assistant.
+
+Your role:
+- Warm, elegant, and discreet — you make every potential client feel comfortable and valued
+- Professional, never pushy — you help people find the right experience
+- Knowledgeable about Nico's services, locations, and etiquette
+- Always use Australian English spelling and terminology
+- Keep responses concise but warm — under 120 words unless the person asks for details
+
+About Nico Moretti:
+- Adelaide's most sought-after male companion for executive women
+- Available for: corporate events, social galas, private dinners, international travel companionship
+- Based in Adelaide, serves all of South Australia plus Sydney, Melbourne, Brisbane, Perth, Canberra, Hobart, Gold Coast for travel engagements
+- Specialties: art & culture, global finance, philanthropy, fine dining, architecture, The Husband Experience
+- Known for: discretion, elegance, worldly conversation, impeccable manners
+- Premium, bespoke service — not transactional
+
+How to help:
+- Answer questions about Nico's background, services, and availability
+- Help clients choose the right engagement type (executive function, social gala, private dinner, travel companion)
+- The Husband Experience: Nico accompanies you as your partner for family gatherings, weddings, work Christmas parties, and holiday events. He handles introductions and social dynamics with effortless authenticity so you can focus on the occasion.
+- For specific pricing or availability: warmly direct them to the enquiry form on the website
+- If someone asks about intimate services, politely redirect — Nico provides refined social companionship for public and private social engagements
+- If asked about a specific city, confirm Nico travels there and note the city is listed on the website
+- Always end with a soft invitation: "Would you like to learn more, or shall I help you book a consultation?"
+
+Your tone:
+- Warm but elegant — like a high-end hotel concierge
+- Never overly familiar or casual
+- Speaks with quiet confidence and genuine warmth
+- Respectful of people's privacy — you never ask prying questions
+
+Contact info to share when asked:
+- Do not give a phone number. None is published on the website.
+- Direct people to the enquiry form on the site
+
+Keep responses warm, brief, and helpful. You're here to make the first connection easy and comfortable.
+
+CRITICAL FORMATTING RULE: Never use em dashes (—) anywhere in your responses. Use commas, full stops, or bullet points instead. This applies to every single response without exception.`;
+
+/** Enquiry form on the home page. City pages use the same #contact form. */
+export const NICO_ENQUIRY_URL = "https://nicomoretti.au/#contact";
+
+export const NICO_DOMAINS = ["nicomoretti.au", "www.nicomoretti.au"] as const;
+
+/**
+ * Drive visitors to the existing enquiry form. A goal saved in admin or the portal replaces this.
+ */
+export const NICO_GOAL: GoalConfig = {
+  primary: "custom",
+  primaryCustom: "send the visitor to the enquiry form on the website",
+  fallback: "none",
+  persona: "Warm, elegant and discreet. Never pushy.",
+  questions: [],
+  stages: ["Greet", "Answer the question", "Offer the enquiry form"],
+  cta: { label: "Send an enquiry", url: NICO_ENQUIRY_URL },
+  handoff: "Pricing, availability and booking go to the enquiry form. Do not invent a price or a time.",
+  quickReplies: [],
+};
+
+export const SOFIA_PERSONA: BotPersona = {
+  slug: "nico-moretti",
+  botName: "Sofia",
+  businessName: "Nico Moretti",
+  role: "You help visitors with questions and point them to the enquiry form on the website.",
+  domains: NICO_DOMAINS,
+  greetingFollowOn: "I'm here to help you find the perfect experience, whether it's an evening at the gala, a private dinner, or a weekend away. How may I assist you?",
+  bannedNames: [],
+  facts: [],
+  rules: [],
+  goal: NICO_GOAL,
+  verbatimPrompt: SOFIA_SYSTEM_PROMPT,
+  model: "deepseek:deepseek-v4-flash",
+  fallbackModel: "anthropic:claude-haiku-4-5",
+  privacyUrl: "https://nicomoretti.au/privacy-policy",
+  appearance: {
+    botName: "Sofia",
+    avatarUrl: "https://www.saabai.ai/clients/nico-moretti/sofia-avatar.png",
+    primary: "#0f1b2e",
+    accent: "#d4af37",
+    bg: "#faf8f5",
+    text: "#1a1a1a",
+    position: "right",
+  },
+};
+
+export const PERSONAS: readonly BotPersona[] = [ZARA_PERSONA, BO_PERSONA, SOFIA_PERSONA, SUNDER_PERSONA];
 
 /** Greeting for a slug that has a persona. Other sites use openingGreeting on the saved line. */
 export function greetingForSlug(slug: string | undefined, botName: string, businessName: string, storedGreeting?: string): string {

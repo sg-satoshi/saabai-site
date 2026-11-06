@@ -3,4 +3,7 @@
 <url><loc>https://www.lifestylemoneymanagement.com.au/</loc><priority>1</priority></url>
 <url><loc>https://www.lifestylemoneymanagement.com.au/privacy</loc><priority>0.3</priority></url>
 <url><loc>https://www.lifestylemoneymanagement.com.au/complaints</loc><priority>0.3</priority></url>
+<url><loc>https://www.lifestylemoneymanagement.com.au/calculators/borrowing-power</loc><priority>0.7</priority></url>
+<url><loc>https://www.lifestylemoneymanagement.com.au/calculators/serviceability</loc><priority>0.7</priority></url>
+<url><loc>https://www.lifestylemoneymanagement.com.au/calculators/repayments</loc><priority>0.7</priority></url>
 </urlset>

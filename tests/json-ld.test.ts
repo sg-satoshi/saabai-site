@@ -26,7 +26,7 @@ import { publicPageMeta } from "../lib/seo-pages";
 import { BRISBANE, GOLD_COAST } from "../lib/location-data";
 import { websiteCareFaqAnswer } from "../lib/website-tiers";
 
-const PUBLISHED_PRICES = new Set(["0", "100", "200", "299", "300", "497", "1497", "2000", "3500"]);
+const PUBLISHED_PRICES = new Set(["0", "100", "200", "300", "497", "1497", "2000", "3500"]);
 
 function parseLd(data: unknown) {
   const raw = JSON.stringify(data).replace(/</g, "\\u003c");
@@ -62,7 +62,7 @@ test("organization JSON-LD parses and carries the published entity facts", () =>
   assert.equal(org.url, "https://www.saabai.ai");
   assert.equal(org.logo, `${SITE_URL}/brand/saabai-logo.png`);
   assert.equal(org.email, NAP.email);
-  assert.equal(org.taxID, "ABN 71 889 082 572");
+  assert.equal(org.legalName, "Saabai Pty Ltd");
   assert.deepEqual(org.sameAs, [...SAME_AS]);
   assert.equal(org.telephone, undefined);
   assert.deepEqual(org.address, POSTAL_ADDRESS);
@@ -107,7 +107,8 @@ test("service and FAQ JSON-LD parses, with no ratings, reviews or unpublished pr
   const lex = parseLd(lexServiceSchema);
   assert.equal(lex["@type"], "Service");
   assert.equal(lex.name, "Lex");
-  assert.equal((lex.offers as { price: string }).price, "299");
+  assert.equal((lex.offers as { price: string }).price, "0");
+  assert.doesNotMatch(JSON.stringify(lex), /299|nlimited/);
 
   const sites = parseLd(websitesServiceNode);
   assert.equal(sites.name, "Saabai website care plans");
@@ -142,7 +143,7 @@ test("schema prices are copied from the pages that publish them", () => {
   const blueprint = readFileSync("lib/blueprint.ts", "utf8");
   const blueprintPage = readFileSync("app/blueprint/page.tsx", "utf8");
   const careAnswer = websiteCareFaqAnswer();
-  assert.match(legal, /\$299/);
+  assert.doesNotMatch(legal, /\$299|price: 299/);
   assert.match(websites, /websiteCareFaqAnswer/);
   assert.match(websites, /WEBSITE_TIERS/);
   assert.match(readFileSync("lib/seo-entity.ts", "utf8"), /WEBSITE_TIERS/);
@@ -230,7 +231,8 @@ test("about page publishes AboutPage, Person and Organization JSON-LD", () => {
   assert.ok(org, "Organization node");
   assert.equal(org.name, NAP.name);
   assert.equal(org.email, NAP.email);
-  assert.equal(org.taxID, NAP.taxID);
+  assert.equal(org.legalName, "Saabai Pty Ltd");
+  assert.equal(org.taxID, "44703735264");
   assert.equal(org.telephone, undefined);
   assert.deepEqual(org.address, POSTAL_ADDRESS);
   assert.equal((org.address as Record<string, unknown>).streetAddress, undefined);
@@ -261,7 +263,7 @@ test("about page publishes AboutPage, Person and Organization JSON-LD", () => {
   assert.doesNotMatch(page, /<h[1-6][^>]*>[^<]*48 hours/i);
   assert.doesNotMatch(page, /(?<!with)in 48 hours/i);
   assert.doesNotMatch(page, /Blueprint is free|your Blueprint is free/i);
-  assert.doesNotMatch(page, /free trial|14-day trial/i);
+  assert.doesNotMatch(page, /(?<!60-day )free trial|14-day trial/i);
   assert.doesNotMatch(page, /24\/7 AI quoting|answers your calls|get Lachie on your number/i);
 });
 
@@ -281,7 +283,8 @@ test("footer, contact, terms, privacy and about share one NAP and publish no pho
   }
   assert.equal(NAP.name, "Saabai");
   assert.equal(NAP.email, "hello@saabai.ai");
-  assert.equal(NAP.abn, "71 889 082 572");
+  assert.equal(NAP.legalName, "Saabai Pty Ltd");
+  assert.equal(NAP.acn, "703 735 264");
   assert.equal(NAP.addressLine, "Merrimac QLD 4226, Australia");
   assert.equal(POSTAL_ADDRESS.addressLocality, "Merrimac");
   assert.equal(POSTAL_ADDRESS.addressRegion, "QLD");

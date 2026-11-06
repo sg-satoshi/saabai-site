@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "./Logo";
+import { MobileMenu } from "./MobileMenu";
 import PoweredBySaabai from "../../components/PoweredBySaabai";
 
 export function PageShell({ children }: { children: React.ReactNode }) {
@@ -18,12 +19,24 @@ export function PageShell({ children }: { children: React.ReactNode }) {
             <Link href="/sites/cycle-repair/faq" className="hover:text-brand transition-colors">FAQ</Link>
             <Link href="/sites/cycle-repair/contact" className="hover:text-brand transition-colors">Contact</Link>
           </div>
+          <div className="flex items-center gap-3">
           <a
             href="tel:0405225721"
             className="bg-brand text-brand-foreground px-4 py-2 rounded-md font-semibold text-xs tracking-wide hover:bg-brand/90 transition-colors"
           >
             0405 225 721
           </a>
+          <MobileMenu
+            links={[
+              { href: "/sites/cycle-repair#services", label: "Services" },
+              { href: "/sites/cycle-repair/gold-coast", label: "Gold Coast" },
+              { href: "/sites/cycle-repair/e-bike-repair-gold-coast", label: "E-bikes" },
+              { href: "/sites/cycle-repair/puncture-repair-gold-coast", label: "Punctures" },
+              { href: "/sites/cycle-repair/faq", label: "FAQ" },
+              { href: "/sites/cycle-repair/contact", label: "Contact" },
+            ]}
+          />
+          </div>
         </nav>
       </header>
       {children}

@@ -6,8 +6,8 @@
  * and the customer can still type one on the Stripe page).
  */
 import { resolvePayToken, getSiteBilling, saveSiteBilling } from "../../../lib/billing/store";
-import { isLinkExpired } from "../../../lib/billing/state";
-import { billingPortalUrl, createSetupCheckout, ensureCustomer, siteUrl, stripeConfigured } from "../../../lib/billing/stripe-ops";
+import { checkoutReuseAction, isLinkExpired } from "../../../lib/billing/state";
+import { billingPortalUrl, createSetupCheckout, ensureCustomer, expireCheckoutSession, getCheckoutSession, siteUrl, stripeConfigured } from "../../../lib/billing/stripe-ops";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,9 +37,18 @@ export async function GET(req: Request, ctx: { params: Promise<{ token: string }
       return page("This link has expired", "<p>Payment links last 7 days. Reply to the email and we'll send a fresh one.</p>", 410);
     }
     if (rec.status !== "pending") return page("You're all set", "<p>This site's billing is already set up. Nothing more to do.</p>");
+    // Reuse a still-open session: stops double subscriptions from two tabs and coupon pile-up.
+    if (rec.checkoutSessionId) {
+      const prev = await getCheckoutSession(rec.checkoutSessionId);
+      const act = checkoutReuseAction(prev?.status, !!code);
+      if (act === "already_paid") return page("Payment received", "<p>Thanks, your payment went through. We're finishing the setup now.</p>");
+      if (act === "reuse" && prev?.url) return Response.redirect(prev.url, 303);
+      if (act === "expire_then_new") await expireCheckoutSession(rec.checkoutSessionId);
+    }
     const customerId = await ensureCustomer(rec);
-    if (customerId !== rec.stripeCustomerId) await saveSiteBilling({ ...rec, stripeCustomerId: customerId });
-    return Response.redirect(await createSetupCheckout({ ...rec, stripeCustomerId: customerId }, customerId, code), 303);
+    const session = await createSetupCheckout({ ...rec, stripeCustomerId: customerId }, customerId, code);
+    await saveSiteBilling({ ...rec, stripeCustomerId: customerId, checkoutSessionId: session.id });
+    return Response.redirect(session.url, 303);
   } catch (e) {
     console.error("[pay]", e);
     return page("Something went sideways", "<p>We couldn't open the secure payment page. Try again in a minute, or reply to the email.</p>", 500);

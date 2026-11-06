@@ -1,7 +1,8 @@
 "use client";
 import { notify, confirmDialog } from "../ui/Feedback";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { SubmissionKey, httpOutcome, stripeErrorOutcome, type SubmitOutcome } from "../../../lib/billing/request-id";
 import AdminShell from "../AdminSidebar";
 import { CardElement, Elements, useStripe, useElements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
@@ -37,7 +38,7 @@ const INTERVAL_LABEL: Record<Interval, string> = {
 };
 
 const FEE_LABEL: Record<FeeKey, string> = {
-  setup: "Setup fee",
+  setup: "Website build and setup",
   recurring: "Recurring",
   one_time: "One-time",
 };
@@ -82,7 +83,7 @@ function PriceBlock({ p }: { p: CatalogueProduct }) {
   } else {
     const per = p.interval ? INTERVAL_LABEL[p.interval] : "month";
     if (p.billingType === "setup_monthly") {
-      rows.push({ label: "Setup", fee: feeDisplay("setup", p.setupFee || 0, discounts), suffix: "" });
+      rows.push({ label: "Website build and setup", fee: feeDisplay("setup", p.setupFee || 0, discounts), suffix: "" });
     }
     rows.push({ label: p.billingType === "setup_monthly" ? "Then" : "", fee: feeDisplay("recurring", p.recurringAmount || 0, discounts), suffix: "/" + per });
   }
@@ -267,6 +268,10 @@ function lineSuffix(line: QuoteLine, interval: Interval | null): string {
   return "/" + (interval ? INTERVAL_LABEL[interval] : "month");
 }
 
+function keyed<T extends object>(k: SubmissionKey, payload: T): T & { requestId: string } {
+  return { ...payload, requestId: k.key(payload) };
+}
+
 function SellPanel({ product, onClose, onSold }: { product: CatalogueProduct; onClose: () => void; onSold: () => void }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -280,6 +285,10 @@ function SellPanel({ product, onClose, onSold }: { product: CatalogueProduct; on
   const [success, setSuccess] = useState<string | null>(null);
   const [linkUrl, setLinkUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  // One Stripe idempotency id per sale submission (required by the sell routes). Same id only for an
+  // identical retry; renewed after every outcome, so a genuine second sale is never replayed.
+  const chargeKey = useRef(new SubmissionKey());
+  const linkKey = useRef(new SubmissionKey());
 
   const fetchQuote = useCallback(async (withCode: string) => {
     try {
@@ -306,30 +315,35 @@ function SellPanel({ product, onClose, onSold }: { product: CatalogueProduct; on
     if (!email.trim()) { setError("Customer email is required"); return; }
     if (!stripe || !elements) { setError("Payment form is still loading"); return; }
     setBusy(true);
+    let outcome: SubmitOutcome = "ambiguous";
     try {
       const res = await fetch("/api/admin/sell/charge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: product.id, customerName: name.trim(), customerEmail: email.trim(), code: code.trim() || undefined }),
+        body: JSON.stringify(keyed(chargeKey.current, { productId: product.id, customerName: name.trim(), customerEmail: email.trim(), code: code.trim() || undefined })),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Charge failed"); setBusy(false); return; }
+      if (!res.ok) { outcome = httpOutcome(res.status); setError(data.error || "Charge failed"); setBusy(false); return; }
       if (data.clientSecret) {
         const { error: confErr, paymentIntent } = await stripe.confirmCardPayment(data.clientSecret, {
           payment_method: { card: elements.getElement(CardElement)! },
         });
-        if (confErr) setError(confErr.message || "Payment failed");
+        if (confErr) { outcome = stripeErrorOutcome(confErr); setError(confErr.message || "Payment failed"); }
         else if (paymentIntent && (paymentIntent.status === "succeeded" || paymentIntent.status === "processing")) {
+          outcome = "success";
           setSuccess("Payment successful. Client account created and welcome email sent.");
           onSold();
         } else setError(`Payment status: ${paymentIntent?.status}`);
       } else {
+        outcome = "success";
         setSuccess("Subscription started (no upfront charge). Client account created.");
         onSold();
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
+      // Keep the id after ambiguous failures (Stripe may have charged); renew on success or a definite 4xx/decline.
+      chargeKey.current.settle(outcome);
       setBusy(false);
     }
   }
@@ -338,18 +352,20 @@ function SellPanel({ product, onClose, onSold }: { product: CatalogueProduct; on
     setError(null); setSuccess(null); setLinkUrl(null); setCopied(false);
     if (!email.trim()) { setError("Customer email is required"); return; }
     setBusy(true);
+    let outcome: SubmitOutcome = "ambiguous";
     try {
       const res = await fetch("/api/admin/sell/link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: product.id, customerName: name.trim(), customerEmail: email.trim(), code: code.trim() || undefined }),
+        body: JSON.stringify(keyed(linkKey.current, { productId: product.id, customerName: name.trim(), customerEmail: email.trim(), code: code.trim() || undefined })),
       });
       const data = await res.json();
-      if (!res.ok) setError(data.error || "Could not create link");
-      else setLinkUrl(data.url);
+      if (!res.ok) { outcome = httpOutcome(res.status); setError(data.error || "Could not create link"); }
+      else { outcome = "success"; setLinkUrl(data.url); }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
+      linkKey.current.settle(outcome);
       setBusy(false);
     }
   }
@@ -674,7 +690,7 @@ export default function ProductsClient({ publishableKey }: { publishableKey: str
 
             <Field label="Price type">
               <select style={inputStyle} value={form.billingType} onChange={(e) => patch({ billingType: e.target.value as BillingType })}>
-                <option value="setup_monthly">Setup fee + recurring</option>
+                <option value="setup_monthly">Website build and setup + recurring</option>
                 <option value="recurring">Recurring only</option>
                 <option value="one_time">One-time</option>
               </select>
@@ -689,7 +705,7 @@ export default function ProductsClient({ publishableKey }: { publishableKey: str
             {form.billingType !== "one_time" && (
               <>
                 {form.billingType === "setup_monthly" && (
-                  <Field label="Setup fee (AUD, one-off)">
+                  <Field label="Website build and setup (AUD, one-off)">
                     <input style={inputStyle} type="number" value={form.setup} onChange={(e) => patch({ setup: e.target.value })} placeholder="e.g. 1000" />
                   </Field>
                 )}

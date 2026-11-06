@@ -1,0 +1,78 @@
+/* SUNDER confirm page (Designer r3b). Scoped to .sc so it cannot leak. */
+@font-face{font-family:Archivo;src:url(/clients/sunder/fonts/Archivo.ttf);font-weight:100 900;font-stretch:62% 125%;font-display:swap}
+@font-face{font-family:"Inter Tight";src:url(/clients/sunder/fonts/InterTight.ttf);font-weight:100 900;font-display:swap}
+.sc *,.sc{box-sizing:border-box;margin:0}
+.sc{font-family:'Inter Tight',sans-serif;-webkit-font-smoothing:antialiased}
+.sc .cap{font-family:Archivo;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;line-height:.92}
+.sc .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:10px;font-weight:700;font-size:16px;text-decoration:none;border:0}
+.sc .eyebrow{font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.sc{background:#f2f2ee;color:#0d0d0d}
+.sc .hero{max-width:1180px;margin:0 auto;padding:32px 56px 80px}
+.sc .hero .top img{height:32px}
+.sc .grid{display:grid;grid-template-columns:1fr 440px;gap:56px;align-items:center;margin-top:48px}
+.sc h1{font-size:104px}
+.sc .hl{background:#d4ff3a;padding:0 10px}
+.sc .sub{font-size:21px;line-height:1.45;margin-top:22px;max-width:540px}
+.sc .pass{background:#0d0d0d;color:#f2f2ee;border-radius:22px;padding:28px;position:relative;overflow:hidden;transform:rotate(2deg);box-shadow:0 30px 60px #0d0d0d33}
+.sc .pass .row{display:flex;justify-content:space-between;align-items:center}
+.sc .pass img.m{height:44px}
+.sc .pass .t{font-family:Archivo;font-weight:900;text-transform:uppercase;font-size:44px;color:#d4ff3a;margin:26px 0 6px;line-height:.95}
+.sc .pass .stub{border-top:2px dashed #f2f2ee44;margin-top:24px;padding-top:16px;font-size:13px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:#f2f2eeaa}
+.sc .peek{position:absolute;right:-40px;bottom:-70px;height:300px;transform:rotate(18deg);opacity:.9}
+.sc .dark{background:#0d0d0d;color:#f2f2ee}
+.sc .in{max-width:1180px;margin:0 auto;padding:72px 56px}
+.sc .dark .eyebrow{color:#d4ff3a}
+.sc .dark h2{font-size:56px;margin:12px 0 32px}
+.sc .perks{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.sc .perk{border:1px solid #f2f2ee26;border-radius:16px;padding:26px}
+.sc .perk .n{font-family:Archivo;font-weight:900;color:#d4ff3a;font-size:15px;letter-spacing:.12em}
+.sc .perk h3{font-family:Archivo;font-weight:800;text-transform:uppercase;font-size:24px;margin:10px 0}
+.sc .perk p{font-size:16px;line-height:1.5;color:#f2f2eecc}
+.sc .tease{margin-top:40px;display:grid;grid-template-columns:1fr 420px;gap:40px;align-items:center;border-top:1px solid #f2f2ee26;padding-top:40px}
+.sc .tease h3{font-family:Archivo;font-weight:900;text-transform:uppercase;font-size:48px;color:#d4ff3a;line-height:.95}
+.sc .tease p{font-size:18px;line-height:1.5;margin-top:14px;color:#f2f2eecc}
+.sc .court{position:relative;height:320px;border:2px solid #f2f2ee33;border-radius:18px;overflow:hidden;background:#141414}
+.sc .court:before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:3px dashed #d4ff3a88}
+.sc .court img{position:absolute;height:270px;top:22px;left:50%;transform:translateX(-50%) rotate(-12deg);filter:brightness(.35) blur(1.5px)}
+.sc .court .tag{position:absolute;bottom:14px;left:0;right:0;text-align:center;font:800 13px Archivo;text-transform:uppercase;letter-spacing:.16em;color:#d4ff3a}
+.sc .share{background:#d4ff3a;color:#0d0d0d;border-radius:18px;padding:36px 40px;display:flex;justify-content:space-between;align-items:center;gap:24px;margin-top:56px}
+.sc .share h2{font-size:46px;margin:0}
+.sc .share p{font-size:17px;margin-top:8px}
+.sc .share .btn{white-space:nowrap;background:#0d0d0d;color:#d4ff3a}
+.sc .link{display:flex;gap:10px;align-items:center}
+.sc .link code{background:#0d0d0d14;padding:14px 16px;border-radius:10px;font:600 15px 'Inter Tight'}
+.sc .foot{margin-top:36px;font-size:13px;color:#f2f2ee99;display:flex;justify-content:space-between;gap:12px}
+.sc .foot a{color:inherit}
+@media(max-width:600px){.sc .hero{padding:20px 20px 56px}.sc .hero .top img{height:26px}.sc .grid{grid-template-columns:1fr;gap:36px;margin-top:24px}.sc h1{font-size:58px}.sc .sub{font-size:18px}.sc .pass{transform:rotate(1deg)}.sc .pass .t{font-size:34px}.sc .peek{height:220px;bottom:-50px}.sc .in{padding:48px 20px}.sc .dark h2{font-size:38px}.sc .perks{grid-template-columns:1fr;gap:14px}.sc .tease{grid-template-columns:1fr;gap:24px}.sc .tease h3{font-size:36px}.sc .court{height:260px}.sc .court img{height:220px}.sc .share{flex-direction:column;align-items:stretch;padding:26px;margin-top:40px}.sc .share h2{font-size:34px}.sc .link{flex-direction:column;align-items:stretch}.sc .link code{text-align:center}.sc .foot{flex-direction:column}}
+.se *,.se{box-sizing:border-box;margin:0}
+.se{font-family:'Inter Tight',sans-serif;-webkit-font-smoothing:antialiased}
+.se .cap{font-family:Archivo;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;line-height:.92}
+.se .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:10px;font-weight:700;font-size:16px;text-decoration:none;border:0}
+.se .eyebrow{font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.se{min-height:100vh;background:#0d0d0d;color:#f2f2ee;padding:28px 20px}
+.se img.lk{height:24px}
+.se h1{font-size:46px;color:#d4ff3a;margin:36px 0 14px}
+.se p{font-size:17px;line-height:1.5;color:#f2f2eecc}
+.se .btn{display:flex;max-width:420px;background:#d4ff3a;color:#0d0d0d;margin-top:24px;width:100%}
+.se small{display:block;margin-top:16px;color:#f2f2ee88;font-size:14px}
+.sc .toast{margin-left:10px;font-size:14px;font-weight:700}
+.sc.pre .btn{background:#0d0d0d;color:#d4ff3a;margin-top:28px;cursor:pointer}
+.sc.pre .btn:focus-visible{outline-color:#0d0d0d}
+.se .in2{max-width:560px;margin:0 auto}
+body:has(.sc),body:has(.se){margin:0;background:#f2f2ee}body:has(.se){background:#0d0d0d}
+.sc :focus-visible,.se :focus-visible{outline:2px solid #d4ff3a;outline-offset:3px}
+.sc .share :focus-visible{outline-color:#0d0d0d}
+.sc .foot a{display:inline-block;padding:6px 0}
+.se h1.off{margin-top:36px}
+.sc button.btn{font-family:inherit;font-weight:700;border:0}
+
+.sc-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* Referral pass: keep the label clear of the paddle graphic. */
+.sc .pass .row{position:relative;z-index:1;justify-content:flex-start;gap:14px}
+.sc .pass .t,.sc .pass .stub{position:relative;z-index:1}
+.se .ref-form{margin-top:28px;max-width:420px}
+.se .ref-form input[type=email]{width:100%;min-height:52px;padding:0 16px;border-radius:10px;border:1px solid #f2f2ee33;background:#161616;color:#f2f2ee;font:500 17px 'Inter Tight',sans-serif}
+.se .ref-form input[type=email]:focus{outline:2px solid #d4ff3a;outline-offset:2px;border-color:#d4ff3a}
+.se .ref-form .btn{margin-top:14px;cursor:pointer;font-family:inherit}
+.se .ref-form .btn:disabled{opacity:.6}
+.se .ref-ok{margin-top:28px;max-width:420px;border:1px solid #d4ff3a55;border-radius:12px;padding:18px;color:#f2f2ee}

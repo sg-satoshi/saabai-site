@@ -1,5 +1,6 @@
 import { list } from "@vercel/blob";
 import { getSiteBySlug, type SiteConfig } from "../site-registry";
+import { SUNDER_SLUG, sunderGeoProfile } from "../sunder-factory-seed";
 import type { GeoProfile } from "./index";
 
 /**
@@ -80,6 +81,9 @@ async function storedPages(slug: string): Promise<GeoProfile["pages"]> {
 export async function resolveGeoProfile(slug: string): Promise<GeoProfile | null> {
   if (CODED_PROFILES[slug]) return CODED_PROFILES[slug];
   const site = await getSiteBySlug(slug).catch(() => null);
-  if (!site || site.status === "archived") return null;
-  return fromRegistry(site, await storedPages(slug));
+  if (site?.status === "archived") return null;
+  if (site) return fromRegistry(site, await storedPages(slug));
+  // Shell is in the repo until Site Factory creates the Redis record.
+  if (slug === SUNDER_SLUG) return sunderGeoProfile();
+  return null;
 }

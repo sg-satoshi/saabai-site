@@ -1,3 +1,4 @@
+import { parseRedisJson } from "./redis-json";
 import { Redis } from "@upstash/redis";
 
 const redis = Redis.fromEnv();
@@ -39,5 +40,5 @@ export async function logAuditEvent(
 
 export async function getAuditEvents(limit = 100): Promise<AuditEvent[]> {
   const events = await redis.lrange("lex:audit:events", 0, limit - 1);
-  return events.map(e => JSON.parse(e as string));
+  return events.map((e) => parseRedisJson<AuditEvent>(e)).filter((e): e is AuditEvent => e !== null);
 }

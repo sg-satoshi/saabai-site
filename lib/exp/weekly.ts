@@ -16,7 +16,7 @@ export type WeekInput = {
   week: { views: number; conversions: number; perVariant: Record<string, { views: number; conversions: number }> };
   pendingSuggestions: number;
 };
-export type WeekNote = { id: string; name: string; views: number; conversions: number; rate: number; variants: WeekVariant[]; verdictLine: string; next: string; adminUrl: string };
+export type WeekNote = { id: string; name: string; siteKey: string; siteLabel: string; views: number; conversions: number; rate: number; variants: WeekVariant[]; verdictLine: string; next: string; adminUrl: string };
 
 const pct = (x: number, dp = 1) => `${(x * 100).toFixed(dp)}%`;
 const nf = (n: number) => n.toLocaleString("en-AU");
@@ -48,19 +48,19 @@ export function nextStep(i: WeekInput): string {
   return `It is too early to tell. Keep it running and let the numbers build.${i.pendingSuggestions ? pend : ""}`.trim();
 }
 
-export function buildNote(i: WeekInput, baseUrl = "https://www.saabai.ai"): WeekNote | null {
+export function buildNote(i: WeekInput, baseUrl = "https://www.saabai.ai", site: { key: string; label: string } = { key: "saabai", label: "saabai.ai" }): WeekNote | null {
   if (i.week.views < WEEKLY_MIN_VIEWS) return null;
   const variants: WeekVariant[] = i.exp.variants.filter((v) => v.active || (i.week.perVariant[v.id]?.views ?? 0) > 0).map((v) => {
     const w = i.week.perVariant[v.id] ?? { views: 0, conversions: 0 };
     return { id: v.id.toUpperCase(), label: v.id === i.exp.defaultVariantId ? "control" : v.source === "ai" ? "AI idea you approved" : "", copy: copyOf(v), views: w.views, conversions: w.conversions, rate: w.views ? w.conversions / w.views : 0 };
   });
   return {
-    id: i.exp.id, name: i.exp.name ?? i.exp.id,
+    id: i.exp.id, name: i.exp.name ?? i.exp.id, siteKey: site.key, siteLabel: site.label,
     views: i.week.views, conversions: i.week.conversions, rate: i.week.views ? i.week.conversions / i.week.views : 0,
     variants,
     verdictLine: `${i.analysis.verdict.headline} ${i.analysis.verdict.detail}`.trim(),
     next: nextStep(i),
-    adminUrl: `${baseUrl}/saabai-admin/experiments?id=${encodeURIComponent(i.exp.id)}`,
+    adminUrl: `${baseUrl}/saabai-admin/experiments?id=${encodeURIComponent(i.exp.id)}${site.key === "saabai" ? "" : `&site=${encodeURIComponent(site.key)}`}`,
   };
 }
 
@@ -72,12 +72,17 @@ export function weekLabel(since: string, end: string): string {
   return `${f(since)} to ${f(end)}`;
 }
 
+/** Test name, with the site named when it isn't saabai.ai. */
+const titleOf = (n: WeekNote) => (n.siteKey && n.siteKey !== "saabai" ? `${n.name} (${n.siteLabel})` : n.name);
+
 export function renderNote(notes: WeekNote[], since: string, end: string): { subject: string; html: string; text: string } {
   const label = weekLabel(since, end);
+  const sites = [...new Set(notes.map((n) => n.siteLabel || "saabai.ai"))];
+  const where = sites.length === 1 ? `on ${sites[0]}` : `across ${sites.length} sites`;
   const subject = `Draft: Saabai testing, what we learned (${label})`;
   const blocks = notes.map((n) => {
     const rows = n.variants.map((v) => `<tr><td style="padding:6px 8px;border-bottom:1px solid #eee"><b>${esc(v.id)}</b>${v.label ? ` <span style="color:#777">(${esc(v.label)})</span>` : ""}<br><span style="color:#444">${esc(v.copy)}</span></td><td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right;white-space:nowrap">${nf(v.views)} views<br>${nf(v.conversions)} enquiries or calls (${pct(v.rate)})</td></tr>`).join("");
-    return `<h2 style="margin:24px 0 4px;font-size:17px">${esc(n.name)}</h2>
+    return `<h2 style="margin:24px 0 4px;font-size:17px">${esc(titleOf(n))}</h2>
 <p style="margin:0 0 8px">This week: <b>${nf(n.views)}</b> views, <b>${nf(n.conversions)}</b> enquiries or calls (${pct(n.rate)}).</p>
 <table style="border-collapse:collapse;width:100%;font-size:14px">${rows}</table>
 <p style="margin:12px 0 4px"><b>Where it stands.</b> ${esc(n.verdictLine)}</p>
@@ -87,10 +92,10 @@ export function renderNote(notes: WeekNote[], since: string, end: string): { sub
   const html = `<div style="font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:620px;color:#111;line-height:1.5">
 <p style="margin:0 0 8px;color:#777;font-size:13px">DRAFT for Shane only. Nothing here goes to anyone else.</p>
 <h1 style="font-size:20px;margin:0 0 4px">What we learned this week</h1>
-<p style="margin:0;color:#555">${esc(label)} on saabai.ai. Your own visits are not counted.</p>${blocks}
+<p style="margin:0;color:#555">${esc(label)} ${esc(where)}. Your own visits are not counted.</p>${blocks}
 <p style="margin:24px 0 0;color:#777;font-size:12px">Small sites need weeks of traffic before a winner is clear, so treat early leads as hints. A winner only goes live when you click.</p></div>`;
   const text = [`DRAFT for Shane only. What we learned this week (${label}).`, ...notes.map((n) =>
-    [`\n${n.name}`, `This week: ${n.views} views, ${n.conversions} enquiries or calls (${pct(n.rate)}).`, ...n.variants.map((v) => `  ${v.id}${v.label ? ` (${v.label})` : ""}: ${v.copy} | ${v.views} views, ${v.conversions} conversions (${pct(v.rate)})`), `Where it stands: ${n.verdictLine}`, `What to try next: ${n.next}`, n.adminUrl].join("\n"))].join("\n");
+    [`\n${titleOf(n)}`, `This week: ${n.views} views, ${n.conversions} enquiries or calls (${pct(n.rate)}).`, ...n.variants.map((v) => `  ${v.id}${v.label ? ` (${v.label})` : ""}: ${v.copy} | ${v.views} views, ${v.conversions} conversions (${pct(v.rate)})`), `Where it stands: ${n.verdictLine}`, `What to try next: ${n.next}`, n.adminUrl].join("\n"))].join("\n");
   return { subject, html, text };
 }
 
