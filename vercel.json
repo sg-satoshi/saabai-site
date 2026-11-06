@@ -51,6 +51,10 @@
     {
       "path": "/api/cron/email-send",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/google-reviews",
+      "schedule": "15 18 * * *"
     }
   ]
 }
