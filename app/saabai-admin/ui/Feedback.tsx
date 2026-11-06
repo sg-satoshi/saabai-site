@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 
 type Tone = "error" | "success" | "info";
 type Toast = { id: number; tone: Tone; message: string };
-type Confirm = { id: number; message: string; confirmLabel: string; danger: boolean; resolve: (ok: boolean) => void };
+type Confirm = { id: number; message: string; confirmLabel: string; cancelLabel: string; danger: boolean; resolve: (ok: boolean) => void };
 type State = { toasts: Toast[]; confirm: Confirm | null };
 
 let state: State = { toasts: [], confirm: null };
@@ -35,11 +35,13 @@ export const notify = {
 };
 
 /** Promise-based replacement for window.confirm(). Falls back to window.confirm if no host is mounted. */
-export function confirmDialog(message: string, opts: { confirmLabel?: string; danger?: boolean } = {}): Promise<boolean> {
+export function confirmDialog(message: string, opts: { confirmLabel?: string; cancelLabel?: string; danger?: boolean } = {}): Promise<boolean> {
   if (listeners.size === 0 && typeof window !== "undefined") return Promise.resolve(window.confirm(message));
   return new Promise((resolve) => {
     state.confirm?.resolve(false);
-    state = { ...state, confirm: { id: ++seq, message, confirmLabel: opts.confirmLabel ?? "Confirm", danger: opts.danger ?? /delete|remove|archive|deny|deactivate/i.test(message), resolve } };
+    const confirmLabel = opts.confirmLabel ?? "Confirm";
+    const cancelLabel = opts.cancelLabel ?? "Cancel";
+    state = { ...state, confirm: { id: ++seq, message, confirmLabel, cancelLabel, danger: opts.danger ?? /delete|remove|archive|deny|deactivate/i.test(message), resolve } };
     emit();
   });
 }
@@ -88,7 +90,7 @@ export function FeedbackHost() {
           <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: "min(100%, 420px)", padding: 20, background: "#fff" }}>
             <p style={{ margin: "0 0 18px", fontSize: 14.5, lineHeight: 1.5, color: "var(--n-900)", whiteSpace: "pre-wrap" }}>{s.confirm.message}</p>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-              <button type="button" ref={cancelRef} className="btn" onClick={() => closeConfirm(false)}>Cancel</button>
+              <button type="button" ref={cancelRef} className="btn" onClick={() => closeConfirm(false)}>{s.confirm.cancelLabel}</button>
               <button type="button" ref={okRef} className={`btn ${s.confirm.danger ? "ds" : "pri"}`} onClick={() => closeConfirm(true)}>{s.confirm.confirmLabel}</button>
             </div>
           </div>
