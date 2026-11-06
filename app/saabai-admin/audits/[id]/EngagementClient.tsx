@@ -65,7 +65,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 type Tab = "overview" | "factfind" | "portal" | "assessment" | "reports" | "notes";
 
-export default function EngagementClient({ id }: { id: string }) {
+export default function EngagementClient({ id, reviewRequired = false }: { id: string; reviewRequired?: boolean }) {
   const [eng, setEng] = useState<AuditEngagement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("overview");
@@ -163,6 +163,26 @@ export default function EngagementClient({ id }: { id: string }) {
         showFlash(`Report v${data.report.version} generated.`);
       } else {
         showFlash(data.error ?? "Report generation failed.");
+      }
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function markReviewed(reportId: string) {
+    setBusy("review");
+    try {
+      const res = await fetch(`/api/audit/engagements/${id}/report`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reportId, action: "review" }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setEng(data.engagement);
+        showFlash("Marked reviewed. You can deliver it now.");
+      } else {
+        showFlash(data.error ?? "Failed.");
       }
     } finally {
       setBusy(null);
@@ -663,6 +683,7 @@ export default function EngagementClient({ id }: { id: string }) {
                     </div>
                     <div style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>
                       Generated {new Date(r.generatedAt).toLocaleString("en-AU")}
+                      {r.reviewedAt && ` · reviewed ${new Date(r.reviewedAt).toLocaleString("en-AU")}`}
                       {r.deliveredAt && ` · delivered ${new Date(r.deliveredAt).toLocaleString("en-AU")}`}
                     </div>
                   </div>
@@ -670,6 +691,11 @@ export default function EngagementClient({ id }: { id: string }) {
                     <a href={r.url} download={r.filename} style={{ ...btnGhost, textDecoration: "none", display: "inline-block" }}>
                       Download .docx
                     </a>
+                    {reviewRequired && !r.deliveredAt && !r.reviewedAt && (
+                      <button onClick={() => markReviewed(r.id)} disabled={busy === "review"} style={btnGhost}>
+                        Mark reviewed
+                      </button>
+                    )}
                     {!r.deliveredAt && (
                       <button onClick={() => markDelivered(r.id)} disabled={busy === "deliver"} style={btn}>
                         Mark delivered
