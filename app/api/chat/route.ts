@@ -8,6 +8,8 @@ import {
 import { z } from "zod";
 import { getSaabaiModel } from "../../../lib/chat-config";
 import { SYSTEM_PROMPT } from "../../../lib/chat-prompt";
+import { knowledgePackEnabled, packPrompt } from "../../../lib/knowledge-pack/core";
+import { SAABAI_PACK } from "../../../lib/knowledge-pack/saabai";
 import { saveLead, saveConversation } from "../../../lib/redis";
 import { CTA_STEPS } from "../../../lib/mia-cta";
 import { noDashesTransform } from "../../../lib/no-dashes";
@@ -69,6 +71,8 @@ function buildSystemPrompt(
   visitorProfile?: Record<string, unknown>
 ): string {
   let system = SYSTEM_PROMPT;
+  // #314: knowledge pack, off unless KNOWLEDGE_PACK_ENABLED is 1 or true.
+  if (knowledgePackEnabled()) system += `\n\n${packPrompt(SAABAI_PACK)}`;
 
   if (pageContext) {
     system += `
