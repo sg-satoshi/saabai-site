@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Card, CardBody, CardHeader } from "../../ui/Card";
 import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
@@ -43,7 +44,7 @@ function CopyLink({ info, picked, onPick, onCopy }: { info: ShareInfoT; picked?:
 
 const blank = { code: "", kind: "percent" as "percent" | "fixed", value: "", targetMode: "all" as "all" | "selected", targets: [] as string[], duration: "once" as "once" | "forever" | "repeating", durationMonths: "3", firstTimeOnly: true, oncePerCustomer: false, minimumSpend: "", maxRedemptions: "", startsAt: "", startsTime: "", expiresAt: "", expiresTime: "" };
 
-export default function OffersClient() {
+export default function OffersClient({ reportHref }: { reportHref?: string }) {
   const [codes, setCodes] = useState<Code[] | null>(null);
   const [targets, setTargets] = useState<Target[]>([]);
   const [err, setErr] = useState<string | null>(null);
@@ -139,6 +140,7 @@ export default function OffersClient() {
           <h1>Offers &amp; Coupons</h1>
           <p className="sub">Promo codes work on Blueprint checkout and care plan pay links. Customers type them on the Stripe page, or you send a link with the code already applied.</p>
         </div>
+        {reportHref ? <Link className="btn gh" href={reportHref}>Coupon report</Link> : null}
       </div>
 
       <div className="kpis k3">

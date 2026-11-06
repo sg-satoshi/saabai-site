@@ -1,0 +1,18 @@
+name: Coupons
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  coupons:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsx --test tests/coupons.test.ts tests/coupon-time.test.ts tests/coupon-report.test.ts

@@ -4,6 +4,7 @@ import { FeedbackHost } from "./ui/Feedback";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCouponReportFlag } from "./CouponReportFlag";
 
 type NavItem = { label: string; href: string; icon: string; external?: boolean; count?: number; urgent?: boolean };
 type NavGroup = { section: string; items: NavItem[]; collapsible?: boolean };
@@ -144,10 +145,26 @@ const NAV: NavGroup[] = [
   },
 ];
 
-function isActive(pathname: string, href: string) {
+const COUPON_REPORT_HREF = "/saabai-admin/marketing/offers/report";
+
+function navFor(reportOn: boolean): NavGroup[] {
+  if (!reportOn) return NAV;
+  return NAV.map((g) => g.section !== "Marketing" ? g : {
+    ...g,
+    items: [...g.items, { label: "Coupon report", href: COUPON_REPORT_HREF, icon: "chart" }],
+  });
+}
+
+function isActive(pathname: string, href: string, hrefs: string[] = []) {
   const path = href.split("?")[0];
   if (path === "/saabai-admin" || path === "/saabai-admin/marketing" || path === "/saabai-admin/email") return pathname === path;
-  return pathname === path || pathname.startsWith(path + "/");
+  const on = pathname === path || pathname.startsWith(path + "/");
+  if (!on) return false;
+  return !hrefs.some((other) => {
+    const o = other.split("?")[0];
+    if (o === path || !o.startsWith(path + "/")) return false;
+    return pathname === o || pathname.startsWith(o + "/");
+  });
 }
 
 // Contextual top-right primary button. Only pages with a real create action are listed.
@@ -159,18 +176,21 @@ const HEADER_ACTIONS: { match: string; label: string; href: string }[] = [
 
 function NavLinks({
   pathname,
+  nav,
   onNavigate,
   collapsedGroups,
   toggleGroup,
 }: {
   pathname: string;
+  nav: NavGroup[];
   onNavigate?: () => void;
   collapsedGroups: Record<string, boolean>;
   toggleGroup: (s: string) => void;
 }) {
+  const hrefs = nav.flatMap((g) => g.items.map((i) => i.href));
   return (
     <>
-      {NAV.map((g) => {
+      {nav.map((g) => {
         const collapsed = g.collapsible && collapsedGroups[g.section];
         return (
           <div key={g.section}>
@@ -198,7 +218,7 @@ function NavLinks({
             </button>
             {!collapsed &&
               g.items.map((item) => {
-                const on = isActive(pathname, item.href);
+                const on = isActive(pathname, item.href, hrefs);
                 const inner = (
                   <>
                     <Icon name={item.icon} />
@@ -246,6 +266,8 @@ export default function AdminShell({
   title?: string;
 }) {
   const pathname = usePathname() || activePath || "/saabai-admin";
+  const nav = navFor(useCouponReportFlag());
+  const hrefs = nav.flatMap((g) => g.items.map((i) => i.href));
   const [drawer, setDrawer] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({
     Growth: true,
@@ -271,7 +293,7 @@ export default function AdminShell({
 
   const crumb =
     title ||
-    NAV.flatMap((g) => g.items).find((i) => isActive(pathname, i.href))?.label ||
+    nav.flatMap((g) => g.items).find((i) => isActive(pathname, i.href, hrefs))?.label ||
     "Dashboard";
 
   const headerAction = HEADER_ACTIONS.find((a) => isActive(pathname, a.match));
@@ -292,6 +314,7 @@ export default function AdminShell({
       </div>
       <NavLinks
         pathname={pathname}
+        nav={nav}
         onNavigate={() => setDrawer(false)}
         collapsedGroups={collapsedGroups}
         toggleGroup={toggleGroup}

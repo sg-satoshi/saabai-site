@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/require-admin";
+import { couponReportEnabled } from "@/lib/coupons/report";
 import AdminShell from "../../AdminSidebar";
 import OffersClient from "./OffersClient";
 import "./offers.css";
@@ -10,7 +11,7 @@ export default async function OffersPage() {
   await requireAdmin("/saabai-admin/marketing/offers");
   return (
     <AdminShell activePath="/saabai-admin/marketing/offers">
-      <OffersClient />
+      <OffersClient reportHref={couponReportEnabled() ? "/saabai-admin/marketing/offers/report" : undefined} />
     </AdminShell>
   );
 }
