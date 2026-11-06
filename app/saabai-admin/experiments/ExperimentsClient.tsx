@@ -56,7 +56,7 @@ export default function ExperimentsClient() {
   async function toggle() {
     if (!cur || cur.kind !== "client") return;
     const on = !cur.enabled;
-    if (!(await confirmDialog(on ? `Turn split testing on for ${cur.label}? Running tests start showing to its visitors within about a minute.` : `Turn split testing off for ${cur.label}? Every visitor sees the normal page again. Tests and results are kept.`, { confirmLabel: on ? "Turn on" : "Turn off", danger: !on }))) return;
+    if (!(await confirmDialog(on ? `Turn split testing on for ${cur.label}? Running tests start showing to its visitors within about a minute.` : `Turn split testing off for ${cur.label}? Every visitor sees the normal page again. Tests and results are kept.`, { confirmLabel: "Yes", cancelLabel: "No", danger: !on }))) return;
     setSwitching(true);
     try {
       const r = await api("/api/admin/experiments/site-switch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: cur.key, enabled: on }) });
@@ -170,9 +170,9 @@ function DetailView({ id, site, onBack }: { id: string; site: string; onBack: ()
         <div><h1>{e.name ?? e.id}</h1><p className="sub">{e.slot} on {e.path} · changes go live within about a minute, no redeploy</p></div>
         <div className="xp-acts">
           <Badge tone={tone(e.status)}>{e.status}</Badge>
-          {e.status === "running" && <Button size="sm" disabled={busy} onClick={() => act({ type: "set_status", status: "paused" }, "Test paused. Everyone sees the control.")}>Pause test</Button>}
-          {e.status === "paused" && <Button size="sm" variant="acc" disabled={busy} onClick={() => act({ type: "set_status", status: "running" }, "Test resumed.")}>Resume test</Button>}
-          {e.status === "won" && <Button size="sm" disabled={busy} onClick={() => act({ type: "set_status", status: "running" }, "Test reopened.")}>Reopen test</Button>}
+          {e.status === "running" && <Button size="sm" disabled={busy} onClick={async () => { if (await confirmDialog("Pause this test? Every visitor will see the control version until you resume it.", { confirmLabel: "Yes", cancelLabel: "No", danger: true })) act({ type: "set_status", status: "paused" }, "Test paused. Everyone sees the control."); }}>Pause test</Button>}
+          {e.status === "paused" && <Button size="sm" variant="acc" disabled={busy} onClick={async () => { if (await confirmDialog("Resume this test? Variants start sharing traffic with visitors again within about a minute.", { confirmLabel: "Yes", cancelLabel: "No" })) act({ type: "set_status", status: "running" }, "Test resumed."); }}>Resume test</Button>}
+          {e.status === "won" && <Button size="sm" disabled={busy} onClick={async () => { if (await confirmDialog("Reopen this finished test? Visitors will start seeing variants again. The previous winner stays as the control until you pick a new one.", { confirmLabel: "Yes", cancelLabel: "No", danger: true })) act({ type: "set_status", status: "running" }, "Test reopened."); }}>Reopen test</Button>}
         </div>
       </div>
 
@@ -206,12 +206,12 @@ function DetailView({ id, site, onBack }: { id: string; site: string; onBack: ()
                 <div className="xp-acts">
                   <Button size="sm" disabled={busy} onClick={() => setEditing(editing === vr.id ? null : vr.id)}>{editing === vr.id ? "Close" : "Edit copy"}</Button>
                   {!isControl && <Button size="sm" disabled={busy} onClick={() => act({ type: "set_variant_active", variantId: vr.id, active: !vr.active }, vr.active ? `Variant ${vr.id.toUpperCase()} paused.` : `Variant ${vr.id.toUpperCase()} resumed.`)}>{vr.active ? "Pause" : "Resume"}</Button>}
-                  {!isControl && <Button size="sm" disabled={busy} onClick={async () => { if (await confirmDialog(`Delete variant ${vr.id.toUpperCase()}? Its copy is removed from the test. This is logged and can't be undone.`, { confirmLabel: "Delete", danger: true })) act({ type: "delete_variant", variantId: vr.id }, `Variant ${vr.id.toUpperCase()} deleted.`); }}>Delete</Button>}
+                  {!isControl && <Button size="sm" disabled={busy} onClick={async () => { if (await confirmDialog(`Delete variant ${vr.id.toUpperCase()}? Its copy is removed from the test. This is logged and can't be undone.`, { confirmLabel: "Yes", cancelLabel: "No", danger: true })) act({ type: "delete_variant", variantId: vr.id }, `Variant ${vr.id.toUpperCase()} deleted.`); }}>Delete</Button>}
                   {!(e.status === "won" && isControl) && <Button size="sm" variant="pri" disabled={busy} onClick={async () => {
                     const proven = v.canMakeWinner && v.leaderId === vr.id;
-                    const ok = await confirmDialog(proven ? `Make variant ${vr.id.toUpperCase()} the live ${noun} for everyone? The test will end.` : `Variant ${vr.id.toUpperCase()} is not a proven winner yet. Make it the live ${noun} for everyone anyway? The test will end, and the call is logged as yours.`, { confirmLabel: "Make it live" });
+                    const ok = await confirmDialog(proven ? `Make variant ${vr.id.toUpperCase()} the live ${noun} for everyone? The test will end and this becomes what every visitor sees.` : `Variant ${vr.id.toUpperCase()} is not a proven winner yet.\n\nMake it the live ${noun} for everyone anyway? The test will end, and the call is logged as yours.`, { confirmLabel: "Yes", cancelLabel: "No", danger: true });
                     if (ok) act({ type: "make_winner", variantId: vr.id }, `Variant ${vr.id.toUpperCase()} is now live for everyone.`);
-                  }}>{isControl ? "Keep as live" : "Make winner live"}</Button>}
+                  }}>{isControl ? "Keep this live" : "Make this live for everyone"}</Button>}
                 </div>
               </div>
               <CopyView v={vr} kind={e.kind} />
@@ -252,7 +252,7 @@ function DetailView({ id, site, onBack }: { id: string; site: string; onBack: ()
                     <CopyView v={x} kind={e.kind} />
                     {x.rationale && <p className="xp-note">{x.rationale}</p>}
                     <div className="xp-acts">
-                      <Button size="sm" variant="pri" disabled={genBusy || busy || e.variants.length >= 8} onClick={async () => { if (await confirmDialog(`Approve this ${noun}? It will be added as a new variant and start getting visitors within about a minute.`)) suggest({ op: "approve", suggestionId: x.id }, "Approved and added. It starts getting visitors within about a minute."); }}>Approve</Button>
+                      <Button size="sm" variant="pri" disabled={genBusy || busy || e.variants.length >= 8} onClick={async () => { if (await confirmDialog(`Approve this ${noun}? It will be added as a new variant and start getting visitors within about a minute.`, { confirmLabel: "Yes", cancelLabel: "No" })) suggest({ op: "approve", suggestionId: x.id }, "Approved and added. It starts getting visitors within about a minute."); }}>Approve</Button>
                       <Button size="sm" disabled={genBusy || busy} onClick={() => setSEdit(x.id)}>Edit then approve</Button>
                       <Button size="sm" variant="gh" disabled={genBusy || busy} onClick={() => suggest({ op: "reject", suggestionId: x.id }, "Rejected. The AI won't repeat that style.")}>Reject</Button>
                     </div>
