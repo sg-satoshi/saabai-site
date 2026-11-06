@@ -18,7 +18,7 @@ export const SAABAI_PACK: KnowledgePack = {
     { text: "Website care plans: Presence $100/month, Growth $200/month, Signature $300/month. Builds from $2,000, $4,000 and $6,500.", source: "https://www.saabai.ai/websites" },
     { text: "Saabai Blueprint AI audit: Starter $497, Pro $1,497, Business $3,500.", source: "https://www.saabai.ai/blueprint" },
     { text: "Free AI Readiness Score: a free 12 question quiz with an instant score.", source: "https://www.saabai.ai/score" },
-    { text: "Lex: an AI legal assistant for Australian law firms. The Firm plan is $299 a month.", source: "https://www.saabai.ai/legal" },
+    { text: "Lex: an AI legal assistant for Australian law firms. It starts with a 60-day free trial, no card needed, and pricing is set after the trial.", source: "https://www.saabai.ai/legal" },
   ],
   faqs: [
     { q: "Is the Blueprint free?", a: "No. The Blueprint starts at $497. The AI Readiness Score is the free option.", source: "https://www.saabai.ai/blueprint" },

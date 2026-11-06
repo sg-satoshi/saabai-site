@@ -13,7 +13,8 @@ test("flag off by default, accepts 1 or true", () => {
 test("saabai pack is valid and sourced", () => assert.deepEqual(validatePack(SAABAI_PACK), []));
 test("pack matches live llms.txt facts", () => {
   const llms = readFileSync("public/llms.txt", "utf8");
-  for (const s of ["$100/month", "$497", "$1,497", "$3,500", "$299", "1 business day"]) assert.ok(llms.includes(s), s);
+  for (const s of ["$100/month", "$497", "$1,497", "$3,500", "1 business day", "60-day free trial"]) assert.ok(llms.includes(s), s);
+  assert.ok(packPrompt(SAABAI_PACK).includes("60-day free trial"));
   const all = packPrompt(SAABAI_PACK);
   assert.ok(all.includes("1 business day"));
   assert.ok(!/2 business days/.test(all + packLlmsSection(SAABAI_PACK)));
