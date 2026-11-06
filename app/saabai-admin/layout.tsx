@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { couponReportEnabled } from "@/lib/coupons/report";
+import { CouponReportFlagProvider } from "./CouponReportFlag";
 import "./admin.css";
 import "./ui/admin-ui.css";
 
@@ -15,7 +17,7 @@ export const metadata: Metadata = {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className={`admin-root ${geist.variable} ${geistMono.variable}`} style={{ fontFamily: "var(--font-admin-sans), system-ui, sans-serif" }}>
-      {children}
+      <CouponReportFlagProvider enabled={couponReportEnabled()}>{children}</CouponReportFlagProvider>
     </div>
   );
 }
