@@ -77,6 +77,10 @@ export async function POST(req: Request, { params }: Params) {
   if (!engagement)
     return Response.json({ error: "Invalid or expired link" }, { status: 404 });
 
+  // Once a client has submitted through the portal the answers are locked.
+  if (engagement.portal?.submittedAt)
+    return Response.json({ error: "This fact-find has been submitted and is locked. Reply to our email if you need a change." }, { status: 423 });
+
   let body: {
     answers?: Record<string, FactFindValue>;
     complete?: boolean;

@@ -6,6 +6,7 @@ import { TIERS, isTier, type BlueprintTier } from "@/lib/blueprint";
 import GaEvent from "../../components/GaEvent";
 import MarketingPurchase from "../../components/MarketingPurchase";
 import MarkConverted from "@/app/components/MarkConverted";
+import { portalAllowed } from "@/lib/portal-blueprint/flag";
 
 export const metadata: Metadata = { title: "You're in: Saabai Blueprint", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -96,7 +97,11 @@ export default async function ConfirmationPage({ searchParams }: { searchParams:
                 </div>
               </div>
             </div>
-            <a className="btn ghost" href="/client-portal" style={{ marginTop: 32 }}>Go to my client portal</a>
+            {o.paid && sid && portalAllowed(o.email) ? (
+              <a className="btn" href={`/api/portal/blueprint/enter?session_id=${encodeURIComponent(sid)}`} style={{ marginTop: 32 }}>Start my fact-find</a>
+            ) : (
+              <a className="btn ghost" href="/client-portal" style={{ marginTop: 32 }}>Go to my client portal</a>
+            )}
           </div>
         </div>
       </div>

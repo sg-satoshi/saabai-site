@@ -7,6 +7,8 @@ export const FOCUSED_FORM_PREFIXES = [
   "/audit/onboarding",
   // Instagram bio landing: one form, no Mia, ticker, popup or announcement bar.
   "/ig",
+  // Blueprint client portal (sign-in, fact-find, review): buyers have already paid, so no promo bar or sales chrome.
+  "/portal",
 ];
 
 export function isFocusedFormPath(path: string | null | undefined): boolean {

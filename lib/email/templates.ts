@@ -159,10 +159,15 @@ export function blueprintOrderCustomerEmail(opts: {
   delivery: string;
   priceLabel: string;
   factFindUrl?: string | null;
+  /** True when factFindUrl is a one-click client portal link (24 hours). */
+  portalLink?: boolean;
   includesCall?: boolean;
   calendlyUrl?: string;
 }): BrandedEmail {
   const first = escapeHtml(firstName(opts.name));
+  const portalNote = opts.portalLink
+    ? p("Your link opens your private portal and works for 24 hours. After that, sign in any time with just your email at saabai.ai/portal/login. Your answers save as you go, so you can stop and come back.")
+    : "";
   const call = opts.includesCall && opts.calendlyUrl
     ? p(`Your ${escapeHtml(opts.tierName)} Blueprint includes a walkthrough call. <a href="${escapeHtml(opts.calendlyUrl)}" style="color:#0e7482;font-weight:600;">Pick a time that suits you</a>.`)
     : "";
@@ -174,6 +179,7 @@ export function blueprintOrderCustomerEmail(opts: {
     bodyHtml: [
       p(`Hi ${first},`),
       p(`Thank you for your order (${escapeHtml(opts.paidLabel)}). Your invoice is on its way. Next up: a short fact-find about your team, tools and busiest tasks. About 15 minutes, then we get to work.`),
+      portalNote,
       call,
       p(`Your Blueprint arrives within ${escapeHtml(opts.delivery)} of the fact-find. Book any Saabai build within 30 days of delivery and the full ${escapeHtml(opts.priceLabel)} is credited. Nice.`),
     ].join(""),
