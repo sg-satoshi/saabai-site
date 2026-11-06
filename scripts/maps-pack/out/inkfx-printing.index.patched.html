@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InkFX Printing | Award-Winning Photographic Prints | Gold Coast</title>
+<meta name="description" content="Multi-award winning photographic printing on the Gold Coast. Canvas, HD Metal, Fine Art Paper and Framed prints. Obsessive quality on every order.">
+<meta property="og:title" content="InkFX Printing, Award-Winning Photographic Prints">
+<meta property="og:description" content="Multi-award winning photographic printing. Canvas, HD Metal, Fine Art Paper and Framed prints from the Gold Coast.">
+<meta property="og:image" content="https://inkfxprinting.com/cdn/shop/files/aluminium-HD-rectangle-1200.jpg?v=1758427636">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.inkfxprinting.com">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"PrintShop","name":"InkFX Printing","description":"Multi-award winning photographic printing on the Gold Coast","url":"https://www.inkfxprinting.com","telephone":"+611300903065","email":"info@inkfx.com.au","address":{"@type":"PostalAddress","streetAddress":"3/17 Indy Court","addressLocality":"Carrara","addressRegion":"QLD","postalCode":"4211","addressCountry":"AU"},"geo":{"@type":"GeoCoordinates","latitude":-28.012169,"longitude":153.347325},"areaServed":{"@type":"Country","name":"Australia"},"hasMap":"https://www.google.com/maps/search/?api=1&query=InkFX+Printing%2C+3%2F17+Indy+Court%2C+Carrara+QLD+4211","openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday"],"opens":"09:00","closes":"17:00"}],"sameAs":["https://www.instagram.com/inkfxprinting","https://www.facebook.com/inkfxprinting"]}</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500&display=swap');
+
+:root {
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface-2: #1e1e1e;
+  --text: #ffffff;
+  --text-muted: #888888;
+  --accent: #c8ff00;
+  --border: rgba(255,255,255,0.08);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:400;line-height:1.6;overflow-x:hidden}
+img{display:block;max-width:100%}
+a{color:inherit}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 48px;display:flex;align-items:center;justify-content:space-between;gap:24px;transition:background .3s,padding .3s,backdrop-filter .3s}
+nav.scrolled{background:rgba(10,10,10,.97);padding:12px 48px;backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.logo-img{height:40px;width:auto;object-fit:contain;filter:brightness(0) invert(1)}
+.logo-img.scrolled-logo{height:32px}
+.nav-links{display:flex;align-items:center;gap:32px;list-style:none;margin:0 auto}
+.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;letter-spacing:.02em;transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{background:var(--accent);color:#000;padding:10px 24px;font-family:'Archivo',sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;transition:background .2s;white-space:nowrap;flex-shrink:0}
+.nav-cta:hover{background:#fff}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;background:none;border:none}
+.hamburger span{display:block;width:24px;height:2px;background:var(--text);transition:all .3s}
+.mobile-nav{display:none;position:fixed;inset:0;background:var(--bg);z-index:99;flex-direction:column;align-items:center;justify-content:center;gap:36px}
+.mobile-nav.open{display:flex}
+.mobile-nav a{color:var(--text);text-decoration:none;font-family:'Archivo',sans-serif;font-size:36px;font-weight:900;letter-spacing:-.02em;transition:color .2s}
+.mobile-nav a:hover{color:var(--accent)}
+.mobile-nav .m-cta{background:var(--accent);color:#000;padding:16px 48px;font-size:16px}
+
+/* HERO */
+#hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;position:relative;overflow:hidden}
+.hero-left{display:flex;flex-direction:column;justify-content:flex-end;padding:160px 56px 80px;position:relative;z-index:2;background:var(--bg)}
+.hero-glow{position:absolute;top:20%;left:20%;width:500px;height:500px;background:radial-gradient(ellipse,rgba(200,255,0,.06) 0%,transparent 70%);pointer-events:none}
+.award-badge{display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(200,255,0,.25);padding:7px 16px;margin-bottom:36px;width:fit-content}
+.award-dot{width:6px;height:6px;background:var(--accent);border-radius:50%;flex-shrink:0;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.award-badge span{font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:'Archivo',sans-serif;font-weight:900;font-size:clamp(52px,6.5vw,100px);line-height:.93;letter-spacing:-.035em;margin-bottom:32px}
+h1 em{font-style:normal;color:var(--accent)}
+.hero-body{font-size:clamp(15px,1.5vw,18px);color:var(--text-muted);max-width:440px;margin-bottom:48px;font-weight:300;line-height:1.8}
+.cta-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.btn{display:inline-block;font-family:'Archivo',sans-serif;font-weight:700;font-size:12px;letter-spacing:.07em;text-transform:uppercase;text-decoration:none;padding:14px 32px;transition:all .2s}
+.btn-accent{background:var(--accent);color:#000}
+.btn-accent:hover{background:#fff}
+.btn-outline{border:1px solid rgba(255,255,255,.2);color:var(--text)}
+.btn-outline:hover{border-color:var(--text)}
+.hero-right{position:relative;overflow:hidden}
+.hero-right img{width:100%;height:100%;object-fit:cover;object-position:center}
+.hero-right-overlay{position:absolute;inset:0;background:linear-gradient(to right,var(--bg) 0%,transparent 30%)}
+
+/* PRODUCT CARDS */
+#products{background:var(--bg)}
+.product-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border)}
+.p-card{background:var(--surface);position:relative;overflow:hidden;text-decoration:none;color:var(--text);display:block;transition:background .25s}
+.p-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .3s;z-index:2}
+.p-card:hover{background:var(--surface-2)}
+.p-card:hover::after{transform:scaleX(1)}
+.p-img{width:100%;height:220px;overflow:hidden;background:var(--surface-2)}
+.p-img img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
+.p-card:hover .p-img img{transform:scale(1.04)}
+.p-body{padding:32px 28px 40px}
+.p-num{font-family:'Archivo',sans-serif;font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--accent);margin-bottom:14px}
+.p-card h3{font-family:'Archivo',sans-serif;font-weight:700;font-size:19px;letter-spacing:-.01em;margin-bottom:10px}
+.p-card p{font-size:13px;color:var(--text-muted);line-height:1.65;margin-bottom:24px}
+.p-from{font-size:11px;color:var(--text-muted)}
+.p-from strong{font-family:'Archivo',sans-serif;font-size:20px;font-weight:900;color:var(--accent);display:block;letter-spacing:-.02em;margin-bottom:2px}
+.p-arrow{position:absolute;bottom:28px;right:28px;font-size:18px;color:var(--text-muted);transition:color .2s,transform .2s}
+.p-card:hover .p-arrow{color:var(--accent);transform:translate(3px,-3px)}
+
+/* SECTION BASE */
+.section{padding:120px 48px}
+.s-label{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:20px;display:flex;align-items:center;gap:12px}
+.s-label::before{content:'';width:20px;height:1px;background:var(--accent)}
+h2{font-family:'Archivo',sans-serif;font-weight:900;font-size:clamp(36px,4.5vw,64px);letter-spacing:-.03em;line-height:1.02}
+
+/* WHY */
+#why{background:var(--bg)}
+.why-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start;max-width:1200px;margin:0 auto}
+.why-left h2{margin-bottom:28px}
+.why-left p{color:var(--text-muted);font-size:17px;line-height:1.8;font-weight:300;margin-bottom:48px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}
+.stat-box{background:var(--surface);padding:28px 24px}
+.stat-n{font-family:'Archivo',sans-serif;font-weight:900;font-size:48px;line-height:1;color:var(--accent);letter-spacing:-.03em;margin-bottom:8px}
+.stat-box p{font-size:13px;color:var(--text-muted);line-height:1.5}
+.why-right{display:flex;flex-direction:column;gap:1px;background:var(--border)}
+.feat{background:var(--surface);padding:26px 30px;display:flex;gap:18px;align-items:flex-start;transition:background .2s}
+.feat:hover{background:var(--surface-2)}
+.feat-icon{width:38px;height:38px;border:1px solid rgba(200,255,0,.15);background:rgba(200,255,0,.05);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.feat-icon svg{width:16px;height:16px;stroke:var(--accent);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.feat h4{font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;margin-bottom:4px;letter-spacing:-.01em}
+.feat p{font-size:13px;color:var(--text-muted);line-height:1.55}
+
+/* PROCESS */
+#process{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.process-inner{max-width:1200px;margin:0 auto}
+.process-inner .s-label{margin-bottom:60px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
+.step{background:var(--surface);padding:52px 40px}
+.step-n{font-family:'Archivo',sans-serif;font-weight:900;font-size:72px;line-height:1;color:rgba(200,255,0,.07);letter-spacing:-.04em;margin-bottom:28px}
+.step h3{font-family:'Archivo',sans-serif;font-weight:700;font-size:21px;letter-spacing:-.015em;margin-bottom:14px}
+.step p{font-size:14px;color:var(--text-muted);line-height:1.75}
+
+/* PRINT LIST */
+#print-types{background:var(--bg)}
+.print-inner{max-width:1200px;margin:0 auto}
+.print-inner h2{margin-bottom:16px}
+.print-sub{color:var(--text-muted);font-size:17px;font-weight:300;margin-bottom:60px}
+.print-rows{display:flex;flex-direction:column;gap:1px;background:var(--border)}
+.print-row{background:var(--surface);display:grid;grid-template-columns:200px 1fr 1.2fr auto;align-items:center;gap:36px;padding:0 48px 0 0;transition:background .2s;overflow:hidden}
+.print-row:hover{background:var(--surface-2)}
+.print-row:hover .pr-thumb img{transform:scale(1.04)}
+.pr-thumb{width:200px;height:140px;overflow:hidden;flex-shrink:0;background:var(--surface-2)}
+.pr-thumb img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease}
+.pr-name{font-family:'Archivo',sans-serif;font-weight:700;font-size:22px;letter-spacing:-.02em}
+.pr-desc{font-size:14px;color:var(--text-muted);line-height:1.65}
+.pr-cta{border:1px solid rgba(255,255,255,.12);color:var(--text);padding:12px 22px;font-family:'Archivo',sans-serif;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;text-decoration:none;white-space:nowrap;transition:all .2s}
+.pr-cta:hover{background:var(--accent);border-color:var(--accent);color:#000}
+
+/* ABOUT */
+#about{background:var(--surface);border-top:1px solid var(--border)}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;max-width:100%;align-items:stretch}
+.about-img{position:relative;overflow:hidden;min-height:600px}
+.about-img img{width:100%;height:100%;object-fit:cover;object-position:center top}
+.about-content{padding:80px 72px 80px 64px;display:flex;flex-direction:column;justify-content:center;max-width:640px}
+.about-content .s-label{margin-bottom:24px}
+.about-content h2{margin-bottom:28px}
+.about-content p{color:var(--text-muted);font-size:16px;line-height:1.85;font-weight:300;margin-bottom:20px}
+.about-content p:last-of-type{margin-bottom:36px}
+
+/* GALLERY STRIP */
+#gallery{background:var(--bg);padding:0}
+.gallery-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
+.g-item{overflow:hidden;aspect-ratio:3/4;background:var(--surface)}
+.g-item img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
+.g-item:hover img{transform:scale(1.06)}
+
+/* TESTIMONIALS */
+#testimonials{background:var(--surface)}
+.testi-inner{max-width:1200px;margin:0 auto}
+.testi-inner h2{margin-bottom:64px;max-width:580px}
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
+.testi-card{background:var(--bg);padding:40px 36px}
+.stars{display:flex;gap:3px;margin-bottom:24px}
+.stars svg{width:14px;height:14px;fill:var(--accent)}
+.testi-card blockquote{font-size:15px;color:var(--text-muted);line-height:1.8;font-weight:300;margin-bottom:32px;font-style:italic}
+.testi-card cite{font-family:'Archivo',sans-serif;font-size:13px;font-weight:700;font-style:normal;color:var(--text)}
+.testi-card cite span{color:var(--text-muted);font-weight:400;font-family:'DM Sans',sans-serif}
+
+/* CTA BAND */
+#cta-band{background:var(--accent);padding:88px 48px;text-align:center}
+#cta-band h2{color:#000;font-family:'Archivo',sans-serif;font-weight:900;font-size:clamp(32px,5vw,64px);letter-spacing:-.03em;margin-bottom:14px}
+#cta-band p{color:rgba(0,0,0,.55);font-size:18px;font-weight:300;margin-bottom:44px}
+.btn-dark{background:#000;color:var(--accent);padding:16px 44px;font-family:'Archivo',sans-serif;font-weight:700;font-size:12px;letter-spacing:.07em;text-transform:uppercase;text-decoration:none;display:inline-block;transition:background .2s}
+.btn-dark:hover{background:#111}
+
+/* CONTACT */
+#contact{background:var(--bg);border-top:1px solid var(--border)}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;max-width:1200px;margin:0 auto}
+.contact-left h2{margin-bottom:52px}
+.c-detail{display:flex;gap:16px;margin-bottom:28px;align-items:flex-start}
+.c-icon{width:40px;height:40px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.c-icon svg{width:15px;height:15px;stroke:var(--accent);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.c-text strong{display:block;font-family:'Archivo',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px}
+.c-text a,.c-text p{color:var(--text);font-size:15px;text-decoration:none;display:block;line-height:1.5}
+.c-text a:hover{color:var(--accent)}
+.contact-form{display:flex;flex-direction:column;gap:14px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.contact-form input,.contact-form textarea{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:14px 18px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s;width:100%}
+.contact-form input::placeholder,.contact-form textarea::placeholder{color:var(--text-muted)}
+.contact-form input:focus,.contact-form textarea:focus{border-color:rgba(200,255,0,.35)}
+.contact-form textarea{height:130px;resize:vertical}
+.contact-form button{background:var(--accent);color:#000;border:none;padding:16px 32px;font-family:'Archivo',sans-serif;font-weight:700;font-size:12px;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;transition:background .2s;align-self:flex-start}
+.contact-form button:hover{background:#fff}
+.form-msg{display:none;padding:12px 16px;font-size:14px;margin-top:4px}
+.form-ok{background:rgba(200,255,0,.08);border:1px solid rgba(200,255,0,.25);color:var(--accent)}
+.form-err{background:rgba(255,80,80,.08);border:1px solid rgba(255,80,80,.25);color:#ff7070}
+
+/* FOOTER */
+footer{background:var(--surface);border-top:1px solid var(--border);padding:64px 48px 32px}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:60px;max-width:1200px;margin:0 auto 60px}
+.f-logo{height:36px;width:auto;filter:brightness(0) invert(1);margin-bottom:16px}
+.f-tagline{color:var(--text-muted);font-size:14px;line-height:1.7;max-width:260px}
+.f-col h4{font-family:'Archivo',sans-serif;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);margin-bottom:20px}
+.f-col ul{list-style:none;display:flex;flex-direction:column;gap:12px}
+.f-col ul a{color:var(--text-muted);text-decoration:none;font-size:14px;transition:color .2s}
+.f-col ul a:hover{color:var(--text)}
+.footer-bottom{border-top:1px solid var(--border);padding-top:28px;display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto}
+.footer-bottom p{color:var(--text-muted);font-size:13px}
+.f-social{display:flex;gap:20px}
+.f-social a{color:var(--text-muted);text-decoration:none;font-size:13px;transition:color .2s}
+.f-social a:hover{color:var(--accent)}
+
+/* RESPONSIVE */
+@media(max-width:1100px){
+  .print-row{grid-template-columns:160px 1fr auto;gap:24px}
+  .pr-desc{display:none}
+  .print-row{padding-right:32px}
+}
+@media(max-width:1024px){
+  .why-grid{gap:48px}
+  .about-content{padding:60px 48px}
+  .footer-grid{grid-template-columns:1fr 1fr;gap:40px}
+}
+@media(max-width:768px){
+  nav{padding:16px 24px}
+  nav.scrolled{padding:12px 24px}
+  .nav-links,.nav-cta{display:none}
+  .hamburger{display:flex}
+  #hero{grid-template-columns:1fr;min-height:100vh}
+  .hero-left{padding:120px 24px 64px;justify-content:flex-end}
+  .hero-right{display:none}
+  .product-grid{grid-template-columns:repeat(2,1fr)}
+  .section{padding:80px 24px}
+  .why-grid{grid-template-columns:1fr;gap:48px}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .steps{grid-template-columns:1fr}
+  .print-row{grid-template-columns:1fr;padding:0}
+  .pr-thumb{width:100%;height:180px}
+  .print-row>*:not(.pr-thumb){padding:0 24px}
+  .print-row .pr-cta{margin:0 24px 24px;align-self:flex-start}
+  .pr-desc{display:block}
+  .about-grid{grid-template-columns:1fr}
+  .about-img{min-height:360px}
+  .about-content{padding:48px 24px}
+  .gallery-strip{grid-template-columns:repeat(3,1fr)}
+  .testi-grid{grid-template-columns:1fr}
+  .contact-grid{grid-template-columns:1fr;gap:48px}
+  .form-row{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr;gap:36px}
+  .footer-bottom{flex-direction:column;gap:14px;text-align:center}
+  footer{padding:48px 24px 28px}
+  #cta-band{padding:72px 24px}
+}
+</style>
+<link rel="icon" href="https://www.saabai.ai/favicon.ico">
+</head>
+<body>
+
+<nav id="nav">
+  <a href="#hero">
+    <img src="https://inkfxprinting.com/cdn/shop/files/inkFX_LOGO_150px_SML.png?v=1762070125" alt="InkFX Printing" class="logo-img" id="logo-img" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='block'">
+    <span style="display:none;font-family:'Archivo',sans-serif;font-weight:900;font-size:20px">Ink<span style="color:var(--accent)">FX</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#products">Prints</a></li>
+    <li><a href="#why">Why Us</a></li>
+    <li><a href="#process">How It Works</a></li>
+    <li><a href="#testimonials">Reviews</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a href="https://www.inkfxprinting.com" class="nav-cta">Order Now</a>
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="mobile-nav" id="mobile-nav">
+  <a href="#products" onclick="closeNav()">Prints</a>
+  <a href="#why" onclick="closeNav()">Why Us</a>
+  <a href="#process" onclick="closeNav()">How It Works</a>
+  <a href="#testimonials" onclick="closeNav()">Reviews</a>
+  <a href="#contact" onclick="closeNav()">Contact</a>
+  <a href="https://www.inkfxprinting.com" class="m-cta btn">Order Now</a>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-left">
+    <div class="hero-glow"></div>
+    <div class="award-badge">
+      <div class="award-dot"></div>
+      <span>Multi-Award Winning HD Metal Prints</span>
+    </div>
+    <h1>Your Photos.<br><em>Perfected.</em></h1>
+    <p class="hero-body">Gold Coast's premium photographic print studio. Canvas, HD Metal, Fine Art Paper and Framed prints, obsessive quality, every single order, no exceptions.</p>
+    <div class="cta-row">
+      <a href="https://www.inkfxprinting.com" class="btn btn-accent">Start Your Order</a>
+      <a href="#products" class="btn btn-outline">See Our Prints</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-right-overlay"></div>
+    <img src="https://inkfxprinting.com/cdn/shop/files/rolled-canvas-prints3.jpg?v=1758427684" alt="Premium canvas prints by InkFX" loading="eager" onerror="this.onerror=null;this.style.display='none';this.parentElement.style.background='var(--surface)'">
+  </div>
+</section>
+
+<!-- PRODUCT CARDS -->
+<div id="products">
+  <div class="product-grid">
+    <a href="https://www.inkfxprinting.com" class="p-card">
+      <div class="p-img">
+        <img src="https://inkfxprinting.com/cdn/shop/files/canvas-rectangle-home.jpg?v=1758427725&width=600" alt="Canvas prints" loading="lazy" onerror="this.onerror=null;this.style.display='none'">
+      </div>
+      <div class="p-body">
+        <div class="p-num">01</div>
+        <h3>Canvas Prints</h3>
+        <p>Rectangle, square, panoramic, triptych and collection formats. Gallery-grade archival canvas with mirror or colour edge finish.</p>
+        <div class="p-from"><strong>From $29</strong>free AU shipping over $100</div>
+      </div>
+      <div class="p-arrow">↗</div>
+    </a>
+    <a href="https://www.inkfxprinting.com" class="p-card">
+      <div class="p-img">
+        <img src="https://inkfxprinting.com/cdn/shop/files/aluminium-HD-rectangle-1200.jpg?v=1758427636&width=600" alt="HD Metal prints" loading="lazy" onerror="this.onerror=null;this.style.display='none'">
+      </div>
+      <div class="p-body">
+        <div class="p-num">02</div>
+        <h3>HD Metal Prints</h3>
+        <p>Our award-winning aluminium prints. Colours with extraordinary depth and luminosity, float mount and circle formats.</p>
+        <div class="p-from"><strong>From $45</strong>trade pricing available</div>
+      </div>
+      <div class="p-arrow">↗</div>
+    </a>
+    <a href="https://www.inkfxprinting.com" class="p-card">
+      <div class="p-img">
+        <img src="https://inkfxprinting.com/cdn/shop/files/prints-ilford-matt-cotton-sonora.jpg?v=1758427616&width=600" alt="Fine art paper prints" loading="lazy" onerror="this.onerror=null;this.style.display='none'">
+      </div>
+      <div class="p-body">
+        <div class="p-num">03</div>
+        <h3>Fine Art Paper</h3>
+        <p>Archival Ilford papers selected to match your image. Cotton rag, gloss, pearl and beyond, every finish chosen with intention.</p>
+        <div class="p-from"><strong>From $2.28</strong>no minimum order</div>
+      </div>
+      <div class="p-arrow">↗</div>
+    </a>
+    <a href="https://www.inkfxprinting.com" class="p-card">
+      <div class="p-img">
+        <img src="https://inkfxprinting.com/cdn/shop/files/canvas-triptych-home-1200.jpg?v=1758427673&width=600" alt="Framed prints" loading="lazy" onerror="this.onerror=null;this.style.display='none'">
+      </div>
+      <div class="p-body">
+        <div class="p-num">04</div>
+        <h3>Framed Prints</h3>
+        <p>Professionally printed and framed in-house. Ready to hang straight from the box, perfect for home, office or gifting.</p>
+        <div class="p-from"><strong>From $59</strong>custom sizes available</div>
+      </div>
+      <div class="p-arrow">↗</div>
+    </a>
+  </div>
+</div>
+
+<!-- WHY INKFX -->
+<section id="why" class="section">
+  <div class="why-grid">
+    <div class="why-left">
+      <div class="s-label">Why InkFX</div>
+      <h2>Quality you can see. Results you can trust.</h2>
+      <p>We're a Gold Coast family business obsessed with getting your prints right, every single time. No compromises on colour accuracy, substrate quality or finish. We print for photographers, artists, and anyone who refuses to settle for average.</p>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-n" data-target="12">0</div>
+          <p>Years printing for Australian photographers and artists</p>
+        </div>
+        <div class="stat-box">
+          <div class="stat-n">★★★</div>
+          <p>Multiple industry awards for HD Metal print excellence</p>
+        </div>
+        <div class="stat-box">
+          <div class="stat-n" data-target="8">0</div>
+          <p>Ilford fine art paper stocks held in house at all times</p>
+        </div>
+        <div class="stat-box">
+          <div class="stat-n" data-target="100">0</div>
+          <p>Percent colour-accuracy, calibrated monitors and printers</p>
+        </div>
+      </div>
+    </div>
+    <div class="why-right">
+      <div class="feat">
+        <div class="feat-icon"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        <div><h4>Award-Winning Quality</h4><p>Our HD Metal prints have won multiple industry awards. When other labs say "good enough," we say "not yet."</p></div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div><h4>Fast Australian Turnaround</h4><p>Printed and dispatched from the Gold Coast. Most orders ready within 3 to 5 business days, tracked to your door.</p></div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div><h4>Colour Accuracy Guaranteed</h4><p>Calibrated monitors and printers throughout. What you see on screen is what arrives on your doorstep.</p></div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div><h4>Real People, Not a Call Centre</h4><p>A Gold Coast family business. We answer the phone, care about your order, and take pride in every print we make.</p></div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <div><h4>Trade Pricing for Professionals</h4><p>Photographers and studios receive preferential trade rates. Contact us to set up your trade account today.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section id="process" class="section">
+  <div class="process-inner">
+    <div class="s-label">How It Works</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">01</div>
+        <h3>Upload Your Image</h3>
+        <p>Submit your high-resolution file through our online order system. Not sure if your image is print-ready? Our team reviews every file before it goes anywhere near a printer.</p>
+      </div>
+      <div class="step">
+        <div class="step-n">02</div>
+        <h3>We Perfect It</h3>
+        <p>Your image is colour-profiled and matched to the substrate you've chosen. We flag any issues before print so you never receive a disappointing result.</p>
+      </div>
+      <div class="step">
+        <div class="step-n">03</div>
+        <h3>Delivered to Your Door</h3>
+        <p>Carefully packaged and dispatched from the Gold Coast with tracked shipping across Australia. We don't consider the job done until you're happy.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRINT TYPES LIST -->
+<section id="print-types" class="section">
+  <div class="print-inner">
+    <div class="s-label">Our Products</div>
+    <h2>Every format.<br>One standard: exceptional.</h2>
+    <p class="print-sub">Four print mediums. Endless size options. One obsession with quality.</p>
+    <div class="print-rows">
+      <div class="print-row">
+        <div class="pr-thumb"><img src="https://inkfxprinting.com/cdn/shop/files/canvas-panoramic-1200.jpg?v=1758427504&width=400" alt="Canvas prints" loading="lazy" onerror="this.onerror=null;this.style.display='none'"></div>
+        <div class="pr-name">Canvas Prints</div>
+        <div class="pr-desc">Rectangle, square, panoramic, triptych and collection formats. Archival UV inks on premium poly-cotton canvas. Mirror edge, colour edge or gallery wrap. Custom sizing available.</div>
+        <a href="https://www.inkfxprinting.com" class="pr-cta">Order Canvas</a>
+      </div>
+      <div class="print-row">
+        <div class="pr-thumb"><img src="https://inkfxprinting.com/cdn/shop/files/24x36-Aluminium-INKFX_fac741d7-5095-4110-bd4f-d85798d96fc6.jpg?v=1762071691&width=400" alt="HD Metal prints" loading="lazy" onerror="this.onerror=null;this.style.display='none'"></div>
+        <div class="pr-name">HD Metal Prints</div>
+        <div class="pr-desc">Our multi-award winning aluminium HD prints. Colours that literally glow with depth and luminosity. Float mount and circle formats for a contemporary, edge-to-edge look.</div>
+        <a href="https://www.inkfxprinting.com" class="pr-cta">Order Metal</a>
+      </div>
+      <div class="print-row">
+        <div class="pr-thumb"><img src="https://inkfxprinting.com/cdn/shop/files/prints-ilford-smooth-pearl-1.jpg?v=1758427597&width=400" alt="Fine art paper" loading="lazy" onerror="this.onerror=null;this.style.display='none'"></div>
+        <div class="pr-name">Fine Art Paper</div>
+        <div class="pr-desc">Curated Ilford archival papers, textured cotton rag, smooth gloss, satin pearl and more. Each paper chosen to suit a different image style. From $2.28, no minimum order.</div>
+        <a href="https://www.inkfxprinting.com" class="pr-cta">Order Paper</a>
+      </div>
+      <div class="print-row">
+        <div class="pr-thumb"><img src="https://inkfxprinting.com/cdn/shop/files/diningroom-Willem-Triptych-JS.jpg?v=1758427673&width=400" alt="Framed prints in a home" loading="lazy" onerror="this.onerror=null;this.style.display='none'"></div>
+        <div class="pr-name">Framed Prints</div>
+        <div class="pr-desc">Professionally printed and framed in-house. Precision-cut and assembled to gallery standard. Ready to hang straight from the box, perfect for home, office or gifting.</div>
+        <a href="https://www.inkfxprinting.com" class="pr-cta">Order Framed</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT / TEAM -->
+<section id="about">
+  <div class="about-grid">
+    <div class="about-img">
+      <img src="https://inkfxprinting.com/cdn/shop/files/Mathilde_and_Audrey.jpg?v=1770763371&width=1200" alt="The InkFX team" loading="lazy" onerror="this.onerror=null;this.style.display='none';this.parentElement.style.background='var(--surface-2)'">
+    </div>
+    <div class="about-content">
+      <div class="s-label">About InkFX</div>
+      <h2>A family business built on prints worth keeping.</h2>
+      <p>InkFX Printing started as a simple belief: every photograph deserves to be printed with the same care the photographer put into capturing it. From our Gold Coast studio, we've spent over a decade obsessing over colour accuracy, substrate selection, and the tiny details that separate an average print from an extraordinary one.</p>
+      <p>We work with photographers, interior designers, artists, and everyday people who want something they're proud to put on a wall. Whether it's a single paper print or a full canvas collection, we treat every order as if it's the only one we're printing today.</p>
+      <p>Our HD Metal prints have won multiple industry awards, but what we're most proud of is the photographers who come back to us, order after order, because they know they can trust the result.</p>
+      <a href="https://www.inkfxprinting.com" class="btn btn-outline">Learn More</a>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY STRIP -->
+<div id="gallery">
+  <div class="gallery-strip">
+    <div class="g-item"><img src="https://inkfxprinting.com/cdn/shop/files/aluminium-HD-Circular-home1200.jpg?v=1758427643&width=400" alt="Circular metal print" loading="lazy" onerror="this.onerror=null;this.style.display='none'"></div>
+    <div class="g-item"><img src="https://inkfxprinting.com/cdn/shop/files/canvas-square-home1200.jpg?v=1758427720&width=400" alt="Square canvas print" loading="lazy" onerror="this.onerror=null;this.style.display='none'"></div>
+    <div class="g-item"><img src="https://inkfxprinting.com/cdn/shop/files/Galerie_Prestige_Smooth_Pearl200.jpg?v=1758427596&width=400" alt="Fine art paper print" loading="lazy" onerror="this.onerror=null;this.style.display='none'"></div>
+    <div class="g-item"><img src="https://inkfxprinting.com/cdn/shop/files/canvas-landscape1200_e22d9485-0d03-43c9-87c2-1d2fae7d5944.jpg?v=1762071716&width=400" alt="Landscape canvas print" loading="lazy" onerror="this.onerror=null;this.style.display='none'"></div>
+    <div class="g-item"><img src="https://inkfxprinting.com/cdn/shop/files/aluminium-circular1200.jpg?v=1758427643&width=400" alt="Aluminium circle print" loading="lazy" onerror="this.onerror=null;this.style.display='none'"></div>
+  </div>
+</div>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials" class="section">
+  <div class="testi-inner">
+    <div class="s-label">Reviews</div>
+    <h2>What photographers say about us.</h2>
+    <div class="testi-grid">
+      <div class="testi-card">
+        <div class="stars">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <blockquote>"The HD metal print for my client came out breathtaking. Depth and colour accuracy blew us both away. InkFX is now my permanent print lab and I recommend them to every photographer I know."</blockquote>
+        <cite>Sarah M. <span>Wedding photographer, Brisbane QLD</span></cite>
+      </div>
+      <div class="testi-card">
+        <div class="stars">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <blockquote>"Ordered a 1.5-metre panoramic canvas of a Whitsundays shoot. Arrived perfectly packaged, colours were spot on, hanging hardware included. Couldn't ask for more at this price point."</blockquote>
+        <cite>Daniel K. <span>Landscape photographer, Gold Coast QLD</span></cite>
+      </div>
+      <div class="testi-card">
+        <div class="stars">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <blockquote>"I've tried four print labs over the years. InkFX is the only one I've stuck with. Consistent results, fast turnaround, and they communicate when there's a question about a file."</blockquote>
+        <cite>Priya R. <span>Portrait photographer, Sydney NSW</span></cite>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BAND -->
+<section id="cta-band">
+  <h2>Ready to see the difference?</h2>
+  <p>Upload your image and get a print that does it justice.</p>
+  <a href="https://www.inkfxprinting.com" class="btn-dark">Start Your Order</a>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="section">
+<section id="maps-pack" class="maps-pack" aria-label="InkFX Printing on Google Maps" data-maps-slug="inkfx-printing" data-maps-mode="shopfront" data-maps-embed="keyless" style="margin:2rem 0">
+  <div style="position:relative;width:100%;padding-bottom:56.25%;border-radius:12px;overflow:hidden;background:#0f172a">
+    <iframe title="InkFX Printing location map" src="https://www.google.com/maps?q=InkFX%20Printing%2C%203%2F17%20Indy%20Court%2C%20Carrara%20QLD%204211%2C%20Australia&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px">
+    <a href="https://www.google.com/maps/dir/?api=1&destination=InkFX%20Printing%2C%203%2F17%20Indy%20Court%2C%20Carrara%20QLD%204211%2C%20Australia" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;background:#1a73e8;color:#fff">Get directions</a>
+  </div>
+  <p style="margin:8px 0 0;font-size:11px;opacity:.55">Map uses a keyless Google embed. Add NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY for the official Maps Embed API. Place ID TODO: Review us button waits on verified ChIJ id.</p>
+</section>
+
+  <div class="contact-grid">
+    <div class="contact-left">
+      <div class="s-label">Get in Touch</div>
+      <h2>Talk to us.</h2>
+      <div class="c-detail">
+        <div class="c-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.12 12 19.79 19.79 0 0 1 1.05 3.4 2 2 0 0 1 3 1.28h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+        <div class="c-text"><strong>Phone</strong><a href="tel:1300903065">1300 90 30 65</a><a href="tel:0426455779">0426 455 779</a></div>
+      </div>
+      <div class="c-detail">
+        <div class="c-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+        <div class="c-text"><strong>Email</strong><a href="mailto:info@inkfx.com.au">info@inkfx.com.au</a></div>
+      </div>
+      <div class="c-detail">
+        <div class="c-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <div class="c-text"><strong>Location</strong><p>Gold Coast, Queensland, Australia</p></div>
+      </div>
+      <div class="c-detail">
+        <div class="c-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+        <div class="c-text"><strong>Hours</strong><p>Monday to Friday, 9am to 5pm AEST</p></div>
+      </div>
+    </div>
+    <div>
+      <form class="contact-form" id="contact-form">
+        <div class="form-row">
+          <input type="text" name="name" placeholder="Your name" required>
+          <input type="email" name="email" placeholder="Email address" required>
+        </div>
+        <input type="tel" name="phone" placeholder="Phone number">
+        <textarea name="message" placeholder="Tell us about your project..." required></textarea>
+        <button type="submit">Send Message</button>
+        <div class="form-msg form-ok" id="form-ok">Message sent. We'll be in touch within one business day.</div>
+        <div class="form-msg form-err" id="form-err">Something went wrong. Please email info@inkfx.com.au directly.</div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div>
+      <img src="https://inkfxprinting.com/cdn/shop/files/inkFX_LOGO_150px_SML.png?v=1762070125" alt="InkFX Printing" class="f-logo" onerror="this.onerror=null;this.style.display='none'">
+      <p class="f-tagline">Multi-award winning photographic printing from the Gold Coast. Great quality prints, every time.</p>
+    </div>
+    <div class="f-col">
+      <h4>Products</h4>
+      <ul>
+        <li><a href="https://www.inkfxprinting.com">Canvas Prints</a></li>
+        <li><a href="https://www.inkfxprinting.com">HD Metal Prints</a></li>
+        <li><a href="https://www.inkfxprinting.com">Fine Art Paper</a></li>
+        <li><a href="https://www.inkfxprinting.com">Framed Prints</a></li>
+      </ul>
+    </div>
+    <div class="f-col">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="#about">About Us</a></li>
+        <li><a href="#process">Our Process</a></li>
+        <li><a href="#testimonials">Reviews</a></li>
+        <li><a href="https://www.inkfxprinting.com">Trade Pricing</a></li>
+      </ul>
+    </div>
+    <div class="f-col">
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="tel:1300903065">1300 90 30 65</a></li>
+        <li><a href="mailto:info@inkfx.com.au">info@inkfx.com.au</a></li>
+        <li><a href="https://instagram.com/inkfxprinting">@inkfxprinting</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2025 InkFX Printing. Gold Coast, Queensland. All rights reserved.</p>
+    <div class="f-social">
+      <a href="https://www.facebook.com/inkfxprinting">Facebook</a>
+      <a href="https://www.instagram.com/inkfxprinting">Instagram</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 50), {passive:true});
+
+const hamburger = document.getElementById('hamburger');
+const mobileNav = document.getElementById('mobile-nav');
+hamburger.addEventListener('click', () => {
+  const open = mobileNav.classList.toggle('open');
+  document.body.style.overflow = open ? 'hidden' : '';
+});
+function closeNav() {
+  mobileNav.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Count-up
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const el = e.target;
+    const target = parseInt(el.dataset.target);
+    if (isNaN(target)) return;
+    io.unobserve(el);
+    const t0 = performance.now();
+    const dur = 1600;
+    const tick = now => {
+      const p = Math.min((now - t0) / dur, 1);
+      el.textContent = Math.round((1 - Math.pow(1-p, 3)) * target);
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}, {threshold: 0.6});
+document.querySelectorAll('[data-target]').forEach(el => io.observe(el));
+
+// Contact form
+document.getElementById('contact-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target));
+  const ok = document.getElementById('form-ok');
+  const err = document.getElementById('form-err');
+  ok.style.display = err.style.display = 'none';
+  try {
+    const res = await fetch('https://www.saabai.ai/api/site-factory/lead', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({...data, siteSlug:'inkfx-printing'})
+    });
+    if (res.ok) { ok.style.display='block'; e.target.reset(); }
+    else throw new Error();
+  } catch { err.style.display='block'; }
+});
+</script>
+<div data-saabai-credit style="text-align:center;padding:12px 16px;font:12px/1.4 system-ui,sans-serif;opacity:.7"><a href="https://www.saabai.ai/?utm_source=inkfx-printing&utm_medium=footer" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">Powered by Saabai.ai</a></div></body>
+</html>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { OWNER_EMAIL } from "../services";
 import { Logo } from "../Logo";
+import MapsPack from "../../../components/MapsPack";
 
 export default function ContactPage() {
   const [form, setForm] = useState({
@@ -208,6 +209,12 @@ export default function ContactPage() {
                 Stu travels from the Northern Rivers to Coomera and Ormeau. He comes
                 to you, at home or at work.
               </p>
+            </div>
+            <div className="border-t border-muted-line pt-5">
+              <h3 className="text-xs font-bold tracking-[0.22em] text-brand uppercase mb-2">
+                Google
+              </h3>
+              <MapsPack slug="cycle-repair" />
             </div>
             <Link
               href="/sites/cycle-repair/quote"

@@ -1,0 +1,1200 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lifestyle Money Management | Property Wealth Strategy Australia</title>
+  <meta name="description" content="Lifestyle Money Management helps Australians build long-term wealth through ethical, property-led strategy, financial analysis, and portfolio management. Adelaide, Brisbane and Queensland focused.">
+  <link rel="icon" href="/clients/lmm-site/assets/favicon.ico?v=20261029" sizes="any">
+  <link rel="apple-touch-icon" sizes="180x180" href="/clients/lmm-site/assets/apple-touch-icon.png?v=20261029">
+  <link rel="manifest" href="/clients/lmm-site/assets/site.webmanifest?v=20261029">
+  <meta name="theme-color" content="#101F34">
+  <meta property="og:title" content="Lifestyle Money Management">
+  <meta property="og:description" content="Smart property purchases. Clear wealth strategy. Adelaide, Brisbane and Queensland focus.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://www.lifestylemoneymanagement.com.au/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="https://www.lifestylemoneymanagement.com.au/">
+  <meta property="og:site_name" content="Lifestyle Money Management">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Lifestyle Money Management">
+  <meta name="twitter:description" content="Smart property purchases. Clear wealth strategy. Adelaide, Brisbane and Queensland focus.">
+  <meta name="twitter:image" content="https://www.lifestylemoneymanagement.com.au/og-image.jpg">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f8faf7;
+      --bg-elevated: #ffffff;
+      --text: #102225;
+      --muted: #667274;
+      --line: rgba(16, 34, 37, 0.12);
+      --green: #0b5d55;
+      --green-2: #14796f;
+      --gold: #c49a3a;
+      --gold-soft: #f2e5c4;
+      --shadow: 0 24px 70px rgba(12, 41, 45, 0.12);
+      --radius: 8px;
+      --max: 1180px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #081314;
+      --bg-elevated: #101f21;
+      --text: #edf4ef;
+      --muted: #a7b4b2;
+      --line: rgba(237, 244, 239, 0.13);
+      --green: #6bd5c8;
+      --green-2: #8be0d5;
+      --gold: #e2bf63;
+      --gold-soft: rgba(226, 191, 99, 0.13);
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, input, select, textarea { font: inherit; }
+    img { display: block; max-width: 100%; }
+
+    .container {
+      width: min(100% - 32px, var(--max));
+      margin: 0 auto;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: blur(18px);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 86px;
+      padding: 6px 0;
+      gap: 20px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border: 1px solid color-mix(in srgb, var(--green) 26%, transparent);
+      border-radius: 8px;
+      background: var(--bg-elevated);
+      color: var(--green);
+      box-shadow: 0 10px 28px rgba(11, 93, 85, 0.11);
+    }
+
+    .brand span:last-child {
+      color: var(--green);
+      font-size: 1.01rem;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-links a,
+    .theme-toggle {
+      min-height: 40px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 9px 12px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      transition: color 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .nav-links a:hover,
+    .theme-toggle:hover {
+      color: var(--text);
+      border-color: var(--line);
+      background: color-mix(in srgb, var(--bg-elevated) 78%, transparent);
+    }
+
+    .hero {
+      position: relative;
+      min-height: calc(100svh - 74px);
+      display: grid;
+      align-items: center;
+      overflow: hidden;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, color-mix(in srgb, var(--bg) 98%, transparent) 0%, color-mix(in srgb, var(--bg) 83%, transparent) 44%, color-mix(in srgb, var(--bg) 18%, transparent) 100%),
+        url("/clients/lmm-site/assets/lmm-brisbane-property-hero.png") center right / cover no-repeat;
+      transform: scale(1.01);
+    }
+
+    [data-theme="dark"] .hero::before {
+      background:
+        linear-gradient(90deg, rgba(8, 19, 20, 0.98) 0%, rgba(8, 19, 20, 0.82) 48%, rgba(8, 19, 20, 0.24) 100%),
+        url("/clients/lmm-site/assets/lmm-brisbane-property-hero.png") center right / cover no-repeat;
+      filter: saturate(0.9) brightness(0.78);
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      padding: 88px 0 64px;
+    }
+
+    /* Tighter gap between nav and hero badge (about half the original). */
+    .hero { align-items: start; }
+    .hero-inner { padding-top: 0; }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      border: 1px solid color-mix(in srgb, var(--gold) 34%, transparent);
+      border-radius: 999px;
+      padding: 7px 11px;
+      background: color-mix(in srgb, var(--gold-soft) 72%, transparent);
+      color: color-mix(in srgb, var(--text) 78%, var(--gold));
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--gold);
+    }
+
+    h1 {
+      max-width: 780px;
+      margin: 24px 0 18px;
+      font-size: clamp(3rem, 8vw, 6.7rem);
+      line-height: 0.93;
+      letter-spacing: 0;
+    }
+
+    .hero-copy {
+      max-width: 650px;
+      margin: 0 0 30px;
+      color: var(--muted);
+      font-size: clamp(1.05rem, 2vw, 1.28rem);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 18px;
+      font-weight: 800;
+      transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+
+    .button:hover { transform: translateY(-2px); }
+    .button-primary {
+      border-color: var(--green);
+      background: var(--green);
+      color: #fff;
+      box-shadow: 0 16px 36px rgba(11, 93, 85, 0.24);
+    }
+
+    [data-theme="dark"] .button-primary { color: #061111; }
+    .button-secondary { background: color-mix(in srgb, var(--bg-elevated) 84%, transparent); }
+
+    .hero-proof {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      max-width: 770px;
+      margin-top: 56px;
+    }
+
+    .proof-item {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      background: color-mix(in srgb, var(--bg-elevated) 82%, transparent);
+      backdrop-filter: blur(14px);
+    }
+
+    .proof-item strong {
+      display: block;
+      color: var(--green);
+      font-size: 1.36rem;
+      line-height: 1.1;
+    }
+
+    .proof-item span {
+      display: block;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    section { padding: 96px 0; }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(280px, 0.55fr);
+      align-items: end;
+      gap: 40px;
+      margin-bottom: 34px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 4rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .section-head p,
+    .muted {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .services {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .service-card,
+    .testimonial,
+    .contact-panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg-elevated);
+      box-shadow: var(--shadow);
+    }
+
+    .service-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 330px;
+      padding: 26px;
+      transition: transform 180ms ease, border-color 180ms ease;
+    }
+
+    .service-card:hover {
+      transform: translateY(-4px);
+      border-color: color-mix(in srgb, var(--green) 34%, var(--line));
+    }
+
+    .service-icon {
+      display: grid;
+      place-items: center;
+      width: 46px;
+      height: 46px;
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--green) 10%, transparent);
+      color: var(--green);
+      margin-bottom: 28px;
+    }
+
+    .service-card h3 {
+      margin: 0 0 12px;
+      font-size: 1.45rem;
+      letter-spacing: 0;
+    }
+
+    .service-card p {
+      margin: 0 0 22px;
+      color: var(--muted);
+    }
+
+    .service-card ul {
+      display: grid;
+      gap: 9px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      color: var(--text);
+      font-size: 0.96rem;
+    }
+
+    .service-card li {
+      display: flex;
+      gap: 9px;
+      align-items: flex-start;
+    }
+
+    .service-card li::before {
+      content: "";
+      flex: 0 0 auto;
+      width: 7px;
+      height: 7px;
+      margin-top: 9px;
+      border-radius: 50%;
+      background: var(--gold);
+    }
+
+    .approach {
+      background: color-mix(in srgb, var(--green) 5%, transparent);
+      border-block: 1px solid var(--line);
+    }
+
+    .approach-grid {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 42px;
+      align-items: center;
+    }
+
+    .signal-board {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--bg-elevated) 86%, transparent);
+      box-shadow: var(--shadow);
+    }
+
+    .signal {
+      display: grid;
+      grid-template-columns: 110px 1fr auto;
+      align-items: center;
+      gap: 14px;
+      min-height: 70px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: var(--bg-elevated);
+    }
+
+    .bar {
+      height: 9px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--muted) 16%, transparent);
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--green);
+    }
+
+    .signal small {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .testimonials {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .testimonial {
+      padding: 24px;
+      box-shadow: none;
+    }
+
+    .quote {
+      margin: 0 0 26px;
+      color: var(--text);
+      font-size: 1.04rem;
+    }
+
+    .person strong { display: block; }
+    .person span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .contact {
+      padding-bottom: 42px;
+    }
+
+    .contact-layout {
+      display: grid;
+      grid-template-columns: 0.82fr 1.18fr;
+      gap: 28px;
+      align-items: start;
+    }
+
+    .contact-aside {
+      display: grid;
+      gap: 18px;
+    }
+
+    .contact-line {
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .contact-line strong { display: block; }
+    .contact-line span { color: var(--muted); }
+
+    .contact-panel {
+      padding: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px 14px;
+      background: color-mix(in srgb, var(--bg) 74%, var(--bg-elevated));
+      color: var(--text);
+      outline: none;
+      transition: border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    select {
+      -webkit-appearance: none;
+      appearance: none;
+      min-height: 48px;
+      padding-right: 40px;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23889590' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+
+    select:has(option[value=""]:checked) { color: var(--muted); }
+    select option { color: var(--text); background: var(--bg-elevated); }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--green) 14%, transparent);
+    }
+
+    .span-2 { grid-column: 1 / -1; }
+    textarea { min-height: 126px; resize: vertical; }
+    .form-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .form-footer button[type="submit"] { order: -1; }
+
+    .status {
+      color: var(--green);
+      font-weight: 800;
+      opacity: 0;
+      transition: opacity 180ms ease;
+    }
+
+    .status.is-visible { opacity: 1; }
+
+    .site-footer {
+      border-top: 1px solid var(--line);
+      padding: 28px 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .powered-by {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 0.78rem;
+      opacity: 0.75;
+    }
+
+    .powered-by a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .powered-by a:hover {
+      color: var(--text);
+      text-decoration: underline;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 520ms ease, transform 520ms ease;
+    }
+
+    .reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 900px) {
+      .nav { min-height: 66px; }
+      .hero { min-height: auto; }
+      .hero::before {
+        background:
+          linear-gradient(180deg, color-mix(in srgb, var(--bg) 96%, transparent) 0%, color-mix(in srgb, var(--bg) 87%, transparent) 52%, color-mix(in srgb, var(--bg) 96%, transparent) 100%),
+          url("/clients/lmm-site/assets/lmm-brisbane-property-hero.png") center / cover no-repeat;
+      }
+      [data-theme="dark"] .hero::before {
+        background:
+          linear-gradient(180deg, rgba(8, 19, 20, 0.98) 0%, rgba(8, 19, 20, 0.84) 52%, rgba(8, 19, 20, 0.98) 100%),
+          url("/clients/lmm-site/assets/lmm-brisbane-property-hero.png") center / cover no-repeat;
+      }
+      .hero-inner { padding: 0 0 44px; }
+      .hero-proof,
+      .services,
+      .testimonials,
+      .section-head,
+      .approach-grid,
+      .contact-layout {
+        grid-template-columns: 1fr;
+      }
+      section { padding: 70px 0; }
+    }
+
+    @media (max-width: 620px) {
+      .container { width: min(100% - 24px, var(--max)); }
+      .brand span:last-child { font-size: 0.94rem; }
+      .brand-mark { width: 34px; height: 34px; }
+      .hero-proof { margin-top: 36px; }
+      .proof-item,
+      .service-card,
+      .testimonial,
+      .contact-panel { padding: 20px; }
+      .signal { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .span-2 { grid-column: auto; }
+      .form-footer { align-items: stretch; flex-direction: column; }
+      .button { width: 100%; }
+    }
+  
+    /* Meet Nick */
+    .meet-nick { background: var(--bg-elevated); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .meet-grid { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr); gap: 56px; align-items: center; }
+    .meet-photo { margin: 0; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--line); }
+    .meet-photo img { display: block; width: 100%; height: auto; }
+    .meet-role { color: var(--gold); font-weight: 700; margin-top: 8px; }
+    .meet-bio { margin-top: 18px; line-height: 1.7; max-width: 60ch; }
+    .meet-bio + .meet-bio { margin-top: 14px; }
+    .meet-contact { margin-top: 28px; display: grid; gap: 10px; }
+    .meet-contact a { color: var(--green); font-weight: 700; }
+    .meet-contact a:hover { text-decoration: underline; }
+    .meet-contact span { color: var(--muted); font-size: 0.92rem; }
+    @media (max-width: 860px) { .meet-grid { grid-template-columns: 1fr; gap: 32px; } .meet-photo { max-width: 460px; } }
+  
+    /* Real LMM logo (header + footer). Light logo by default, reversed logo in dark theme. */
+    .brand-logo { display: block; height: 70px; width: auto; }
+    .brand-logo.logo-dark, [data-theme="dark"] .brand-logo.logo-light { display: none; }
+    [data-theme="dark"] .brand-logo.logo-dark { display: block; }
+    @media (max-width: 620px) { .brand-logo { height: 55px; } }
+  
+    /* Footer: navy/gold, multi-column */
+    .site-footer { background: #101F34; color: #c8d0da; border-top: 3px solid #B48C54; padding: 56px 0 24px; }
+    [data-theme="dark"] .site-footer { background: #0a1522; }
+    .footer-grid { display: grid; grid-template-columns: 1.3fr 0.7fr 1.2fr; gap: 48px; }
+    .footer-col h3 { margin: 0 0 16px; color: #C99E5F; font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; }
+    .footer-col p { margin: 14px 0 0; max-width: 34ch; line-height: 1.6; font-size: 0.92rem; }
+    .footer-col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+    .footer-col a { color: #e8edf3; text-decoration: none; }
+    .footer-col a:hover { color: #C99E5F; }
+    .footer-brand { display: inline-flex; margin: 0; }
+    .footer-logo { display: block; height: 77px; width: auto; }
+    .footer-contact li { display: flex; align-items: flex-start; gap: 12px; line-height: 1.5; }
+    .footer-contact svg { flex: none; width: 18px; height: 18px; margin-top: 3px; fill: none; stroke: #C99E5F; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .footer-bottom { display: flex; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; margin-top: 44px; padding-top: 20px; border-top: 1px solid rgba(201,158,95,0.28); font-size: 0.86rem; }
+    .footer-legal { margin-top: 22px; display: grid; gap: 12px; }
+    .footer-legal p { margin: 0; max-width: 78ch; font-size: 0.86rem; line-height: 1.55; color: #c8d0da; }
+    .footer-legal nav { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+    .footer-legal a { color: #E5C690; text-decoration: underline; text-underline-offset: 3px; }
+    .footer-legal a:hover { color: #fff; }
+    .site-footer .powered-by a { color: #9aa6b4; }
+    .site-footer .powered-by a:hover { color: #C99E5F; }
+    @media (max-width: 860px) { .footer-grid { grid-template-columns: 1fr 1fr; gap: 36px; } .footer-brand-col { grid-column: 1 / -1; } }
+    @media (max-width: 560px) { .footer-grid { grid-template-columns: 1fr; gap: 30px; } .footer-logo { height: 67px; } .site-footer { padding-top: 44px; } }
+  
+    /* Hero top spacing reduced ~35% (96px -> 62px desktop, 70px -> 45px mobile) */
+    .hero { padding-top: 62px; }
+    @media (max-width: 860px) { .hero { padding-top: 45px; } }
+  
+    /* Google reviews: white strip, LMM navy/gold. Data: assets/reviews.json */
+    .reviews { background: #fff; color: #101F34; border-top: 1px solid #e8eaed; border-bottom: 1px solid #e8eaed; padding: 72px 0; }
+    .rv-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; margin-bottom: 36px; }
+    .rv-eyebrow { color: #B48C54; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; }
+    .reviews h2 { color: #101F34; margin: 8px 0 0; padding-bottom: 14px; position: relative; }
+    .reviews h2::after { content: ""; position: absolute; left: 0; bottom: 0; width: 56px; height: 3px; background: #B48C54; border-radius: 2px; }
+    .rv-summary { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 18px; color: #101F34; text-decoration: none; }
+    .rv-summary:hover .rv-score { text-decoration: underline; text-underline-offset: 3px; }
+    .g-logo { width: 26px; height: 26px; flex: none; }
+    .rv-stars { display: inline-flex; gap: 2px; }
+    .rv-stars svg { width: 18px; height: 18px; fill: #FBBC04; }
+    .rv-stars svg.off { fill: #dadce0; }
+    .rv-stars.big svg { width: 24px; height: 24px; }
+    .rv-score { font-size: 1.05rem; color: #3c4043; }
+    .rv-score b { font-size: 1.5rem; color: #101F34; }
+    .rv-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .rv-all { color: #101F34; font-weight: 600; font-size: 0.92rem; text-decoration: underline; text-decoration-color: #B48C54; text-underline-offset: 4px; }
+    .rv-all:hover { color: #B48C54; }
+    .rv-btn { width: 42px; height: 42px; border-radius: 50%; border: 1px solid #dadce0; background: #fff; color: #101F34; font-size: 1.1rem; cursor: pointer; }
+    .rv-btn:hover { border-color: #B48C54; color: #B48C54; }
+    .rv-track { list-style: none; margin: 0; padding: 4px 2px 12px; display: flex; gap: 24px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .rv-track::-webkit-scrollbar { display: none; }
+    .rv-track:focus-visible, .rv-btn:focus-visible, .rv-all:focus-visible, .rv-summary:focus-visible { outline: 2px solid #B48C54; outline-offset: 3px; border-radius: 8px; }
+    .rv-card { flex: 0 0 calc((100% - 48px) / 3); scroll-snap-align: start; background: #f8f9fa; border: 1px solid #e8eaed; border-top: 3px solid #B48C54; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; box-shadow: 0 2px 10px rgba(16,31,52,0.05); }
+    .rv-text { margin: 16px 0 0; flex: 1; font-size: 0.95rem; line-height: 1.65; color: #3c4043; white-space: pre-line; }
+    .rv-meta { margin-top: 20px; padding-top: 14px; border-top: 1px solid #e8eaed; display: flex; justify-content: space-between; gap: 12px; font-size: 0.85rem; color: #70757a; }
+    .rv-meta strong { color: #101F34; }
+    @media (max-width: 1000px) { .rv-card { flex-basis: calc((100% - 24px) / 2); } }
+    @media (max-width: 640px) { .reviews { padding: 52px 0; } .rv-card { flex-basis: 88%; } .rv-controls .rv-btn { display: none; } }
+    @media (prefers-reduced-motion: reduce) { .rv-track { scroll-behavior: auto; } }
+    /* Nav: spacing + mobile menu */
+    .nav-links { margin-left: auto; }
+    .nav-actions { display: flex; align-items: center; gap: 6px; }
+    .nav-toggle { display: none; min-height: 40px; min-width: 44px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--text); cursor: pointer; }
+    .nav-toggle svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+    @media (max-width: 900px) {
+      .nav-toggle { display: inline-flex; align-items: center; justify-content: center; }
+      .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; align-items: stretch; gap: 2px; padding: 10px 16px 16px; background: var(--bg-elevated); border-bottom: 1px solid var(--line); box-shadow: 0 18px 40px rgba(0,0,0,0.12); }
+      .nav-links.open { display: flex; }
+      .nav-links a { display: flex !important; align-items: center; font-size: 1rem; color: var(--text); }
+    }
+  
+
+    /* Calculators dropdown */
+    .nav-dd { position: relative; }
+    .nav-dd summary { list-style: none; min-height: 40px; display: flex; align-items: center; gap: 6px; padding: 9px 12px; border: 1px solid transparent; border-radius: 8px; color: var(--muted); cursor: pointer; }
+    .nav-dd summary::-webkit-details-marker { display: none; }
+    .nav-dd summary::after { content: "\25BE"; font-size: .8em; color: var(--gold, #B48C54); }
+    .nav-dd[open] summary::after { content: "\25B4"; }
+    .nav-dd summary:hover, .nav-dd[open] summary { color: var(--text); border-color: var(--line); }
+    .nav-dd-menu { position: absolute; top: calc(100% + 6px); left: 0; min-width: 240px; display: grid; gap: 2px; padding: 8px; background: var(--bg-elevated); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 18px 40px rgba(0,0,0,0.14); z-index: 60; }
+    .nav-dd-menu a { display: block; white-space: nowrap; }
+    @media (max-width: 900px) {
+      .nav-dd summary { font-size: 1rem; color: var(--text); }
+      .nav-dd-menu { position: static; min-width: 0; box-shadow: none; border: 0; padding: 0 0 4px 14px; background: transparent; }
+    }
+    /* Hero redesign (17 Oct 2026): rounded golden-hour panel, glass card, navy + gold */
+    .button-navy { background: #101F34; border-color: #101F34; color: #fff; border-radius: 99px; box-shadow: 0 12px 28px -12px rgba(16,31,52,0.5); transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease; }
+    .button-navy:hover { background: #1b3050; box-shadow: 0 16px 32px -12px rgba(16,31,52,0.55); }
+    .button-navy:active { transform: translateY(0); box-shadow: 0 6px 14px -8px rgba(16,31,52,0.5); }
+    .button-outline { background: #fff; border-color: #d9d1c0; color: #101F34; border-radius: 99px; }
+    .button-outline:hover { border-color: #B48C54; color: #8a6a38; }
+    .button-outline:active { transform: translateY(0); }
+    .button-navy:focus-visible, .button-outline:focus-visible, .hx-rev:focus-visible { outline: 2px solid #B48C54; outline-offset: 3px; }
+    [data-theme="dark"] .nav-cta { background: #E5C690; border-color: #E5C690; color: #101F34; }
+    [data-theme="dark"] .nav-cta:hover { background: #f0d6a6; }
+    .nav-cta { min-height: 44px; padding: 10px 22px; font-size: 0.9rem; margin-right: 8px; }
+    @media (max-width: 900px) { .nav-cta { display: none; } }
+
+    .hero.hx { position: relative; isolation: isolate; width: min(100% - 48px, 1480px); margin: 8px auto 24px; padding: 44px 52px; min-height: calc(100svh - 100px); border: 0; border-radius: 36px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; background: #101F34; color: #fff; box-shadow: 0 30px 60px -30px rgba(16,31,52,0.5); }
+    .hero.hx::before { content: ""; position: absolute; inset: 0; z-index: -1; transform: none; filter: none; background: linear-gradient(180deg, rgba(16,31,52,0.8), rgba(16,31,52,0) 55%), linear-gradient(90deg, rgba(16,31,52,0.55), transparent 55%); }
+    [data-theme="dark"] .hero.hx::before { filter: none; background: linear-gradient(180deg, rgba(16,31,52,0.8), rgba(16,31,52,0) 55%), linear-gradient(90deg, rgba(16,31,52,0.55), transparent 55%); }
+    .hx-img { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; max-width: none; object-fit: cover; object-position: 70% center; }
+    .hx .eyebrow { background: #fff; border: 1px solid #e8dfcf; color: #101F34; font-weight: 600; padding: 8px 16px; font-size: 0.82rem; }
+    .hx .eyebrow::before { background: #B48C54; width: 8px; height: 8px; }
+    .hx h1 { font-size: clamp(2.25rem, 5vw, 4.5rem); line-height: 1; letter-spacing: -0.035em; font-weight: 700; max-width: 820px; margin: 20px 0 0; color: #fff; }
+    .hx h1 span { color: #E5C690; }
+    .hx-rev { position: absolute; right: 40px; top: 44px; display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.94); border-radius: 16px; padding: 12px 18px; color: #101F34; box-shadow: 0 12px 30px -12px rgba(16,31,52,0.35); }
+    .hx-rev b { font-size: 1.75rem; letter-spacing: -0.03em; line-height: 1; }
+    .hx-stars { display: block; color: #B48C54; letter-spacing: 2px; font-size: 0.875rem; line-height: 1.2; }
+    .hx-rev small { display: block; color: #5a677a; font-size: 0.75rem; }
+    .hx-card { width: min(100%, 620px); padding: 26px 28px; border-radius: 26px; background: rgba(255,255,255,0.88); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); color: #101F34; box-shadow: 0 30px 60px -20px rgba(0,0,0,0.4); }
+    .hx-card .hero-copy { margin: 0; color: #3a485d; font-size: 0.97rem; line-height: 1.6; max-width: none; }
+    .hx-card .hero-proof { display: flex; gap: 10px; margin: 16px 0; max-width: none; }
+    .hx-card .proof-item { flex: 1; background: #F6F3EC; border: 0; border-radius: 14px; padding: 11px 13px; }
+    .hx-card .proof-item strong { display: block; font-size: 0.8rem; color: #8a6a38; margin-bottom: 3px; }
+    .hx-card .proof-item span { font-size: 0.75rem; color: #4a586c; line-height: 1.4; }
+    .hx-card .actions { flex-wrap: nowrap; }
+    .hx-card .button { padding: 14px 24px; font-size: 0.94rem; font-weight: 600; }
+
+    @media (max-width: 900px) {
+      .hero.hx { min-height: 0; padding: 22px 16px 16px; width: min(100% - 20px, 1480px); margin: 6px auto 14px; border-radius: 26px; justify-content: flex-start; gap: 0; }
+      .hero.hx::before { background: linear-gradient(180deg, rgba(16,31,52,0.55) 0%, rgba(16,31,52,0) 20%); }
+      .hx-img { position: relative; inset: auto; order: 2; z-index: -2; width: calc(100% + 32px); max-width: none; margin: 18px -16px 0; height: 270px; object-fit: cover; object-position: 84% 60%; -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 14%, #000 70%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0, #000 14%, #000 70%, transparent 100%); }
+      .hx-top { order: 1; }
+      .hx h1 { font-size: 2.25rem; }
+      .hx-rev { order: 3; position: relative; right: auto; top: auto; align-self: flex-end; margin: 8px 0 18px; padding: 9px 14px; }
+      .hx-rev b { font-size: 1.25rem; }
+      .hx-card { order: 4; width: 100%; padding: 16px; border-radius: 20px; }
+      .hx-card .hero-copy { font-size: 0.82rem; line-height: 1.5; }
+      .hx-card .hero-proof { display: none; }
+      .hx-card .actions { flex-direction: column; flex-wrap: wrap; margin-top: 14px; }
+      .hx-card .button { width: 100%; padding: 13px; }
+    }
+
+    /* Anchor jumps: keep section content clear of the sticky header */
+    main section[id] { scroll-margin-top: 40px; }
+  </style>
+<link rel="canonical" href="https://www.lifestylemoneymanagement.com.au/">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": ["FinancialService", "ProfessionalService"], "@id": "https://www.lifestylemoneymanagement.com.au/#business", "name": "Lifestyle Money Management", "url": "https://www.lifestylemoneymanagement.com.au/", "description": "Ethical, evidence-led property wealth strategy, financial analysis and portfolio management for Australians.", "telephone": "+611300799119", "email": "nick@lifestylemoneymanagement.com.au", "legalName": "Foale Group Pty Ltd", "taxID": "26 648 878 862", "identifier": {"@type": "PropertyValue", "name": "Australian Credit Licence", "value": "530067"}, "founder": {"@type": "Person", "name": "Nick Foale", "jobTitle": "Managing Director"}, "areaServed": [{"@type": "City", "name": "Adelaide"}, {"@type": "City", "name": "Brisbane"}, {"@type": "State", "name": "Queensland"}, {"@type": "Country", "name": "Australia"}], "aggregateRating": {"@type": "AggregateRating", "ratingValue": 5, "reviewCount": 7, "bestRating": 5}, "hasOfferCatalog": {"@type": "OfferCatalog", "name": "Services", "itemListElement": [{"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Investment Strategy"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Financial Analysis"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Portfolio Management"}}]}}</script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="#top" aria-label="Lifestyle Money Management home">
+        <img class="brand-logo logo-light" src="/clients/lmm-site/assets/lmm-logo-full-colour-light.svg" alt="Lifestyle Money Management" width="420" height="276">
+        <img class="brand-logo logo-dark" src="/clients/lmm-site/assets/lmm-logo-reversed-dark.svg" alt="Lifestyle Money Management" width="420" height="276">
+      </a>
+      <nav class="nav-links" id="primaryNav" aria-label="Primary navigation">
+        <a href="#reviews">Why Choose Us?</a>
+        <a href="#services">Services</a>
+        <a href="#approach">Approach</a>
+        <details class="nav-dd">
+          <summary>Calculators</summary>
+          <div class="nav-dd-menu">
+            <a href="/calculators/borrowing-power">How much can I borrow?</a>
+            <a href="/calculators/serviceability">Can I afford it?</a>
+            <a href="/calculators/repayments">Repayments</a>
+          </div>
+        </details>
+        <a href="#meet-nick">Meet Nick</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="button button-navy nav-cta" href="#contact">Book a strategy call</a>
+        <button class="theme-toggle" type="button" aria-label="Toggle dark mode">DL</button>
+        <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="primaryNav"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero hx" aria-label="Lifestyle Money Management property wealth strategy">
+      <img class="hx-img" src="/clients/lmm-site/assets/lmm-hero-house-1680.webp" srcset="/clients/lmm-site/assets/lmm-hero-house-900.webp 900w, /clients/lmm-site/assets/lmm-hero-house-1680.webp 1680w" sizes="(max-width: 700px) 100vw, 1680px" width="1680" height="944" alt="Modern two-storey family home at golden hour" fetchpriority="high" decoding="async">
+      <div class="hx-top">
+        <div class="eyebrow reveal">Property-led wealth advice for Australia</div>
+        <h1 class="reveal">Smarter property purchases. <span>Stronger long-term wealth.</span></h1>
+      </div>
+      <a class="hx-rev" href="#reviews" aria-label="5.0 out of 5 stars from 7 Google reviews">
+        <b>5.0</b>
+        <span><span class="hx-stars" aria-hidden="true">&#9733;&#9733;&#9733;&#9733;&#9733;</span><small>7 Google reviews</small></span>
+      </a>
+      <div class="hx-card reveal">
+        <p class="hero-copy">Lifestyle Money Management helps clients build ethical, evidence-led wealth strategies around quality residential property, with a practical focus on Adelaide, Brisbane, Queensland, and resilient Australian growth markets.</p>
+        <div class="hero-proof reveal" aria-label="Key proof points">
+          <div class="proof-item">
+            <strong>SA &amp; QLD focus</strong>
+            <span>Adelaide and SE Queensland growth-corridor property insight.</span>
+          </div>
+          <div class="proof-item">
+            <strong>ROI aware</strong>
+            <span>Numbers-led advice without hype or pressure.</span>
+          </div>
+          <div class="proof-item">
+            <strong>Portfolio view</strong>
+            <span>Strategy, lending, risk, and cash flow aligned.</span>
+          </div>
+        </div>
+        <div class="actions reveal">
+          <a class="button button-navy" href="#contact">Book a strategy call</a>
+          <a class="button button-outline" href="#services">Explore services</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="reviews" id="reviews" aria-labelledby="reviews-heading">
+      <div class="container">
+        <div class="rv-head">
+          <div>
+            <div class="rv-eyebrow">Google reviews</div>
+            <h2 id="reviews-heading">Why Us?</h2>
+            <a class="rv-summary" id="rvSummary" href="https://www.google.com/search?kgmid=/g/11b6hyfwnh&amp;q=Lifestyle+Money+Management#lrd=0x6ab0cedb64cd8233:0x43ddf01d057f2221,1,,,," target="_blank" rel="noopener noreferrer" aria-label="Rated 5.0 out of 5 from 7 Google reviews. Read them on Google (opens in a new tab)">
+              <svg class="g-logo" viewBox="0 0 48 48" role="img" aria-label="Google"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span class="rv-stars big" aria-hidden="true"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg></span><span class="rv-score"><b>5.0</b> &middot; 7 Google reviews</span>
+            </a>
+          </div>
+          <div class="rv-controls">
+            <a class="rv-all" href="https://www.google.com/search?kgmid=/g/11b6hyfwnh&amp;q=Lifestyle+Money+Management#lrd=0x6ab0cedb64cd8233:0x43ddf01d057f2221,1,,,," target="_blank" rel="noopener noreferrer">Read all reviews on Google</a>
+            <button type="button" class="rv-btn" data-dir="-1" aria-label="Previous review">&larr;</button>
+            <button type="button" class="rv-btn" data-dir="1" aria-label="Next review">&rarr;</button>
+          </div>
+        </div>
+        <ul class="rv-track" id="rvTrack" role="region" aria-roledescription="carousel" aria-label="Customer reviews from Google" tabindex="0">
+          <li class="rv-card" role="group" aria-roledescription="slide" aria-label="Review 1 of 7, by Anna Langston">
+            <span class="rv-stars" role="img" aria-label="5 out of 5 stars"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg></span>
+            <p class="rv-text">Nick is professional, knowledgeable, and was helpful throughout the entire process. He took the time to explain the options available, answered all my questions, and made everything smooth and stress-free.
+
+Nicks communication was excellent, and I really appreciated his support and attention to detail. I would highly recommend Nick to anyone looking for reliable and trustworthy finance services.
+
+Thank you for the outstanding service!</p>
+            <div class="rv-meta"><strong>Anna Langston</strong><span>October 2026</span></div>
+          </li>
+          <li class="rv-card" role="group" aria-roledescription="slide" aria-label="Review 2 of 7, by Vicki Shepherd">
+            <span class="rv-stars" role="img" aria-label="5 out of 5 stars"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg></span>
+            <p class="rv-text">Awesome service and experience and you can guarantee that every effort is taken to get you the best outcome. 5 star service.</p>
+            <div class="rv-meta"><strong>Vicki Shepherd</strong><span>October 2026</span></div>
+          </li>
+          <li class="rv-card" role="group" aria-roledescription="slide" aria-label="Review 3 of 7, by Fabian Ackers">
+            <span class="rv-stars" role="img" aria-label="5 out of 5 stars"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg></span>
+            <p class="rv-text">Nick has been my broker for 12 years, he has helped with my super, and income protection. When my van died and I needed a loan asap to get another one I had it approved within 3 days. To say he is exceptional at what he does is an understatement. Thank you Nick for always being there when I need you the most 🙏</p>
+            <div class="rv-meta"><strong>Fabian Ackers</strong><span>October 2026</span></div>
+          </li>
+          <li class="rv-card" role="group" aria-roledescription="slide" aria-label="Review 4 of 7, by Lee Boys">
+            <span class="rv-stars" role="img" aria-label="5 out of 5 stars"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg></span>
+            <p class="rv-text">Simply cannot recommend Nick highly enough. My situation as a self employed person was rather complex and he navigated me through it all, dealing not only with the financial institutions but with me (who was rather stressed) brilliantly. His knowledge, professionalism, communication at all times is outstanding. Would simply never undertake any finance through anyone else and I would recommend you do the same. Thanks Nick for getting us our dream home ... you simply are the best.</p>
+            <div class="rv-meta"><strong>Lee Boys</strong><span>2 years ago</span></div>
+          </li>
+          <li class="rv-card" role="group" aria-roledescription="slide" aria-label="Review 5 of 7, by Tony Vuong">
+            <span class="rv-stars" role="img" aria-label="5 out of 5 stars"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg></span>
+            <p class="rv-text">Assisted with my long term financial goals and property investment. Very professional and had great customer service.</p>
+            <div class="rv-meta"><strong>Tony Vuong</strong><span>Edited 5 years ago</span></div>
+          </li>
+          <li class="rv-card" role="group" aria-roledescription="slide" aria-label="Review 6 of 7, by Shane Goldberg">
+            <span class="rv-stars" role="img" aria-label="5 out of 5 stars"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg></span>
+            <p class="rv-text">I've been fortunate enough to have at least 4 home loans and investment loans through the Lifestyle Money Management guys. They are great to deal with, excellent communication and super friendly. They've been able to help us achieve things we didn't think were possible. We worked with other banks and brokers in the past but to be perfectly honest I wouldn't go anywhere else now. These guys are highly recommended especially for residential / investment properties. Thanks again Nick and the team. Really appreciate all your help! Cheers Shane &amp; Mandy</p>
+            <div class="rv-meta"><strong>Shane Goldberg</strong><span>7 years ago</span></div>
+          </li>
+          <li class="rv-card" role="group" aria-roledescription="slide" aria-label="Review 7 of 7, by Les Foale">
+            <span class="rv-stars" role="img" aria-label="5 out of 5 stars"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg></span>
+            <p class="rv-text">Excellent service and understanding of my financial needs. Les</p>
+            <div class="rv-meta"><strong>Les Foale</strong><span>9 years ago</span></div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="services">
+      <div class="container">
+        <div class="section-head reveal">
+          <h2>Property strategy with commercial discipline.</h2>
+          <p>Clear recommendations built around acquisition quality, borrowing position, risk controls, and your actual lifestyle goals.</p>
+        </div>
+        <div class="services">
+          <article class="service-card reveal">
+            <div class="service-icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 19V5m0 14h16M8 16l3-4 3 2 5-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>Investment Strategy</h3>
+            <p>Define the buying brief before the market does it for you.</p>
+            <ul>
+              <li>Location and property-type strategy</li>
+              <li>Risk-adjusted growth and yield filters</li>
+              <li>Personal goal and timeline alignment</li>
+            </ul>
+          </article>
+          <article class="service-card reveal">
+            <div class="service-icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M7 10h10M8 14h4m-6 6h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+            <h3>Financial Analysis</h3>
+            <p>Know the cash flow, holding costs, and lending impact before committing.</p>
+            <ul>
+              <li>Borrowing and serviceability review</li>
+              <li>Cash-flow stress testing</li>
+              <li>Exit, buffer, and contingency planning</li>
+            </ul>
+          </article>
+          <article class="service-card reveal">
+            <div class="service-icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 20V8m7 12V4m7 16v-9M3 20h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+            <h3>Portfolio Management</h3>
+            <p>Keep each purchase connected to the wider wealth plan.</p>
+            <ul>
+              <li>Portfolio balance and exposure review</li>
+              <li>Upgrade, hold, or sell decision support</li>
+              <li>Ongoing performance and lending checks</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="approach" id="approach">
+      <div class="container approach-grid">
+        <div class="reveal">
+          <div class="eyebrow">Ethical ROI advice</div>
+          <h2 style="margin-top: 18px;">Advice that starts with suitability.</h2>
+          <p class="muted" style="margin-top: 18px;">The right property is not just the one with a glossy forecast. LMM prioritises affordability, asset quality, downside protection, and whether the purchase genuinely moves the client closer to financial independence.</p>
+        </div>
+        <div class="signal-board reveal" aria-label="Property assessment signals">
+          <div class="signal">
+            <strong>Asset quality</strong>
+            <div class="bar"><span style="width: 88%"></span></div>
+            <small>High</small>
+          </div>
+          <div class="signal">
+            <strong>Cash-flow resilience</strong>
+            <div class="bar"><span style="width: 76%; background: var(--gold)"></span></div>
+            <small>Strong</small>
+          </div>
+          <div class="signal">
+            <strong>Lending fit</strong>
+            <div class="bar"><span style="width: 82%"></span></div>
+            <small>Ready</small>
+          </div>
+          <div class="signal">
+            <strong>Portfolio balance</strong>
+            <div class="bar"><span style="width: 71%; background: var(--gold)"></span></div>
+            <small>Sound</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="meet-nick" id="meet-nick" aria-label="Meet Nick Foale">
+      <div class="container meet-grid">
+        <figure class="meet-photo reveal">
+          <img src="/clients/lmm-site/assets/nick-foale-lmm.jpg" alt="Nick Foale, Managing Director of Lifestyle Money Management" width="900" height="1200" loading="lazy">
+        </figure>
+        <div class="reveal">
+          <div class="eyebrow">Meet your adviser</div>
+          <h2 style="margin-top: 18px;">Nick Foale</h2>
+          <p class="meet-role">Managing Director</p>
+          <p class="muted meet-bio">Drawing upon more than 26 years of experience in the finance industry, Nick launched Lifestyle Money Management to offer personalised professional service from start to finish, with maximum flexibility and control over product and pricing. Whether you’re looking to buy a car, a boat, an overseas trip, a house, a business, plan for your retirement or simply consolidate some existing debt, we have the solution.</p>
+          <p class="muted meet-bio">With sharp rates, fast turnaround times and in-house sign off, you can get your deals done quickly, leaving you more time to do what you love, with the people you love.</p>
+          <div class="meet-contact">
+            <span>Call</span>
+            <a href="tel:1300799119">1300 799 119</a>
+            <a href="tel:0488165908">0488 165 908</a>
+            <span>Email</span>
+            <a href="mailto:nick@lifestylemoneymanagement.com.au">nick@lifestylemoneymanagement.com.au</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="contact" id="contact">
+      <div class="container contact-layout">
+        <aside class="contact-aside reveal">
+          <div>
+            <div class="eyebrow">Start with a strategy call</div>
+            <h2 style="margin-top: 18px;">Ready to buy with more clarity?</h2>
+          </div>
+          <p class="muted">Tell us where you are now, what you want property to do for your wealth plan, and when you want to act.</p>
+          <div class="contact-line">
+            <strong>Focus</strong>
+            <span>Property investment strategy, financial analysis, and portfolio review.</span>
+          </div>
+          <div class="contact-line">
+            <strong>Markets</strong>
+            <span>Adelaide, Brisbane, Queensland, and selected Australian residential growth locations.</span>
+          </div>
+        </aside>
+        <form class="contact-panel reveal" id="leadForm">
+          <div class="form-grid">
+            <label>Full name
+              <input name="name" autocomplete="name" required>
+            </label>
+            <label>Email
+              <input type="email" name="email" autocomplete="email" required>
+            </label>
+            <label>Phone
+              <input name="phone" autocomplete="tel">
+            </label>
+            <label>Investment stage
+              <select name="stage">
+                <option value="" selected>Select one</option>
+                <option>Purchase my First Property</option>
+                <option>Purchase my Next Property</option>
+                <option>Portfolio &amp; Finance Review</option>
+              </select>
+            </label>
+            <label class="span-2">What are you trying to achieve?
+              <textarea name="message" required></textarea>
+            </label>
+          </div>
+          <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+          <div class="form-footer">
+            <span class="status" role="status" aria-live="polite"></span>
+            <button class="button button-primary" type="submit">Submit enquiry</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-col footer-brand-col">
+        <a class="footer-brand" href="#top" aria-label="Lifestyle Money Management home">
+          <img class="footer-logo" src="/clients/lmm-site/assets/lmm-logo-reversed-dark.svg" alt="Lifestyle Money Management" width="420" height="276" loading="lazy">
+        </a>
+        <p>Property-led wealth advice for Australia. Ethical, evidence-led strategy around quality residential property.</p>
+      </div>
+      <nav class="footer-col" aria-label="Footer navigation">
+        <h3>Quick links</h3>
+        <ul>
+          <li><a href="#services">Services</a></li>
+          <li><a href="#approach">Approach</a></li>
+          <li><a href="#meet-nick">Meet Nick</a></li>
+          <li><a href="#reviews">Why Choose Us?</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </nav>
+      <div class="footer-col">
+        <h3>Contact Nick</h3>
+        <ul class="footer-contact">
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg><a href="tel:1300799119">1300 799 119</a></li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg><a href="tel:0488165908">0488 165 908</a></li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><a href="mailto:nick@lifestylemoneymanagement.com.au">nick@lifestylemoneymanagement.com.au</a></li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Adelaide, Brisbane, Queensland and selected Australian growth locations</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <span>&copy; <span id="year"></span> Lifestyle Money Management. All rights reserved.</span>
+      <span>General information only. Seek licensed advice before making investment decisions.</span>
+    </div>
+    <!-- LMM-LEGAL-FOOTER -->
+    <div class="container powered-by">
+      <a href="https://www.saabai.ai" target="_blank" rel="noopener">Powered by Saabai.ai</a>
+    </div>
+  </footer>
+
+  <script>
+    const root = document.documentElement;
+    const savedTheme = localStorage.getItem("lmm-theme");
+    if (savedTheme) root.dataset.theme = savedTheme;
+
+    document.querySelector(".theme-toggle").addEventListener("click", () => {
+      const next = root.dataset.theme === "dark" ? "light" : "dark";
+      root.dataset.theme = next;
+      localStorage.setItem("lmm-theme", next);
+    });
+
+    // Calculators dropdown: close on outside click or Escape
+    (function () {
+      const d = document.querySelector(".nav-dd"); if (!d) return;
+      document.addEventListener("click", (e) => { if (!d.contains(e.target)) d.open = false; });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") d.open = false; });
+    })();
+
+    // Mobile menu
+    (function () {
+      const t = document.querySelector(".nav-toggle"), n = document.getElementById("primaryNav");
+      if (!t || !n) return;
+      const set = (o) => { n.classList.toggle("open", o); t.setAttribute("aria-expanded", String(o)); t.setAttribute("aria-label", o ? "Close menu" : "Open menu"); };
+      t.addEventListener("click", () => set(!n.classList.contains("open")));
+      n.addEventListener("click", (e) => { if (e.target.closest("a")) set(false); });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") set(false); });
+    })();
+
+    // Google reviews carousel. Content is server-rendered above; reviews.json (same shape the
+    // site can later be fed from an API/cron) refreshes it when available.
+    (function () {
+      const track = document.getElementById("rvTrack"); if (!track) return;
+      const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+      const star = (on) => '<svg viewBox="0 0 20 20" aria-hidden="true"' + (on ? "" : ' class="off"') + '><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z"/></svg>';
+      const stars = (n) => [0, 1, 2, 3, 4].map((i) => star(i < Math.round(n))).join("");
+      fetch("/clients/lmm-site/assets/reviews.json", { cache: "no-cache" }).then((r) => r.ok ? r.json() : null).then((d) => {
+        if (!d || !Array.isArray(d.reviews) || !d.reviews.length) return;
+        track.innerHTML = d.reviews.map((r, i) => '<li class="rv-card" role="group" aria-roledescription="slide" aria-label="Review ' + (i + 1) + " of " + d.reviews.length + ", by " + esc(r.name) + '"><span class="rv-stars" role="img" aria-label="' + r.stars + ' out of 5 stars">' + stars(r.stars) + '</span><p class="rv-text">' + esc(r.text) + '</p><div class="rv-meta"><strong>' + esc(r.name) + "</strong><span>" + esc(r.date || "") + "</span></div></li>").join("");
+        const sc = document.querySelector("#rvSummary .rv-score"), st = document.querySelector("#rvSummary .rv-stars");
+        if (sc && d.rating) sc.innerHTML = "<b>" + Number(d.rating).toFixed(1) + "</b> &middot; " + d.count + " Google reviews";
+        if (st && d.rating) st.innerHTML = stars(d.rating);
+      }).catch(() => {});
+      const step = (dir) => {
+        const c = track.querySelector(".rv-card"); const w = c ? c.getBoundingClientRect().width + 24 : track.clientWidth;
+        const end = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4;
+        if (dir > 0 && end) track.scrollTo({ left: 0 }); else if (dir < 0 && track.scrollLeft <= 4) track.scrollTo({ left: track.scrollWidth }); else track.scrollBy({ left: dir * w });
+      };
+      document.querySelectorAll(".rv-btn").forEach((b) => b.addEventListener("click", () => step(Number(b.dataset.dir))));
+      track.addEventListener("keydown", (e) => { if (e.key === "ArrowRight") { e.preventDefault(); step(1); } if (e.key === "ArrowLeft") { e.preventDefault(); step(-1); } });
+    })();
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll(".reveal").forEach((item) => observer.observe(item));
+
+    document.getElementById("leadForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const status = form.querySelector(".status");
+      const button = form.querySelector('button[type="submit"]');
+      const data = Object.fromEntries(new FormData(form).entries());
+      button.disabled = true;
+      button.textContent = "Sending...";
+      status.classList.remove("is-visible");
+      try {
+        const res = await fetch("/api/lmm-contact", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !json.ok) throw new Error(json.error || "Failed");
+        status.textContent = "Thanks! Your enquiry has been sent. We'll be in touch shortly.";
+        form.reset();
+      } catch (err) {
+        status.textContent = "Sorry, something went wrong. Please call or email us directly.";
+      }
+      status.classList.add("is-visible");
+      button.disabled = false;
+      button.textContent = "Submit enquiry";
+    });
+  </script>
+  <script src="/clients/lmm-site/assets/chat-widget.js?v=14" defer></script>
+</body>
+</html>

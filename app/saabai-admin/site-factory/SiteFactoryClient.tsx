@@ -446,6 +446,8 @@ export default function SiteFactoryClient() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
+  const [placeId, setPlaceId] = useState("");
+  const [gbpUrl, setGbpUrl] = useState("");
   const [style, setStyle] = useState(NICHE_THEME_DEFAULT["trades"]);
   const [description, setDescription] = useState("");
   const [genCharCount, setGenCharCount] = useState(0);
@@ -1418,6 +1420,8 @@ export default function SiteFactoryClient() {
       if (d.phone) setPhone(d.phone);
       if (d.email) setEmail(d.email);
       if (d.address) setAddress(d.address);
+      if (d.placeId) setPlaceId(d.placeId);
+      if (d.gbpUrl) setGbpUrl(d.gbpUrl);
       if (d.services) setServices(d.services);
       if (d.description) setDescription(d.description);
 
@@ -1506,7 +1510,7 @@ export default function SiteFactoryClient() {
         const buildMultiPayload = (confirmDuplicate = false) => JSON.stringify({
           businessName: businessName.trim(), niche, location,
           services: services.split(",").map(s => s.trim()).filter(Boolean),
-          phone, email, address, style, description: description.trim(),
+          phone, email, address, placeId, gbpUrl, style, description: description.trim(),
           pages, chatbot: chatbotPayload, confirmDuplicate,
         });
 
@@ -1571,7 +1575,7 @@ export default function SiteFactoryClient() {
       const buildPayload = (confirmDuplicate = false) => JSON.stringify({
         businessName: businessName.trim(), niche, location,
         services: services.split(",").map(s => s.trim()).filter(Boolean),
-        phone, email, address, style, description: description.trim(),
+        phone, email, address, placeId, gbpUrl, style, description: description.trim(),
         chatbot: chatbotPayload, confirmDuplicate,
       });
 
@@ -3508,7 +3512,11 @@ export default function SiteFactoryClient() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
                     <div>{lbl("Phone")}<input value={phone} onChange={e => setPhone(e.target.value)} placeholder="0412 345 678" style={inp()} /></div>
                     <div>{lbl("Email")}<input value={email} onChange={e => setEmail(e.target.value)} placeholder="info@..." style={inp()} /></div>
-                    <div>{lbl("Address")}<input value={address} onChange={e => setAddress(e.target.value)} placeholder="123 Main St" style={inp()} /></div>
+                    <div>{lbl("Address")}<input value={address} onChange={e => setAddress(e.target.value)} placeholder="123 Main St (public shopfront only)" style={inp()} /></div>
+                    <div>{lbl("Google Place ID")}<input value={placeId} onChange={e => setPlaceId(e.target.value)} placeholder="ChIJ... from Google Place ID Finder" style={inp()} />
+                      <p style={{ margin: "4px 0 0", fontSize: 10, color: C.textMuted }}>Never invent. Leave blank for service-area businesses.</p>
+                    </div>
+                    <div>{lbl("Google Business / Maps URL")}<input value={gbpUrl} onChange={e => setGbpUrl(e.target.value)} placeholder="https://maps.app.goo.gl/... or maps.google.com/..." style={inp()} /></div>
                   </div>
                   <div>
                     {lbl("Design Theme")}

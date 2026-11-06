@@ -37,7 +37,7 @@ MOBILE-FIRST: Base styles for 375px, then @media(min-width:768px) and @media(min
 NAV: overflow:hidden. CTA button: white-space:nowrap. No horizontal overflow.
 
 COPY: Specific, persuasive Australian copy. Real suburbs. Concrete benefits. No Lorem Ipsum. No em dashes.
-SEO: JSON-LD LocalBusiness (most specific @type). Open Graph. Twitter Card. Semantic HTML5.`;
+SEO: JSON-LD LocalBusiness (most specific @type), full NAP when public, openingHoursSpecification, hasMap/sameAs when Place ID or GBP URL given, areaServed. Shopfront: lazy Maps embed + Get directions. Service-area: no street pin. Never invent Place IDs. Open Graph. Twitter Card. Semantic HTML5.`;
 
 function formatCssVars(palette: string): string {
   return palette.split(";").filter(Boolean).map(v => {
@@ -108,7 +108,8 @@ function innerPageSections(
       `2. PAGE HERO: Compact. Full-width ${heroBg} bg. Centered. Eyebrow pill "GET IN TOUCH". Bold 48px white headline "Let's Talk." One-line subtext about response time. Min-height:45vh.`,
       `3. PROMISE BAR: White bg. 3 columns with icon circles: "Same-Day Response" / "Free Consultation" / one niche-specific promise. Bold label + sub-label each.`,
       `4. CONTACT SECTION: White or ${altBg} bg. 2-column desktop layout. LEFT card (white, shadow, 12px radius, padding:36px): phone number (large, prominent, bold heading), email, address, hours table (Mon-Fri 9am-5pm, Sat by appointment). RIGHT card: contact form — Name input, Email input, Phone input, Message textarea (4 rows), themed Submit button. Form: method POST action="https://www.saabai.ai/api/site-factory/lead" plus hidden input siteSlug="${slug}".`,
-      `5. FOOTER: 4-column grid identical to homepage footer.`,
+      `5. MAPS PACK: If a public street address was given, add a lazy iframe maps?q=ADDRESS&output=embed (no API key) plus Get directions link. If GOOGLE_PLACE_ID was given, add Review us on Google linking to https://search.google.com/local/writereview?placeid=ID. Service-area businesses (no street): omit the map pin; keep Review us / GBP link only when Place ID or GBP URL given.`,
+      `6. FOOTER: 4-column grid identical to homepage footer.`,
     ].join("\n");
   }
 
@@ -136,6 +137,8 @@ export async function POST(req: NextRequest) {
     phone = "",
     email = "",
     address = "",
+    placeId = "",
+    gbpUrl = "",
     style = "",
     description = "",
     pages: inputPages,
@@ -206,6 +209,8 @@ export async function POST(req: NextRequest) {
               `PHONE: ${phone || "Contact us for a free quote"}`,
               `EMAIL: ${email || ""}`,
               `ADDRESS: ${address || location}`,
+              placeId ? `GOOGLE_PLACE_ID: ${placeId}` : "",
+              gbpUrl ? `GOOGLE_BUSINESS_URL: ${gbpUrl}` : "",
               `SERVICES: ${servicesList}`,
               description ? `\nCLIENT BRIEF (follow carefully):\n${description}\n` : "",
               ``,
@@ -231,7 +236,7 @@ export async function POST(req: NextRequest) {
               `TESTIMONIALS: 3 review cards — 5 stars, 3-4 sentence quote, first name + last initial + Australian suburb.`,
               `CTA BAND: [Follow theme CTA band rules exactly]. Bold headline + 2 buttons.`,
               `FOOTER: 3-column — brand+social, site links (link to all pages), contact. Copyright ${new Date().getFullYear()} ${businessName}.`,
-              `SEO: JSON-LD LocalBusiness schema. Full OpenGraph + Twitter Card. <meta name="robots" content="index,follow">.`,
+              `SEO: JSON-LD LocalBusiness (most specific @type), full NAP when public, openingHoursSpecification, hasMap/sameAs when Place ID or GBP URL given, areaServed. Shopfront address: lazy maps?q= embed + Get directions + Review us when Place ID known. Service-area: no street pin. Never invent Place IDs. Full OpenGraph + Twitter Card. <meta name="robots" content="index,follow">.`,
             ].filter(Boolean).join("\n");
           } else {
             userPrompt = [
@@ -243,6 +248,8 @@ export async function POST(req: NextRequest) {
               `PHONE: ${phone || "Contact us for a free quote"}`,
               `EMAIL: ${email || ""}`,
               `ADDRESS: ${address || location}`,
+              placeId ? `GOOGLE_PLACE_ID: ${placeId}` : "",
+              gbpUrl ? `GOOGLE_BUSINESS_URL: ${gbpUrl}` : "",
               `SERVICES: ${servicesList}`,
               description ? `\nCLIENT BRIEF:\n${description}\n` : "",
               ``,
@@ -250,7 +257,7 @@ export async function POST(req: NextRequest) {
               ``,
               innerPageSections(page.slug, niche, slug, allPages, theme, phone, email, address),
               ``,
-              `SEO: JSON-LD LocalBusiness schema. Page-specific <title> and <meta description>. OpenGraph tags.`,
+              `SEO: JSON-LD LocalBusiness with Place ID/GBP when provided. Page-specific <title> and <meta description>. OpenGraph tags. Contact page: Get directions / Review us when Place ID known; shopfront only gets a map embed.`,
             ].filter(Boolean).join("\n");
           }
 
@@ -339,7 +346,7 @@ export async function POST(req: NextRequest) {
           status: "live",
           source: "factory",
           url: siteUrl,
-          business: { name: businessName, tagline: "", phone, email, address },
+          business: { name: businessName, tagline: "", phone, email, address, ...(placeId ? { placeId } : {}), ...(gbpUrl ? { gbpUrl } : {}) },
           chatbot: { enabled: true, name: botName, greeting: botGreeting, systemPrompt: botSystemPrompt },
         });
       } catch (e) {

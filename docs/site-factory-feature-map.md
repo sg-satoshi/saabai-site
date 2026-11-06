@@ -142,3 +142,14 @@ Checks: home 200; every same-host sitemap URL and `--pages` return 200; robots.t
 - Opt out of your own traffic: visit `/?exp_off=1`. Bots, GPC/DNT, admin session and opt-out always see the control with no cookie.
 - Check: `node scripts/site-check.mjs https://www.saabai.ai --exp` and `... https://stuscyclerepairs.com --exp=off`. Tests: `npm run test:exp`.
 
+
+
+## 11. Google Maps pack (5 Nov 2026)
+
+- Shared helpers: `lib/maps/` (`profiles.ts`, `schema.ts`, `links.ts`) and UI `app/components/MapsPack.tsx`.
+- Site Factory intake: Place ID + Google Business / Maps URL on the generate form; stored on `SiteConfig.business.placeId` / `gbpUrl`.
+- Shopfront sites get a lazy iframe (Maps Embed API when `NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY` is set, otherwise keyless `maps?q=&output=embed`), Get directions, and Review us when Place ID is known.
+- Service-area sites (Stu, Saabai, SUNDER, Wholesale, BO, LMM until GBP pin confirmed): no street pin / embed. Stu gets Review us via verified Place ID `ChIJMTybEAUCkWsRN6_ET-Nqjus`.
+- Saabai GBP is suspended: never add Maps sameAs until reinstated. SUNDER has no GBP yet.
+- Heaven Thai is excluded from the maps pack until the client pays.
+- Blob HTML patches: `scripts/maps-pack/` (dry-run only; no upload without approval).

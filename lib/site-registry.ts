@@ -40,6 +40,10 @@ export interface SiteConfig {
     phone?: string;
     email?: string;
     address?: string;
+    /** Google Place ID (ChIJ...). Used for Review us + Embed. Never invent. */
+    placeId?: string;
+    /** Public Google Business Profile / Maps listing URL for sameAs and hasMap. */
+    gbpUrl?: string;
   };
   chatbot: {
     enabled: boolean;

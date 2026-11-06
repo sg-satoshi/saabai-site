@@ -108,7 +108,15 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
               "Trades Recruitment",
               "Logistics Recruitment",
             ],
-            openingHours: "Mo-Fr 09:00-17:00",
+            "@id": "https://www.boconsulting.com.au/#business",
+            openingHoursSpecification: [
+              {
+                "@type": "OpeningHoursSpecification",
+                dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                opens: "09:00",
+                closes: "17:00",
+              },
+            ],
             sameAs: [],
           }),
         }}
